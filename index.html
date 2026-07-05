@@ -562,6 +562,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)
 .rzaddrow:hover{border-color:var(--primary);color:var(--primary)}
 .rzkart{border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;background:#fff}
 .rzkart.bolgeli{border-color:var(--warning)}
+.rzkart.ulasim .rzkart-head{background:linear-gradient(135deg,#075985,#0284c7)}
+.otl-tur{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-weight:600;font-size:.78rem;color:var(--muted);background:#fff;user-select:none}
+.otl-tur:hover{border-color:var(--primary)}
+.otl-tur.active{background:var(--primary);border-color:var(--primary);color:#fff}
+body.dark .otl-tur{background:var(--card)}
 .rzkart-head{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;padding:7px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .rzkart-head .no{background:#fff;color:var(--navy);border-radius:6px;font-weight:800;font-size:.72rem;padding:1px 8px}
 .rzkart-head input{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:3px 8px;font-size:.82rem;font-family:inherit;flex:1;min-width:180px}
@@ -687,6 +692,58 @@ body.dark tr.t-ARAD td{background:#123528}body.dark tr.t-ARAG td{background:#163
 .dilchip{font-size:.74rem;padding:4px 10px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;user-select:none;color:var(--muted);background:var(--bg)}
 .dilchip:hover{border-color:var(--primary)}
 .dilchip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+/* ── OTEL MODALI ── */
+.otl-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.otl-f{display:flex;flex-direction:column;gap:4px;font-size:.8rem}
+.otl-f span{font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.otl-f input,.otl-f select{padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.83rem;background:#fff;color:inherit}
+body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
+.otl-it{padding:8px 12px;display:flex;flex-direction:column;gap:2px;cursor:pointer;border-bottom:1px solid var(--border);font-size:.82rem}
+.otl-it:last-child{border-bottom:none}
+.otl-it:hover{background:var(--primary-soft)}
+.otl-it span{font-size:.7rem;color:var(--muted)}
+/* ── OTEL DETAY SAYFASI ── */
+.otld-grid{display:grid;grid-template-columns:290px 1fr 250px;gap:16px;align-items:start}
+@media(max-width:1100px){.otld-grid{grid-template-columns:1fr}}
+.otld-hero{height:150px;background:linear-gradient(135deg,var(--navy),var(--navy-2));position:relative;display:flex;align-items:center;justify-content:center;color:#fff;overflow:hidden}
+.otld-hero img{width:100%;height:100%;object-fit:cover}
+.otld-hero .bas{font-size:2.2rem;font-weight:800;opacity:.35}
+.otld-kimlik{padding:13px 16px}
+.otld-kimlik .kd{font-size:.7rem;font-weight:800;color:var(--primary);letter-spacing:1px}
+.otld-kimlik h3{font-size:1rem;line-height:1.3;margin:2px 0 6px}
+.otld-kimlik .mt{font-size:.74rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.otld-ilet{padding:11px 16px;border-top:1px solid var(--border);font-size:.76rem;display:flex;flex-direction:column;gap:6px;word-break:break-word}
+.otld-harita{height:120px;background:#e8edf3;position:relative;display:block;text-decoration:none}
+.otld-harita .alt{position:absolute;left:0;right:0;bottom:0;background:rgba(30,58,95,.85);color:#fff;font-size:.66rem;padding:4px 10px;display:flex;justify-content:space-between}
+.otld-stat{flex:1;min-width:86px;background:var(--light);border:1px solid var(--border);border-radius:12px;padding:9px 10px;text-align:center}
+.otld-stat b{font-size:1.15rem;color:var(--navy);display:block}
+.otld-stat span{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.otld-tl{display:flex;align-items:center;gap:9px;padding:6px 0;border-top:1px dashed var(--border);font-size:.74rem}
+.otld-tl .r{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.otld-tl .f{margin-left:auto;font-weight:800;color:var(--navy)}
+.otld-mbtn{background:var(--card,#fff);border:1.5px solid var(--border);border-radius:16px;box-shadow:var(--shadow-md);padding:16px 14px;cursor:pointer;display:flex;gap:11px;align-items:center;transition:transform .12s,border-color .12s;margin-bottom:12px}
+.otld-mbtn:hover{border-color:var(--primary);transform:translateY(-2px)}
+.otld-mbtn .ikon{width:44px;height:44px;border-radius:12px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--primary)}
+.otld-mbtn b{display:block;font-size:.84rem}
+.otld-mbtn span{font-size:.66rem;color:var(--muted)}
+.otld-mbtn .ok{margin-left:auto;color:var(--muted)}
+.otlpop{position:fixed;inset:0;background:rgba(16,24,40,.5);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:1200}
+.otlpop.open{display:flex}
+.otlpop-box{background:var(--card,#fff);border-radius:20px;max-width:900px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 28px 72px rgba(16,24,40,.3)}
+.otlpop-head{position:sticky;top:0;background:var(--navy);color:#fff;padding:13px 20px;display:flex;align-items:center;gap:12px;z-index:2}
+.otlpop-head h2{font-size:.92rem;flex:1;margin:0}
+.otlpop-head .x{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.76rem;font-family:inherit}
+.otlpop-tabs{display:flex;gap:6px;padding:12px 20px 0}
+.otlpop-tab{padding:8px 16px;border-radius:10px 10px 0 0;border:1.5px solid var(--border);border-bottom:none;background:var(--light);cursor:pointer;font-weight:700;font-size:.78rem;color:var(--muted)}
+.otlpop-tab.active{background:var(--card,#fff);color:var(--primary);border-color:var(--primary)}
+.otlpop-body{padding:16px 20px 20px;border-top:1.5px solid var(--border);margin-top:-1px}
+.otld-foto{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.otld-foto .kut{aspect-ratio:4/3;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--border)}
+.otld-foto img{width:100%;height:100%;object-fit:cover}
+.otld-foto .araclar{position:absolute;right:6px;top:6px;display:flex;gap:4px}
+.otld-foto .araclar button{background:rgba(16,24,40,.6);border:none;color:#fff;border-radius:8px;padding:3px 8px;cursor:pointer;font-size:.64rem;font-family:inherit}
+.otld-foto .kapakroz{position:absolute;left:6px;top:6px;background:var(--primary);color:#fff;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:10px}
+.otld-foto .ekle{aspect-ratio:4/3;border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:700;cursor:pointer;font-size:.78rem}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1227,14 +1284,17 @@ body.dark tr.t-ARAD td{background:#123528}body.dark tr.t-ARAG td{background:#163
         <button class="btn btn-outline btn-sm" onclick="rzListeGoster()">← Liste</button>
         <h2 style="font-size:1.05rem"><svg class="ic ic-lg"><use href="#i-bed"/></svg> Oteller</h2>
         <input id="rzOtelAra" placeholder="Otel / şehir ara…" style="min-width:200px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit" oninput="rzOtelRender()">
+        <select id="rzOtelTurF" onchange="rzOtelRender()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm türler</option><option value="otel">Otel</option><option value="tekne">Tekne / Yat</option><option value="apart">Apart</option><option value="pansiyon">Pansiyon</option></select>
         <span style="flex:1"></span>
         <button class="btn btn-primary btn-sm" onclick="rzOtelAdd()">+ Otel Ekle</button>
       </div>
       <div class="card" style="padding:.4rem .6rem">
         <table class="rzmg" id="rzOtelTbl"></table>
       </div>
-      <div style="font-size:.7rem;color:var(--muted);margin-top:8px">Bu liste konaklama kartlarındaki otel seçiminde ve rooming çıktısındaki iletişim satırında kullanılır. Tüm ekiple bulutta ortaktır.</div>
+      <div style="font-size:.7rem;color:var(--muted);margin-top:8px">Satıra tıklayınca otel kartı açılır. Otel eklerken adı online arayıp seçebilirsin — adres ve konum otomatik dolar, kısa kod otomatik üretilir. Liste konaklama kartları ve rooming çıktısında kullanılır; tüm ekiple bulutta ortaktır.</div>
     </div>
+
+    <div id="rzVOtelDet" style="display:none"></div>
 
     <div id="rzVMon" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
@@ -1288,6 +1348,7 @@ body.dark tr.t-ARAD td{background:#123528}body.dark tr.t-ARAG td{background:#163
         <div class="card-title"><svg class="ic"><use href="#i-bed"/></svg> Konaklama Kartları
           <button class="btn btn-success btn-sm" id="rzBtnAcilim" onclick="rzAcilim()" style="margin-left:10px">Açılımı Yap (şablondan)</button>
           <button class="btn btn-outline btn-sm" onclick="rzKartEkle()">+ Kart ekle</button>
+          <button class="btn btn-outline btn-sm" onclick="rzUlasimEkle()">+ Ulaşım kartı</button>
           <span style="font-weight:500;color:var(--muted);font-size:.68rem;margin-left:auto">Gece değişince sonraki kartlar kayar · üye çipi = karta dahil/hariç</span>
         </div>
         <div id="rzKartlarDiv"></div>
@@ -1480,6 +1541,38 @@ body.dark tr.t-ARAD td{background:#123528}body.dark tr.t-ARAG td{background:#163
 </div>
 
 <!-- ══ CONFIRM ══ -->
+<div id="modalOtel" class="modal-overlay">
+  <div class="modal-box" style="max-width:700px">
+    <div class="modal-header"><h2 id="otlBaslik"><svg class="ic"><use href="#i-bed"/></svg> Otel Ekle</h2><button class="modal-close" onclick="closeModal('modalOtel')">✕ Kapat</button></div>
+    <div class="modal-body">
+      <div id="otlTurlar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div id="otlAraKapali" style="display:none;margin-bottom:14px"><div style="background:var(--light);border:1.5px dashed var(--border);border-radius:10px;padding:10px 12px;color:var(--muted);font-size:.78rem">Tekne/yat online aramada güvenilir bulunmaz — bilgileri elle gir. Ad alanı serbesttir (ör. QUEEN ATLANTIS).</div></div>
+      <div style="position:relative;margin-bottom:14px" id="otlAraWrap">
+        <div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Online ara (OpenStreetMap) — otel adını yaz, listeden seç</div>
+        <input id="otlAra" placeholder="ör. Hilton Skopje…" autocomplete="off" oninput="otlAraInput()" onkeydown="if(event.key==='Escape')document.getElementById('otlDrop').style.display='none'" style="width:100%;padding:9px 12px;border:1.5px solid var(--primary);border-radius:10px;font-family:inherit;font-size:.85rem">
+        <div id="otlDrop" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:60;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);max-height:240px;overflow:auto"></div>
+      </div>
+      <div class="otl-grid">
+        <label class="otl-f"><span>Kod (otomatik)</span><input id="otlKod" style="text-transform:uppercase" placeholder="GRAPAL"></label>
+        <label class="otl-f" style="grid-column:span 2"><span>Otel adı *</span><input id="otlAd" onchange="otlAdChange()"></label>
+        <label class="otl-f"><span id="otlLSehir">Şehir</span><input id="otlSehir"></label>
+        <label class="otl-f"><span id="otlLBolge">Bölge</span><input id="otlBolge" list="otlBolgeList" placeholder="Tanımlamalar → Bölgeler"><datalist id="otlBolgeList"></datalist></label>
+        <label class="otl-f"><span id="otlLDetay">Yıldız</span><select id="otlYildiz"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><input id="otlDetay" type="number" min="0" placeholder="ör. 8" style="display:none"></label>
+        <label class="otl-f"><span>Telefon</span><input id="otlTel"></label>
+        <label class="otl-f" style="grid-column:span 2"><span>E-posta (rooming bu adrese gider)</span><input id="otlEmail"></label>
+        <label class="otl-f" style="grid-column:span 3"><span>Adres</span><input id="otlAdres"></label>
+        <label class="otl-f"><span>Enlem</span><input id="otlLat" placeholder="41.99…"></label>
+        <label class="otl-f"><span>Boylam</span><input id="otlLon" placeholder="21.43…"></label>
+        <div class="otl-f"><span>&nbsp;</span><div style="font-size:.68rem;color:var(--muted);padding-top:8px">Koordinat online seçimde otomatik dolar</div></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+        <button class="btn btn-outline" onclick="closeModal('modalOtel')">Vazgeç</button>
+        <button class="btn btn-primary" onclick="rzOtelKaydet()"><svg class="ic"><use href="#i-save"/></svg> Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="confirmOverlay" class="confirm-overlay">
   <div class="confirm-box">
     <div class="ci" id="confirmIcon"><svg class="ic"><use href="#i-alert"/></svg> </div>
@@ -1498,7 +1591,7 @@ body.dark tr.t-ARAD td{background:#123528}body.dark tr.t-ARAG td{background:#163
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v013 · 04.07.2026';
+const APP_VER='v033 · 05.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -5735,7 +5828,7 @@ function rzTab(t){
   else if(t==='monitor') rzMonGoster();
 }
 function _rzViewShow(id){
-  ['rzVListe','rzVDetay','rzVOtel','rzVMon'].forEach(x=>{ const el=document.getElementById(x); if(el) el.style.display=(x===id)?'':'none'; });
+  ['rzVListe','rzVDetay','rzVOtel','rzVOtelDet','rzVMon'].forEach(x=>{ const el=document.getElementById(x); if(el) el.style.display=(x===id)?'':'none'; });
 }
 function rzMonGoster(){
   _rzCur=null; _rzViewShow('rzVMon');
@@ -5747,8 +5840,8 @@ function rzMonGoster(){
     g.rez++; g.pax+=(r.musteriler||[]).length;
     g.op[r.operator||'—']=(g.op[r.operator||'—']||0)+(r.musteriler||[]).length;
     if(rzDurum(r)==='bekliyor') g.bekleyen++;
-    g.kartlar+=(r.kartlar||[]).length;
-    g.konfirme+=(r.kartlar||[]).filter(k=>k.konfirme==='Evet').length;
+    g.kartlar+=(r.kartlar||[]).filter(k=>k.tip!=='ulasim').length;
+    g.konfirme+=(r.kartlar||[]).filter(k=>k.tip!=='ulasim'&&k.konfirme==='Evet').length;
     g.odasiz+=_rzOdasiz(r).length;
   });
   const list=Object.values(gruplar).sort((a,b)=>String(a.kalkis).localeCompare(String(b.kalkis)));
@@ -5767,23 +5860,820 @@ function rzMonGoster(){
   document.getElementById('rzMonTbl').innerHTML=h;
 }
 function rzListeGoster(){ _rzCur=null; _rzViewShow('rzVListe'); renderRezvListe(); }
-function rzOtelGoster(){ _rzCur=null; _rzViewShow('rzVOtel'); rzOtelRender(); }
+function rzOtelGoster(){ _rzCur=null; _otlPopAcik=null; _rzViewShow('rzVOtel'); rzOtelRender(); }
 function rzOtelRender(){
   const t=getTanimlar()||{}; const list=Array.isArray(t.oteller)?t.oteller:[];
   const q=String((document.getElementById('rzOtelAra')||{}).value||'').toLocaleLowerCase('tr').replace(/ı/g,'i');
-  const cols=[['ad','Otel adı',220],['sehir','Şehir',120],['yildiz','Yıldız',70],['tel','Telefon',130],['email','E-posta',180]];
+  const tf=String((document.getElementById('rzOtelTurF')||{}).value||'');
+  const esc=x=>String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const B={otel:['Otel','background:#eef2ff;color:#4338ca'],tekne:['Tekne','background:#e0f2fe;color:#0369a1'],apart:['Apart','background:#fef3c7;color:#b45309'],pansiyon:['Pansiyon','background:#dcfce7;color:#15803d']};
+  const cols=[['kod','Kod',70],['ad','Ad',200],['tur','Tür',80],['sehir','Şehir',100],['bolge','Bölge/Liman',95],['detay','Detay',60],['tel','Telefon',110],['email','E-posta',160]];
   let h='<tr>'+cols.map(c=>`<th style="width:${c[2]}px">${c[1]}</th>`).join('')+'<th style="width:30px"></th></tr>';
   list.forEach((o,i)=>{
-    const blob=cols.map(c=>o[c[0]]||'').join(' ').toLocaleLowerCase('tr').replace(/ı/g,'i');
+    const tur=(o.tur&&B[o.tur])?o.tur:'otel';
+    if(tf&&tur!==tf) return;
+    const blob=[o.kod,o.ad,o.sehir,o.bolge,o.tel,o.email,B[tur][0]].join(' ').toLocaleLowerCase('tr').replace(/ı/g,'i');
     if(q&&!blob.includes(q)) return;
-    h+='<tr>'+cols.map(c=>`<td><input value="${String(o[c[0]]||'').replace(/"/g,'&quot;')}" onchange="rzOtelSet(${i},'${c[0]}',this.value)"></td>`).join('')+`<td><button class="rowdel" style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="rzOtelDel(${i})">✕</button></td></tr>`;
+    h+=`<tr style="cursor:pointer" onclick="rzOtelDetay(${i})" title="Detay için tıkla">`+cols.map(c=>{
+      let v;
+      if(c[0]==='tur') v=`<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:.66rem;font-weight:700;${B[tur][1]}">${B[tur][0]}</span>`;
+      else if(c[0]==='detay') v=tur==='otel'?(o.yildiz?esc(o.yildiz)+'★':''):esc(o.detay||'');
+      else v=esc(o[c[0]]);
+      return `<td style="padding:7px 8px">${v||'<i style="color:var(--muted)">—</i>'}</td>`;
+    }).join('')+`<td><button class="rowdel" style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="event.stopPropagation();rzOtelDel(${i})">✕</button></td></tr>`;
   });
   document.getElementById('rzOtelTbl').innerHTML=h;
 }
-function rzOtelSet(i,f,v){ const t=getTanimlar()||{}; if(!Array.isArray(t.oteller)||!t.oteller[i])return; t.oteller[i][f]=v.trim(); setTanimlar(t); }
-function rzOtelAdd(){ const t=getTanimlar()||{}; (t.oteller=Array.isArray(t.oteller)?t.oteller:[]).push({ad:'',sehir:'',yildiz:'',tel:'',email:''}); setTanimlar(t); rzOtelRender(); }
+const OTL_TURLER={otel:{ad:'Otel',detay:'Yıldız',yer1:'Şehir',yer2:'Bölge',ara:true},
+  tekne:{ad:'Tekne / Yat',detay:'Kabin sayısı',yer1:'Bağlama şehri',yer2:'Marina / Liman',ara:false},
+  apart:{ad:'Apart',detay:'Daire sayısı',yer1:'Şehir',yer2:'Bölge',ara:true},
+  pansiyon:{ad:'Pansiyon',detay:'Oda sayısı',yer1:'Şehir',yer2:'Bölge',ara:true}};
+let _otlTur='otel';
+function otlTurSec(t){ _otlTur=OTL_TURLER[t]?t:'otel'; _otlTurUI(); }
+function _otlTurUI(){
+  const c=OTL_TURLER[_otlTur];
+  const el=document.getElementById('otlTurlar');
+  if(el) el.innerHTML=Object.entries(OTL_TURLER).map(([id,x])=>`<span class="otl-tur ${id===_otlTur?'active':''}" onclick="otlTurSec('${id}')">${x.ad}</span>`).join('');
+  const g=id=>document.getElementById(id);
+  if(g('otlLSehir')) g('otlLSehir').textContent=c.yer1;
+  if(g('otlLBolge')) g('otlLBolge').textContent=c.yer2;
+  if(g('otlLDetay')) g('otlLDetay').textContent=c.detay;
+  if(g('otlYildiz')) g('otlYildiz').style.display=_otlTur==='otel'?'':'none';
+  if(g('otlDetay')) g('otlDetay').style.display=_otlTur==='otel'?'none':'';
+  if(g('otlAraWrap')) g('otlAraWrap').style.display=c.ara?'':'none';
+  if(g('otlAraKapali')) g('otlAraKapali').style.display=c.ara?'none':'';
+}
+let _otlEdit=-1, _otlSon=[], _otlAraT=null, _otlAraSeq=0;
+function rzOtelAdd(){ rzOtelModalAc(-1); }
+function rzOtelEdit(i){ rzOtelModalAc(i); }
+function rzOtelModalAc(i){
+  _otlEdit=i;
+  const o=(i>=0?(getTanimlar().oteller||[])[i]:null)||{};
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?'':v); };
+  set('otlAra',''); const dp=document.getElementById('otlDrop'); if(dp) dp.style.display='none';
+  set('otlKod',o.kod); set('otlAd',o.ad); set('otlSehir',o.sehir); set('otlBolge',o.bolge);
+  set('otlYildiz',o.yildiz); set('otlTel',o.tel); set('otlEmail',o.email);
+  set('otlAdres',o.adres); set('otlLat',o.lat); set('otlLon',o.lon); set('otlDetay',o.detay);
+  _otlTur=(o.tur&&OTL_TURLER[o.tur])?o.tur:'otel'; _otlTurUI();
+  const b=document.getElementById('otlBaslik'); if(b) b.innerHTML='<svg class="ic"><use href="#i-bed"/></svg> '+(i>=0?'Oteli Düzenle':'Otel Ekle');
+  const dl=document.getElementById('otlBolgeList');
+  if(dl) dl.innerHTML=((getTanimlar().bolgeler)||[]).map(x=>`<option value="${String(x.ad||'').replace(/"/g,'&quot;')}">`).join('');
+  document.getElementById('modalOtel').classList.add('open');
+  setTimeout(()=>{ const el=document.getElementById(i>=0?'otlAd':'otlAra'); if(el) el.focus(); },60);
+}
+function _otlKodUret(ad,haric){
+  const tr={'İ':'I','ı':'I','Ş':'S','ş':'S','Ğ':'G','ğ':'G','Ü':'U','ü':'U','Ö':'O','ö':'O','Ç':'C','ç':'C'};
+  let x=String(ad||'').replace(/[İıŞşĞğÜüÖöÇç]/g,ch=>tr[ch]||ch).toUpperCase().replace(/[^A-Z0-9 ]/g,' ');
+  const stop=new Set(['HOTEL','OTEL','HOTELS','THE','AND','BY','DE','RESORT','SPA','SUITES']);
+  let ws=x.split(/\s+/).filter(w=>w&&!stop.has(w));
+  if(!ws.length) ws=x.split(/\s+/).filter(Boolean);
+  if(!ws.length) return '';
+  let kod = ws.length>=3 ? (ws[0].slice(0,3)+ws[1].slice(0,3)+ws[ws.length-1].slice(0,3))
+          : ws.length===2 ? (ws[0].slice(0,3)+ws[1].slice(0,3))
+          : ws[0].slice(0,6);
+  const dolu=k=>(getTanimlar().oteller||[]).some((o,ix)=>ix!==haric&&String(o.kod||'').toUpperCase()===k);
+  let out=kod,n=2; while(out&&dolu(out)){ out=kod+n; n++; }
+  return out;
+}
+function otlAdChange(){ const k=document.getElementById('otlKod'); if(k&&!k.value.trim()) k.value=_otlKodUret(document.getElementById('otlAd').value,_otlEdit); }
+function otlAraInput(){
+  clearTimeout(_otlAraT);
+  const q=document.getElementById('otlAra').value.trim();
+  const dp=document.getElementById('otlDrop');
+  if(q.length<3){ dp.style.display='none'; return; }
+  _otlAraT=setTimeout(async()=>{
+    const seq=++_otlAraSeq;
+    dp.style.display=''; dp.innerHTML='<div class="otl-it" style="color:var(--muted)">Aranıyor…</div>';
+    try{
+      const u='https://photon.komoot.io/api/?limit=7&lang=en&osm_tag=tourism:hotel&osm_tag=tourism:guest_house&osm_tag=tourism:apartment&osm_tag=tourism:hostel&q='+encodeURIComponent(q);
+      const r=await fetch(u); const j=await r.json();
+      if(seq!==_otlAraSeq) return;
+      const fs=(j.features||[]).filter(f=>f.properties&&f.properties.name);
+      _otlSon=fs;
+      if(!fs.length){ dp.innerHTML='<div class="otl-it" style="color:var(--muted)">Sonuç yok — alanları elle doldurabilirsin</div>'; return; }
+      dp.innerHTML=fs.map((f,ix)=>{ const p=f.properties;
+        const alt=[p.city||p.town||p.village||p.state,p.country].filter(Boolean).join(', ');
+        return `<div class="otl-it" onclick="otlSec(${ix})"><strong>${String(p.name).replace(/</g,'&lt;')}</strong><span>${String(alt).replace(/</g,'&lt;')}</span></div>`;
+      }).join('');
+    }catch(e){ if(seq===_otlAraSeq) dp.innerHTML='<div class="otl-it" style="color:var(--danger)">Online aramaya ulaşılamadı — alanları elle doldur</div>'; }
+  },350);
+}
+function otlSec(ix){
+  const f=_otlSon[ix]; if(!f) return;
+  const p=f.properties||{};
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el&&v) el.value=v; };
+  document.getElementById('otlAd').value=p.name||'';
+  const trk=/t\u00fcrk|turkey/i.test(p.country||'');
+  const il=trk?(p.state||p.city||p.town||p.village||''):(p.city||p.town||p.village||p.state||'');
+  const ilce=p.city||p.town||p.village||p.county||'';
+  set('otlSehir',il);
+  if(trk&&ilce&&String(ilce).toLocaleLowerCase('tr')!==String(il).toLocaleLowerCase('tr')) set('otlBolge',ilce);
+  set('otlAdres',[[p.street,p.housenumber].filter(Boolean).join(' '),p.postcode,(p.city||p.town||p.village),p.country].filter(Boolean).join(', '));
+  if(f.geometry&&Array.isArray(f.geometry.coordinates)){
+    set('otlLon',String(f.geometry.coordinates[0]).slice(0,10));
+    set('otlLat',String(f.geometry.coordinates[1]).slice(0,10));
+  }
+  const k=document.getElementById('otlKod'); if(k) k.value=_otlKodUret(p.name||'',_otlEdit);
+  document.getElementById('otlDrop').style.display='none';
+  document.getElementById('otlAra').value='';
+  showToast('Otel bilgileri dolduruldu — tel/e-posta eksikse tamamla','success');
+}
+function rzOtelKaydet(){
+  const g=id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
+  const ad=g('otlAd');
+  if(!ad){ showToast('Otel adı boş olamaz','error'); return; }
+  let kod=g('otlKod').toUpperCase();
+  if(!kod) kod=_otlKodUret(ad,_otlEdit);
+  if(kod&&(getTanimlar().oteller||[]).some((o,ix)=>ix!==_otlEdit&&String(o.kod||'').toUpperCase()===kod)){ showToast('Bu kod başka otelde kullanılıyor: '+kod,'error'); return; }
+  const nrm=x=>String(x||'').toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/\s+/g,' ').trim();
+  const sehirY=nrm(g('otlSehir'));
+  const ayni=(getTanimlar().oteller||[]).find((o,ix)=>ix!==_otlEdit&&nrm(o.ad)===nrm(ad)&&(!nrm(o.sehir)||!sehirY||nrm(o.sehir)===sehirY));
+  if(ayni){ showToast('Bu otel zaten kayıtlı: '+ayni.ad+(ayni.sehir?' ('+ayni.sehir+')':''),'error'); return; }
+  const o={kod:kod,ad:ad,tur:_otlTur,sehir:g('otlSehir'),bolge:g('otlBolge'),yildiz:_otlTur==='otel'?g('otlYildiz'):'',detay:_otlTur==='otel'?'':g('otlDetay'),tel:g('otlTel'),email:g('otlEmail'),adres:g('otlAdres'),lat:g('otlLat'),lon:g('otlLon')};
+  const t=getTanimlar()||{}; t.oteller=Array.isArray(t.oteller)?t.oteller:[];
+  if(_otlEdit>=0&&t.oteller[_otlEdit]) Object.assign(t.oteller[_otlEdit],o);
+  else {
+    o.odalar=(OTL_ODA_SABLON[_otlTur]||OTL_ODA_SABLON.otel).map(_odaS);
+    o.odaTipleri=[{kod:'STD',ad:'STANDART ROOM',aciklama:''}];
+    o.pansiyonlar=_otlTur==='tekne'?['FB']:['BB','HB'];
+    o.donemler=[];
+    t.oteller.push(o);
+  }
+  setTanimlar(t); closeModal('modalOtel'); rzOtelRender();
+  const detEl=document.getElementById('rzVOtelDet');
+  if(detEl&&detEl.style.display!=='none') rzOtelDetRender();
+  showToast('Otel kaydedildi: '+ad,'success');
+}
 function rzOtelDel(i){ const t=getTanimlar()||{}; const o=(t.oteller||[])[i];
   showConfirm('🗑️','Oteli Sil',(o&&o.ad?o.ad:'Kayıt')+' silinecek.','Sil',()=>{ t.oteller.splice(i,1); setTanimlar(t); rzOtelRender(); });
+}
+let _otlDet=-1;
+// [kod, ad, stdYet, minYet, maxYet, maxCoc, maxPax]
+const OTL_ODA_SABLON={otel:[['DBL','DOUBLE',2,2,2,2,4],['SGL','SINGLE',1,1,1,1,1],['TRP','TRIPLE',3,2,3,2,5]],
+  tekne:[['MASTER','MASTER KABİN',2,1,2,1,3],['TWIN','TWIN KABİN',2,1,2,1,3]],
+  apart:[['APT11','1+1 DAİRE',2,1,2,2,4],['APT21','2+1 DAİRE',4,2,4,3,6]],
+  pansiyon:[['DBL','DOUBLE',2,2,2,2,4],['SGL','SINGLE',1,1,1,1,1]]};
+const _odaS=x=>({kod:x[0],ad:x[1],stdYet:x[2],minYet:x[3],maxYet:x[4],maxCoc:x[5],maxPax:x[6],adet:''});
+const OTL_PANS_TUM=['RO','BB','HB','FB','AI','UAI'];
+function _otlDetO(){ return (getTanimlar().oteller||[])[_otlDet]; }
+function _otlDetSave(){ setTanimlar(getTanimlar()); }
+function rzOtelDetay(i){ _otlDet=i; _rzViewShow('rzVOtelDet'); rzOtelDetRender(); }
+function rzOtelDetRender(){
+  const o=_otlDetO(); const el=document.getElementById('rzVOtelDet');
+  if(!o||!el){ rzOtelGoster(); return; }
+  if(!Array.isArray(o.odalar)){
+    if(Array.isArray(o.odaTipleri)&&o.odaTipleri.length&&('kap' in (o.odaTipleri[0]||{}))){
+      o.odalar=o.odaTipleri.map(x=>({kod:x.kod,ad:x.ad,stdYet:+x.kap||2,minYet:1,maxYet:+x.kap||2,maxCoc:1,maxPax:(+x.kap||2)+1,adet:x.adet||''}));
+      o.odaTipleri=[{kod:'STD',ad:'STANDART ROOM',aciklama:''}];
+    } else {
+      o.odalar=(OTL_ODA_SABLON[o.tur||'otel']||OTL_ODA_SABLON.otel).map(_odaS);
+    }
+  }
+  if(!Array.isArray(o.odaTipleri)||('kap' in (o.odaTipleri[0]||{}))) o.odaTipleri=[{kod:'STD',ad:'STANDART ROOM',aciklama:''}];
+  if(!Array.isArray(o.pansiyonlar)) o.pansiyonlar=(o.tur==='tekne')?['FB']:['BB','HB'];
+  if(!Array.isArray(o.donemler)) o.donemler=[];
+  if(!Array.isArray(o.gorseller)) o.gorseller=[];
+  _fytInit(o);
+  const B={otel:['Otel','background:#eef2ff;color:#4338ca'],tekne:['Tekne / Yat','background:#e0f2fe;color:#0369a1'],apart:['Apart','background:#fef3c7;color:#b45309'],pansiyon:['Pansiyon','background:#dcfce7;color:#15803d']};
+  const tur=(o.tur&&B[o.tur])?o.tur:'otel';
+  const yldz=(+o.yildiz>0)?'<span style="color:#f59e0b;letter-spacing:2px">'+'★'.repeat(Math.min(5,+o.yildiz))+'</span>':'';
+  const kapak=o.gorseller[0]?`<img src="${o.gorseller[0].data}" alt="">`:`<span class="bas">${esc((o.kod||o.ad||'?').slice(0,2).toUpperCase())}</span>`;
+  const _szD=(o.fytDonem||[]).map((d,di)=>({d,di})).filter(x=>(x.d.sez||'')===(o.fytSezonAktif||''));
+  const _szIds=new Set(_szD.map(x=>x.d.id));
+  const _szAd=((o.fytSezon||[]).find(x=>x.id===o.fytSezonAktif)||{}).ad||'';
+  const fiy=Object.entries(o.fytF||{}).filter(([k])=>_szIds.has(k.split('|')[0])).map(([,v])=>+v||0).filter(x=>x>0);
+  const fmin=fiy.length?Math.min.apply(null,fiy):0, fmax=fiy.length?Math.max.apply(null,fiy):0;
+  const szn=f=>{f=+f||0; if(!f||!fiy.length) return 'var(--muted)'; if(f<=fmin) return '#16a34a'; if(f>=fmax&&fmax>fmin) return '#f59e0b'; return '#64748b';};
+  // ── ana yerleşim ──
+  let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap">
+    <button class="btn btn-outline btn-sm" onclick="rzOtelGoster()">← Oteller</button>
+    <span style="font-size:.74rem;color:var(--muted)">Rezervasyon › Oteller › <b>${esc(o.kod||'')}</b></span>
+    <span style="flex:1"></span>
+    <button class="btn btn-outline btn-sm" onclick="rzOtelModalAc(_otlDet)"><svg class="ic"><use href="#i-pencil"/></svg> Bilgileri Düzenle</button>
+    <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:none" onclick="rzOtelDetSil()">Sil</button>
+  </div>
+  <div class="otld-grid">
+    <div>
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
+        <div class="otld-hero">${kapak}</div>
+        <div class="otld-kimlik">
+          <div class="kd">${esc(o.kod||'')}</div>
+          <h3>${esc(o.ad||'(adsız)')}</h3>
+          <div class="mt"><span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:.66rem;font-weight:700;${B[tur][1]}">${B[tur][0]}</span>${yldz}<span>${esc([o.sehir,o.bolge].filter(Boolean).join(' · '))}</span></div>
+        </div>
+        <div class="otld-ilet">
+          ${o.tel?`<div><svg class="ic" style="color:var(--primary)"><use href="#i-users"/></svg> ${esc(o.tel)}</div>`:''}
+          ${o.email?`<div><svg class="ic" style="color:var(--primary)"><use href="#i-file"/></svg> ${esc(o.email)} <span style="font-size:.62rem;color:var(--muted)">(rooming)</span></div>`:''}
+          ${o.adres?`<div><svg class="ic" style="color:var(--primary)"><use href="#i-pin"/></svg> ${esc(o.adres)}</div>`:''}
+          ${(!o.tel&&!o.email)?'<div style="color:var(--muted)">İletişim girilmedi — Bilgileri Düzenle</div>':''}
+        </div>
+      </div>
+      ${(o.lat&&o.lon)?`<a class="card otld-harita" href="https://www.openstreetmap.org/?mlat=${encodeURIComponent(o.lat)}&mlon=${encodeURIComponent(o.lon)}#map=16/${encodeURIComponent(o.lat)}/${encodeURIComponent(o.lon)}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 290 120" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><rect width="290" height="120" fill="#dbe6f0"/><path d="M0 78 C60 64 90 92 150 78 S250 56 290 68 V120 H0 Z" fill="#bcd3e6"/><path d="M20 24 C70 38 120 15 180 31 S260 24 290 34" stroke="#fff" stroke-width="5" fill="none"/></svg>
+        <svg style="position:absolute;left:50%;top:42%;transform:translate(-50%,-100%);width:26px;height:26px" viewBox="0 0 24 24" fill="var(--primary)"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3" fill="#fff"/></svg>
+        <span class="alt"><span>${esc(String(o.lat).slice(0,8))}, ${esc(String(o.lon).slice(0,8))}</span><span>Haritada aç ↗</span></span>
+      </a>`:`<div class="card" style="padding:10px 14px;font-size:.72rem;color:var(--muted)">Koordinat yok — otel bilgilerinde online arama ile seçersen harita gelir.</div>`}
+    </div>
+    <div class="card" style="padding:14px 16px">
+      <div class="card-title" style="margin-bottom:.6rem"><svg class="ic"><use href="#i-grid"/></svg> Genel Bakış</div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px">
+        <div class="otld-stat"><b>${o.odalar.length}</b><span>Oda</span></div>
+        <div class="otld-stat"><b>${o.odaTipleri.length}</b><span>Oda Tipi</span></div>
+        <div class="otld-stat"><b>${o.pansiyonlar.length}</b><span>Pansiyon</span></div>
+        <div class="otld-stat"><b>${_szD.length}</b><span>Dönem</span></div>
+      </div>
+      <div style="font-size:.76rem;color:var(--muted);line-height:1.7">
+        Odalar: <b style="color:var(--text)">${o.odalar.map(x=>esc(x.kod)).filter(Boolean).join(' · ')||'—'}</b><br>
+        Oda tipleri: <b style="color:var(--text)">${o.odaTipleri.map(x=>esc(x.kod)).filter(Boolean).join(' · ')||'—'}</b><br>
+        Pansiyonlar: <b style="color:var(--text)">${o.pansiyonlar.join(' · ')||'—'}</b>
+      </div>
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 2px">Alış fiyat dönemleri${_szAd?' — '+esc(_szAd)+' sezonu':''}${(()=>{const szo=(o.fytSezon||[]).find(x=>x.id===o.fytSezonAktif)||{};return ' · '+(szo.tip==='giris'?'giriş bazlı':'konaklama bazlı');})()}</div>
+      ${_szD.length?(()=>{const DK=_fytKod(o);return _szD.slice(0,6).map(({d,di})=>{const ps=Object.entries(o.fytF||{}).filter(([k])=>k.startsWith(d.id+'|')).map(([,v])=>+v||0).filter(x=>x>0);const mn=ps.length?Math.min.apply(null,ps):0;const mx=ps.length?Math.max.apply(null,ps):0;return `<div class="otld-tl"><span class="r" style="background:${szn(mn)}"></span><b style="min-width:16px;color:var(--primary)">${DK[di]}</b><b>${_rzTrT(d.bas)||'?'} → ${_rzTrT(d.bit)||'?'}</b><span class="f">${ps.length?esc(o.fytPara||'EUR')+' '+mn+(mx>mn?'–'+mx:''):'—'}</span></div>`;}).join('')+(_szD.length>6?`<div style="font-size:.68rem;color:var(--muted);padding-top:4px">+${_szD.length-6} dönem daha — Fiyatlar</div>`:'');})():'<div style="font-size:.74rem;color:var(--muted);padding:4px 0">Henüz dönem girilmedi — sağdan Fiyatlar.</div>'}
+    </div>
+    <div>
+      <div class="otld-mbtn" onclick="rzOtlPopAc('oda')">
+        <div class="ikon"><svg class="ic ic-lg"><use href="#i-bed"/></svg></div>
+        <div><b>Odalar &amp; Pansiyonlar</b><span>${o.odalar.length} oda · ${o.odaTipleri.length} tip · ${o.pansiyonlar.length} pansiyon</span></div>
+        <span class="ok">›</span>
+      </div>
+      <div class="otld-mbtn" onclick="rzOtlPopAc('fiyat')">
+        <div class="ikon" style="background:#e8eef7;color:var(--navy)"><svg class="ic ic-lg"><use href="#i-coins"/></svg></div>
+        <div><b>Fiyatlar</b><span>${_szAd?esc(_szAd)+' · ':''}${_szD.length} dönem${fiy.length?' · '+esc(o.fytPara||'EUR')+' '+fmin+'–'+fmax:''}</span></div>
+        <span class="ok">›</span>
+      </div>
+      <div class="otld-mbtn" onclick="rzOtlPopAc('gorsel')">
+        <div class="ikon"><svg class="ic ic-lg"><use href="#i-camera"/></svg></div>
+        <div><b>Görseller</b><span>${o.gorseller.length} fotoğraf</span></div>
+        <span class="ok">›</span>
+      </div>
+    </div>
+  </div>
+  ${_otlPopHtml(o)}`;
+  el.innerHTML=h;
+  if(_fytFoc){ const t=document.querySelector(`#fytDnmTbl [data-fr="${_fytFoc.r}"][data-fc="${_fytFoc.c}"]`); if(t){ t.focus(); if(t.select&&t.type!=='date') t.select(); } _fytFoc=null; }
+}
+let _otlPopAcik=null, _otlPopTab='odalar';
+function rzOtlPopAc(id){ _otlPopAcik=id; if(id==='oda') _otlPopTab=_otlPopTab||'odalar'; if(id==='fiyat'){ const od=_otlDetO(); const ds=od?_fytSzDnm(od):[]; _fytTab=ds.length?'fiyat':'donem'; if(ds.length&&!_fytAcikSet.size) _fytAcikSet.add(ds[0].id); } rzOtelDetRender(); }
+function rzOtlPopKapat(){ _otlPopAcik=null; rzOtelDetRender(); }
+function rzOtlPopTabSec(t){ _otlPopTab=t; rzOtelDetRender(); }
+function _otlPopHtml(o){
+  if(!_otlPopAcik) return '';
+  const bas={oda:'Odalar & Pansiyonlar',fiyat:'Dönemler & Fiyatlar',gorsel:'Görseller'}[_otlPopAcik];
+  let ic='';
+  if(_otlPopAcik==='oda'){
+    const T=[['odalar','Odalar'],['tipler','Oda Tipleri'],['pans','Pansiyonlar']];
+    ic+=`<div class="otlpop-tabs">${T.map(t=>`<div class="otlpop-tab ${_otlPopTab===t[0]?'active':''}" onclick="rzOtlPopTabSec('${t[0]}')">${t[1]}</div>`).join('')}</div><div class="otlpop-body">`;
+    if(_otlPopTab==='odalar') ic+=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">Std = standart yetişkin · Min/Max Yet = yetişkin sınırları · konaklama kartındaki öneriler buradan gelir</div>
+      <table class="rzmg"><tr><th style="width:80px">Oda</th><th style="width:170px">Tanım</th><th style="width:64px">Std Yet</th><th style="width:64px">Min Yet</th><th style="width:64px">Max Yet</th><th style="width:64px">Max Çoc</th><th style="width:64px">Max Pax</th><th style="width:66px">Adet</th><th style="width:30px"></th></tr>
+      ${o.odalar.map((x,ix)=>`<tr>
+        <td><input value="${esc(x.kod||'')}" style="text-transform:uppercase;font-weight:700" onchange="rzOdaT(${ix},'kod',this.value.toUpperCase())"></td>
+        <td><input value="${esc(x.ad||'')}" onchange="rzOdaT(${ix},'ad',this.value)"></td>
+        <td><input type="number" min="0" value="${esc(x.stdYet==null?'':x.stdYet)}" onchange="rzOdaT(${ix},'stdYet',this.value)"></td>
+        <td><input type="number" min="0" value="${esc(x.minYet==null?'':x.minYet)}" onchange="rzOdaT(${ix},'minYet',this.value)"></td>
+        <td><input type="number" min="0" value="${esc(x.maxYet==null?'':x.maxYet)}" onchange="rzOdaT(${ix},'maxYet',this.value)"></td>
+        <td><input type="number" min="0" value="${esc(x.maxCoc==null?'':x.maxCoc)}" onchange="rzOdaT(${ix},'maxCoc',this.value)"></td>
+        <td><input type="number" min="0" value="${esc(x.maxPax==null?'':x.maxPax)}" onchange="rzOdaT(${ix},'maxPax',this.value)"></td>
+        <td><input type="number" min="0" value="${esc(x.adet||'')}" placeholder="—" onchange="rzOdaT(${ix},'adet',this.value)"></td>
+        <td><button class="rowdel" style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="rzOdaTDel(${ix})">✕</button></td></tr>`).join('')}</table>
+      <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="rzOdaTAdd()">+ Oda ekle</button>`;
+    if(_otlPopTab==='tipler') ic+=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">SEA VIEW, MOUNTAIN VIEW gibi kategori/manzara — fiyat satırlarında oda ile birlikte seçilir</div>
+      <table class="rzmg"><tr><th style="width:90px">Oda Tipi</th><th style="width:220px">Tanımı</th><th>Açıklama</th><th style="width:30px"></th></tr>
+      ${o.odaTipleri.map((x,ix)=>`<tr>
+        <td><input value="${esc(x.kod||'')}" style="text-transform:uppercase;font-weight:700" onchange="rzOtip(${ix},'kod',this.value.toUpperCase())"></td>
+        <td><input value="${esc(x.ad||'')}" onchange="rzOtip(${ix},'ad',this.value)"></td>
+        <td><input value="${esc(x.aciklama||'')}" onchange="rzOtip(${ix},'aciklama',this.value)"></td>
+        <td><button class="rowdel" style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="rzOtipDel(${ix})">✕</button></td></tr>`).join('')}</table>
+      <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="rzOtipAdd()">+ Tip ekle</button>`;
+    if(_otlPopTab==='pans') ic+=`<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">Seçili olanlar konaklama kartındaki pansiyon listesine yansır</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;padding:4px 0">${OTL_PANS_TUM.map(p=>`<span class="otl-tur ${o.pansiyonlar.includes(p)?'active':''}" onclick="rzPansTog('${p}')">${p}</span>`).join('')}</div>
+      ${o.pansiyonlar.length?`<div style="margin-top:14px;font-size:.72rem;font-weight:700">Geçerlilik tarihleri <span style="font-weight:500;color:var(--muted);font-size:.64rem">— boş = her zaman geçerli · tarihli pansiyon, kapsamadığı dönemin fiyat tablosunda ve o tarihteki konaklama kartlarında görünmez</span></div>
+      <table class="rzmg" style="margin-top:6px;max-width:540px"><tr><th style="width:80px">Pansiyon</th><th style="width:150px">Geçerli başlangıç</th><th style="width:150px">Geçerli bitiş</th><th style="width:70px"></th></tr>
+      ${o.pansiyonlar.map(p=>{const t=(o.pansTarih||{})[p]||{};return `<tr><td style="font-weight:800">${p}</td>
+        <td><input inputmode="numeric" placeholder="her zaman" value="${_fytTarFmt(t.bas||'')}" oninput="_tarMask(this)" onchange="rzPansTar('${p}','bas',this)"></td>
+        <td><input inputmode="numeric" placeholder="her zaman" value="${_fytTarFmt(t.bit||'')}" oninput="_tarMask(this)" onchange="rzPansTar('${p}','bit',this)"></td>
+        <td>${(t.bas||t.bit)?`<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.68rem" onclick="rzPansTarSil('${p}')">temizle</button>`:''}</td></tr>`;}).join('')}</table>`:''}`;
+    ic+='</div>';
+  }
+  if(_otlPopAcik==='fiyat'){
+    const paraL=['EUR','USD','TRY','GBP'];
+    const DK=_fytKod(o);
+    const SZ=o.fytSezonAktif||'';
+    const dnmA=o.fytDonem.map((d,di)=>({d,di})).filter(x=>(x.d.sez||'')===SZ);
+    const szIx=(o.fytSezon||[]).findIndex(x=>x.id===SZ);
+    const szOnceki=szIx>0?o.fytSezon[szIx-1]:null;
+    const T=[['donem','Dönemler'],['fiyat','Fiyatlar']];
+    ic+=`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 20px 0">
+      <span style="font-size:.72rem;font-weight:700">Sezon:</span>
+      ${(o.fytSezon||[]).map(sz=>sz.id===SZ
+        ?`<span class="otl-tur active" style="padding:5px 8px"><input value="${esc(sz.ad)}" onchange="rzFytSezAd('${sz.id}',this.value)" title="Sezon adını düzenle" style="width:${Math.max(46,String(sz.ad).length*9)}px;border:none;background:transparent;color:#fff;font-weight:700;font-family:inherit;font-size:.78rem;text-align:center;padding:0"></span>`
+        :`<span class="otl-tur" onclick="rzFytSezSec('${sz.id}')">${esc(sz.ad)}</span>`).join('')}
+      <button class="btn btn-outline btn-sm" onclick="rzFytSezYeni()">+ Yeni sezon</button>
+      ${(!dnmA.length&&szOnceki)?`<button class="btn btn-primary btn-sm" onclick="rzFytSezKopya()">"${esc(szOnceki.ad)}" sezonundan kopyala (tarihler +1 yıl)</button>`:''}
+      ${(o.fytSezon||[]).length>1?`<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.68rem;text-decoration:underline" onclick="rzFytSezSil()">bu sezonu sil</button>`:''}
+    </div>`;
+    ic+=`<div class="otlpop-tabs">${T.map(t=>`<div class="otlpop-tab ${_fytTab===t[0]?'active':''}" onclick="rzFytTabSec('${t[0]}')">${t[1]}</div>`).join('')}</div><div class="otlpop-body">`;
+    if(_fytTab==='donem'){
+      ic+=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <label style="font-size:.74rem;font-weight:700">Para birimi:</label>
+        <select onchange="rzFytPara(this.value)" style="padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit">${paraL.map(p=>`<option ${(o.fytPara||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select>
+        <button class="btn btn-outline btn-sm" onclick="rzFytDnmAdd()">+ Dönem</button>
+        <span style="font-size:.74rem;font-weight:700;margin-left:6px">Fiyatlandırma:</span>
+        ${(()=>{const szo=(o.fytSezon||[]).find(x=>x.id===SZ)||{};return ['konaklayan','giris'].map(t=>`<span class="otl-tur ${ (szo.tip||'konaklayan')===t?'active':''}" onclick="rzFytSezTip('${t}')" title="${t==='konaklayan'?'Her gece, düştüğü dönemin fiyatından hesaplanır':'Tüm konaklama, giriş tarihinin döneminden hesaplanır'}">${t==='konaklayan'?'Konaklama bazlı':'Giriş bazlı'}</span>`).join('');})()}
+        <span style="font-size:.68rem;color:var(--muted)">Tarih: sadece rakam yaz — <b>2604</b> = 26.04 (yıl otomatik), 8 hane yazınca yana atlar · kod elle değiştirilebilir · yeni dönem öncekinin bitişinden başlar</span>
+      </div>
+      <table class="rzmg" id="fytDnmTbl"><tr><th style="width:52px">Kod</th><th style="width:130px">Başlangıç</th><th style="width:130px">Bitiş</th><th style="width:64px">Gün</th><th style="width:96px">Kontenjan</th><th style="width:96px">Opsiyon gün</th><th></th><th style="width:30px"></th></tr>
+      ${dnmA.map(({d,di})=>{
+        const gun=(d.bas&&d.bit)?Math.max(0,Math.round((new Date(d.bit)-new Date(d.bas))/86400000)+1):'';
+        return `<tr>
+        <td><input data-fr="${di}" data-fc="0" value="${esc(DK[di])}" title="Elle değiştirebilirsin — boş bırakırsan otomatik harf" style="text-align:center;font-weight:800;color:var(--primary);background:var(--primary-soft);border:none;border-radius:8px;padding:4px 2px;width:100%" onchange="rzFytDnm(${di},'kod',this.value.toUpperCase().trim())"></td>
+        <td><input data-fr="${di}" data-fc="1" inputmode="numeric" placeholder="GG.AA.YYYY" value="${_fytTarFmt(d.bas)}" oninput="_fytTar(this,${di},'bas')" onchange="rzFytDnmTar(${di},'bas',this)"></td>
+        <td><input data-fr="${di}" data-fc="2" inputmode="numeric" placeholder="GG.AA.YYYY" value="${_fytTarFmt(d.bit)}" oninput="_fytTar(this,${di},'bit')" onchange="rzFytDnmTar(${di},'bit',this)"></td>
+        <td class="ro" style="text-align:center;color:var(--muted)">${gun}</td>
+        <td><input data-fr="${di}" data-fc="3" inputmode="numeric" value="${esc(o.fytKont[d.id]!=null?o.fytKont[d.id]:'')}" placeholder="—" onchange="rzFytKont('${d.id}',this.value)"></td>
+        <td><input data-fr="${di}" data-fc="4" inputmode="numeric" value="${esc(o.fytOps[d.id]!=null?o.fytOps[d.id]:'')}" placeholder="—" onchange="rzFytOps('${d.id}',this.value)"></td>
+        <td></td>
+        <td><button class="rowdel" style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="rzFytDnmDel(${di})">✕</button></td></tr>`;}).join('')}</table>
+      ${dnmA.length?'':'<div style="font-size:.76rem;color:var(--muted);padding:8px 2px">Bu sezonda henüz dönem yok — "+ Dönem" ile başla ya da üstten önceki sezondan kopyala.</div>'}`;
+    } else {
+      const pansL2=(o.pansiyonlar&&o.pansiyonlar.length)?o.pansiyonlar:['STD'];
+      const otipL=o.odaTipleri.filter(x=>x.kod);
+      const odaL=o.odalar.filter(x=>x.kod);
+      const kdate=d=>{const f=x=>x?x.slice(8,10)+'.'+x.slice(5,7):'?';return f(d.bas)+' – '+f(d.bit);};
+      if(!dnmA.length){
+        ic+=`<div style="font-size:.78rem;color:var(--muted);padding:14px 4px">Bu sezonda dönem yok — "Dönemler" sekmesinden aç ya da önceki sezondan kopyala.</div>`;
+      } else if(!odaL.length||!otipL.length){
+        ic+=`<div style="font-size:.78rem;color:var(--muted);padding:14px 4px">Önce "Odalar &amp; Pansiyonlar"dan oda (DBL, SGL…) ve oda tipi (STD, SEA…) tanımla.</div>`;
+      } else {
+      ic+=`<div style="font-size:.68rem;color:var(--muted);margin-bottom:10px"><b>ALIŞ</b> fiyatı · satır = oda, sütun = oda tipi${pansL2.length>1?' → pansiyon':' · pansiyon: <b>'+pansL2[0]+'</b>'} · Para: <b>${esc(o.fytPara||'EUR')}</b> · satırın ilk hücresine Excel satırı yapıştırılabilir · Enter/ok tuşları gezdirir</div>`;
+      dnmA.forEach(({d,di})=>{
+        const acik=_fytAcikSet.has(d.id);
+        const dolu=Object.entries(o.fytF).filter(([k,v])=>k.startsWith(d.id+'|')&&v!==''&&v!=null).length;
+        const pansD=_fytPansDnm(o,d);
+        const toplam=odaL.length*otipL.length*pansD.length;
+        ic+=`<div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">
+        <div onclick="rzFytBlokTog('${d.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;background:${acik?'var(--primary-soft)':'var(--light)'}">
+          <span style="font-size:.66rem;display:inline-block;transition:transform .15s${acik?';transform:rotate(90deg)':''}">▶</span>
+          <span style="min-width:24px;padding:2px 8px;border-radius:8px;font-weight:800;font-size:.76rem;background:var(--primary);color:#fff;text-align:center">${DK[di]}</span>
+          <b style="font-size:.8rem">${kdate(d)}</b>
+          <span style="font-size:.68rem;color:${dolu>=toplam?'#15803d':'var(--muted)'}">${dolu}/${toplam} dolu${o.fytKont[d.id]?' · kont. '+esc(o.fytKont[d.id]):''}</span>
+          <span style="flex:1"></span>
+        </div>
+        ${acik?(pansD.length?`<div style="padding:10px 12px;overflow-x:auto"><table class="rzmg fytFtbl" data-did="${d.id}" style="min-width:${120+otipL.length*pansD.length*74}px">
+          <tr><th style="min-width:64px" ${pansD.length>1?'rowspan="2"':''}>Oda</th>${otipL.map(t=>`<th colspan="${pansD.length}" style="text-align:center;border-left:2px solid var(--border)" title="${esc(t.ad||'')}">${esc(t.kod)}</th>`).join('')}</tr>
+          ${pansD.length>1?`<tr>${otipL.map(()=>pansD.map((p,pi)=>`<th style="text-align:center;font-size:.6rem;color:var(--muted)${pi===0?';border-left:2px solid var(--border)':''}">${p}</th>`).join('')).join('')}</tr>`:''}
+          ${(()=>{const bazK=_fytBazKod(o);
+          return odaL.map((oda,oi)=>{let gc=0;
+            const rc=o.fytRowCrp[d.id+'|'+oda.kod]||{};
+            const isBaz=oda.kod===bazK, akt=!isBaz&&!!rc.aktif;
+            const rot=isBaz?`<td style="font-weight:800;white-space:nowrap">${esc(oda.kod)} <span style="font-size:.58rem;color:var(--muted);font-weight:600">BAZ</span></td>`
+              :`<td style="font-weight:800;white-space:nowrap">${esc(oda.kod)}<span onclick="rzFytRowCrpTog('${d.id}','${esc(oda.kod)}')" title="${bazK} × çarpan ile otomatik hesapla (aç/kapa)" style="cursor:pointer;display:inline-flex;align-items:center;margin-left:5px;padding:1px 6px;border-radius:8px;font-size:.64rem;font-weight:800;${akt?'background:var(--primary);color:#fff':'background:var(--light);color:var(--muted);border:1px solid var(--border)'}">×${akt?`<input value="${esc(rc.k!=null?rc.k:1)}" onclick="event.stopPropagation()" onchange="rzFytRowCrpK('${d.id}','${esc(oda.kod)}',this.value)" style="width:34px;border:none;background:transparent;color:#fff;font-weight:800;font-size:.64rem;font-family:inherit;text-align:center;padding:0">`:''}</span></td>`;
+            return `<tr>${rot}${otipL.map(t=>pansD.map((p,pi)=>{const kk=d.id+'|'+oda.kod+'|'+t.kod+'|'+p;const c=gc++;return `<td style="padding:3px 4px${pi===0?';border-left:2px solid var(--border)':''}"><input data-gr="${oi}" data-gc="${c}" inputmode="decimal" ${akt?'disabled':''} value="${esc(o.fytF[kk]!=null?o.fytF[kk]:'')}" style="width:100%;text-align:right;min-width:54px${akt?';background:var(--light);color:var(--muted)':''}" onchange="rzFytF('${d.id}','${esc(oda.kod)}','${esc(t.kod)}','${p}',this.value)" onpaste="rzFytFPaste(event,'${d.id}',${oi})"></td>`;}).join('')).join('')}</tr>`;}).join('');})()}
+        </table></div>`:`<div style="padding:10px 12px;font-size:.74rem;color:var(--muted)">Bu dönem aralığında aktif pansiyon yok — Odalar &amp; Pansiyonlar › Pansiyonlar sekmesindeki tarihlere bak.</div>`):''}
+        </div>`;
+      });
+      ic+=`<div style="margin-top:6px;font-size:.66rem;color:var(--muted)">Satır başındaki <b>×</b> anahtarı: o oda o dönemde BAZ satırdan (DBL) çarpanla otomatik hesaplanır — çarpanı içindeki kutudan değiştir; kapatınca değerler kalır, elle düzenlenebilir.</div>`;
+      }
+    }
+    ic+='</div>';
+  }
+  if(_otlPopAcik==='gorsel'){
+    ic+=`<div class="otlpop-body" style="border-top:none">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">İlk görsel kapak olur · fotoğraflar küçültülerek saklanır ve tüm ekiple bulutta eşitlenir (en çok 10)</div>
+      <div class="otld-foto">
+        ${o.gorseller.map((g,ix)=>`<div class="kut">${ix===0?'<span class="kapakroz">KAPAK</span>':''}<img src="${g.data}" alt="">
+          <div class="araclar">${ix>0?`<button onclick="rzOtlImgKapak(${ix})">Kapak yap</button>`:''}<button onclick="rzOtlImgDel(${ix})">✕</button></div></div>`).join('')}
+        ${o.gorseller.length<10?`<div class="ekle" onclick="document.getElementById('otlImgInput').click()">+ Görsel yükle</div>`:''}
+      </div>
+      <input type="file" id="otlImgInput" multiple accept="image/*" style="display:none" onchange="rzOtlImg(this)"></div>`;
+  }
+  return `<div class="otlpop open" onclick="if(event.target===this)rzOtlPopKapat()">
+    <div class="otlpop-box"${_otlPopAcik==='fiyat'?' style="max-width:1240px"':''}>
+      <div class="otlpop-head"><h2>${esc(_otlDetO().kod||'')} — ${bas}</h2><button class="x" onclick="rzOtlPopKapat()">✕ Kapat</button></div>
+      ${ic}
+    </div></div>`;
+}
+function _otlImgKucult(file,cb){
+  const fr=new FileReader();
+  fr.onload=()=>{ const img=new Image();
+    img.onload=()=>{ const mx=1000; const k=Math.min(1,mx/Math.max(img.width,img.height));
+      const c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      cb(c.toDataURL('image/jpeg',0.72)); };
+    img.onerror=()=>cb(null);
+    img.src=fr.result; };
+  fr.readAsDataURL(file);
+}
+function rzOtlImg(inp){
+  const o=_otlDetO(); if(!o) return;
+  const files=Array.from(inp.files||[]); inp.value='';
+  let kalan=10-(o.gorseller||[]).length;
+  if(files.length>kalan) showToast('En çok 10 görsel — ilk '+kalan+' tanesi alınacak','error');
+  files.slice(0,Math.max(0,kalan)).forEach(f=>{
+    _otlImgKucult(f,data=>{
+      if(!data){ showToast(f.name+' okunamadı','error'); return; }
+      if(data.length>450000){ showToast(f.name+' küçültülmesine rağmen çok büyük — atlandı','error'); return; }
+      (o.gorseller=o.gorseller||[]).push({id:genId(),ad:f.name,data});
+      _otlDetSave(); rzOtelDetRender();
+    });
+  });
+}
+function rzOtlImgDel(ix){ const o=_otlDetO(); if(!o)return; o.gorseller.splice(ix,1); _otlDetSave(); rzOtelDetRender(); }
+function rzOtlImgKapak(ix){ const o=_otlDetO(); if(!o)return; const g=o.gorseller.splice(ix,1)[0]; o.gorseller.unshift(g); _otlDetSave(); rzOtelDetRender(); showToast('Kapak güncellendi','success'); }
+function rzOdaT(ix,f,v){ const o=_otlDetO(); if(!o||!o.odalar[ix])return; o.odalar[ix][f]=String(v).trim(); _otlDetSave(); }
+function rzOdaTAdd(){ const o=_otlDetO(); if(!o)return; (o.odalar=o.odalar||[]).push({kod:'',ad:'',stdYet:2,minYet:1,maxYet:2,maxCoc:1,maxPax:3,adet:''}); _otlDetSave(); rzOtelDetRender(); }
+function rzOdaTDel(ix){ const o=_otlDetO(); if(!o)return; o.odalar.splice(ix,1); _otlDetSave(); rzOtelDetRender(); }
+function rzOtip(ix,f,v){ const o=_otlDetO(); if(!o||!o.odaTipleri[ix])return; o.odaTipleri[ix][f]=String(v).trim(); _otlDetSave(); }
+function rzOtipAdd(){ const o=_otlDetO(); if(!o)return; (o.odaTipleri=o.odaTipleri||[]).push({kod:'',ad:'',aciklama:''}); _otlDetSave(); rzOtelDetRender(); }
+function rzOtipDel(ix){ const o=_otlDetO(); if(!o)return; o.odaTipleri.splice(ix,1); _otlDetSave(); rzOtelDetRender(); }
+function rzPansTog(p){ const o=_otlDetO(); if(!o)return; o.pansiyonlar=o.pansiyonlar||[];
+  if(o.pansiyonlar.includes(p)) o.pansiyonlar=o.pansiyonlar.filter(x=>x!==p); else o.pansiyonlar.push(p);
+  o.pansiyonlar.sort((a,b)=>OTL_PANS_TUM.indexOf(a)-OTL_PANS_TUM.indexOf(b));
+  _otlDetSave(); rzOtelDetRender();
+}
+function _otlDnmKod(o){
+  // tarih sırasına göre A, B, C… (tarihsizler sona)
+  const idx=(o.donemler||[]).map((d,i)=>({i,bas:d.bas||'9999-99-99'}));
+  idx.sort((a,b)=>a.bas<b.bas?-1:a.bas>b.bas?1:a.i-b.i);
+  const kod=[];
+  idx.forEach((x,sira)=>{ kod[x.i]=sira<26?String.fromCharCode(65+sira):'Z'+(sira-25); });
+  return kod;
+}
+function rzDnm(ix,f,v){ const o=_otlDetO(); if(!o||!o.donemler[ix])return; o.donemler[ix][f]=String(v).trim();
+  if(f==='bas'||f==='bit'){ const dn=o.donemler[ix]; if(dn.bas&&dn.bit&&dn.bit<dn.bas) showToast('Bitiş başlangıçtan önce olamaz','error'); }
+  _otlDetSave();
+  if(f==='bas') rzOtelDetRender();
+}
+function rzDnmAdd(){ const o=_otlDetO(); if(!o)return;
+  const son=(o.donemler||[])[o.donemler.length-1];
+  (o.donemler=o.donemler||[]).push({bas:son&&son.bit?son.bit:'',bit:'',oda:'',pans:(o.pansiyonlar||[])[0]||'',fiyat:'',para:son?son.para:'EUR',kont:'',not:''});
+  _otlDetSave(); rzOtelDetRender();
+}
+function rzDnmDel(ix){ const o=_otlDetO(); if(!o)return; o.donemler.splice(ix,1); _otlDetSave(); rzOtelDetRender(); }
+function _fytInit(o){
+  if(!o.fytPara) o.fytPara='EUR';
+  if(!Array.isArray(o.fytDonem)) o.fytDonem=[];
+  if(!Array.isArray(o.fytSatir)||!o.fytSatir.length){
+    o.fytSatir=(o.odaTipleri||[]).filter(x=>(x.kod||x.ad)).map(x=>({id:genId(),ad:x.ad||x.kod,pp:{}}));
+    if(!o.fytSatir.length) o.fytSatir=[{id:genId(),ad:'STANDART ROOM',pp:{}}];
+  }
+  if(!Array.isArray(o.fytCarpan)||!o.fytCarpan.length) o.fytCarpan=[{kod:'DBL',k:2},{kod:'SNG',k:1.5},{kod:'TRP',k:2.75},{kod:'SNG+CHD',k:1.5},{kod:'DBL+CHD',k:2},{kod:'DBL+2CHD',k:2.5}];
+  if(typeof o.fytCarpanAktif!=='boolean') o.fytCarpanAktif=false;
+  // eski (pansiyonsuz) fiyat anahtarlarını ilk pansiyona taşı
+  const p0=(o.pansiyonlar&&o.pansiyonlar[0])||'STD';
+  (o.fytSatir||[]).forEach(st=>{ if(!st.pp) return; Object.keys(st.pp).forEach(k=>{ if(!k.includes('|')){ st.pp[p0+'|'+k]=st.pp[k]; delete st.pp[k]; } }); });
+  if(!o.fytF||typeof o.fytF!=='object') o.fytF={};
+  if(!o.pansTarih||typeof o.pansTarih!=='object') o.pansTarih={};
+  if(!o.fytRowCrp||typeof o.fytRowCrp!=='object') o.fytRowCrp={};
+  if(!Array.isArray(o.fytSezon)||!o.fytSezon.length){
+    let yil=''; const ilkD=(o.fytDonem||[]).find(d=>d.bas); if(ilkD) yil=ilkD.bas.slice(0,4);
+    o.fytSezon=[{id:genId(),ad:yil||String(new Date().getFullYear())}];
+  }
+  if(!o.fytSezonAktif||!o.fytSezon.some(x=>x.id===o.fytSezonAktif)) o.fytSezonAktif=o.fytSezon[o.fytSezon.length-1].id;
+  (o.fytDonem||[]).forEach(d=>{ if(!d.sez) d.sez=o.fytSezon[0].id; });
+  (o.fytSezon||[]).forEach(sz=>{ if(sz.tip!=='giris'&&sz.tip!=='konaklayan') sz.tip='konaklayan'; });
+  if(!Array.isArray(o.fytDoldur)||!o.fytDoldur.length) o.fytDoldur=[{kod:'SGL',k:1.6},{kod:'TRP',k:0.92}];
+  if(!o.fytKont||typeof o.fytKont!=='object') o.fytKont={};
+  if(!o.fytOps||typeof o.fytOps!=='object') o.fytOps={};
+}
+function _fytKod(o){
+  const kod=[]; const grup={};
+  (o.fytDonem||[]).forEach((d,i)=>{ (grup[d.sez||'']=grup[d.sez||'']||[]).push({i,bas:d.bas||'9999-99-99'}); });
+  Object.values(grup).forEach(list=>{
+    list.sort((a,b)=>a.bas<b.bas?-1:a.bas>b.bas?1:a.i-b.i);
+    list.forEach((x,sira)=>{ kod[x.i]=sira<26?String.fromCharCode(65+sira):'Z'+(sira-25); });
+  });
+  (o.fytDonem||[]).forEach((d,i)=>{ if(d.kod) kod[i]=d.kod; });
+  return kod;
+}
+let _fytPrev=0, _fytTab='donem', _fytPans='', _fytFoc=null, _fytAcikSet=new Set();
+function _fytBazKod(o){ const odaL=(o.odalar||[]).filter(x=>x.kod); const b=odaL.find(x=>x.kod==='DBL')||odaL[0]; return b?b.kod:''; }
+function _fytRowHesap(o,did){
+  const baz=_fytBazKod(o); if(!baz) return;
+  const otipL=o.odaTipleri.filter(x=>x.kod);
+  const d=(o.fytDonem||[]).find(x=>x.id===did);
+  const pansL=_fytPansDnm(o,d);
+  o.odalar.filter(x=>x.kod&&x.kod!==baz).forEach(oda=>{
+    const rc=o.fytRowCrp[did+'|'+oda.kod];
+    if(!rc||!rc.aktif) return;
+    const k=+String(rc.k).replace(',','.')||0;
+    otipL.forEach(t=>pansL.forEach(p=>{
+      const bv=+o.fytF[did+'|'+baz+'|'+t.kod+'|'+p]||0;
+      o.fytF[did+'|'+oda.kod+'|'+t.kod+'|'+p]=(bv&&k)?Math.round(bv*k*100)/100:'';
+    }));
+  });
+}
+function rzFytRowCrpTog(did,oda){
+  const o=_otlDetO(); if(!o) return;
+  const key=did+'|'+oda, rc=o.fytRowCrp[key];
+  if(rc&&rc.aktif){ rc.aktif=false; }
+  else {
+    const varsay=(o.fytDoldur||[]).find(c=>String(c.kod).toUpperCase()===String(oda).toUpperCase());
+    o.fytRowCrp[key]={aktif:true,k:(rc&&rc.k)||((varsay&&+varsay.k)||1)};
+    _fytRowHesap(o,did);
+  }
+  _otlDetSave(); rzOtelDetRender();
+}
+function rzFytRowCrpK(did,oda,v){
+  const o=_otlDetO(); if(!o) return;
+  const key=did+'|'+oda; if(!o.fytRowCrp[key]) return;
+  o.fytRowCrp[key].k=_fytNum(v)||1;
+  _fytRowHesap(o,did); _otlDetSave(); rzOtelDetRender();
+}
+function _fytSzDnm(o){ const SZ=o.fytSezonAktif||''; return (o.fytDonem||[]).filter(d=>(d.sez||'')===SZ); }
+function rzFytSezSec(id){ const o=_otlDetO(); if(!o)return; o.fytSezonAktif=id; _fytAcikSet=new Set(); const ilk=(o.fytDonem||[]).find(d=>(d.sez||'')===id); if(ilk) _fytAcikSet.add(ilk.id); _otlDetSave(); rzOtelDetRender(); }
+function rzFytSezTip(t){ const o=_otlDetO(); if(!o)return; const sz=(o.fytSezon||[]).find(x=>x.id===o.fytSezonAktif); if(sz){ sz.tip=t; _otlDetSave(); rzOtelDetRender(); } }
+function rzFytSezAd(id,v){ const o=_otlDetO(); if(!o)return; const sz=(o.fytSezon||[]).find(x=>x.id===id); if(sz&&v.trim()){ sz.ad=v.trim(); _otlDetSave(); rzOtelDetRender(); } }
+function rzFytSezYeni(){
+  const o=_otlDetO(); if(!o)return;
+  let yil=0;
+  (o.fytSezon||[]).forEach(sz=>{ const m=String(sz.ad).match(/(19|20)\d\d/); if(m) yil=Math.max(yil,+m[0]); });
+  (o.fytDonem||[]).forEach(d=>{ if(d.bas) yil=Math.max(yil,+d.bas.slice(0,4)); });
+  const ad=String(yil?yil+1:new Date().getFullYear()+1);
+  const id=genId();
+  o.fytSezon.push({id,ad}); o.fytSezonAktif=id; _fytTab='donem'; _fytAcikSet=new Set();
+  _otlDetSave(); rzOtelDetRender();
+  showToast('Sezon açıldı: '+ad+' — istersen önceki sezondan kopyala','success',4000);
+}
+function rzFytSezKopya(){
+  const o=_otlDetO(); if(!o)return;
+  const akt=o.fytSezonAktif; const ix=o.fytSezon.findIndex(x=>x.id===akt);
+  const kaynak=ix>0?o.fytSezon[ix-1]:null;
+  if(!kaynak){ showToast('Kopyalanacak önceki sezon yok','error'); return; }
+  if(o.fytDonem.some(d=>(d.sez||'')===akt)){ showToast('Bu sezonda zaten dönem var — kopyalama boş sezona yapılır','error'); return; }
+  const shift=iso=>iso&&iso.length===10?String(+iso.slice(0,4)+1)+iso.slice(4):'';
+  let n=0;
+  o.fytDonem.filter(d=>(d.sez||'')===kaynak.id).forEach(d=>{
+    const yeni={id:genId(),sez:akt,bas:shift(d.bas),bit:shift(d.bit),kod:d.kod||''};
+    o.fytDonem.push(yeni); n++;
+    if(o.fytKont[d.id]!=null&&o.fytKont[d.id]!=='') o.fytKont[yeni.id]=o.fytKont[d.id];
+    if(o.fytOps[d.id]!=null&&o.fytOps[d.id]!=='') o.fytOps[yeni.id]=o.fytOps[d.id];
+    Object.keys(o.fytF).forEach(k=>{ if(k.startsWith(d.id+'|')) o.fytF[yeni.id+k.slice(d.id.length)]=o.fytF[k]; });
+    Object.keys(o.fytRowCrp||{}).forEach(k=>{ if(k.startsWith(d.id+'|')) o.fytRowCrp[yeni.id+k.slice(d.id.length)]={aktif:!!o.fytRowCrp[k].aktif,k:o.fytRowCrp[k].k}; });
+  });
+  const ilk=o.fytDonem.find(d=>(d.sez||'')===akt);
+  _fytAcikSet=new Set(ilk?[ilk.id]:[]); _fytTab='fiyat';
+  _otlDetSave(); rzOtelDetRender();
+  showToast(n+' dönem kopyalandı, tarihler +1 yıl kaydırıldı — fiyatları güncelle','success',5000);
+}
+function rzFytSezSil(){
+  const o=_otlDetO(); if(!o||(o.fytSezon||[]).length<2) return;
+  const akt=o.fytSezonAktif; const sz=o.fytSezon.find(x=>x.id===akt);
+  showConfirm('🗑️','Sezonu Sil','"'+(sz?sz.ad:'')+'" sezonu, dönemleri ve tüm fiyatları silinecek.','Sil',()=>{
+    const ids=o.fytDonem.filter(d=>(d.sez||'')===akt).map(d=>d.id);
+    o.fytDonem=o.fytDonem.filter(d=>(d.sez||'')!==akt);
+    ids.forEach(id=>{ delete o.fytKont[id]; delete o.fytOps[id];
+      Object.keys(o.fytF).forEach(k=>{ if(k.startsWith(id+'|')) delete o.fytF[k]; });
+      Object.keys(o.fytRowCrp||{}).forEach(k=>{ if(k.startsWith(id+'|')) delete o.fytRowCrp[k]; });
+    });
+    o.fytSezon=o.fytSezon.filter(x=>x.id!==akt);
+    o.fytSezonAktif=o.fytSezon[o.fytSezon.length-1].id;
+    _fytAcikSet=new Set();
+    _otlDetSave(); rzOtelDetRender();
+  });
+}
+function rzFytBlokTog(did){ if(_fytAcikSet.has(did)) _fytAcikSet.delete(did); else _fytAcikSet.add(did); rzOtelDetRender(); }
+function rzFytF(did,oda,otip,pans,v){
+  const o=_otlDetO(); if(!o)return;
+  o.fytF[did+'|'+oda+'|'+otip+'|'+pans]=_fytNum(v);
+  if(oda===_fytBazKod(o)){
+    _fytRowHesap(o,did);
+    const tbl=document.querySelector(`.fytFtbl[data-did="${did}"]`);
+    if(tbl){
+      const odaL=o.odalar.filter(x=>x.kod), otipL=o.odaTipleri.filter(x=>x.kod);
+      const d=(o.fytDonem||[]).find(x=>x.id===did);
+      const pansL=_fytPansDnm(o,d);
+      odaL.forEach((od,oi)=>{ if(!((o.fytRowCrp[did+'|'+od.kod]||{}).aktif)) return; let gc=0;
+        otipL.forEach(t=>pansL.forEach(p=>{ const inp=tbl.querySelector(`input[data-gr="${oi}"][data-gc="${gc}"]`); if(inp){ const vv=o.fytF[did+'|'+od.kod+'|'+t.kod+'|'+p]; inp.value=(vv!=null?vv:''); } gc++; }));
+      });
+    }
+  }
+  _otlDetSave();
+}
+function rzFytDolAdd(){ const o=_otlDetO(); if(!o)return; o.fytDoldur.push({kod:'',k:1}); _otlDetSave(); rzOtelDetRender(); }
+function rzFytDol(ci,f,v){ const o=_otlDetO(); if(!o||!o.fytDoldur[ci])return; o.fytDoldur[ci][f]=f==='k'?_fytNum(v):String(v).trim(); _otlDetSave(); }
+function rzFytDolDel(ci){ const o=_otlDetO(); if(!o)return; o.fytDoldur.splice(ci,1); _otlDetSave(); rzOtelDetRender(); }
+function rzFytDoldur(did){
+  const o=_otlDetO(); if(!o)return;
+  const odaL=o.odalar.filter(x=>x.kod), otipL=o.odaTipleri.filter(x=>x.kod);
+  const pansL=_fytPansDnm(o,(o.fytDonem||[]).find(x=>x.id===did));
+  const baz=odaL.find(x=>x.kod==='DBL')||odaL[0]; if(!baz){ showToast('Önce oda tanımla','error'); return; }
+  let n=0;
+  otipL.forEach(t=>pansL.forEach(p=>{
+    const bv=+o.fytF[did+'|'+baz.kod+'|'+t.kod+'|'+p]||0; if(!bv) return;
+    odaL.forEach(oda=>{
+      if(oda.kod===baz.kod) return;
+      const cr=(o.fytDoldur||[]).find(c=>String(c.kod).toUpperCase()===String(oda.kod).toUpperCase());
+      if(!cr||!+cr.k) return;
+      const kk=did+'|'+oda.kod+'|'+t.kod+'|'+p;
+      if(o.fytF[kk]!==''&&o.fytF[kk]!=null) return;
+      o.fytF[kk]=Math.round(bv*(+cr.k)*100)/100; n++;
+    });
+  }));
+  _otlDetSave(); rzOtelDetRender();
+  showToast(n?(n+' hücre çarpanla dolduruldu ('+baz.kod+' bazlı)'):('Doldurulacak hücre yok — önce '+baz.kod+' satırını gir; çarpan kodları oda kodlarıyla eşleşmeli'), n?'success':'error',4500);
+}
+function rzFytFPaste(e,did,odaIx){
+  let txt=''; try{ txt=(e.clipboardData||window.clipboardData).getData('text')||''; }catch(err){ return; }
+  const t=txt.trim(); if(!t) return;
+  let rows=t.split(/\r?\n+/).map(r=>r.split(/\t|;/).map(x=>x.trim()).filter(x=>x!==''));
+  if(rows.length===1&&rows[0].length===1){
+    const toks=rows[0][0].split(/\s+/);
+    if(toks.length>1&&toks.every(x=>_fytNum(x)!=='')) rows=[toks]; else return;
+  }
+  e.preventDefault();
+  const o=_otlDetO(); if(!o) return;
+  const odaL=o.odalar.filter(x=>x.kod), otipL=o.odaTipleri.filter(x=>x.kod);
+  const pansL=_fytPansDnm(o,(o.fytDonem||[]).find(x=>x.id===did));
+  const kolonlar=[]; otipL.forEach(tt=>pansL.forEach(p=>kolonlar.push([tt.kod,p])));
+  let dolu=0;
+  rows.forEach((cols,ri)=>{ const oda=odaL[odaIx+ri]; if(!oda) return;
+    cols.forEach((val,ci)=>{ const kol=kolonlar[ci]; if(!kol) return;
+      const n=_fytNum(val); if(n==='') return;
+      o.fytF[did+'|'+oda.kod+'|'+kol[0]+'|'+kol[1]]=n; dolu++;
+    });
+  });
+  _fytRowHesap(o,did);
+  _otlDetSave(); rzOtelDetRender();
+  showToast(dolu+' hücre yapıştırıldı','success');
+}
+document.addEventListener('keydown',e=>{
+  const el=e.target;
+  if(!el.matches||!el.matches('.fytFtbl input')) return;
+  const tbl=el.closest('table'); if(!tbl) return;
+  const r=+el.dataset.gr, c=+el.dataset.gc;
+  let maxC=0,maxR=0; tbl.querySelectorAll('input[data-gr]').forEach(x=>{ maxC=Math.max(maxC,+x.dataset.gc); maxR=Math.max(maxR,+x.dataset.gr); });
+  const go=(nr,nc)=>{ const t2=tbl.querySelector(`input[data-gr="${nr}"][data-gc="${nc}"]`); if(t2){ e.preventDefault(); t2.focus(); t2.select&&t2.select(); } };
+  if(e.key==='Enter'||(e.key==='Tab'&&!e.shiftKey)){ if(c<maxC) go(r,c+1); else if(r<maxR) go(r+1,0); return; }
+  if(e.key==='Tab'&&e.shiftKey){ if(c>0) go(r,c-1); else if(r>0) go(r-1,maxC); return; }
+  if(e.key==='ArrowDown'){ go(r+1,c); return; }
+  if(e.key==='ArrowUp'){ go(r-1,c); return; }
+  if(e.key==='ArrowRight'){ if(el.selectionEnd===el.value.length) go(r,c+1); return; }
+  if(e.key==='ArrowLeft'){ if(el.selectionStart===0) go(r,c-1); return; }
+});
+const FYT_MAXC=4;
+function _fytGo(nr,nc,el){
+  if(nr<0||nc<0||nc>FYT_MAXC) return;
+  _fytFoc={r:nr,c:nc};
+  if(el) el.dispatchEvent(new Event('change'));
+  setTimeout(()=>{ if(_fytFoc){ const t=document.querySelector(`#fytDnmTbl [data-fr="${_fytFoc.r}"][data-fc="${_fytFoc.c}"]`); if(t){ t.focus(); if(t.select&&t.type!=='date') t.select(); } _fytFoc=null; } },60);
+}
+function _fytTarFmt(iso){ return (iso&&iso.length===10)?(iso.slice(8,10)+'.'+iso.slice(5,7)+'.'+iso.slice(0,4)):''; }
+function _fytTarIso(el,di,f){
+  const dg=String(el.value||'').replace(/\D/g,'');
+  if(!dg) return '';
+  if(dg.length!==4&&dg.length!==8) return null;
+  const g=+dg.slice(0,2), a=+dg.slice(2,4);
+  if(g<1||g>31||a<1||a>12) return null;
+  let y;
+  if(dg.length===8){ y=+dg.slice(4,8); if(y<1970||y>2100) return null; }
+  else {
+    const o=_otlDetO(); const d=o&&o.fytDonem[di];
+    let ref='';
+    if(f==='bit'&&d&&d.bas) ref=d.bas;
+    else if(o&&di>0){ const p=o.fytDonem[di-1]; if(p) ref=p.bit||p.bas||''; }
+    y=ref?+ref.slice(0,4):(new Date()).getFullYear();
+    if(ref){ const ra=+ref.slice(5,7), rg=+ref.slice(8,10); if(a<ra||(a===ra&&g<rg)) y++; }
+  }
+  return y+'-'+String(a).padStart(2,'0')+'-'+String(g).padStart(2,'0');
+}
+function _tarMask(el){ const dg=el.value.replace(/\D/g,'').slice(0,8); let out=dg.slice(0,2); if(dg.length>2) out+='.'+dg.slice(2,4); if(dg.length>4) out+='.'+dg.slice(4,8); el.value=out; }
+function _fytPansDnm(o,d){
+  const L=(o.pansiyonlar&&o.pansiyonlar.length)?o.pansiyonlar:['STD'];
+  return L.filter(p=>{
+    const t=(o.pansTarih||{})[p];
+    if(!t||(!t.bas&&!t.bit)) return true;
+    if(!d||!d.bas||!d.bit) return true;
+    return (t.bas||'0000-01-01')<=d.bit && (t.bit||'9999-12-31')>=d.bas;
+  });
+}
+function rzPansTar(p,f,el){
+  const o=_otlDetO(); if(!o) return;
+  o.pansTarih=o.pansTarih||{};
+  const eski=_fytTarFmt(((o.pansTarih[p]||{})[f])||'');
+  const dg=String(el.value||'').replace(/\D/g,'');
+  let iso='';
+  if(dg){
+    if(dg.length!==4&&dg.length!==8){ showToast('Tarih anlaşılmadı — GGAA (0104) veya GG.AA.YYYY','error'); el.value=eski; return; }
+    const g=+dg.slice(0,2), a=+dg.slice(2,4);
+    if(g<1||g>31||a<1||a>12){ showToast('Tarih anlaşılmadı','error'); el.value=eski; return; }
+    let y;
+    if(dg.length===8){ y=+dg.slice(4,8); if(y<1970||y>2100){ showToast('Yıl anlaşılmadı','error'); el.value=eski; return; } }
+    else {
+      const ref=(f==='bit'&&(o.pansTarih[p]||{}).bas)?o.pansTarih[p].bas:'';
+      y=ref?+ref.slice(0,4):(new Date()).getFullYear();
+      if(ref){ const ra=+ref.slice(5,7), rg=+ref.slice(8,10); if(a<ra||(a===ra&&g<rg)) y++; }
+    }
+    iso=y+'-'+String(a).padStart(2,'0')+'-'+String(g).padStart(2,'0');
+  }
+  (o.pansTarih[p]=o.pansTarih[p]||{})[f]=iso;
+  _otlDetSave(); rzOtelDetRender();
+}
+function rzPansTarSil(p){ const o=_otlDetO(); if(!o)return; if(o.pansTarih) delete o.pansTarih[p]; _otlDetSave(); rzOtelDetRender(); }
+function rzFytDnmTar(di,f,el){
+  const iso=_fytTarIso(el,di,f);
+  if(iso===null){ showToast('Tarih anlaşılmadı — GGAA (2604) veya GG.AA.YYYY yaz','error');
+    const o=_otlDetO(); el.value=_fytTarFmt((o&&o.fytDonem[di]&&o.fytDonem[di][f])||''); return; }
+  const o=_otlDetO();
+  if(o&&o.fytDonem[di]&&o.fytDonem[di][f]===iso) return; // değişmedi — gereksiz render yok
+  rzFytDnm(di,f,iso);
+}
+function _fytTar(el,di,f){
+  const dg=el.value.replace(/\D/g,'').slice(0,8);
+  let out=dg.slice(0,2);
+  if(dg.length>2) out+='.'+dg.slice(2,4);
+  if(dg.length>4) out+='.'+dg.slice(4,8);
+  el.value=out;
+  if(dg.length===8){ _fytFoc={r:di,c:+el.dataset.fc+1}; rzFytDnmTar(di,f,el); setTimeout(()=>{ if(_fytFoc){ const t=document.querySelector(`#fytDnmTbl [data-fr="${_fytFoc.r}"][data-fc="${_fytFoc.c}"]`); if(t){t.focus(); if(t.select&&t.type!=='date')t.select();} _fytFoc=null; } },60); }
+}
+function _fytDT(el){
+  // tarih tamamlanınca (geçerli tam tarih) sağdaki hücreye geç
+  const v=el.value;
+  if(v&&v.length===10&&+v.slice(0,4)>=1970){ _fytGo(+el.dataset.fr,+el.dataset.fc+1,el); }
+}
+document.addEventListener('keydown',e=>{
+  const el=e.target;
+  if(!el.matches||!el.matches('#fytDnmTbl input')) return;
+  const r=+el.dataset.fr, c=+el.dataset.fc;
+  const satirN=(_otlDetO()&&_otlDetO().fytDonem||[]).length;
+  if(e.key==='Enter'||(e.key==='Tab'&&!e.shiftKey)){
+    e.preventDefault();
+    if(c<FYT_MAXC) _fytGo(r,c+1,el);
+    else if(r+1<satirN) _fytGo(r+1,0,el);
+    else { el.dispatchEvent(new Event('change')); rzFytDnmAdd(); setTimeout(()=>_fytGo(satirN,1,null),80); }
+    return;
+  }
+  if(e.key==='Tab'&&e.shiftKey){ e.preventDefault(); if(c>0) _fytGo(r,c-1,el); else if(r>0) _fytGo(r-1,FYT_MAXC,el); return; }
+  if(e.key==='ArrowDown'){ e.preventDefault(); if(r+1<satirN) _fytGo(r+1,c,el); return; }
+  if(e.key==='ArrowUp'){ e.preventDefault(); if(r>0) _fytGo(r-1,c,el); return; }
+  if(e.key==='ArrowRight'){ if(el.type!=='date'&&el.selectionEnd===el.value.length){ e.preventDefault(); if(c<FYT_MAXC) _fytGo(r,c+1,el); else if(r+1<satirN) _fytGo(r+1,0,el); } return; }
+  if(e.key==='ArrowLeft'){ if(el.type!=='date'&&el.selectionStart===0){ e.preventDefault(); if(c>0) _fytGo(r,c-1,el); else if(r>0) _fytGo(r-1,FYT_MAXC,el); } return; }
+});
+function rzFytTabSec(t){ _fytTab=t; if(t==='fiyat'){ const od=_otlDetO(); const ds=od?_fytSzDnm(od):[]; if(ds.length&&!_fytAcikSet.size) _fytAcikSet.add(ds[0].id); } rzOtelDetRender(); }
+function rzFytPansSec(p){ _fytPans=p; rzOtelDetRender(); }
+function _fytPansAkt(o){ const L=(o.pansiyonlar&&o.pansiyonlar.length)?o.pansiyonlar:['STD']; return L.includes(_fytPans)?_fytPans:L[0]; }
+function rzFytCrpAktif(v){ const o=_otlDetO(); if(!o)return; o.fytCarpanAktif=!!v; _otlDetSave(); rzOtelDetRender(); }
+function rzFytPrevSec(v){ _fytPrev=parseInt(v)||0; rzOtelDetRender(); }
+function rzFytPara(v){ const o=_otlDetO(); if(!o)return; o.fytPara=v; _otlDetSave(); rzOtelDetRender(); }
+function rzFytDnmAdd(){ const o=_otlDetO(); if(!o)return;
+  const SZ=o.fytSezonAktif||'';
+  const liste=o.fytDonem.filter(d=>(d.sez||'')===SZ);
+  const son=liste[liste.length-1];
+  const bas=son&&son.bit?_rzGun(son.bit,1):'';
+  o.fytDonem.push({id:genId(),sez:SZ,bas,bit:''});
+  _otlDetSave(); rzOtelDetRender();
+}
+function rzFytDnm(di,f,v){ const o=_otlDetO(); if(!o||!o.fytDonem[di])return;
+  if(f==='kod'){ const oto=(()=>{ const d2={...o.fytDonem[di]}; delete d2.kod; const yedek=o.fytDonem[di]; o.fytDonem[di]=d2; const k=_fytKod(o)[di]; o.fytDonem[di]=yedek; return k; })(); if(v===oto) v=''; }
+  o.fytDonem[di][f]=v;
+  const d=o.fytDonem[di]; if(d.bas&&d.bit&&d.bit<d.bas) showToast('Bitiş başlangıçtan önce olamaz','error');
+  _otlDetSave(); rzOtelDetRender();
+}
+function rzFytDnmDel(di){ const o=_otlDetO(); if(!o)return;
+  const d=o.fytDonem[di]; if(!d) return;
+  showConfirm('🗑️','Dönemi Sil','Dönem ve bu sütundaki tüm fiyatlar silinecek.','Sil',()=>{
+    o.fytDonem.splice(di,1);
+    o.fytSatir.forEach(st=>{ if(st.pp) delete st.pp[d.id]; });
+    delete o.fytKont[d.id]; delete o.fytOps[d.id];
+    _otlDetSave(); rzOtelDetRender();
+  });
+}
+function rzFytSatirAdd(){ const o=_otlDetO(); if(!o)return; o.fytSatir.push({id:genId(),ad:'',pp:{}}); _otlDetSave(); rzOtelDetRender(); }
+function rzFytSatir(si,v){ const o=_otlDetO(); if(!o||!o.fytSatir[si])return; o.fytSatir[si].ad=v.trim(); _otlDetSave(); }
+function rzFytSatirDel(si){ const o=_otlDetO(); if(!o)return;
+  showConfirm('🗑️','Satırı Sil',(o.fytSatir[si]&&o.fytSatir[si].ad||'Satır')+' ve fiyatları silinecek.','Sil',()=>{ o.fytSatir.splice(si,1); _otlDetSave(); rzOtelDetRender(); });
+}
+function _fytNum(v){ let t=String(v==null?'':v).trim().replace(/\s/g,''); if(!t) return '';
+  if(t.includes(',')&&t.includes('.')) t=t.replace(/\./g,'').replace(',','.'); else t=t.replace(',','.');
+  const n=parseFloat(t); return isNaN(n)?'':Math.round(n*100)/100;
+}
+function rzFytPP(si,did,v){ const o=_otlDetO(); if(!o||!o.fytSatir[si])return; (o.fytSatir[si].pp=o.fytSatir[si].pp||{})[_fytPansAkt(o)+'|'+did]=_fytNum(v); _otlDetSave(); }
+function rzFytKont(did,v){ const o=_otlDetO(); if(!o)return; o.fytKont[did]=String(v).trim(); _otlDetSave(); }
+function rzFytOps(did,v){ const o=_otlDetO(); if(!o)return; o.fytOps[did]=String(v).trim(); _otlDetSave(); }
+function rzFytCrpAdd(){ const o=_otlDetO(); if(!o)return; o.fytCarpan.push({kod:'',k:1}); _otlDetSave(); rzOtelDetRender(); }
+function rzFytCrp(ci,f,v){ const o=_otlDetO(); if(!o||!o.fytCarpan[ci])return; o.fytCarpan[ci][f]=f==='k'?_fytNum(v):String(v).trim(); _otlDetSave(); }
+function rzFytCrpDel(ci){ const o=_otlDetO(); if(!o)return; o.fytCarpan.splice(ci,1); _otlDetSave(); rzOtelDetRender(); }
+function rzFytPaste(e,si,di){
+  let txt=''; try{ txt=(e.clipboardData||window.clipboardData).getData('text')||''; }catch(err){ return; }
+  const t=txt.trim(); if(!t) return;
+  let rows=t.split(/\r?\n+/).map(r=>r.split(/\t|;/).map(x=>x.trim()).filter(x=>x!==''));
+  if(rows.length===1&&rows[0].length===1){
+    const toks=rows[0][0].split(/\s+/);
+    if(toks.length>1&&toks.every(x=>_fytNum(x)!=='')) rows=[toks]; else return; // tek değer → normal yapıştırma
+  }
+  e.preventDefault();
+  const o=_otlDetO(); if(!o) return;
+  let dolu=0;
+  rows.forEach((cols,ri)=>{ const st=o.fytSatir[si+ri]; if(!st) return;
+    cols.forEach((val,ci)=>{ const dn=o.fytDonem[di+ci]; if(!dn) return;
+      const n=_fytNum(val); if(n===''){ return; }
+      (st.pp=st.pp||{})[_fytPansAkt(o)+'|'+dn.id]=n; dolu++;
+    });
+  });
+  _otlDetSave(); rzOtelDetRender();
+  showToast(dolu+' hücre yapıştırıldı','success');
+}
+function rzOtelDetSil(){ const o=_otlDetO(); if(!o)return;
+  showConfirm('🗑️','Oteli Sil',(o.ad||'Kayıt')+' silinecek.','Sil',()=>{ getTanimlar().oteller.splice(_otlDet,1); _otlDetSave(); rzOtelGoster(); });
 }
 function renderRezvListe(){
   const rez=getRezv();
@@ -5806,7 +6696,8 @@ function renderRezvListe(){
   let h='<thead><tr><th>Tip</th><th>Operatör</th><th>Voucher</th><th>Ürün · Kalkış</th><th>Müşteriler</th><th>Pax</th><th>Satış</th><th>Durum</th><th>Konfirme</th></tr></thead><tbody>';
   list.forEach(r=>{
     const d=rzDurum(r);
-    const konf=(r.kartlar||[]).length?`${r.kartlar.filter(k=>k.konfirme==='Evet').length}/${r.kartlar.length}`:'—';
+    const hk=(r.kartlar||[]).filter(k=>k.tip!=='ulasim');
+    const konf=hk.length?`${hk.filter(k=>k.konfirme==='Evet').length}/${hk.length}`:'—';
     h+=`<tr onclick="rzAc('${r.id}')">
       <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span></td>
       <td>${esc(r.operator||'—')}</td><td><b>${esc(r.voucher||'—')}</b></td>
@@ -6006,7 +6897,7 @@ function renderRzUrunKarti(){
   const varyantB=[...new Set(msB.map(m=>(m.paket||'').trim()).filter(Boolean))].join(', ')||'—';
   const sablonB=pkgB?_rzSablonFromPkg(pkgB):[];
   const pansB=(()=>{ const say={}; sablonB.forEach(b2=>{ say[b2.pansiyon]=(say[b2.pansiyon]||0)+b2.gece; }); const p2=Object.entries(say).map(([k2,v2])=>v2+' gece '+k2); return p2.length?p2.join(' + '):'Programa göre'; })();
-  const acB=(r.kartlar||[]).length;
+  const acB=(r.kartlar||[]).filter(k2=>k2.tip!=='ulasim').length;
   const F=(l,v)=>'<div class="field" style="min-width:100px"><label>'+l+'</label><div style="font-size:.9rem;font-weight:700;padding:4px 0">'+v+'</div></div>';
   const bilgiEl=document.getElementById('rzUkBilgi');
   if(bilgiEl) bilgiEl.innerHTML=
@@ -6017,7 +6908,7 @@ function renderRzUrunKarti(){
     +F('Varyant',esc(varyantB))
     +F('Pansiyon',esc(pansB))
     +F('Açılım',acB?'<span class="rzchip rzc-ok">'+acB+' kart</span>':'<span class="rzchip rzc-bek">bekliyor</span>')
-    +F('Konfirme',acB?(r.kartlar.filter(k2=>k2.konfirme==='Evet').length+'/'+acB):'—');
+    +F('Konfirme',acB?(r.kartlar.filter(k2=>k2.tip!=='ulasim'&&k2.konfirme==='Evet').length+'/'+acB):'—');
   // üst durum + özet
   const os=_rzOdasiz(r), komp=_rzKompOzet(r);
   document.getElementById('rzUstDurum').innerHTML=(r.musteriler||[]).length
@@ -6220,8 +7111,39 @@ function rzKartlar(){
   if(!(r.kartlar||[]).length){ el.innerHTML='<div style="font-size:.78rem;color:var(--muted);padding:6px 2px">'+(r.tip==='urun'?'Henüz açılım yapılmadı — ürünü ve kalkışı seçip "Açılımı Yap".':'Kart yok — "+ Kart ekle".')+'</div>'; return; }
   el.innerHTML=r.kartlar.map((k,i)=>{
     const kacik=_rzKartAcik.has(i);
+    if(k.tip==='ulasim'){
+      const UT=['Tren / YHT','Feribot','İç Uçuş','Tekne','Otobüs'];
+      return `<div class="rzkart ulasim">
+      <div class="rzkart-head" onclick="if(!['INPUT','SELECT','BUTTON'].includes(event.target.tagName)) rzKartAcKapa(${i})" style="cursor:pointer">
+        <span style="font-size:.66rem;opacity:.8${kacik?';transform:rotate(90deg)':''};display:inline-block;transition:transform .15s">▶</span>
+        <span class="no">${i+1}</span>
+        <svg class="ic"><use href="#i-ticket"/></svg>
+        <select onchange="rzKSet(${i},'utip',this.value)" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:3px 8px;font-size:.8rem;font-family:inherit">${UT.map(u=>`<option style="color:#111" ${k.utip===u?'selected':''}>${u}</option>`).join('')}</select>
+        <input value="${(k.guzergah||'').replace(/"/g,'&quot;')}" placeholder="Güzergâh — ör. İstanbul → Ankara" onchange="rzKSet(${i},'guzergah',this.value)">
+        <span class="sab">${_rzTrT(k.baslangic)}${k.saat?' · '+esc(k.saat):''}</span>
+        <button class="btn btn-outline btn-sm" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35)" onclick="rzRooming(${i})">İsim Listesi</button>
+        <button style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:.85rem" onclick="rzKSil(${i})">✕</button>
+      </div>
+      <div class="rzkart-body" style="display:${kacik?'flex':'none'}">
+        <div class="field"><label>Tarih</label><input type="date" value="${k.baslangic||''}" onchange="rzKSet(${i},'baslangic',this.value)"></div>
+        <div class="field"><label>Saat</label><input value="${(k.saat||'').replace(/"/g,'&quot;')}" placeholder="14:00" style="width:64px" onchange="rzKSet(${i},'saat',this.value)"></div>
+        <div class="field" style="min-width:130px"><label>PNR / Bilet No</label><input value="${(k.pnr||'').replace(/"/g,'&quot;')}" onchange="rzKSet(${i},'pnr',this.value)"></div>
+        <div class="field"><label>Durum</label><select onchange="rzKSet(${i},'durum',this.value)" style="font-weight:700;color:${k.durum==='Alındı'?'#065f46':'#b91c1c'}">${['Alınacak','Alındı'].map(o=>`<option ${k.durum===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div class="field" style="flex:1;min-width:140px"><label>Not</label><input value="${(k.not||'').replace(/"/g,'&quot;')}" onchange="rzKSet(${i},'not',this.value)"></div>
+      </div>
+      <div class="rzuyeler" style="display:${kacik?'flex':'none'}"><span class="t">Yolcular (${(k.uyeler||[]).length}/${(r.musteriler||[]).length}):</span>
+        ${(r.musteriler||[]).map(m=>`<span class="rzuye ${(k.uyeler||[]).includes(m.id)?'on':''}" onclick="rzKUye(${i},'${m.id}')">${esc(m.soyad||'?')} ${esc(((m.ad||'')[0]||''))}.</span>`).join('')}
+      </div>
+    </div>`;
+    }
     const bolgeli=!(k.otel||'').trim();
     const bitis=k.baslangic?_rzGun(k.baslangic,+k.gece||0):'';
+    const nnK=t=>String(t||'').toLocaleLowerCase('tr');
+    const otKT=_rzOteller().find(o=>nnK(o.ad)===nnK(k.otel||''));
+    const pansL=(()=>{ let l=(otKT&&Array.isArray(otKT.pansiyonlar)&&otKT.pansiyonlar.length)?otKT.pansiyonlar.slice():['BB','HB','FB','AI','UAI'];
+      if(otKT&&otKT.pansTarih&&k.baslangic){ const f=l.filter(p=>{ const t=otKT.pansTarih[p]; if(!t||(!t.bas&&!t.bit)) return true; return (t.bas||'0000-01-01')<=k.baslangic&&(t.bit||'9999-12-31')>=k.baslangic; }); if(f.length) l=f; }
+      if(k.pansiyon&&!l.includes(k.pansiyon)) l.unshift(k.pansiyon); return l; })();
+    const odaTL=(otKT?(Array.isArray(otKT.odalar)?otKT.odalar:(Array.isArray(otKT.odaTipleri)?otKT.odaTipleri:[])):[]).filter(x=>x.kod);
     return `<div class="rzkart${bolgeli?' bolgeli':''}">
       <div class="rzkart-head" onclick="if(!['INPUT','SELECT','BUTTON'].includes(event.target.tagName)) rzKartAcKapa(${i})" style="cursor:pointer">
         <span style="font-size:.66rem;opacity:.8${_rzKartAcik.has(i)?';transform:rotate(90deg)':''};display:inline-block;transition:transform .15s">▶</span>
@@ -6236,8 +7158,8 @@ function rzKartlar(){
         <div class="field"><label>Başlangıç</label><input type="date" value="${k.baslangic||''}" onchange="rzKSet(${i},'baslangic',this.value)"></div>
         <div class="field"><label>Gece</label><input type="number" min="1" style="width:56px" value="${k.gece||1}" onchange="rzKGece(${i},this.value)"></div>
         <div class="field"><label>Bitiş</label><input value="${_rzTrT(bitis)}" disabled style="background:var(--light);width:96px"></div>
-        <div class="field" style="min-width:120px"><label>Oda(lar)</label><input value="${String(k.oda||'').replace(/"/g,'&quot;')}" placeholder="1×DBL" onchange="rzKSet(${i},'oda',this.value)"></div>
-        <div class="field"><label>Pansiyon</label><select onchange="rzKSet(${i},'pansiyon',this.value)">${['HB','AI','BB','FB','UAI'].map(o=>`<option ${k.pansiyon===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div class="field" style="min-width:120px"><label>Oda(lar)</label><input value="${String(k.oda||'').replace(/"/g,'&quot;')}" placeholder="1×DBL" list="rzOdaTipL_${i}" onchange="rzKSet(${i},'oda',this.value)"><datalist id="rzOdaTipL_${i}">${odaTL.map(x=>`<option value="1×${esc(x.kod)}">${esc(x.ad||'')}${(x.maxPax||x.kap)?' (max '+(x.maxPax||x.kap)+' pax)':''}</option>`).join('')}</datalist></div>
+        <div class="field"><label>Pansiyon</label><select onchange="rzKSet(${i},'pansiyon',this.value)">${pansL.map(o=>`<option ${k.pansiyon===o?'selected':''}>${o}</option>`).join('')}</select></div>
         <div class="field"><label>Konfirme</label><select onchange="rzKSet(${i},'konfirme',this.value)" style="font-weight:700;color:${k.konfirme==='Evet'?'#065f46':k.konfirme==='Gönderildi'?'#92400e':'#b91c1c'}">${['Gönderilmedi','Gönderildi','Evet'].map(o=>`<option ${k.konfirme===o?'selected':''}>${o}</option>`).join('')}</select></div>
         <div class="field" style="flex:1;min-width:140px"><label>Kart Notu</label><input value="${(k.not||'').replace(/"/g,'&quot;')}" onchange="rzKSet(${i},'not',this.value)"></div>
       </div>
@@ -6253,7 +7175,8 @@ function _rzOtelOpts(sehir){
   const n=t=>String(t||'').toLocaleLowerCase('tr');
   const ayni=list.filter(o=>sehir&&n(o.sehir)===n(sehir));
   const diger=list.filter(o=>!ayni.includes(o));
-  return ayni.concat(diger).map(o=>`<option value="${esc(o.ad||'')}">${esc((o.sehir||'')+(o.yildiz?' · '+o.yildiz:''))}</option>`).join('');
+  const ta={tekne:'Tekne',apart:'Apart',pansiyon:'Pansiyon'};
+  return ayni.concat(diger).map(o=>`<option value="${esc(o.ad||'')}">${esc((o.sehir||'')+(o.yildiz?' · '+o.yildiz:'')+(ta[o.tur]?' · '+ta[o.tur]:''))}</option>`).join('');
 }
 function rzKOtel(i,el){
   const v=(el.value||'').trim();
@@ -6284,6 +7207,14 @@ function rzKartEkle(){
   const son=(r.kartlar||[])[r.kartlar.length-1];
   (r.kartlar=r.kartlar||[]).push({id:genId(),otel:'',sehir:'',yildiz:'',pansiyon:'HB',baslangic:son&&son.baslangic?_rzGun(son.baslangic,+son.gece||0):(r.kalkis||''),gece:1,oda:_rzKompOzet(r)||'1×DBL',uyeler:(r.musteriler||[]).map(m=>m.id),konfirme:'Gönderilmedi',not:''});
   rzSave(); rzKartlar();
+}
+function rzUlasimEkle(){
+  const r=rzR(); if(!r)return;
+  const son=(r.kartlar||[])[(r.kartlar||[]).length-1];
+  (r.kartlar=r.kartlar||[]).push({id:genId(),tip:'ulasim',utip:'Tren / YHT',guzergah:'',saat:'',pnr:'',durum:'Alınacak',baslangic:son&&son.baslangic?_rzGun(son.baslangic,+son.gece||0):(r.kalkis||''),gece:0,uyeler:(r.musteriler||[]).map(m=>m.id),not:''});
+  _rzKartAcik.add(r.kartlar.length-1);
+  rzSave(); rzKartlar();
+  showToast('Ulaşım kartı eklendi — tur ortasındaysa tarihini ayarla; gün kaydırmalarında konaklamalarla birlikte kayar','success',4500);
 }
 function rzKSil(i){ const r=rzR(); showConfirm('🗑️','Kartı Sil','Kart '+(i+1)+' silinecek.','Sil',()=>{ r.kartlar.splice(i,1); rzSave(); rzKartlar(); rzMusteriler(); }); }
 function rzAcilim(){
@@ -6327,9 +7258,9 @@ function rzRooming(i){
   const otelT=_rzOteller().find(o=>n(o.ad)===n(k.otel||''));
   const iletisim=otelT?[otelT.sehir,otelT.tel,otelT.email].filter(Boolean).join(' · '):'';
   document.getElementById('rzPrintBox').innerHTML=`<div style="font-family:Arial,sans-serif;padding:6mm">
-    <h1 style="font-size:16pt;margin:0 0 2mm">${esc(k.otel||'(OTEL SEÇİLMEDİ)')} — İsim Listesi</h1>
+    <h1 style="font-size:16pt;margin:0 0 2mm">${k.tip==='ulasim'?esc((k.utip||'Ulaşım')+(k.guzergah?' · '+k.guzergah:'')):esc(k.otel||'(OTEL SEÇİLMEDİ)')} — İsim Listesi</h1>
     ${iletisim?`<div style="font-size:9.5pt;color:#666;margin-bottom:2mm">${esc(iletisim)}</div>`:''}
-    <div style="font-size:10.5pt;color:#444;margin-bottom:5mm">${_rzTrT(k.baslangic)} → ${_rzTrT(bitis)} · ${k.gece} gece · ${esc(k.oda||'')} · ${esc(k.pansiyon||'')} · Voucher: ${esc(r.voucher||'')} (${esc(r.operator||'')})${k.not?' · '+esc(k.not):''}</div>
+    <div style="font-size:10.5pt;color:#444;margin-bottom:5mm">${k.tip==='ulasim'?(_rzTrT(k.baslangic)+(k.saat?' '+esc(k.saat):'')+(k.pnr?' · PNR: '+esc(k.pnr):'')+' · Voucher: '+esc(r.voucher||'')+' ('+esc(r.operator||'')+')'):(_rzTrT(k.baslangic)+' → '+_rzTrT(bitis)+' · '+k.gece+' gece · '+esc(k.oda||'')+' · '+esc(k.pansiyon||'')+' · Voucher: '+esc(r.voucher||'')+' ('+esc(r.operator||'')+')')}${k.not?' · '+esc(k.not):''}</div>
     <table style="width:100%;border-collapse:collapse;font-size:10.5pt">
       <tr><th style="border:1px solid #999;padding:4px 8px;text-align:left">#</th><th style="border:1px solid #999;padding:4px 8px;text-align:left">Mr/s</th><th style="border:1px solid #999;padding:4px 8px;text-align:left">Soyadı, Adı</th><th style="border:1px solid #999;padding:4px 8px;text-align:left">Doğum</th><th style="border:1px solid #999;padding:4px 8px;text-align:left">Uyruk</th><th style="border:1px solid #999;padding:4px 8px;text-align:left">Oda</th></tr>
       ${uyeler.slice().sort((a,b)=>_rzOdaAd(a,r).localeCompare(_rzOdaAd(b,r),'tr')).map((m,j)=>`<tr><td style="border:1px solid #999;padding:4px 8px">${j+1}</td><td style="border:1px solid #999;padding:4px 8px">${esc(m.unvan||'')}</td><td style="border:1px solid #999;padding:4px 8px"><b>${esc(m.soyad||'')}</b>, ${esc(m.ad||'')}</td><td style="border:1px solid #999;padding:4px 8px">${_rzTrT(m.dogum)}</td><td style="border:1px solid #999;padding:4px 8px">${esc(m.milliyet||'')}</td><td style="border:1px solid #999;padding:4px 8px">${_rzOdaAd(m,r)!=='—'?esc(_rzOdaAd(m,r)):esc(k.oda||'')}</td></tr>`).join('')}
