@@ -1594,7 +1594,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v041 · 06.07.2026';
+const APP_VER='v042 · 06.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8282,6 +8282,13 @@ function _ogResolve(){
   Object.values(seferMap).forEach(g=>{ out.push(enrich(Object.assign({},g,{isDefault:false}))); });
   return out;
 }
+function _ogIsimVar(g){
+  if((g.pax||0)>0) return true; // uçak listesinde isim var
+  const ciftler=new Set();
+  (g.uyeler||[]).forEach(u=>ciftler.add(u.pkgId+'|'+u.kalkis));
+  if(g.sefer) ciftler.add(g.sefer.pkgId+'|'+g.sefer.kalkis);
+  return (getRezv()||[]).some(r=>r.tip==='urun'&&ciftler.has(r.pkgId+'|'+r.kalkis)&&(r.musteriler||[]).some(m=>((m.ad||'')+(m.soyad||'')).trim()));
+}
 function _ogMaterialize(gid){ if(!gid.startsWith('auto:')) return gid; const g=_ogResolve().find(x=>x.id===gid); if(!g) return gid; const S=getOpsGrup(); S.gruplar=S.gruplar||{}; const nid='og'+R_GID().slice(1); S.gruplar[nid]={id:nid,ad:g.ad,rehberId:g.rehberId||'',not:g.not||'',uyeler:g.uyeler.map(u=>({pkgId:u.pkgId,kalkis:u.kalkis,resno:u.resno})),tahsisler:[]}; setOpsGrup(S); return nid; }
 function _ogSetRehber(gid,v){ gid=_ogMaterialize(gid); const S=getOpsGrup(); if(S.gruplar[gid]){ S.gruplar[gid].rehberId=v; setOpsGrup(S); } renderOpsGrup(); }
 function _ogNotSet(gid,v){ gid=_ogMaterialize(gid); const S=getOpsGrup(); if(S.gruplar[gid]){ S.gruplar[gid].not=v; setOpsGrup(S); } }
@@ -8318,7 +8325,7 @@ function renderOpsGrup(){
   if(!_ogDate) _ogDate=_opsDate||_opsToday();
   const rehberler=(getTanimlar().rehberler||[]);
   const rehAd=id=>{ const r=rehberler.find(x=>x.id===id); return r?(r.ad||''):''; };
-  const list=_ogResolve().filter(g=>g.tarih===_ogDate).sort((a,b)=>(a.urunler[0]||'').localeCompare(b.urunler[0]||''));
+  const list=_ogResolve().filter(g=>g.tarih===_ogDate&&_ogIsimVar(g)).sort((a,b)=>(a.urunler[0]||'').localeCompare(b.urunler[0]||''));
   let h=`<div style="margin-bottom:8px"><button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')">← Ana Sayfa</button></div>
     <div class="ops-datebar">
       <button class="btn btn-outline btn-sm" onclick="opsGrupNav(-1)">◀</button>
