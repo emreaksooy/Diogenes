@@ -1594,7 +1594,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v038 · 06.07.2026';
+const APP_VER='v039 · 06.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8039,7 +8039,15 @@ function opsNavDate(d){ _opsDate=_isoAdd(_opsDate||_opsToday(),d); renderOperasy
 function opsSetDate(v){ _opsDate=v||_opsToday(); renderOperasyonPage(); }
 function _opsView(det){ const l=document.getElementById('opsListe'),d=document.getElementById('opsDetay'); if(l)l.style.display=det?'none':''; if(d)d.style.display=det?'':'none'; }
 function opsBack(){ _opsView(false); renderOperasyonPage(); window.scrollTo(0,0); }
-function opsOpen(pkgId,kalkis){ _opsPkgId=pkgId; _opsKalkis=kalkis; renderOperasyonDetay(); _opsView(true); window.scrollTo(0,0); }
+function opsOpen(pkgId,kalkis){
+  // Artık ana ekran TUR DOSYASI: kalkışın grubunu bul/aç
+  let gruplar=[];
+  try{ gruplar=_ogResolve().filter(g=>(g.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)); }catch(e){}
+  if(gruplar.length===1){ opsTab('grup'); _ogDate=kalkis; opsTdAc(gruplar[0].id); return; }
+  if(gruplar.length>1){ opsTab('grup'); _ogDate=kalkis; _tdGid=null; _ogSel.clear(); renderOpsGrup(); showToast('Bu kalkış '+gruplar.length+' gruba bölünmüş — dosyasını açacağın grubu seç',null,4000); return; }
+  // yolcu girilmemiş sefer: eski detay ekranı (yedek)
+  _opsPkgId=pkgId; _opsKalkis=kalkis; renderOperasyonDetay(); _opsView(true); window.scrollTo(0,0);
+}
 function _opsFltOp(){ const op=document.getElementById('opsFltOp').value; const fp=document.getElementById('opsFltPkg'); const pk=getPackages().filter(p=>p.operatorId===op); fp.innerHTML='<option value="">Ürün…</option>'+pk.map(p=>`<option value="${p.id}">${esc((p.paketKodu?p.paketKodu+' · ':'')+(p.paketAdi||'Adsız'))}</option>`).join(''); document.getElementById('opsFltTarih').innerHTML='<option value="">Tarih…</option>'; }
 function _opsFltPkg(){ const id=document.getElementById('opsFltPkg').value; const pkg=getPackages().find(p=>p.id===id); const ts=document.getElementById('opsFltTarih'); const dates=pkg?_resDepartureDates(pkg):[]; ts.innerHTML='<option value="">Tarih…</option>'+dates.map(d=>`<option value="${d}">${_fmtDateTR(d)}</option>`).join(''); }
 function _opsFltTarih(){ const id=document.getElementById('opsFltPkg').value, dt=document.getElementById('opsFltTarih').value; if(id&&dt) opsOpen(id,dt); }
