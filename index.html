@@ -1594,7 +1594,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v040 · 06.07.2026';
+const APP_VER='v041 · 06.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8025,12 +8025,12 @@ function renderOperasyonPage(){
   if(!list.length){ html+='<p style="color:var(--muted);font-size:.86rem;margin-top:10px">Bu gün yürüyen tur yok. Tarihi değiştir ya da "Sefere git" ile bir sefer aç.</p>'; }
   else html+=list.map(it=>{
     const rec=_opsGet(it.pkg.id,it.kalkis); const p=_opsPax(it.pkg.id,it.kalkis);
-    const sehir=_opsCity(it.pkg,it.dayNo); const okReh=(rec.rehberAd||'').trim();
+    const sehir=_opsCity(it.pkg,it.dayNo); const okReh=(_opsGrupReh(it.pkg.id,it.kalkis)||rec.rehberAd||'').trim();
     return `<div class="ops-row" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')">
       <div class="ops-day">Gün ${it.dayNo}/${it.toplam}${sehir?'<div style="font-weight:600;color:var(--muted);font-size:.7rem;margin-top:2px">'+esc(sehir)+'</div>':''}</div>
       <div class="ops-main"><div class="ops-nm">${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</div>
         <div class="ops-sub">${esc(_resOpAd(it.pkg)||'')} · kalkış ${_fmtDateTR(it.kalkis)}${p?' · '+p+' yolcu':''}${rec.aracPlaka?' · '+esc(rec.aracPlaka):''}</div></div>
-      <div class="ops-badge ${okReh?'ok':''}">${okReh?('Rehber: '+esc(rec.rehberAd)):'rehber yok'}</div>
+      <div class="ops-badge ${okReh?'ok':''}">${okReh?('Rehber: '+esc(okReh)):'rehber yok'}</div>
     </div>`;
   }).join('');
   box.innerHTML=html;
@@ -8045,9 +8045,25 @@ function opsOpen(pkgId,kalkis){
   try{ gruplar=_ogResolve().filter(g=>(g.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)); }catch(e){}
   _opsView(false); // eski detay ekranı kullanım dışı
   if(gruplar.length===1){ opsTab('grup'); _ogDate=kalkis; opsTdAc(gruplar[0].id); return; }
-  opsTab('grup'); _ogDate=kalkis; _tdGid=null; _ogSel.clear(); renderOpsGrup();
-  if(gruplar.length>1) showToast('Bu kalkış '+gruplar.length+' gruba bölünmüş — dosyasını açacağın grubu seç',null,4000);
-  else showToast('Bu kalkışta henüz yolcu girilmemiş — uçak listesine yolcu girildiğinde grup burada oluşur','error',4500);
+  if(gruplar.length>1){ opsTab('grup'); _ogDate=kalkis; _tdGid=null; _ogSel.clear(); renderOpsGrup(); showToast('Bu kalkış '+gruplar.length+' gruba bölünmüş — dosyasını açacağın grubu seç',null,4000); return; }
+  // yolcu girilmemiş sefer: sefer bazlı kalıcı grup aç → Tur Dosyası yine açılır
+  const S=getOpsGrup(); S.gruplar=S.gruplar||{};
+  let sg=Object.values(S.gruplar).find(g=>g.sefer&&g.sefer.pkgId===pkgId&&g.sefer.kalkis===kalkis);
+  if(!sg){
+    const pk=getPackages().find(p=>p.id===pkgId)||{};
+    const nid='og'+R_GID().slice(1);
+    sg={id:nid,ad:(pk.paketKodu?pk.paketKodu+' ':'')+_fmtDateTR(kalkis),rehberId:'',not:'',uyeler:[],tahsisler:[],sefer:{pkgId:pkgId,kalkis:kalkis}};
+    S.gruplar[nid]=sg; setOpsGrup(S);
+  }
+  opsTab('grup'); _ogDate=kalkis; opsTdAc(sg.id);
+}
+function _opsGrupReh(pkgId,kalkis){
+  try{
+    const rehberler=getTanimlar().rehberler||[];
+    const ad=id=>{ const r=rehberler.find(x=>x.id===id); return r?(r.ad||''):''; };
+    const gs=_ogResolve().filter(g=>(g.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)||(g.sefer&&g.sefer.pkgId===pkgId&&g.sefer.kalkis===kalkis));
+    return [...new Set(gs.map(g=>ad(g.rehberId)).filter(Boolean))].join(', ');
+  }catch(e){ return ''; }
 }
 function _opsFltOp(){ const op=document.getElementById('opsFltOp').value; const fp=document.getElementById('opsFltPkg'); const pk=getPackages().filter(p=>p.operatorId===op); fp.innerHTML='<option value="">Ürün…</option>'+pk.map(p=>`<option value="${p.id}">${esc((p.paketKodu?p.paketKodu+' · ':'')+(p.paketAdi||'Adsız'))}</option>`).join(''); document.getElementById('opsFltTarih').innerHTML='<option value="">Tarih…</option>'; }
 function _opsFltPkg(){ const id=document.getElementById('opsFltPkg').value; const pkg=getPackages().find(p=>p.id===id); const ts=document.getElementById('opsFltTarih'); const dates=pkg?_resDepartureDates(pkg):[]; ts.innerHTML='<option value="">Tarih…</option>'+dates.map(d=>`<option value="${d}">${_fmtDateTR(d)}</option>`).join(''); }
@@ -8105,7 +8121,7 @@ function renderOpsAnasayfa(){
       </div>
     </div>
     <div class="card"><div class="ops-ct"><svg class="ic"><use href="#i-list"/></svg> Bugün Aktif Turlar <span style="color:var(--muted);font-weight:600;font-size:.8rem">(${aktif.length})</span></div>
-      ${aktif.length?aktif.map(it=>{const rec=_opsGet(it.pkg.id,it.kalkis);const sehir=_opsCity(it.pkg,it.dayNo);return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">Gün ${it.dayNo}/${it.toplam}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' ':'')+(it.pkg.paketAdi||''))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}${sehir?' · '+esc(sehir):''}</div></span><span class="ops-badge ${(rec.rehberAd||'').trim()?'ok':''}">${(rec.rehberAd||'').trim()?esc(rec.rehberAd):'rehber yok'}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Bugün yürüyen tur yok.</p>'}
+      ${aktif.length?aktif.map(it=>{const rec=_opsGet(it.pkg.id,it.kalkis);const sehir=_opsCity(it.pkg,it.dayNo);const rh=(_opsGrupReh(it.pkg.id,it.kalkis)||rec.rehberAd||'').trim();return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">Gün ${it.dayNo}/${it.toplam}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' ':'')+(it.pkg.paketAdi||''))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}${sehir?' · '+esc(sehir):''}</div></span><span class="ops-badge ${rh?'ok':''}">${rh?esc(rh):'rehber yok'}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Bugün yürüyen tur yok.</p>'}
     </div>`;
   _opsRenderMap();
 }
@@ -8254,11 +8270,16 @@ function _ogResolve(){
   const S=getOpsGrup(); const exp=S.gruplar||{}; const claimed={};
   Object.values(exp).forEach(g=>(g.uyeler||[]).forEach(u=>{ claimed[u.pkgId+'|'+u.kalkis+'|'+u.resno]=g.id; }));
   const pkgs=getPackages();
-  const enrich=g=>{ const uy=(g.uyeler||[]).map(u=>({pkgId:u.pkgId,kalkis:u.kalkis,resno:u.resno,pax:_ogResnoPax(u.pkgId,u.kalkis,u.resno)})); const ops=new Set(),ur=new Set(); let tarih=''; uy.forEach(u=>{ const pk=pkgs.find(p=>p.id===u.pkgId)||{}; ops.add(_resOpAd(pk)||''); ur.add(pk.paketKodu||''); if(!tarih||u.kalkis<tarih)tarih=u.kalkis; }); return Object.assign({},g,{uyeler:uy,pax:uy.reduce((n,u)=>n+u.pax,0),ops:[...ops].filter(Boolean),urunler:[...ur].filter(Boolean),tarih}); };
+  const enrich=g=>{ const uy=(g.uyeler||[]).map(u=>({pkgId:u.pkgId,kalkis:u.kalkis,resno:u.resno,pax:_ogResnoPax(u.pkgId,u.kalkis,u.resno)})); const ops=new Set(),ur=new Set(); let tarih=''; uy.forEach(u=>{ const pk=pkgs.find(p=>p.id===u.pkgId)||{}; ops.add(_resOpAd(pk)||''); ur.add(pk.paketKodu||''); if(!tarih||u.kalkis<tarih)tarih=u.kalkis; }); if(!tarih&&g.sefer){ tarih=g.sefer.kalkis; const pk2=pkgs.find(p=>p.id===g.sefer.pkgId)||{}; ops.add(_resOpAd(pk2)||''); ur.add(pk2.paketKodu||''); } return Object.assign({},g,{uyeler:uy,pax:uy.reduce((n,u)=>n+u.pax,0),ops:[...ops].filter(Boolean),urunler:[...ur].filter(Boolean),tarih}); };
   const out=[];
+  const seferMap={};
+  Object.values(exp).forEach(g=>{ if(g.sefer&&!(g.uyeler||[]).length) seferMap[g.sefer.pkgId+'|'+g.sefer.kalkis]=g; });
   Object.values(exp).forEach(g=>{ if((g.uyeler||[]).length) out.push(enrich(Object.assign({},g,{isDefault:false}))); });
   getReservations().forEach(grid=>{ const real=(grid.rows||[]).filter(_isim); const resnos=[...new Set(real.map(r=>(r.resno||'').trim()).filter(Boolean))]; const un=resnos.filter(rn=>!claimed[grid.pkgId+'|'+grid.kalkis+'|'+rn]); if(!un.length) return; const pk=pkgs.find(p=>p.id===grid.pkgId)||{};
+    const sg=seferMap[grid.pkgId+'|'+grid.kalkis];
+    if(sg){ out.push(enrich(Object.assign({},sg,{isDefault:false,uyeler:un.map(rn=>({pkgId:grid.pkgId,kalkis:grid.kalkis,resno:rn}))}))); delete seferMap[grid.pkgId+'|'+grid.kalkis]; return; }
     out.push(enrich({id:'auto:'+grid.pkgId+'|'+grid.kalkis, ad:(pk.paketKodu?pk.paketKodu+' ':'')+_fmtDateTR(grid.kalkis), isDefault:true, rehberId:'', not:'', uyeler:un.map(rn=>({pkgId:grid.pkgId,kalkis:grid.kalkis,resno:rn})), tahsisler:[]})); });
+  Object.values(seferMap).forEach(g=>{ out.push(enrich(Object.assign({},g,{isDefault:false}))); });
   return out;
 }
 function _ogMaterialize(gid){ if(!gid.startsWith('auto:')) return gid; const g=_ogResolve().find(x=>x.id===gid); if(!g) return gid; const S=getOpsGrup(); S.gruplar=S.gruplar||{}; const nid='og'+R_GID().slice(1); S.gruplar[nid]={id:nid,ad:g.ad,rehberId:g.rehberId||'',not:g.not||'',uyeler:g.uyeler.map(u=>({pkgId:u.pkgId,kalkis:u.kalkis,resno:u.resno})),tahsisler:[]}; setOpsGrup(S); return nid; }
