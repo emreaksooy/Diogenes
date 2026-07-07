@@ -121,6 +121,10 @@ body.dark #resBody tbody td:first-child{background:#20242c !important;color:var(
 .ops-tbl th{background:var(--light);color:var(--muted);font-size:.71rem;padding:6px 8px;text-align:left;font-weight:700}
 .ops-tbl td{border-bottom:1px solid var(--border);padding:3px 6px}
 .ops-tbl input{width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 7px;background:var(--bg);color:var(--text);font-family:inherit;font-size:.82rem}
+.bc-drop{position:fixed;z-index:99999;background:var(--card,#fff);border:1.5px solid var(--border);border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.18);max-height:260px;overflow-y:auto;display:none;min-width:150px}
+.bc-item{padding:7px 12px;cursor:pointer;font-size:.86rem;white-space:nowrap;color:var(--text)}
+.bc-item:hover{background:var(--primary-soft);color:var(--primary)}
+.bc-empty{padding:9px 12px;color:var(--muted);font-size:.78rem;white-space:nowrap}
 .ops-x{background:rgba(220,38,38,.12);color:var(--danger);border:none;border-radius:5px;width:24px;height:26px;cursor:pointer}
 .ucak-metrics{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0 4px}
 .ucak-metric{flex:1;min-width:120px;background:var(--light);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
@@ -1565,7 +1569,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <label class="otl-f"><span>Kod (otomatik)</span><input id="otlKod" style="text-transform:uppercase" placeholder="GRAPAL"></label>
         <label class="otl-f" style="grid-column:span 2"><span>Otel adı *</span><input id="otlAd" onchange="otlAdChange()"></label>
         <label class="otl-f"><span id="otlLSehir">Şehir</span><input id="otlSehir"></label>
-        <label class="otl-f"><span id="otlLBolge">Bölge</span><div style="display:flex;gap:6px"><input id="otlBolge" list="otlBolgeList" placeholder="yaz ya da seç…" onchange="otlBolgeCoz(this)" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.9rem"><datalist id="otlBolgeList"></datalist><button type="button" class="btn btn-outline btn-sm" style="flex-shrink:0;padding:6px 11px" onclick="otlBolgeEkle()" title="Yeni bölge tanımla">+</button></div></label>
+        <label class="otl-f"><span id="otlLBolge">Bölge</span><div style="display:flex;gap:6px;align-items:stretch"><span class="bcombo" style="position:relative;display:inline-flex;flex:1"><input id="otlBolge" placeholder="yaz ya da ▾" autocomplete="off" onfocus="_bcShow(this)" onclick="_bcShow(this)" oninput="_bcFill()" onblur="_bcHideSoon()" onchange="otlBolgeCoz(this)" style="width:100%;padding:8px 24px 8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.9rem"><span onmousedown="event.preventDefault()" onclick="var i=this.previousElementSibling;i.focus();_bcShow(i)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);font-size:.65rem">▾</span></span><button type="button" class="btn btn-outline btn-sm" style="flex-shrink:0;padding:6px 11px" onclick="otlBolgeEkle()" title="Yeni bölge tanımla">+</button></div></label>
         <label class="otl-f"><span id="otlLDetay">Yıldız</span><select id="otlYildiz"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><input id="otlDetay" type="number" min="0" placeholder="ör. 8" style="display:none"></label>
         <label class="otl-f"><span>Telefon</span><input id="otlTel"></label>
         <label class="otl-f" style="grid-column:span 2"><span>E-posta (rooming bu adrese gider)</span><input id="otlEmail"></label>
@@ -1635,7 +1639,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v063 · 07.07.2026';
+const APP_VER='v064 · 07.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6313,13 +6317,7 @@ function _otlKodUret(ad,haric){
   let out=kod,n=2; while(out&&dolu(out)){ out=kod+n; n++; }
   return out;
 }
-function _otlBolgeDoldur(cur){
-  const inp=document.getElementById('otlBolge'), dl=document.getElementById('otlBolgeList'); if(!inp) return;
-  if(cur!=null) inp.value=cur;
-  const list=((getTanimlar().bolgeler)||[]).filter(b=>(b.ad||'').trim()).map(_bolgeLabel).sort((a,b)=>a.localeCompare(b,'tr'));
-  const enc=x=>String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-  if(dl) dl.innerHTML=list.map(b=>`<option value="${enc(b)}">`).join('');
-}
+function _otlBolgeDoldur(cur){ const inp=document.getElementById('otlBolge'); if(inp&&cur!=null) inp.value=cur; }
 function otlBolgeCoz(el){ const v=String(el.value||'').trim(); if(!v){ return; } const r=_bolgeResolve(v);
   if(r){ el.value=r; } else { showToast('Bölge bulunamadı: "'+v+'" — listeden seç ya da + ile ekle (aynı adlıysa şehriyle)','error'); el.value=''; el.focus(); } }
 function otlBolgeEkle(){
@@ -8581,9 +8579,24 @@ function _bolgeResolve(v){ v=String(v||'').trim(); if(!v) return ''; const bs=(g
   let m=bs.find(b=>_norm(_bolgeLabel(b))===nv); if(m) return _bolgeLabel(m);
   const byAd=bs.filter(b=>_norm(b.ad)===nv); if(byAd.length===1) return _bolgeLabel(byAd[0]);
   return null; }
-function _afBolgeSel(cur,ri,fld){
-  return `<input value="${esc(cur||'')}" list="afBolgeL" placeholder="yaz ya da seç…" onchange="afKR(${ri},'${fld}',this.value)" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.86rem">`;
+let _bcInp=null;
+function _bcShow(inp){ _bcInp=inp; let drop=document.getElementById('bcDrop');
+  if(!drop){ drop=document.createElement('div'); drop.id='bcDrop'; drop.className='bc-drop';
+    drop.addEventListener('mousedown',function(e){ const it=e.target.closest('.bc-item'); if(!it) return; e.preventDefault(); if(_bcInp){ const t=_bcInp; t.value=it.getAttribute('data-v'); _bcHide(); t.dispatchEvent(new Event('change',{bubbles:true})); } });
+    document.body.appendChild(drop); }
+  _bcFill(); const r=inp.getBoundingClientRect(); drop.style.left=r.left+'px'; drop.style.top=(r.bottom+2)+'px'; drop.style.minWidth=r.width+'px'; drop.style.display='block';
 }
+function _bcFill(){ const drop=document.getElementById('bcDrop'); if(!drop||!_bcInp) return; const q=_norm(_bcInp.value); const items=_afBolgeList().filter(b=>!q||_norm(b).includes(q));
+  drop.innerHTML=items.length?items.map(b=>`<div class="bc-item" data-v="${esc(b)}">${esc(b)}</div>`).join(''):'<div class="bc-empty">eşleşen bölge yok · "+ Bölge" ile ekle</div>'; }
+function _bcHide(){ const drop=document.getElementById('bcDrop'); if(drop) drop.style.display='none'; _bcInp=null; }
+function _bcHideSoon(){ setTimeout(_bcHide,180); }
+function _bolgeCombo(cur,onchg){
+  return `<span class="bcombo" style="position:relative;display:inline-flex;width:100%">
+    <input value="${esc(cur||'')}" placeholder="yaz ya da ▾" autocomplete="off" onfocus="_bcShow(this)" onclick="_bcShow(this)" oninput="_bcFill()" onblur="_bcHideSoon()" onchange="${onchg}" style="width:100%;padding:6px 22px 6px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.86rem">
+    <span onmousedown="event.preventDefault()" onclick="var i=this.previousElementSibling;i.focus();_bcShow(i)" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);font-size:.65rem">▾</span>
+  </span>`;
+}
+function _afBolgeSel(cur,ri,fld){ return _bolgeCombo(cur, `afKR(${ri},'${fld}',this.value)`); }
 function afBolgeEkle(){
   const ad=(window.prompt('Yeni bölge adı (örn. Kuşadası, Belek, AYT):')||'').trim();
   if(!ad) return;
