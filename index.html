@@ -1565,7 +1565,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <label class="otl-f"><span>Kod (otomatik)</span><input id="otlKod" style="text-transform:uppercase" placeholder="GRAPAL"></label>
         <label class="otl-f" style="grid-column:span 2"><span>Otel adı *</span><input id="otlAd" onchange="otlAdChange()"></label>
         <label class="otl-f"><span id="otlLSehir">Şehir</span><input id="otlSehir"></label>
-        <label class="otl-f"><span id="otlLBolge">Bölge</span><div style="display:flex;gap:6px"><select id="otlBolge" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.9rem"></select><button type="button" class="btn btn-outline btn-sm" style="flex-shrink:0;padding:6px 11px" onclick="otlBolgeEkle()" title="Yeni bölge tanımla">+</button></div></label>
+        <label class="otl-f"><span id="otlLBolge">Bölge</span><div style="display:flex;gap:6px"><input id="otlBolge" list="otlBolgeList" placeholder="yaz ya da seç…" onchange="otlBolgeCoz(this)" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.9rem"><datalist id="otlBolgeList"></datalist><button type="button" class="btn btn-outline btn-sm" style="flex-shrink:0;padding:6px 11px" onclick="otlBolgeEkle()" title="Yeni bölge tanımla">+</button></div></label>
         <label class="otl-f"><span id="otlLDetay">Yıldız</span><select id="otlYildiz"><option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><input id="otlDetay" type="number" min="0" placeholder="ör. 8" style="display:none"></label>
         <label class="otl-f"><span>Telefon</span><input id="otlTel"></label>
         <label class="otl-f" style="grid-column:span 2"><span>E-posta (rooming bu adrese gider)</span><input id="otlEmail"></label>
@@ -1635,7 +1635,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v060 · 07.07.2026';
+const APP_VER='v063 · 07.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6314,21 +6314,21 @@ function _otlKodUret(ad,haric){
   return out;
 }
 function _otlBolgeDoldur(cur){
-  const sel=document.getElementById('otlBolge'); if(!sel) return;
-  const list=((getTanimlar().bolgeler)||[]).map(b=>(b.ad||'').trim()).filter(Boolean).sort((a,b)=>a.localeCompare(b,'tr'));
-  const cf=String(cur||'').toLocaleUpperCase('tr-TR').trim(); const has=list.some(b=>b.toLocaleUpperCase('tr-TR')===cf);
+  const inp=document.getElementById('otlBolge'), dl=document.getElementById('otlBolgeList'); if(!inp) return;
+  if(cur!=null) inp.value=cur;
+  const list=((getTanimlar().bolgeler)||[]).filter(b=>(b.ad||'').trim()).map(_bolgeLabel).sort((a,b)=>a.localeCompare(b,'tr'));
   const enc=x=>String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-  let o='<option value="">— bölge seç —</option>';
-  o+=list.map(b=>`<option value="${enc(b)}"${b.toLocaleUpperCase('tr-TR')===cf?' selected':''}>${enc(b)}</option>`).join('');
-  if(cf&&!has) o+=`<option value="${enc(cur)}" selected>${enc(cur)} (listede yok!)</option>`;
-  sel.innerHTML=o;
+  if(dl) dl.innerHTML=list.map(b=>`<option value="${enc(b)}">`).join('');
 }
+function otlBolgeCoz(el){ const v=String(el.value||'').trim(); if(!v){ return; } const r=_bolgeResolve(v);
+  if(r){ el.value=r; } else { showToast('Bölge bulunamadı: "'+v+'" — listeden seç ya da + ile ekle (aynı adlıysa şehriyle)','error'); el.value=''; el.focus(); } }
 function otlBolgeEkle(){
   const ad=(window.prompt('Yeni bölge adı (örn. Side, Belek, Kuşadası):')||'').trim(); if(!ad) return;
+  const sehir=(window.prompt('Şehir (opsiyonel, örn. Antalya):')||'').trim();
   const t=getTanimlar(); t.bolgeler=Array.isArray(t.bolgeler)?t.bolgeler:[];
-  const dup=t.bolgeler.find(b=>_norm(b.ad)===_norm(ad));
-  if(dup){ showToast('Zaten var: '+(dup.ad||ad),'error'); _otlBolgeDoldur(dup.ad); return; }
-  t.bolgeler.push({ad,once:''}); setTanimlar(t); showToast('Bölge eklendi: '+ad,'success'); _otlBolgeDoldur(ad);
+  const dup=t.bolgeler.find(b=>_norm(b.ad)===_norm(ad)&&_norm(b.sehir)===_norm(sehir));
+  if(dup){ showToast('Zaten var: '+_bolgeLabel(dup),'error'); _otlBolgeDoldur(_bolgeLabel(dup)); return; }
+  t.bolgeler.push({ad,sehir,once:''}); setTanimlar(t); showToast('Bölge eklendi: '+_bolgeLabel({ad,sehir}),'success'); _otlBolgeDoldur(_bolgeLabel({ad,sehir}));
 }
 function otlAdChange(){ const k=document.getElementById('otlKod'); if(k&&!k.value.trim()) k.value=_otlKodUret(document.getElementById('otlAd').value,_otlEdit); }
 function otlAraInput(){
@@ -6362,7 +6362,7 @@ function otlSec(ix){
   const il=trk?(p.state||p.city||p.town||p.village||''):(p.city||p.town||p.village||p.state||'');
   const ilce=p.city||p.town||p.village||p.county||'';
   set('otlSehir',il);
-  if(trk&&ilce){ const _cf=x=>String(x||'').toLocaleUpperCase('tr-TR').trim(); const _m=(getTanimlar().bolgeler||[]).map(b=>(b.ad||'').trim()).find(b=>_cf(b)===_cf(ilce)); if(_m) _otlBolgeDoldur(_m); }
+  if(trk&&ilce){ const _m=(getTanimlar().bolgeler||[]).find(b=>_norm(b.ad)===_norm(ilce)); if(_m) _otlBolgeDoldur(_bolgeLabel(_m)); }
   set('otlAdres',[[p.street,p.housenumber].filter(Boolean).join(' '),p.postcode,(p.city||p.town||p.village),p.country].filter(Boolean).join(', '));
   if(f.geometry&&Array.isArray(f.geometry.coordinates)){
     set('otlLon',String(f.geometry.coordinates[0]).slice(0,10));
@@ -8571,31 +8571,27 @@ function afKDDel(di){ const f=_afList()[_afDet]; if(!f)return;
 }
 function afKT(tip,did,v){ const f=_afList()[_afDet]; if(!f)return; f.kTahsis[tip+'|'+did]=_fytNum(v); setTanimlar(getTanimlar()); }
 function afKRAdd(){ const f=_afList()[_afDet]; if(!f)return; _afKInit(f); f.kRota.push({id:genId(),nereden:'',nereye:''}); setTanimlar(getTanimlar()); renderOpsTanim(); }
-function afKR(ri,fld,v){ const f=_afList()[_afDet]; if(!f||!f.kRota[ri])return; f.kRota[ri][fld]=String(v).trim(); setTanimlar(getTanimlar()); }
-function _afBolgeList(){ return (getTanimlar().bolgeler||[]).map(b=>(b.ad||'').trim()).filter(Boolean).sort((a,b)=>a.localeCompare(b,'tr')); }
+function afKR(ri,fld,v){ const f=_afList()[_afDet]; if(!f||!f.kRota[ri])return; v=String(v||'').trim();
+  if(v){ const r=_bolgeResolve(v); if(r){ v=r; } else { showToast('Bölge bulunamadı: "'+v+'" — listeden seç ya da "+ Bölge" ile ekle (aynı adlıysa şehriyle seç)','error'); renderOpsTanim(); return; } }
+  f.kRota[ri][fld]=v; setTanimlar(getTanimlar()); renderOpsTanim();
+}
+function _bolgeLabel(b){ b=b||{}; const a=(b.ad||'').trim(); const c=(b.sehir||'').trim(); return c?(a+' · '+c):a; }
+function _afBolgeList(){ return (getTanimlar().bolgeler||[]).filter(b=>(b.ad||'').trim()).map(_bolgeLabel).sort((a,b)=>a.localeCompare(b,'tr')); }
+function _bolgeResolve(v){ v=String(v||'').trim(); if(!v) return ''; const bs=(getTanimlar().bolgeler||[]).filter(b=>(b.ad||'').trim()); const nv=_norm(v);
+  let m=bs.find(b=>_norm(_bolgeLabel(b))===nv); if(m) return _bolgeLabel(m);
+  const byAd=bs.filter(b=>_norm(b.ad)===nv); if(byAd.length===1) return _bolgeLabel(byAd[0]);
+  return null; }
 function _afBolgeSel(cur,ri,fld){
-  const list=_afBolgeList(); const cf=String(cur||'').toLocaleUpperCase('tr-TR').trim(); const has=list.some(b=>b.toLocaleUpperCase('tr-TR')===cf);
-  let o='<option value="">— bölge seç —</option>';
-  o+=list.map(b=>`<option value="${esc(b)}"${b.toLocaleUpperCase('tr-TR')===cf?' selected':''}>${esc(b)}</option>`).join('');
-  if(cf&&!has) o+=`<option value="${esc(cur)}" selected>${esc(cur)} (listede yok!)</option>`;
-  return `<select onchange="afKR(${ri},'${fld}',this.value)" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.86rem">${o}</select>`;
+  return `<input value="${esc(cur||'')}" list="afBolgeL" placeholder="yaz ya da seç…" onchange="afKR(${ri},'${fld}',this.value)" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.86rem">`;
 }
 function afBolgeEkle(){
   const ad=(window.prompt('Yeni bölge adı (örn. Kuşadası, Belek, AYT):')||'').trim();
   if(!ad) return;
+  const sehir=(window.prompt('Şehir (opsiyonel, örn. Antalya):')||'').trim();
   const t=getTanimlar(); t.bolgeler=Array.isArray(t.bolgeler)?t.bolgeler:[];
-  const dup=t.bolgeler.find(b=>_norm(b.ad)===_norm(ad));
-  if(dup){ showToast('Zaten var: '+(dup.ad||ad),'error'); return; }
-  t.bolgeler.push({ad,once:''}); setTanimlar(t); renderOpsTanim(); showToast('Bölge eklendi: '+ad,'success');
-}
-function afKRTers(ri){
-  const f=_afList()[_afDet]; if(!f||!f.kRota[ri])return; const r=f.kRota[ri];
-  if(!(r.nereden||'').trim()||!(r.nereye||'').trim()){ showToast('Önce nereden/nereye seç','error'); return; }
-  const cf=x=>String(x||'').toLocaleUpperCase('tr-TR').trim();
-  if((f.kRota||[]).some(x=>x!==r&&cf(x.nereden)===cf(r.nereye)&&cf(x.nereye)===cf(r.nereden))){ showToast('Ters yön zaten var','error'); return; }
-  const nid=genId(); f.kRota.push({id:nid,nereden:r.nereye,nereye:r.nereden});
-  Object.keys(f.kTrf||{}).forEach(k=>{ const p=k.split('|'); if(p[0]===r.id){ p[0]=nid; f.kTrf[p.join('|')]=f.kTrf[k]; } });
-  setTanimlar(getTanimlar()); renderOpsTanim(); showToast('Ters yön eklendi: '+r.nereye+' → '+r.nereden+' (aynı fiyatlarla)','success');
+  const dup=t.bolgeler.find(b=>_norm(b.ad)===_norm(ad)&&_norm(b.sehir)===_norm(sehir));
+  if(dup){ showToast('Zaten var: '+_bolgeLabel(dup),'error'); return; }
+  t.bolgeler.push({ad,sehir,once:''}); setTanimlar(t); renderOpsTanim(); showToast('Bölge eklendi: '+_bolgeLabel({ad,sehir}),'success');
 }
 function afKRDel(ri){ const f=_afList()[_afDet]; if(!f)return;
   const r=f.kRota[ri]; if(!r)return;
@@ -8655,15 +8651,15 @@ function _afKontratHtml(f){
         <button class="btn btn-outline btn-sm" onclick="afKRAdd()">+ Güzergâh</button>
         <button class="btn btn-outline btn-sm" onclick="afBolgeEkle()" title="Yeni bölge tanımla — sonra listeden seçilebilir">+ Bölge</button>
       </div>
-      <datalist id="afBolgeL">${bolgeler.map(b=>`<option value="${esc((b.ad||'').toUpperCase())}">`).join('')}</datalist>
-      <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">Nereden/nereye <b>Bölgeler</b>den seçilir (serbest yazı yok) · fiyat seçili dönem · <b>⇄</b> ile ters yönü aynı fiyatla oluştur · Para: <b>${esc(f.kPara||'EUR')}</b></div>
+      <datalist id="afBolgeL">${_afBolgeList().map(b=>`<option value="${esc(b)}">`).join('')}</datalist>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">Nereden/nereye <b>Bölgeler</b>den seçilir/aranır · <b>yön fark etmez</b>: AYT→Side girmen Side→AYT için de geçerli · fiyat seçili dönem · Para: <b>${esc(f.kPara||'EUR')}</b></div>
       <div style="overflow-x:auto"><table class="rzmg" style="min-width:${300+tipler.length*90}px">
       <tr><th style="min-width:130px">Nereden</th><th style="min-width:130px">Nereye</th>${tipler.map(t2=>`<th style="min-width:84px;text-align:center">${esc(t2.kod)}</th>`).join('')}<th style="width:30px"></th></tr>
       ${f.kRota.map((r,ri)=>`<tr>
         <td>${_afBolgeSel(r.nereden,ri,'nereden')}</td>
         <td>${_afBolgeSel(r.nereye,ri,'nereye')}</td>
         ${tipler.map(t2=>{const k=r.id+'|'+t2.kod+'|'+_afKD;return `<td style="padding:3px 4px"><input inputmode="decimal" value="${esc(f.kTrf[k]!=null?f.kTrf[k]:'')}" style="width:100%;text-align:right;min-width:60px" onchange="afKTrf('${r.id}','${esc(t2.kod)}','${_afKD}',this.value)"></td>`;}).join('')}
-        <td style="white-space:nowrap"><button title="Ters yönü aynı fiyatla oluştur" style="background:var(--primary-soft);color:var(--primary);border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;margin-right:3px" onclick="afKRTers(${ri})">⇄</button><button class="rowdel" style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="afKRDel(${ri})">✕</button></td></tr>`).join('')}
+        <td><button class="rowdel" style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="afKRDel(${ri})">✕</button></td></tr>`).join('')}
       </table></div>
       ${f.kRota.length?'':'<div style="font-size:.76rem;color:var(--muted);padding:8px 2px">Güzergâh yok — "+ Güzergâh" ile ekle (AYT→SIDE gibi).</div>'}`;
     }
@@ -8841,7 +8837,7 @@ function renderOpsTanim(){
         ${card('rehberler','Rehberler','users',(t.rehberler||[]).length,'ad · telefon · dil')}
         ${card('aracFirmalari','Araç Firmaları','bus',(t.aracFirmalari||[]).length,'firma kartı · yetkili · filo')}
         ${card('saglayicilar','Sağlayıcılar','building',(t.saglayicilar||[]).length,'mağaza/otel · tür · telefon')}
-        ${card('bolgeler','Bölgeler','pin',(t.bolgeler||[]).length,'ad · pickup süresi (SS:DD)')}
+        ${card('bolgeler','Bölgeler','pin',(t.bolgeler||[]).length,'bölge · şehir')}
         ${card('yerDuzeltme','Harita Yer Düzeltmeleri','pin',(t.yerDuzeltme||[]).length,'programdaki yer → haritada aranacak')}
       </div>`;
     return;
@@ -8853,7 +8849,7 @@ function renderOpsTanim(){
     saglayicilar:{ad:'Sağlayıcılar',cols:['ad','tur','tel','not'],hd:['Ad','Tür','Telefon','Not']},
     aracTipleri:{ad:'Araç Tipleri',cols:['kod','ad','koltuk'],hd:['Kod (MINI, OTOBUS…)','Ad','Koltuk']},
     araclar:{ad:'Araçlar',cols:['ad','tip','kap','firma'],hd:['Araç adı','Tip','Koltuk','Firma']},
-    bolgeler:{ad:'Bölgeler',cols:['ad','once'],hd:['Bölge','Pickup süresi (SS:DD)']},
+    bolgeler:{ad:'Bölgeler',cols:['ad','sehir'],hd:['Bölge','Şehir']},
     oteller:{ad:'Oteller',cols:['ad','sehir','yildiz','tel','email'],hd:['Otel adı','Şehir','Yıldız','Telefon','E-posta']},
     yerDuzeltme:{ad:'Harita Yer Düzeltmeleri',cols:['yer','sehir'],hd:['Programdaki yer','Haritada aranacak yer/şehir']}}[_opsTanimCat];
   const list=t[_opsTanimCat]||[];
@@ -8866,14 +8862,20 @@ function renderOpsTanim(){
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="opsTanimAdd()">+ Ekle</button>
     </div>
     <div style="overflow-x:auto"><table class="ops-tbl"><thead><tr>${meta.hd.map(h=>`<th>${h}</th>`).join('')}<th></th></tr></thead>
-      <tbody>${rows||`<tr><td colspan="${meta.cols.length+1}" style="color:var(--muted);padding:10px;font-size:.82rem">Henüz kayıt yok. "+ Ekle" ile başla.</td></tr>`}</tbody></table></div>`;
+      <tbody>${rows||`<tr><td colspan="${meta.cols.length+1}" style="color:var(--muted);padding:10px;font-size:.82rem">Henüz kayıt yok. "+ Ekle" ile başla.</td></tr>`}</tbody></table></div><div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="opsTanimAdd()">+ Ekle</button></div>`;
 }
 function opsTanimCat(c){ _opsTanimCat=c; try{localStorage.setItem('dmc_opsTanimCat',c);}catch(e){} _rehEdit=null; _rehFilter=''; _tanimFilter=''; _rehDilFilter=''; _afDet=-1; renderOpsTanim(); }
 function opsTanimAdd(){ const t=getTanimlar(); (t[_opsTanimCat]=t[_opsTanimCat]||[]).push({id:genId()}); setTanimlar(t); renderOpsTanim(); }
 function opsTanimDel(i){ const t=getTanimlar(); if(t[_opsTanimCat]){ t[_opsTanimCat].splice(i,1); setTanimlar(t); renderOpsTanim(); } }
 function opsTanimSet(i,c,v){ const t=getTanimlar(); const arr=t[_opsTanimCat]; if(!arr||!arr[i]) return;
-  if((c==='ad'||c==='kod')&&String(v).trim()){ const dup=arr.find((x,ix)=>ix!==i&&_norm(x[c])===_norm(v)); if(dup){ showToast('Zaten var: '+(dup[c]||'')+' — tekrar eklenmedi','error'); arr[i][c]=''; setTanimlar(t); renderOpsTanim(); return; } }
-  arr[i][c]=v; setTanimlar(t);
+  arr[i][c]=v;
+  if(_opsTanimCat==='bolgeler'){
+    if((arr[i].ad||'').trim()&&(c==='ad'||c==='sehir')){ const cur=arr[i]; const dup=arr.find((x,ix)=>ix!==i&&_norm(x.ad)===_norm(cur.ad)&&_norm(x.sehir)===_norm(cur.sehir));
+      if(dup){ showToast('Zaten var: '+_bolgeLabel(dup)+' — tekrar eklenmedi','error'); arr.splice(i,1); setTanimlar(t); renderOpsTanim(); return; } }
+    setTanimlar(t); return;
+  }
+  if((c==='ad'||c==='kod')&&String(v).trim()){ const dup=arr.find((x,ix)=>ix!==i&&_norm(x[c])===_norm(v)); if(dup){ showToast('Zaten var: '+(dup[c]||'')+' — tekrar eklenmedi','error'); arr.splice(i,1); setTanimlar(t); renderOpsTanim(); return; } }
+  setTanimlar(t);
 }
 function opsPickRehber(id){ const g=(getTanimlar().rehberler||[]).find(x=>x.id===id); const r=_opsRec(true); r.rehberId=id||''; r.rehberAd=g?(g.ad||''):''; r.rehberTel=g?(g.tel||''):''; r.rehberDil=g?(g.dil||''):''; setOperasyon(getOperasyon()); renderOperasyonDetay(); }
 /* ── Transfer varış panosu ── */
