@@ -190,6 +190,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 .nav-tab{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border-radius:9px;cursor:pointer;font-size:.85rem;color:var(--muted);transition:all .16s;border:none;background:none;font-family:inherit;font-weight:600;text-align:left}
 .nav-tab:hover{background:var(--light);color:var(--primary)}
 .nav-tab.active{background:var(--primary-soft);color:var(--primary-dark);box-shadow:inset 0 0 0 1px rgba(242,101,34,.18)}
+.page.ro-lock input,.page.ro-lock select,.page.ro-lock textarea{pointer-events:none!important;background:var(--light)!important;color:var(--muted)!important;cursor:default}
+.page.ro-lock .btn-primary,.page.ro-lock .btn-success,.page.ro-lock .btn-danger,.page.ro-lock .add-btn,.page.ro-lock .res-addrow,.page.ro-lock .rowdel,.page.ro-lock .row-del,.page.ro-lock label.btn{display:none!important}
+#roBar{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:1200;background:#fef3c7;color:#92400e;border:1.5px solid #f5c518;border-radius:20px;padding:5px 16px;font-size:.72rem;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.14)}
+#rolPvBar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:1300;background:#1e293b;color:#fff;border-radius:24px;padding:8px 14px;font-size:.75rem;display:flex;align-items:center;gap:8px;box-shadow:0 4px 18px rgba(0,0,0,.3);flex-wrap:wrap;max-width:94vw}
+#rolPvBar .rpv-eye{background:var(--primary);color:#fff;border-radius:12px;padding:2px 9px;font-weight:800;font-size:.62rem;letter-spacing:.5px}
+#rolPvBar select{border:none;border-radius:8px;padding:3px 7px;font-family:inherit;font-size:.72rem}
+#rolPvBar button{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:4px 12px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.72rem}
 .nav-group{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:9px 12px 3px;margin-top:5px}
 .sidebar-ctx{flex:1;display:flex;flex-direction:column;min-height:0}
 .sidebar-header{padding:14px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -528,6 +535,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)
 #sectionStash{display:block}
 #sectionStash .card{scroll-margin-top:14px}
 .card.section-flash{animation:sectionFlash 1.1s ease}
+#sectionStash > .card > .card-title{cursor:pointer;user-select:none}
+#sectionStash > .card.collapsed > .card-title{margin-bottom:0;border-bottom:none;padding-bottom:0}
+#sectionStash > .card.collapsed{padding-bottom:.85rem}
+#sectionStash > .card.collapsed > *:not(.card-title){display:none!important}
+.sec-chev{margin-left:auto;color:var(--muted);font-size:.8rem;flex-shrink:0}
 @keyframes sectionFlash{
   0%{box-shadow:0 0 0 3px rgba(242,101,34,0)}
   25%{box-shadow:0 0 0 3px rgba(242,101,34,.45),var(--shadow-lg)}
@@ -643,6 +655,14 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .resgrid .kisa{position:absolute;right:1px;top:1px;font-size:.55rem;font-weight:800;background:#fee2e2;color:#b91c1c;border-radius:4px;padding:0 3px;pointer-events:none}
 .reschip{font-size:.62rem;font-weight:700;border-radius:9px;padding:1px 7px;white-space:nowrap}
 .rc-ok{background:#d1fae5;color:#065f46}.rc-bek{background:#fef3c7;color:#92400e}.rc-frk{background:#fde8c8;color:#7c4a03}
+.resgrid td.res-durum{padding:2px 3px;vertical-align:top}
+.res-dstat{font-size:.57rem;color:var(--muted);text-align:center;margin-top:1px;line-height:1.1}
+.res-opsd{width:100%;border:1.5px solid var(--border);border-radius:5px;font-size:.62rem;font-family:inherit;padding:1px 2px;margin-top:2px;color:var(--text);background:var(--card)}
+.resgrid tr.res-iptal td{background:#fde2e2!important}
+.resgrid tr.res-iptal td.fg,.resgrid tr.res-iptal td.fd,.resgrid tr.res-iptal td.fa{background:#f6cccc!important}
+.resgrid tr.res-iptal input,.resgrid tr.res-iptal select{color:#b91c1c!important;text-decoration:line-through}
+.resgrid tr.res-iptal td.res-durum select{text-decoration:none}
+.resgrid td.selc{outline:2px solid var(--primary);outline-offset:-2px;background:rgba(242,101,34,.14)!important}
 .res-mets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:.7rem}
 .res-met{background:var(--light);border:1px solid var(--border);border-radius:11px;padding:.55rem .85rem}
 .res-met .n{font-size:1.2rem;font-weight:800;line-height:1.1}.res-met .l{font-size:.66rem;color:var(--muted);font-weight:600;margin-top:2px}
@@ -821,6 +841,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div class="pkg-section-item" onclick="openSectionModal('card-aktivite')"><svg class="ic"><use href="#i-ticket"/></svg> Aktiviteler</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-konaklama')"><svg class="ic"><use href="#i-bed"/></svg> Örnek Konaklama</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-fiyat')"><svg class="ic"><use href="#i-coins"/></svg> Fiyatlandırma</div>
+        <div class="pkg-section-item" onclick="openSectionModal('card-uzatma')"><svg class="ic"><use href="#i-calendar"/></svg> Uzatma Haftası</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-dahil')"><svg class="ic"><use href="#i-list"/></svg> Dahil / Dahil Değil</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-notlar')"><svg class="ic"><use href="#i-pin"/></svg> Önemli Notlar</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-iptal')"><svg class="ic"><use href="#i-stop"/></svg> İptal Şartları</div>
@@ -1026,6 +1047,14 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
     <div class="card" id="card-ucus">
       <div class="card-title"><svg class="ic"><use href="#i-plane"/></svg> Uçuş Bilgileri</div>
+      <label style="display:flex;align-items:center;gap:9px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:9px 12px;margin-bottom:12px;cursor:pointer;font-size:.84rem;font-weight:600;color:#92400e">
+        <input type="checkbox" id="pkgUcakOperatorde" onchange="markDirty()" style="width:16px;height:16px;flex-shrink:0"> <span><svg class="ic"><use href="#i-plane"/></svg> <b>Uçuş operatör tarafından alınır</b> <span style="font-weight:400">— bizim uçak/bilet modülümüzde takip edilmez</span></span>
+      </label>
+      <div class="field field-full" style="margin-bottom:12px">
+        <label><svg class="ic"><use href="#i-box"/></svg> Bagaj Seçenekleri <span style="font-weight:400;color:var(--muted);font-size:.75rem">— dahil olan 0€; satılabilir upgrade'lere ek ücret. Uçak listesinde yolcuya seçilir.</span></label>
+        <div id="bagajlar"></div>
+        <button class="add-btn" onclick="addBagaj()">+ Bagaj seçeneği ekle</button>
+      </div>
       <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px">
         <div class="field" style="flex:1;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Varış Havalimanı (TR)</label><input id="varisHavalimani" value="" oninput="varisHavalimani=this.value.toUpperCase().trim();markDirty()" placeholder="SAW, IST, AYT..."></div>
         <div class="field" style="flex:1;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Dönüş Havalimanı (TR)</label><input id="donusHavalimani" value="" oninput="donusHavalimani=this.value.toUpperCase().trim();markDirty()" placeholder="AYT, IST, SAW..."></div>
@@ -1094,6 +1123,11 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       </div>
       <p style="font-size:.76rem;color:var(--muted);margin-bottom:.7rem">Havalimanlarında seçilen tarihler burada otomatik görünür. Fiyat girdikçe sezonlar oluşur (en düşük = A). EZZ supplementini buradan ayarlayın.</p>
       <div id="sezonlarTablosu"></div>
+    </div>
+    <div class="card" id="card-uzatma">
+      <div class="card-title"><svg class="ic"><use href="#i-calendar"/></svg> Uzatma Haftası</div>
+      <p style="font-size:.76rem;color:var(--muted);margin-bottom:.7rem">Ana tura opsiyonel deniz/uzatma haftası (Badeverlängerung). Tek otel/bölge · sezon bazlı haftalık kişi başı fiyat. Rezervasyon/fatura sonraki fazda.</p>
+      <div id="uzatmaBody"></div>
     </div>
     <div class="card" id="card-dahil">
       <div class="card-title"><svg class="ic"><use href="#i-list"/></svg> Dahil / Dahil Değil</div>
@@ -1362,6 +1396,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
           <button class="btn btn-success btn-sm" id="rzBtnAcilim" onclick="rzAcilim()" style="margin-left:10px">Açılımı Yap (şablondan)</button>
           <button class="btn btn-outline btn-sm" onclick="rzKartEkle()">+ Kart ekle</button>
           <button class="btn btn-outline btn-sm" onclick="rzUlasimEkle()">+ Ulaşım kartı</button>
+          <span id="rzUzatmaWrap" style="display:none;align-items:center;gap:6px;margin-left:8px;font-size:.78rem;font-weight:700;color:#1d4ed8"><svg class="ic"><use href="#i-calendar"/></svg> Uzatma:<select id="rzUzatma" onchange="rzUzatmaSet(this.value)" style="padding:4px 8px;border:1.5px solid #1d4ed8;border-radius:7px;font-family:inherit;font-weight:600"><option value="0">Yok</option><option value="1">1 hafta</option><option value="2">2 hafta</option><option value="3">3 hafta</option><option value="4">4 hafta</option></select></span>
           <span style="font-weight:500;color:var(--muted);font-size:.68rem;margin-left:auto">Gece değişince sonraki kartlar kayar · üye çipi = karta dahil/hariç</span>
         </div>
         <div id="rzKartlarDiv"></div>
@@ -1639,7 +1674,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v064 · 07.07.2026';
+const APP_VER='v088 · 07.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -1655,7 +1690,9 @@ let ucuslar=[], araUcuslar=[], varisHavalimani='', donusHavalimani=''; // araUcu
 let _opDetayYear = null;
 let oteller=[], transferler=[], gunler=[], aktiviteler=[], ekstraMaliyetler=[], havalimanSuppleri=[];
 let ornekOteller={}; // key: 'sehir|||kalite|||pansiyon' → otel adı
-let fiyatlandirma=[], sezonlar=[], cocukFiyatiAktif=false;
+let fiyatlandirma=[], sezonlar=[], cocukFiyatiAktif=false; let _havAcik=new Set();
+function _uzatmaBos(){ return {aktif:false,ad:'',bolge:'',otel:'',pansiyon:'',gece:7,fiyat:{}}; }
+let uzatma=_uzatmaBos(); let bagajlar=[];
 let _fiyatSort={col:'tarih',dir:1}, _fiyatFilter={sezon:'',ap:''};
 let dahilItems=[], dahilDegilItems=[], onemliNotlarItems=[];
 let _airportCalStates={}; // {i:{yil,ay}}
@@ -1720,9 +1757,19 @@ function openSectionModal(cardId, title) {
   }
 }
 
+function _secToggle(card){ card.classList.toggle('collapsed'); const c=card.querySelector(':scope > .card-title .sec-chev'); if(c) c.textContent=card.classList.contains('collapsed')?'▸':'▾'; }
+function _initSecCollapse(){
+  document.querySelectorAll('#sectionStash > .card').forEach(card=>{
+    const t=card.querySelector(':scope > .card-title'); if(!t||t.dataset.secInit) return; t.dataset.secInit='1';
+    const chev=document.createElement('span'); chev.className='sec-chev'; chev.textContent=card.classList.contains('collapsed')?'▸':'▾'; t.appendChild(chev);
+    t.addEventListener('click',e=>{ if(e.target.closest('button,input,select,a,label,textarea')) return; _secToggle(card); });
+  });
+}
+function _secCollapseAll(){ document.querySelectorAll('#sectionStash > .card').forEach(card=>{ card.classList.add('collapsed'); const c=card.querySelector(':scope > .card-title .sec-chev'); if(c) c.textContent='▸'; }); }
 function _scrollToCard(cardId) {
   const card = document.getElementById(cardId);
   if (!card) return;
+  if(card.classList.contains('collapsed')) _secToggle(card);
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   card.classList.add('section-flash');
   setTimeout(() => card.classList.remove('section-flash'), 1100);
@@ -1892,7 +1939,10 @@ function showPage(id, tabEl) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   if(!document.getElementById('page-'+id)) id='paketlerim';
+  if(_acl(id)==='-'){ if(sbRol&&_cloudOn) showToast('Bu bölüme erişim yetkiniz yok','error'); id='paketlerim'; }
   document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.page.ro-lock').forEach(function(p){p.classList.remove('ro-lock');});
+  { const _avv=_acl(id), _pgel=document.getElementById('page-'+id); if(_pgel&&_avv==='v') _pgel.classList.add('ro-lock'); _roBanner(_avv==='v'); }
   // nav tab highlight: opdetay gösterilirken "Paketlerim" tabı aktif kalsın
   const tabId = ['opdetay','paket','maliyet','cikti','harita','sunum','urun'].includes(id) ? 'urun' : id;
   (tabEl||document.querySelector(`[data-page="${tabId}"]`))?.classList.add('active');
@@ -2043,14 +2093,26 @@ function renderPano(){
   if(sbRol==='yonetici'||sbRol==='urun'){
     try{
       const L=_mutIssues().filter(x=>x.tip==='seferUrunYok');
-      if(L.length) suyH=`<div class="card" style="border:1.5px solid #d8b4fe;background:#faf5ff;padding:.65rem .95rem;margin-bottom:12px">
+      if(L.length) suyH=`<div class="card" style="border:1.5px solid #d8b4fe;background:#faf5ff;padding:.65rem .95rem;margin-bottom:12px;color:#4b3a63">
         <div style="font-weight:800;font-size:.78rem;margin-bottom:4px;color:#6b21a8">✈ Üründe olmayan tarihe uçak listesi açıldı (${L.length})</div>
         ${L.slice(0,6).map(x=>`<div style="font-size:.74rem;padding:2px 0"><b>${esc(x.kod)}</b> · ${_fmtDateTR(x.kalkis)} — bu tarihi ürüne ekleyin, uyarı kendiliğinden kalkar</div>`).join('')}
-        ${L.length>6?`<div style="font-size:.66rem;color:var(--muted)">+${L.length-6} uyarı daha</div>`:''}
+        ${L.length>6?`<div style="font-size:.66rem;color:#6b7280">+${L.length-6} uyarı daha</div>`:''}
       </div>`;
     }catch(e){}
   }
-  el.innerHTML=suyH+`<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:14px" class="pano-grid">${gorH}${duyH}</div><style>@media(max-width:900px){.pano-grid{grid-template-columns:1fr !important}}</style>`;
+  let opsH='';
+  try{
+    const _OL=_opsAktifListe();
+    if(_OL.length){
+      const _acil=_OL.filter(x=>x.stat.level==='acil').length, _yakin=_OL.filter(x=>x.stat.level==='yakin').length;
+      opsH=`<div class="card" style="border:1.5px solid #f26522;background:#fff6f0;padding:.65rem .95rem;margin-bottom:12px;color:#7c2d12">
+        <div style="font-weight:800;font-size:.78rem;margin-bottom:5px;color:#9a3412"><svg class="ic" style="vertical-align:-2px"><use href="#i-card"/></svg> Opsiyon takibi — ${_OL.length} bilet opsiyonda${_acil?` · <span style="color:#c2410c">${_acil} acil</span>`:''}${_yakin?` · ${_yakin} yaklaşıyor`:''}</div>
+        ${_OL.slice(0,8).map(x=>{ const c=_OPSCLR[x.stat.level]; return `<div onclick="_opsGit('${x.pkgId}','${x.kalkis}')" style="cursor:pointer;display:flex;align-items:center;gap:8px;font-size:.74rem;padding:3px 0;border-bottom:1px dashed #f0d9c8"><span style="width:9px;height:9px;border-radius:50%;background:${c.bd};flex-shrink:0"></span><b style="min-width:90px">${esc(x.kod||'—')}</b><span>${esc(x.ad||'—')}${x.resno?' · '+esc(x.resno):''}</span><span style="flex:1"></span><span>${_fmtDateTR(x.stat.tarih)}</span><b style="color:${c.tx};min-width:74px;text-align:right">${_opsGun(x.stat)}</b></div>`; }).join('')}
+        ${_OL.length>8?`<div style="font-size:.66rem;color:#9a3412;margin-top:3px">+${_OL.length-8} opsiyon daha</div>`:''}
+      </div>`;
+    }
+  }catch(e){}
+  el.innerHTML=suyH+opsH+`<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:14px" class="pano-grid">${gorH}${duyH}</div><style>@media(max-width:900px){.pano-grid{grid-template-columns:1fr !important}}</style>`;
 }
 function panoGorevKaydet(){
   const g=id=>{ const e2=document.getElementById(id); return e2?(e2.value||'').trim():''; };
@@ -2321,11 +2383,12 @@ function _pkgCardHTML(pkg){
   const futureDates = _allPkgDates(pkg).filter(d=>d>=today);
   return `<div class="pkg-card ${isEditing?'active-pkg':''}">
     <div class="pkg-card-header">
-      <div class="pkg-name">${esc(pkg.paketAdi||'İsimsiz Paket')}${isEditing?' <span style="font-size:.68rem;background:var(--accent);border-radius:4px;padding:1px 5px;margin-left:3px">Düzenleniyor</span>':''}</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
-        ${pkg.paketKodu?`<span style="font-family:monospace;font-size:.72rem;font-weight:700;letter-spacing:1.5px;background:var(--primary);color:white;border-radius:4px;padding:1px 7px">${esc(pkg.paketKodu)}</span>`:''}
-        <div class="pkg-dest"><svg class="ic"><use href="#i-pin"/></svg> ${esc(pkg.destinasyon||'—')}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${pkg.paketKodu?`<span style="font-family:monospace;font-size:.95rem;font-weight:700;letter-spacing:1.5px;background:var(--primary);color:white;border-radius:5px;padding:2px 10px">${esc(pkg.paketKodu)}</span>`:'<span style="font-size:.72rem;color:#fff;opacity:.6;font-style:italic">kodsuz</span>'}
+        ${isEditing?'<span style="font-size:.68rem;background:var(--accent);border-radius:4px;padding:1px 5px">Düzenleniyor</span>':''}
       </div>
+      <div class="pkg-name" style="margin-top:6px">${esc(pkg.paketAdi||'İsimsiz Paket')}</div>
+      <div class="pkg-dest" style="margin-top:3px"><svg class="ic"><use href="#i-pin"/></svg> ${esc(pkg.destinasyon||'—')}</div>
     </div>
     <div class="pkg-card-body">
       <div style="margin-bottom:7px">${durumBadge(pkg)}</div>
@@ -2836,6 +2899,8 @@ function collectData(){
     dahil:[...dahilItems], dahilDegil:[...dahilDegilItems],
     marginPct:v('marginPct'), maliyetNot:v('maliyetNot'),
     operatorId: currentOpId,
+    ucakOperatorde: (document.getElementById('pkgUcakOperatorde')||{}).checked||false,
+    bagajlar:JSON.parse(JSON.stringify(bagajlar)),
     ucuslar:JSON.parse(JSON.stringify(ucuslar)),
     araUcuslar:JSON.parse(JSON.stringify(ucuslar)),
     varisHavalimani:varisHavalimani,
@@ -2848,6 +2913,7 @@ function collectData(){
     havalimanSuppleri:JSON.parse(JSON.stringify(havalimanSuppleri)),
     fiyatlandirma:JSON.parse(JSON.stringify(fiyatlandirma)),
     sezonlar:JSON.parse(JSON.stringify(sezonlar)),
+    uzatma:JSON.parse(JSON.stringify(uzatma)),
     cocukFiyatiAktif,
     ornekOteller:JSON.parse(JSON.stringify(ornekOteller))
   };
@@ -3120,6 +3186,8 @@ function resetSunumTranslation(){
 }
 
 function fillForm(d){
+  _havAcik=new Set();
+  uzatma=Object.assign(_uzatmaBos(), d.uzatma||{}); if(!uzatma.fiyat||typeof uzatma.fiyat!=='object') uzatma.fiyat={};
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||''};
   set('paketAdi',d.paketAdi); set('paketKodu',d.paketKodu||'');
   renderDestinasyonSelect(d.destinasyon); // select'i ülke listesiyle doldur
@@ -3135,6 +3203,8 @@ function fillForm(d){
   // araUcuslar: yeni format; eski ucuslar'dan sadece {from,to} olanları al
   const _rawU=d.araUcuslar||(d.ucuslar||[]).filter(u=>u.from&&u.to)||[];
   ucuslar=_rawU; varisHavalimani=d.varisHavalimani||''; donusHavalimani=d.donusHavalimani||'';
+  const _uoEl=document.getElementById('pkgUcakOperatorde');if(_uoEl)_uoEl.checked=!!d.ucakOperatorde;
+  bagajlar = Array.isArray(d.bagajlar) ? d.bagajlar.map(b=>({ad:b.ad||'',fiyat:+b.fiyat||0,dahil:!!b.dahil})) : ((d.bagajDetay||'').trim()?[{ad:d.bagajDetay,fiyat:0,dahil:true}]:[]); if(bagajlar.length&&!bagajlar.some(b=>b.dahil)) bagajlar[0].dahil=true; renderBagajlar();
   const _vhEl=document.getElementById('varisHavalimani');if(_vhEl)_vhEl.value=varisHavalimani;
   const _dhEl=document.getElementById('donusHavalimani');if(_dhEl)_dhEl.value=donusHavalimani;
   oteller=d.oteller||[]; ornekOteller=d.ornekOteller||{}; transferler=d.transferler||[];
@@ -3302,7 +3372,7 @@ function doLoad(id){
   history.replaceState(null,'','#pkg='+id);
   _setSaveUI();
   updateCurrentLabel(pkg.paketAdi,pkg.destinasyon);
-  showPage('paket'); showToast('📂 Paket yüklendi','success');
+  showPage('paket'); try{_secCollapseAll();}catch(e){} showToast('📂 Paket yüklendi','success');
 }
 
 function deletePackage(id){
@@ -3312,6 +3382,25 @@ function deletePackage(id){
     if(currentId===id){currentId=null;isDirty=false;clearForm();updateCurrentLabel('','');}
     renderOpDetailPkgGrid(); showToast('🗑️ Paket silindi');
   });
+}
+function silInaktifUrunler(){
+  const all=getPackages();
+  const inaktif=all.filter(p=>pkgDurum(p)!=='aktif');
+  const aktifSay=all.length-inaktif.length;
+  if(!inaktif.length){ showToast('Silinecek inaktif ürün yok — tüm ürünler Aktif','success'); return; }
+  const say={}; inaktif.forEach(p=>{ const k=pkgDurum(p); say[k]=(say[k]||0)+1; });
+  const kirilim=Object.keys(say).map(k=>(PKG_DURUMLAR[k]?PKG_DURUMLAR[k].ad:k)+': '+say[k]).join(' · ');
+  showConfirm('🗑️','İnaktif Ürünleri Sil',
+    inaktif.length+' inaktif ürün silinecek ('+kirilim+'). Sadece '+aktifSay+' Aktif ürün KALACAK. Bu işlem GERİ ALINAMAZ ve buluttan da siler.',
+    'Evet, '+inaktif.length+' ürünü sil',()=>{
+      const silId=new Set(getPackages().filter(p=>pkgDurum(p)!=='aktif').map(p=>p.id));
+      setPackages(getPackages().filter(p=>pkgDurum(p)==='aktif'));
+      if(silId.has(currentId)){ currentId=null; isDirty=false; try{clearForm();updateCurrentLabel('','');}catch(e){} }
+      try{renderDashboard();}catch(e){}
+      try{ if(typeof renderUrunPage==='function') renderUrunPage(); }catch(e){}
+      try{renderOpDetailPkgGrid();}catch(e){}
+      showToast('🗑️ '+silId.size+' inaktif ürün silindi — '+aktifSay+' aktif kaldı','success',5000);
+    });
 }
 
 function duplicatePackage(id){
@@ -3342,15 +3431,17 @@ function updateIptalHint(){
 function clearForm(){
   _undoStack=[]; _updateUndoBtn();
   ['paketAdi','destinasyonSehir','baslangic','bitis','paketAciklama','maliyetNot','iptalSartlari'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  bagajlar=[]; renderBagajlar();
   dahilItems=[]; dahilDegilItems=[]; onemliNotlarItems=[]; renderDahilLists();
   renderDestinasyonSelect('');
   document.getElementById('gece').value=3;
   document.getElementById('pax').value=20;
   document.getElementById('marginPct').value=25;
   ucuslar=[];oteller=[];ornekOteller={};transferler=[];gunler=[];aktiviteler=[];ekstraMaliyetler=[];havalimanSuppleri=[];
-  fiyatlandirma=[];sezonlar=[];cocukFiyatiAktif=false;_airportCalStates={};
+  fiyatlandirma=[];sezonlar=[];cocukFiyatiAktif=false;_airportCalStates={};_havAcik=new Set();uzatma=_uzatmaBos();
   const cbx=document.getElementById('cocukFiyatiCheckbox'); if(cbx) cbx.checked=false;
-  renderAll(); updateCalc();
+  const _uoc=document.getElementById('pkgUcakOperatorde'); if(_uoc) _uoc.checked=false;
+  renderAll(); updateCalc(); try{_secCollapseAll();}catch(e){}
 }
 
 function updateCurrentLabel(name,dest){
@@ -3434,7 +3525,7 @@ function renderPkgGrid(){
     const isActive=pkg.id===currentId;
     const opBadge=op?`<div class="pkg-op-badge"><div class="pkg-op-avatar">${op.logo?`<img src="${op.logo}" alt="">`:(op.ad||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div><span style="font-size:.75rem;color:var(--muted)">${esc(op.ad)}</span></div>`:'';
     html+=`<div class="pkg-card ${isActive?'active-pkg':''}">
-      <div class="pkg-card-header"><div class="pkg-name">${esc(pkg.paketAdi||'İsimsiz Paket')}${isActive?' <span style="font-size:.68rem;background:var(--accent);border-radius:4px;padding:1px 5px;margin-left:3px">Aktif</span>':''}</div><div style="display:flex;align-items:center;gap:8px;margin-top:2px">${pkg.paketKodu?`<span style="font-family:monospace;font-size:.72rem;font-weight:700;letter-spacing:1.5px;background:var(--primary);color:white;border-radius:4px;padding:1px 7px">${esc(pkg.paketKodu)}</span>`:''}<div class="pkg-dest"><svg class="ic"><use href="#i-pin"/></svg> ${esc(pkg.destinasyon||'—')}</div></div></div>
+      <div class="pkg-card-header"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${pkg.paketKodu?`<span style="font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:1.5px;background:var(--primary);color:white;border-radius:5px;padding:2px 9px">${esc(pkg.paketKodu)}</span>`:'<span style="font-size:.72rem;color:var(--muted);font-style:italic">kodsuz</span>'}${isActive?'<span style="font-size:.68rem;background:var(--accent);border-radius:4px;padding:1px 5px">Aktif</span>':''}</div><div class="pkg-name" style="margin-top:5px">${esc(pkg.paketAdi||'İsimsiz Paket')}</div><div class="pkg-dest" style="margin-top:3px"><svg class="ic"><use href="#i-pin"/></svg> ${esc(pkg.destinasyon||'—')}</div></div>
       <div class="pkg-card-body">
         ${opBadge}
         <div class="pkg-meta"><span class="pkg-meta-item"><svg class="ic"><use href="#i-calendar"/></svg> ${pkg.baslangic||'—'}</span><span class="pkg-meta-item"><svg class="ic"><use href="#i-moon"/></svg> ${pkg.gece||'—'} gece</span><span class="pkg-meta-item"><svg class="ic"><use href="#i-users"/></svg> ${pkg.pax||'—'} kişi</span>${calc.sell>0?`<span class="pkg-meta-item" style="font-weight:700;color:var(--primary)"><svg class="ic"><use href="#i-coins"/></svg> ${fmtPkg(calc.sell,pkg.para)}/kişi</span>`:''}</div>
@@ -3526,7 +3617,7 @@ function removeHavalimanSupp(i){
   const ad=(havalimanSuppleri[i]&&havalimanSuppleri[i].havalimani)||'Havalimanı';
   confirmRemove('Havalimanını Sil', '"'+ad+'" ve ona atanmış tarihler silinecek. Emin misiniz?', 'havalimanı silindi: '+ad, ()=>{
     cleanFiyatForAirport(i, havalimanSuppleri[i].tarihler||[]);
-    havalimanSuppleri.splice(i,1);
+    havalimanSuppleri.splice(i,1); _havAcik=new Set();
     _syncFromFiyatlandirma(); renderSezonlar(); renderHavalimanSuppleri(); markDirty();
   });
 }
@@ -3560,7 +3651,8 @@ function renderUcuslar(){
     </div>`).join('');
 }
 
-function addHavalimanSupp(){havalimanSuppleri.push({havalimani:'',supplement:0,tarihler:[]});renderHavalimanSuppleri();markDirty();}
+function addHavalimanSupp(){havalimanSuppleri.push({havalimani:'',supplement:0,tarihler:[]});_havAcik=new Set([havalimanSuppleri.length-1]);renderHavalimanSuppleri();markDirty();}
+function _havTog(i){ if(_havAcik.has(i)) _havAcik.delete(i); else _havAcik.add(i); renderHavalimanSuppleri(); }
 function renderHavalimanSuppleri(){
   const el=document.getElementById('havalimanSuppleri');
   if(!el) return;
@@ -3569,20 +3661,24 @@ function renderHavalimanSuppleri(){
     const cnt=(s.tarihler||[]).length;
     const ornekCount=(s.ornekUcuslar||[]).length;
     const defaultHub=ucuslar.length?ucuslar[0].from:'';
-    return `<div style="border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--bg)">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-        <input value="${esc(s.havalimani)}" oninput="havalimanSuppleri[${i}].havalimani=this.value;markDirty()" placeholder="VIE+MUC, SZG, GRZ+LNZ..." style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.88rem;font-family:inherit">
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+    const acik=_havAcik.has(i);
+    const hubSupp=`<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
           <span style="font-size:.74rem;color:var(--muted);font-weight:600">Hub:</span>
           <input value="${esc(s.hub||defaultHub)}" oninput="havalimanSuppleri[${i}].hub=this.value.toUpperCase().trim();markDirty()" placeholder="${esc(defaultHub||'SAW')}" style="width:52px;padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-size:.84rem;font-weight:700;font-family:inherit;text-align:center;text-transform:uppercase">
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
           <span style="font-size:.77rem;color:var(--muted);font-weight:600">Supp:</span>
           <input type="number" value="${s.supplement||0}" min="0" oninput="havalimanSuppleri[${i}].supplement=+this.value;markDirty()" style="width:65px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:.86rem;font-family:inherit;text-align:right">
-        </div>
+        </div>`;
+    const ozet=`<span style="font-size:.74rem;color:var(--muted);flex-shrink:0;white-space:nowrap">${s.supplement?('+'+s.supplement+'€'):'supp 0'} · ${cnt} kalkış${ornekCount?' · '+ornekCount+' örnek':''}</span>`;
+    return `<div style="border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--bg)">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:${acik?'8':'0'}px">
+        <button onclick="_havTog(${i})" title="${acik?'kapat':'aç'}" style="background:var(--light);border:1.5px solid var(--border);border-radius:6px;width:26px;height:28px;cursor:pointer;color:var(--primary);font-size:12px;flex-shrink:0">${acik?'▾':'▸'}</button>
+        <input value="${esc(s.havalimani)}" oninput="havalimanSuppleri[${i}].havalimani=this.value;markDirty()" placeholder="VIE+MUC, SZG, GRZ+LNZ..." style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.88rem;font-family:inherit">
+        ${acik?hubSupp:ozet}
         <button onclick="removeHavalimanSupp(${i})" style="background:#fee2e2;color:#dc2626;border:none;border-radius:5px;width:28px;height:28px;cursor:pointer;font-size:14px;flex-shrink:0">×</button>
       </div>
-      <div style="display:flex;gap:5px;align-items:stretch">
+      ${acik?`<div style="display:flex;gap:5px;align-items:stretch">
         <button onclick="toggleAirportCalendar(${i})" id="airportCalBtn_${i}"
           style="flex:1;padding:6px 12px;border:1.5px solid ${cnt?'var(--primary)':'var(--border)'};border-radius:8px;background:${cnt?'var(--primary)':'var(--light)'};color:${cnt?'white':'var(--primary)'};font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">
           <svg class="ic"><use href="#i-calendar"/></svg> <span id="airportCalBadge_${i}">${cnt?cnt+' kalkış tarihi':'Tarih Seç'}</span>
@@ -3605,7 +3701,7 @@ function renderHavalimanSuppleri(){
           <button onclick="addOrnekUcus(${i})" style="padding:3px 10px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:.74rem;font-weight:700;cursor:pointer;font-family:inherit">+ Örnek Uçuş Ekle</button>
         </div>
         <div id="ornekUcuslar_${i}">${renderOrnekUcuslarHTML(i)}</div>
-      </div>
+      </div>`:''}
     </div>`;
   }).join('');
 }
@@ -4032,17 +4128,40 @@ function renderGunler(){
     </div></div>`).join('');
 }
 
-function addAktivite(){aktiviteler.push({ad:'',sure:'2 saat',fiyat:0,dahilMi:true});renderAktiviteler();markDirty();}
+function addBagaj(){ bagajlar.push({ad:'',fiyat:0,dahil:bagajlar.length===0}); renderBagajlar(); markDirty(); }
+function _bagajDahil(i){ bagajlar.forEach((b,j)=>b.dahil=(j===i)); renderBagajlar(); markDirty(); }
+function renderBagajlar(){
+  const el=document.getElementById('bagajlar'); if(!el) return;
+  el.innerHTML=bagajlar.map((b,i)=>`
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:5px">
+      <div class="field" style="flex:1;margin-bottom:0"><label>Bagaj adı</label><input value="${esc(b.ad)}" oninput="bagajlar[${i}].ad=this.value;markDirty()" placeholder="ör. 8 kg el bagajı (dahil) · 20 kg valiz"></div>
+      <div class="field" style="width:120px;margin-bottom:0"><label>Ek ücret €</label><input type="number" min="0" value="${b.fiyat||0}" oninput="bagajlar[${i}].fiyat=+this.value||0;markDirty()"></div>
+      <label style="display:flex;align-items:center;gap:5px;font-size:.74rem;color:${b.dahil?'var(--primary)':'var(--muted)'};font-weight:${b.dahil?'700':'400'};margin-bottom:9px;white-space:nowrap;cursor:pointer"><input type="radio" name="bagajDahilR" ${b.dahil?'checked':''} onclick="_bagajDahil(${i})" style="accent-color:var(--primary)"> Varsayılan (dahil)</label>
+      <button onclick="removeRow(bagajlar,${i},renderBagajlar)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
+    </div>`).join('') || '<div style="font-size:.78rem;color:var(--muted);padding:4px 0">Seçenek yok — "+ Bagaj seçeneği ekle" (ör. 8 kg dahil 0€, 20 kg +35€).</div>';
+}
+function addAktivite(){aktiviteler.push({ad:'',sure:'',fiyat:0,dahilMi:false,komTip:'',komDeg:'',aciklamaAcik:false,aciklama:'',operatoreGoster:false,operatorSatabilir:false,operatorFiyat:''});renderAktiviteler();markDirty();}
 function renderAktiviteler(){
   document.getElementById('aktiviteler').innerHTML=aktiviteler.map((a,i)=>`
     <div class="row-item">
-      <div style="display:flex;gap:8px;align-items:flex-end">
-        <div class="field" style="flex:3"><label>Aktivite Adı</label><input value="${esc(a.ad)}" oninput="aktiviteler[${i}].ad=this.value;markDirty()" placeholder="Balon, Tekne, ATV..."></div>
-        <div class="field" style="flex:1;min-width:80px"><label>Süre</label><input value="${esc(a.sure)}" oninput="aktiviteler[${i}].sure=this.value;markDirty()" placeholder="2 saat"></div>
-        <div class="field" style="flex:1;min-width:90px"><label>Kişi Başı Fiyat</label><input type="number" value="${a.fiyat}" min="0" oninput="aktiviteler[${i}].fiyat=+this.value;updateCalc();markDirty()"></div>
-        <div class="field" style="flex:1;min-width:0"><label>Pakete Dahil?</label><select oninput="aktiviteler[${i}].dahilMi=this.value==='true';updateCalc();markDirty()"><option value="true" ${a.dahilMi?'selected':''}>Evet</option><option value="false" ${!a.dahilMi?'selected':''}>Hayır (opsiyonel)</option></select></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:7px">
+        <div class="field" style="flex:1;margin-bottom:0"><label>Aktivite / Paket Adı</label><input value="${esc(a.ad)}" oninput="aktiviteler[${i}].ad=this.value;markDirty()" placeholder="Kültür Paketi, Türk Gecesi, Balon..."></div>
+        <div class="field" style="width:110px;flex-shrink:0;margin-bottom:0"><label>Satış €</label><input type="number" value="${a.fiyat}" min="0" oninput="aktiviteler[${i}].fiyat=+this.value;updateCalc();markDirty()"></div>
         <button onclick="removeRow(aktiviteler,${i},renderAktiviteler)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
       </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <div class="field" style="width:110px;margin-bottom:0"><label>Süre</label><input value="${esc(a.sure)}" oninput="aktiviteler[${i}].sure=this.value;markDirty()" placeholder="2 saat"></div>
+        <div class="field" style="width:140px;margin-bottom:0"><label>Rehber Komisyonu</label><select oninput="aktiviteler[${i}].komTip=this.value;renderAktiviteler();markDirty()"><option value="" ${!a.komTip?'selected':''}>Yok</option><option value="%" ${a.komTip==='%'?'selected':''}>Yüzde %</option><option value="pax" ${a.komTip==='pax'?'selected':''}>€ / kişi</option></select></div>
+        <div class="field" style="width:100px;margin-bottom:0"><label>Kom. Değer</label><input type="number" value="${a.komDeg??''}" min="0" ${!a.komTip?'disabled style="background:var(--light)"':''} oninput="aktiviteler[${i}].komDeg=this.value;markDirty()" placeholder="${a.komTip==='%'?'%':(a.komTip==='pax'?'€':'—')}"></div>
+        <div class="field" style="width:150px;margin-bottom:0"><label>Pakete Dahil?</label><select oninput="aktiviteler[${i}].dahilMi=this.value==='true';updateCalc();markDirty()"><option value="true" ${a.dahilMi?'selected':''}>Evet (dahil)</option><option value="false" ${!a.dahilMi?'selected':''}>Hayır (satış)</option></select></div>
+      </div>
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">
+        <label style="display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;margin:0"><input type="checkbox" ${a.aciklamaAcik?'checked':''} onchange="aktiviteler[${i}].aciklamaAcik=this.checked;renderAktiviteler();markDirty()" style="width:15px;height:15px;accent-color:var(--primary)"> Açıklama ekle</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;margin:0"><input type="checkbox" ${a.operatoreGoster?'checked':''} onchange="aktiviteler[${i}].operatoreGoster=this.checked;markDirty()" style="width:15px;height:15px;accent-color:var(--primary)"> Operatör sunumunda göster</label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;margin:0"><input type="checkbox" ${a.operatorSatabilir?'checked':''} onchange="aktiviteler[${i}].operatorSatabilir=this.checked;renderAktiviteler();markDirty()" style="width:15px;height:15px;accent-color:var(--primary)"> Operatör satabilir</label>
+        ${a.operatorSatabilir?`<span style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted)">Operatöre satış / fatura €:<input type="number" min="0" value="${a.operatorFiyat??''}" oninput="aktiviteler[${i}].operatorFiyat=this.value;markDirty()" placeholder="€" style="width:90px;padding:6px 9px;border:1.5px solid var(--primary);border-radius:7px;font-family:inherit;font-weight:600"></span>`:''}
+      </div>
+      ${a.aciklamaAcik?`<div class="field field-full" style="margin-top:8px;margin-bottom:0"><label>Açıklama</label><textarea oninput="aktiviteler[${i}].aciklama=this.value;markDirty()" placeholder="Bu aktivite / satış paketi için açıklama...">${esc(a.aciklama||'')}</textarea></div>`:''}
     </div>`).join('');
 }
 
@@ -4511,10 +4630,36 @@ function dahilDrop(ev,name,to){
   const [moved]=arr.splice(from,1);arr.splice(to,0,moved);
   renderDahilLists();renderPkgSummary();markDirty();
 }
+function uzatmaSet(f,v){ uzatma[f]=(f==='gece')?(+v||0):v; markDirty(); }
+function uzatmaFiyat(sez,tip,v){ if(!uzatma.fiyat[sez]) uzatma.fiyat[sez]={ciftKisi:0,tekSupp:0}; uzatma.fiyat[sez][tip]=+String(v).replace(/[^0-9.]/g,'')||0; markDirty(); }
+function uzatmaTog(el){ uzatma.aktif=el.checked; renderUzatma(); markDirty(); }
+function renderUzatma(){
+  const el=document.getElementById('uzatmaBody'); if(!el) return;
+  if(!uzatma.aktif){ el.innerHTML=`<label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.86rem;font-weight:600"><input type="checkbox" onchange="uzatmaTog(this)" style="width:16px;height:16px;flex-shrink:0"> Bu üründe uzatma haftası var (deniz / Badeverlängerung)</label>`; return; }
+  const fld=(f,ph)=>`<input value="${esc(uzatma[f]||'')}" oninput="uzatmaSet('${f}',this.value)" placeholder="${ph}" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit">`;
+  let h=`<label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.86rem;font-weight:600;margin-bottom:12px"><input type="checkbox" checked onchange="uzatmaTog(this)" style="width:16px;height:16px;flex-shrink:0"> Bu üründe uzatma haftası var</label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    <label style="display:block"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Uzatma adı</span>${fld('ad','ör. Side deniz haftası')}</label>
+    <label style="display:block"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Bölge</span>${fld('bolge','ör. Side')}</label>
+    <label style="display:block"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Otel</span>${fld('otel','otel adı')}</label>
+    <div style="display:flex;gap:10px">
+      <label style="display:block;flex:1"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Pansiyon</span>${fld('pansiyon','HB, AI…')}</label>
+      <label style="display:block;width:84px"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Gece</span><input type="number" min="1" value="${uzatma.gece||7}" oninput="uzatmaSet('gece',this.value)" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit"></label>
+    </div>
+  </div>`;
+  if(!sezonlar.length){ h+=`<div style="font-size:.8rem;color:var(--muted);padding:9px 11px;background:var(--light);border-radius:8px">Haftalık fiyat için önce <b>Sezon Fiyatlandırması</b>ndan sezonları oluştur; sonra burada her sezona haftalık fiyat girersin.</div>`; }
+  else { h+=`<div style="font-size:.78rem;font-weight:700;color:var(--primary);margin-bottom:6px">Haftalık kişi başı fiyat (uzatma · ${esc(document.getElementById('para')?document.getElementById('para').value:'EUR')})</div>
+    <table class="rzmg" style="max-width:440px"><tr><th style="width:70px">Sezon</th><th>Haftalık DBL</th><th>Haftalık EZ farkı</th></tr>
+    ${sezonlar.map(sz=>{ const fz=uzatma.fiyat[sz.ad]||{}; return `<tr><td style="font-weight:800;color:var(--primary)">${esc(sz.ad)}</td>
+      <td><input inputmode="decimal" value="${fz.ciftKisi!=null&&fz.ciftKisi!==0?fz.ciftKisi:(fz.ciftKisi===0?0:'')}" onchange="uzatmaFiyat('${esc(sz.ad)}','ciftKisi',this.value)" style="width:100%;text-align:right"></td>
+      <td><input inputmode="decimal" value="${fz.tekSupp!=null&&fz.tekSupp!==0?fz.tekSupp:(fz.tekSupp===0?0:'')}" onchange="uzatmaFiyat('${esc(sz.ad)}','tekSupp',this.value)" style="width:100%;text-align:right"></td></tr>`; }).join('')}
+    </table>`; }
+  el.innerHTML=h;
+}
 function renderAll(){const _vh=document.getElementById('varisHavalimani');if(_vh)_vh.value=varisHavalimani;
 const _dh=document.getElementById('donusHavalimani');if(_dh)_dh.value=donusHavalimani;
 refreshSidebarPkgSwitch();
-renderUcuslar();renderHavalimanSuppleri();renderOteller();renderTransferler();renderGunler();renderKonaklamaOzet();renderAktiviteler();renderEkstraMaliyetler();renderSezonlar();renderDahilLists();}
+renderUcuslar();renderHavalimanSuppleri();renderOteller();renderTransferler();renderGunler();renderKonaklamaOzet();renderAktiviteler();renderEkstraMaliyetler();renderSezonlar();renderUzatma();renderBagajlar();renderDahilLists();}
 
 // ═══════════════ HESAPLAMA ═══════════════
 function updateCalc(){
@@ -4718,6 +4863,7 @@ function openSunum(lang){
     })()}
     ${(()=>{const arr=Array.isArray(d.dahil)?d.dahil.filter(Boolean):(d.dahil||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-check"/></svg> ${L.included}</h2><ul style="margin:0;padding-left:1.2rem">${arr.map(i=>`<li style="margin-bottom:4px;font-size:.85rem">${esc(i)}</li>`).join('')}</ul></div>`:''})()}
     ${(()=>{const arr=Array.isArray(d.dahilDegil)?d.dahilDegil.filter(Boolean):(d.dahilDegil||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-x"/></svg> ${L.notIncluded}</h2><ul style="margin:0;padding-left:1.2rem">${arr.map(i=>`<li style="margin-bottom:4px;font-size:.85rem">${esc(i)}</li>`).join('')}</ul></div>`:''})()}
+    ${(()=>{ const ea=(d.aktiviteler||[]).filter(a=>a.operatoreGoster&&(a.ad||'').trim()); return ea.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-ticket"/></svg> ${L.extras||'Ek Paketler & Aktiviteler'}</h2>${ea.map(a=>`<div style="margin-bottom:9px"><div style="font-weight:700;font-size:.9rem">${esc(a.ad)}${a.fiyat?` <span style="color:var(--primary)">· ${a.fiyat}€ ${a.dahilMi?'(dahil)':'(opsiyonel)'}</span>`:''}</div>${(a.aciklama||'').trim()?`<div style="font-size:.85rem;opacity:.85;white-space:pre-line;margin-top:2px">${esc(a.aciklama)}</div>`:''}</div>`).join('')}</div>`:''; })()}
     ${(()=>{const arr=Array.isArray(d.onemliNotlar)?d.onemliNotlar.filter(Boolean):(d.onemliNotlar||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-pin"/></svg> ${L.importantNotes||'Önemli Notlar'}</h2><div style="background:#fff8ec;border:1px solid #f3d9a8;border-left:4px solid var(--accent);border-radius:8px;padding:.8rem 1.05rem .8rem .6rem"><ul style="margin:0;padding-left:1.3rem">${arr.map(n=>`<li style="margin-bottom:5px;font-size:.85rem;line-height:1.55">${esc(n)}</li>`).join('')}</ul></div></div>`:''})()}
     ${(()=>{const pkg=(d.iptalSartlari||'').trim();const eff=(pkg||((op&&op.iptalSartlari)||'')).trim();if(!eff) return '';const arr=eff.split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);if(!arr.length) return '';return `<div class="pres-section"><h2><svg class="ic"><use href="#i-stop"/></svg> ${L.cancellationTerms||'İptal Şartları'}</h2><div style="background:#fef2f2;border:1px solid #f3c2c2;border-left:4px solid #dc2626;border-radius:8px;padding:.8rem 1.05rem .8rem .6rem"><ul style="margin:0;padding-left:1.3rem">${arr.map(n=>`<li style="margin-bottom:5px;font-size:.85rem;line-height:1.55">${esc(n)}</li>`).join('')}</ul></div></div>`;})()}
     ${(()=>{
@@ -5555,6 +5701,10 @@ function _fmtDateFile(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00'
 
 let _ucakNav={yil:null,ay:null};
 let _ucakFilter={op:'',pkg:'',tarih:'',voucher:''};
+let _ucakGor=(()=>{try{return localStorage.getItem('dmcUcakGor')||'grid';}catch(e){return 'grid';}})();
+let _ucakGizle=(()=>{try{return JSON.parse(localStorage.getItem('dmcUcakGizle')||'{}')||{};}catch(e){return {};}})();
+function _ucakGorSet(m){ _ucakGor=m; try{localStorage.setItem('dmcUcakGor',m);}catch(e){} renderUcakGenel(); }
+function _ucakGizleTog(k,el){ _ucakGizle[k]=!!el.checked; try{localStorage.setItem('dmcUcakGizle',JSON.stringify(_ucakGizle));}catch(e){} renderUcakGenel(); }
 function _ucakGo(yil,ay){ _ucakNav={yil:yil||null,ay:(yil?(ay||null):null)}; renderUcakGenel(); const b=document.getElementById('ucakGenel'); if(b) b.scrollIntoView({block:'nearest'}); }
 function _ucakBack(){ if(_ucakNav.ay) _ucakGo(_ucakNav.yil,null); else if(_ucakNav.yil) _ucakGo(null,null); }
 function _ucakFilterPkgs(){ return getPackages().filter(p=>pkgDurum(p)!=='arsiv'); }
@@ -5645,7 +5795,7 @@ function renderUcakGenel(){
   _migrateResData();
   const resAll=getReservations();
   const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv');
-  const items=[];
+  let items=[];
   pkgs.forEach(pkg=>{
     const opAd=_resOpAd(pkg)||'';
     (_resDepartureDates(pkg)||[]).forEach(d=>{
@@ -5656,7 +5806,7 @@ function renderUcakGenel(){
       const pend=real.filter(r=>!((r.g_pnr||'').toString().trim())).length;
       let status; if(!real.length){status='giris';} else if(pend>0){status='bekliyor';} else {status='biletlendi';}
       const aps=new Set(); real.forEach(r=>{ [r.g_k1,r.g_v1,r.g_v2,r.d_k1,r.d_v1,r.d_v2].forEach(a=>{ const t=(a||'').toString().trim().toUpperCase(); if(t.length===3) aps.add(t); }); });
-      items.push({id:pkg.id,kalkis:d||'',yil:(d||'').slice(0,4)||'—',ay:(d||'').slice(5,7)||'--',pkg,opAd,pax,real:real.length,pend,status,aps:[...aps]});
+      items.push({id:pkg.id,kalkis:d||'',yil:(d||'').slice(0,4)||'—',ay:(d||'').slice(5,7)||'--',pkg,opAd,pax,real:real.length,pend,status,aps:[...aps],iptal:!!(g&&g.iptal)});
     });
   });
   // Uçakçının açtığı ürün-dışı listeler + özel gruplar da klasörlerde görünsün
@@ -5671,8 +5821,10 @@ function renderUcakGenel(){
     const pend=real.filter(r=>!((r.g_pnr||'').toString().trim())).length;
     let status; if(!real.length){status='giris';} else if(pend>0){status='bekliyor';} else {status='biletlendi';}
     const aps=new Set(); real.forEach(r=>{ [r.g_k1,r.g_v1,r.g_v2,r.d_k1,r.d_v1,r.d_v2].forEach(a=>{ const t=(a||'').toString().trim().toUpperCase(); if(t.length===3) aps.add(t); }); });
-    items.push({id:pkg.id,kalkis:gr.kalkis,yil:(gr.kalkis||'').slice(0,4)||'—',ay:(gr.kalkis||'').slice(5,7)||'--',pkg,opAd:_resOpAd(pkg)||'',pax,real:real.length,pend,status,aps:[...aps],ekstra:!pkg.ozelGrup,ozel:!!pkg.ozelGrup});
+    items.push({id:pkg.id,kalkis:gr.kalkis,yil:(gr.kalkis||'').slice(0,4)||'—',ay:(gr.kalkis||'').slice(5,7)||'--',pkg,opAd:_resOpAd(pkg)||'',pax,real:real.length,pend,status,aps:[...aps],ekstra:!pkg.ozelGrup,ozel:!!pkg.ozelGrup,iptal:!!gr.iptal});
   });
+  if(_ucakGizle.bos) items=items.filter(x=>x.real);
+  if(_ucakGizle.iptal) items=items.filter(x=>!x.iptal);
   const AY=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const now=new Date(); const cy=now.getFullYear(), cym=now.getFullYear()*100+(now.getMonth()+1);
   const fmtGun=iso=>{ if(!iso) return '—'; const p=iso.split('-'); return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):iso; };
@@ -5691,6 +5843,8 @@ function renderUcakGenel(){
       <div class="ud-main"><div class="ud-name">${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</div><div class="ud-aps">${esc(it.opAd)||'—'}${it.aps.length?' · '+esc(it.aps.join(' · ')):''}</div></div>
       <div class="ud-pax">${it.real?it.pax+' yolcu':'—'}</div>
       ${it.ozel?'<div class="ud-status ozelg">özel grup</div>':(it.ekstra?'<div class="ud-status urunyok">üründe yok</div>':'')}
+      ${it.pkg.ucakOperatorde?'<div class="ud-status" style="background:#dbeafe;color:#1d4ed8;white-space:nowrap">✈ Uçakları Operatör Alıyor</div>':''}
+      ${it.iptal?'<div class="ud-status" style="background:#fee2e2;color:#dc2626">İPTAL</div>':''}
       <div class="ud-status ${it.status}">${stTxt[it.status]}</div>
     </div>`; };
   // ── Filtre çubuğu (canlı) ──
@@ -5728,6 +5882,14 @@ function renderUcakGenel(){
     f.forEach(it=>{ const key=it.yil+'-'+it.ay; if(key!==lastKey){ if(lastKey)list+='</div>'; list+=`<div class="ucak-month">${AY[(+it.ay)-1]||it.ay} ${it.yil}</div><div class="ucak-deps">`; lastKey=key; } list+=depRow(it); });
     if(lastKey)list+='</div>';
     inner=f.length?list:`<p style="color:var(--muted);font-size:.86rem;margin-top:10px">Eşleşen kalkış/rezervasyon yok.</p>`;
+  } else if(_ucakGor==='liste'){
+    const f=items.slice().sort((a,b)=>(a.kalkis||'').localeCompare(b.kalkis||''));
+    scope=f;
+    crumb=`<div class="ucak-crumb"><span class="cur">${f.length} kalkış</span><span class="sep">·</span>liste görünümü</div>`;
+    let list='',lastKey='';
+    f.forEach(it=>{ const key=it.yil+'-'+it.ay; if(key!==lastKey){ if(lastKey)list+='</div>'; list+=`<div class="ucak-month">${AY[(+it.ay)-1]||it.ay} ${it.yil}</div><div class="ucak-deps">`; lastKey=key; } list+=depRow(it); });
+    if(lastKey)list+='</div>';
+    inner=f.length?list:`<p style="color:var(--muted);font-size:.86rem;margin-top:10px">Gösterilecek kalkış yok.</p>`;
   } else {
     // ── KLASÖR MODU ──
     crumb=`<div class="ucak-crumb">${(_ucakNav.yil?`<button class="btn btn-outline btn-sm" style="padding:2px 11px" onclick="_ucakBack()">← Geri</button>`:'')}<a onclick="_ucakGo(null,null)"><svg class="ic"><use href="#i-plane"/></svg> Kalkışlar</a>`;
@@ -5753,6 +5915,12 @@ function renderUcakGenel(){
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">
       <div class="card-title" style="margin:0"><svg class="ic"><use href="#i-plane"/></svg> Kalkışlar</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden">
+          <button onclick="_ucakGorSet('liste')" style="padding:5px 12px;border:none;cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:600;${_ucakGor==='liste'?'background:var(--primary);color:#fff':'background:var(--card);color:var(--text)'}"><svg class="ic"><use href="#i-list"/></svg> Liste</button>
+          <button onclick="_ucakGorSet('grid')" style="padding:5px 12px;border:none;border-left:1.5px solid var(--border);cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:600;${_ucakGor==='grid'?'background:var(--primary);color:#fff':'background:var(--card);color:var(--text)'}"><svg class="ic"><use href="#i-grid"/></svg> Grid</button>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap"><input type="checkbox" ${_ucakGizle.bos?'checked':''} onchange="_ucakGizleTog('bos',this)" style="width:15px;height:15px;accent-color:var(--primary)"> Boş gizle</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap"><input type="checkbox" ${_ucakGizle.iptal?'checked':''} onchange="_ucakGizleTog('iptal',this)" style="width:15px;height:15px;accent-color:var(--primary)"> İptal gizle</label>
         <button class="btn btn-outline btn-sm" style="white-space:nowrap" onclick="_ucYeniListe()">+ Yeni Liste</button>
         <label class="btn btn-outline btn-sm" style="cursor:pointer;white-space:nowrap"><svg class="ic"><use href="#i-upload"/></svg> Liste İçe Aktar<input type="file" accept=".json" multiple onchange="importPackages(event)" style="display:none"></label>
       </div>
@@ -5770,6 +5938,7 @@ function ucakOpen(pkgId,kalkis){
   const ps=document.getElementById('resPkgSel'); if(ps) ps.value=pkgId;
   onResPkgChange(true);
   const g=_resGrid(true); if(g && g.rows.length===0){ for(let i=0;i<4;i++) g.rows.push(_newResRow()); setReservations(getReservations()); renderRezervasyon(); }
+  { const _pk=getPackages().find(p=>p.id===_resPkgId)||{}; if(_pk.ucakOperatorde && g){ let _ch=false; (g.rows||[]).forEach(y=>{ if(!(y.g_u1||'').trim()){ y.g_u1='Opr. Bilgi'; _ch=true; } if(!(y.d_u1||'').trim()){ y.d_u1='Opr. Bilgi'; _ch=true; } }); if(_ch){ setReservations(getReservations()); renderRezervasyon(); } } }
   const pkg=getPackages().find(p=>p.id===pkgId)||{};
   const fmt=(typeof _fmtDateTR==='function')?_fmtDateTR:(x=>x);
   const t=document.getElementById('ucakDetayBaslik');
@@ -5811,7 +5980,7 @@ function onResPkgChange(keep){
 function onResKalkisChange(){ _resKalkis=document.getElementById('resKalkisSel').value; renderRezervasyon(); }
 // ═══ Uçak v3 modeli (adlı alanlar) ═══
 const R_GID=()=>'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-const PCOLS=[['op','Operatör',84],['kod','Ürün',62],['resno','Res No',62],['soyad','Soyad',110],['ad','Ad',120],['oda','Oda',40],['tip','Tip',46],['bagaj','Bagaj',58]];
+const PCOLS=[['durum','Durum',108],['op','Operatör',84],['kod','Ürün',62],['resno','Res No',62],['soyad','Soyad',110],['ad','Ad',120],['oda','Oda',40],['tip','Tip',46],['bagaj','Bagaj',58]];
 const FBASE=p=>[[p+'_hy','Havayolu',90],[p+'_pnr','PNR',64],[p+'_tarih','Tarih',96],[p+'_u1','Uçuş 1',68],[p+'_k1','Kalkış',54],[p+'_v1','Varış',54],[p+'_ks1','K.Saat',56],[p+'_vs1','V.Saat',56]];
 const FAKT=p=>[[p+'_u2','Uçuş 2',68],[p+'_k2','Kalkış 2',54],[p+'_v2','Varış 2',54],[p+'_ks2','K.Saat 2',56],[p+'_vs2','V.Saat 2',56]];
 const ARAF=['a_hy','a_pnr','a_tarih','a_u1','a_k1','a_ks1','a_v1','a_vs1'];
@@ -5837,7 +6006,7 @@ function _migrateResData(){
 function _resGrid(create){ const all=getReservations(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setReservations(all); } return g; }
 function _pnrGrid(create){ const all=getPnrLedger(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setPnrLedger(all); } return g; }
 function _donusTarihi(iso,pkg){ if(!iso) return ''; const g=parseInt(pkg&&pkg.gece)||0; const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return ''; d.setDate(d.getDate()+g); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-function _newResRow(){ const pkg=getPackages().find(p=>p.id===_resPkgId)||{}; const y=_bosRow(); y.op=_resOpAd(pkg); y.kod=pkg.paketKodu||pkg.paketAdi||''; y.g_tarih=_resKalkis||''; y.d_tarih=_donusTarihi(_resKalkis,pkg); return y; }
+function _newResRow(){ const pkg=getPackages().find(p=>p.id===_resPkgId)||{}; const y=_bosRow(); y.op=_resOpAd(pkg); y.kod=pkg.paketKodu||pkg.paketAdi||''; y.g_tarih=_resKalkis||''; y.d_tarih=_donusTarihi(_resKalkis,pkg); if(pkg.ucakOperatorde){ y.g_u1='Opr. Bilgi'; y.d_u1='Opr. Bilgi'; } const _bd=(pkg.bagajlar||[]).find(b=>b.dahil)||(pkg.bagajlar||[])[0]; if(_bd&&(_bd.ad||'').trim()) y.bagaj=_bd.ad; return y; }
 let _resColw=(function(){ try{return JSON.parse(localStorage.getItem('dmcResColw')||'{}');}catch(e){return {};} })();
 let _resTgl={g:false,a:false,d:false}, _resTglKey='';
 function _resAutoTgl(){ const g=_resGrid(); const rows=g?g.rows:[]; const has=p=>rows.some(y=>(y[p+'_u2']||y[p+'_ks2']||y[p+'_v2']||'').toString().trim()); _resTgl.g=has('g'); _resTgl.d=has('d'); _resTgl.a=rows.some(_araVar); }
@@ -5850,7 +6019,7 @@ const _RSEPW=20;
 // ── metrik + özet ──
 function _resMetricsHTML(rows,pnrs){
   const ys=rows.filter(_isim);
-  const bilet=ys.filter(x=>_durum(x)==='biletlendi').length;
+  const bilet=ys.filter(x=>_durumEff(x)==='biletlendi').length;
   const kul=new Set(); ys.forEach(y=>['g_pnr','a_pnr','d_pnr'].forEach(f=>{ if((y[f]||'').trim())kul.add(y[f].trim()); }));
   return `<div class="res-met"><div class="n">${ys.length}</div><div class="l">Yolcu</div></div>`
     +`<div class="res-met"><div class="n">${kul.size}</div><div class="l">PNR</div></div>`
@@ -5888,6 +6057,7 @@ function renderRezervasyon(){
   if(!_resPkgId||!_resKalkis){ body.innerHTML='<div class="card"><p style="color:var(--muted);font-size:.88rem">Liste için yukarıdan paket ve kalkış seçin.</p></div>'; return; }
   const key=_resPkgId+'|'+_resKalkis; if(key!==_resTglKey){ _resTglKey=key; _resAutoTgl(); }
   const g=_resGrid(true); const rows=g.rows;
+  const _pkgB=getPackages().find(p=>p.id===_resPkgId)||{}; const _bagOpts=(_pkgB.bagajlar||[]).filter(b=>(b.ad||'').trim());
   const _mutSefer=_mutIssues().filter(x=>x.pkgId===_resPkgId&&x.kalkis===_resKalkis);
   const pnrs=(_pnrGrid()||{rows:[]}).rows;
   const _hl=(_resHighlight||'').toLowerCase().trim();
@@ -5899,22 +6069,30 @@ function renderRezervasyon(){
   gh+='<tr class="ghead"><th colspan="'+PCOLS.length+'"></th><th class="sep"></th><th colspan="'+gCnt+'" class="gh-g">GELİŞ</th><th class="sep"></th>'
     +(aCnt?'<th colspan="'+aCnt+'" class="gh-a">ARA UÇUŞ</th><th class="sep"></th>':'')
     +'<th colspan="'+dCnt+'" class="gh-d">DÖNÜŞ</th><th class="sep"></th><th colspan="2"></th></tr>';
-  gh+='<tr>'+disp.map(c=>{ if(c===null) return '<th class="sep"></th>'; const f=c[0]; const grp=f.startsWith('g_')?' hg':f.startsWith('a_')?' ha':f.startsWith('d_')?' hd':''; return `<th class="${grp.trim()}">${c[1]}<span class="rs" data-f="${f}"></span></th>`; }).join('')+'<th>Durum</th><th></th></tr>';
+  gh+='<tr>'+disp.map(c=>{ if(c===null) return '<th class="sep"></th>'; const f=c[0]; const grp=f.startsWith('g_')?' hg':f.startsWith('a_')?' ha':f.startsWith('d_')?' hd':''; return `<th class="${grp.trim()}">${c[1]}<span class="rs" data-f="${f}"></span></th>`; }).join('')+'<th></th><th></th></tr>';
   rows.forEach((y,r)=>{
     const st=_durum(y), frk=_farkliMi(y,rows);
     const hlMatch=_hl && ((y.resno||'').toLowerCase().includes(_hl)||((y.soyad||'')+' '+(y.ad||'')).toLowerCase().includes(_hl));
-    gh+=`<tr class="${frk?'farkli ':''}${hlMatch?'reshl':''}">`;
+    const _eff=_durumEff(y);
+    gh+=`<tr class="${_eff==='iptal'?'res-iptal ':''}${frk?'farkli ':''}${hlMatch?'reshl':''}">`;
     disp.forEach(c=>{
       if(c===null){ gh+='<td class="sep"></td>'; return; }
       const f=c[0]; const v=y[f]==null?'':y[f];
+      if(f==='durum'){ gh+=`<td class="res-durum">${_resDurumCell(r,y)}</td>`; return; }
       let tdCls=f.startsWith('g_')?'fg':f.startsWith('d_')?'fd':f.startsWith('a_')?'fa':'';
       let badge='';
       if(/_vs[12]$/.test(f)){ const p=f[0], leg=f.slice(-1); const ks=_dk(y[p+'_ks'+leg]), vs=_dk(v); if(ks!==null&&vs!==null&&vs<ks) badge='<span class="plus1">+1</span>'; }
       if(/_ks2$/.test(f)){ const p=f[0]; const a2=_dk(y[p+'_vs1']), b2=_dk(v); if(a2!==null&&b2!==null){ let bek=b2-a2; if(bek<0)bek+=1440; if(bek<60) badge='<span class="kisa">kısa!</span>'; } }
-      const ev=FLIGHTF.has(f)?`onchange="_resSetFlight(${r},'${f}',this.value)"`:`oninput="_resSetP(${r},'${f}',this.value)"`;
-      gh+=`<td class="${tdCls}"><input data-r="${r}" data-f="${f}" value="${String(v).replace(/"/g,'&quot;')}" ${ev}>${badge}</td>`;
+      const _isTar=/_tarih$/.test(f);
+      const _dispV=(_isTar&&/^\d{4}-\d{2}-\d{2}$/.test(String(v)))?String(v).split('-').reverse().join('.'):String(v);
+      const ev=FLIGHTF.has(f)?(_isTar?`onchange="_resSetFlight(${r},'${f}',_pdate(this.value))"`:`onchange="_resSetFlight(${r},'${f}',this.value)"`):`oninput="_resSetP(${r},'${f}',this.value)"`;
+      if(f==='bagaj' && _bagOpts.length){ const _has=_bagOpts.some(b=>b.ad===v);
+        gh+=`<td class="${tdCls}"><select data-r="${r}" data-f="bagaj" onchange="_resSetP(${r},'bagaj',this.value)" style="width:100%;border:none;background:transparent;padding:5px 4px;font-size:.75rem;font-family:inherit;color:var(--text);cursor:pointer"><option value=""></option>${_bagOpts.map(b=>`<option value="${esc(b.ad)}"${v===b.ad?' selected':''}>${esc(b.ad)}${b.dahil?' (dahil)':''}${b.fiyat?(' +'+b.fiyat+'€'):''}</option>`).join('')}${(v&&!_has)?`<option value="${esc(v)}" selected>${esc(v)}</option>`:''}</select>${badge}</td>`;
+      } else {
+        gh+=`<td class="${tdCls}"><input data-r="${r}" data-f="${f}" value="${_dispV.replace(/"/g,'&quot;')}" ${ev}>${badge}</td>`;
+      }
     });
-    gh+=`<td style="padding:3px 5px;text-align:center">${st?`<span class="reschip ${st==='biletlendi'?'rc-ok':'rc-bek'}">${st}</span>`:''}${frk?' <span class="reschip rc-frk">farklı PNR</span>':''}</td>`;
+    gh+=`<td style="padding:3px 5px;text-align:center">${frk?'<span class="reschip rc-frk">farklı PNR</span>':''}</td>`;
     gh+=`<td style="text-align:center"><button class="rowdel" onclick="delResRow(${r})">✕</button></td></tr>`;
   });
   // PNR maliyet tablosu
@@ -5985,6 +6163,18 @@ function _resSearchRows(v){ _resHighlight=v||''; const q=(v||'').toLowerCase().t
 function _resSetPnr(i,f,v){ const g=_pnrGrid(true); const p=g.rows[i]; if(!p)return; p[f]=f==='maliyet'?(parseFloat(v)||0):v; setPnrLedger(getPnrLedger()); renderRezervasyon(); }
 function _resAddPnr(){ const g=_pnrGrid(true); g.rows.push({pnr:'',maliyet:0,para:'TL',hy:'',hesap:'',alim:''}); setPnrLedger(getPnrLedger()); renderRezervasyon(); }
 function _resDelPnr(i){ const g=_pnrGrid(); if(!g)return; g.rows.splice(i,1); setPnrLedger(getPnrLedger()); renderRezervasyon(); }
+// ── Opsiyon (bilet hold) + Durum takibi ──
+const DURUM_OPTS=[['','—'],['bekliyor','Bekliyor'],['opsiyon','Opsiyon'],['biletlendi','Biletlendi'],['iptal','İptal']];
+const _DURCLR={bekliyor:'#b45309',opsiyon:'#c2410c',biletlendi:'#15803d',iptal:'#b91c1c'};
+const _OPSCLR={acil:{bg:'#fff1e6',bd:'#f26522',tx:'#9a3412'},yakin:{bg:'#fef9e7',bd:'#e0a800',tx:'#854d0e'},rahat:{bg:'#eafaf1',bd:'#22c55e',tx:'#15803d'}};
+function _durumEff(y){ return (y&&y.durum)||_durum(y)||''; }
+function _opsGun(st){ return st.days<0?(Math.abs(st.days)+'g geçti'):(st.days===0?'BUGÜN':(st.days+'g kaldı')); }
+function _opsStat(y){ if(!y||_durumEff(y)!=='opsiyon'||!y.opsTarih) return null; const t=String(y.opsTarih).slice(0,10); const today=new Date().toISOString().slice(0,10); const d=Math.round((Date.parse(t)-Date.parse(today))/86400000); if(isNaN(d)) return null; const level=d<=0?'acil':(d<=3?'yakin':'rahat'); return {days:d,level:level,tarih:t}; }
+function _resDurumCell(r,y){ const eff=_durumEff(y); const isOv=!!(y&&y.durum); const clr=_DURCLR[eff]||'var(--muted)'; let h='<select data-r="'+r+'" data-f="durum" onchange="_resSetDurum('+r+',this.value)" style="width:100%;border:none;background:transparent;font-family:inherit;font-size:.72rem;font-weight:700;cursor:pointer;color:'+clr+'">'+DURUM_OPTS.map(function(o){ return '<option value="'+o[0]+'"'+(((y&&y.durum)||'')===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select>'; if(!isOv && eff) h+='<div class="res-dstat">oto: '+eff+'</div>'; if(eff==='opsiyon'){ const st=_opsStat(y); const c=st?_OPSCLR[st.level]:null; const style=c?('border-color:'+c.bd+';background:'+c.bg+';color:'+c.tx):''; h+='<input type="date" class="res-opsd" value="'+esc((y&&y.opsTarih)||'')+'" onchange="_resSetOpsT('+r+',this.value)" style="'+style+'">'; if(st) h+='<div class="res-dstat" style="color:'+c.tx+';font-weight:800">'+_opsGun(st)+'</div>'; } return h; }
+function _resSetDurum(r,v){ const g=_resGrid(true); const y=g.rows[r]; if(!y)return; y.durum=v; setReservations(getReservations()); renderRezervasyon(); }
+function _resSetOpsT(r,v){ const g=_resGrid(true); const y=g.rows[r]; if(!y)return; y.opsTarih=v; setReservations(getReservations()); renderRezervasyon(); }
+function _opsAktifListe(){ const out=[]; const pkgs=getPackages(); (getReservations()||[]).forEach(function(g){ if(!g||!g.rows) return; const pk=pkgs.find(function(x){return x.id===g.pkgId;}); (g.rows||[]).forEach(function(y){ if(!_isim(y)) return; const st=_opsStat(y); if(st) out.push({pkgId:g.pkgId,kalkis:g.kalkis,ad:((y.soyad||'')+' '+(y.ad||'')).trim(),resno:y.resno||'',pnr:(y.g_pnr||y.d_pnr||''),stat:st,kod:pk?(pk.paketKodu||pk.paketAdi||''):''}); }); }); out.sort(function(a,b){return String(a.stat.tarih).localeCompare(String(b.stat.tarih));}); return out; }
+function _opsGit(pkgId,kalkis){ try{showPage('ucak');}catch(e){} setTimeout(function(){ try{ ucakOpen(pkgId,kalkis); }catch(e){} },60); }
 // ── toast (yayılım geri al) ──
 function _resToast(msg,undo){ let t=document.getElementById('resToast'); if(!t){ t=document.createElement('div'); t.id='resToast'; t.className='res-toast'; t.innerHTML='<span id="resToastMsg"></span><button id="resToastUndo" onclick="_resUndoProp()">Geri Al</button>'; document.body.appendChild(t); } document.getElementById('resToastMsg').textContent=msg; document.getElementById('resToastUndo').style.display=undo?'':'none'; t.classList.add('show'); clearTimeout(_resToast._t); _resToast._t=setTimeout(()=>t.classList.remove('show'),undo?6000:2400); }
 // ── sürükleme + klavye + yapıştırma (bir kez) ──
@@ -6003,6 +6193,16 @@ function _resGridInit(){
   document.addEventListener('paste',e=>{ const el=e.target; if(!el.matches||!el.matches('#resTbl input'))return; const txt=(e.clipboardData||window.clipboardData).getData('text'); if(!txt||(!txt.includes('\t')&&!txt.includes('\n')))return; e.preventDefault(); const lines=txt.replace(/\r/g,'').split('\n').filter(x=>x.length); const order=_resVisCols().map(c=>c[0]); const g=_resGrid(true); let r=+el.dataset.r; const c0=order.indexOf(el.dataset.f);
     lines.forEach(line=>{ while(r>=g.rows.length) g.rows.push(_newResRow()); const y=g.rows[r]; line.split('\t').forEach((val,i)=>{ const f=order[c0+i]; if(f) y[f]=val.trim(); }); r++; });
     setReservations(getReservations()); renderRezervasyon(); showToast(lines.length+' satır yapıştırıldı','success'); });
+  // ── çoklu hücre seçimi + kopyala ──
+  let _sel=null,_md=false;
+  const _order2=()=>_resVisCols().map(c=>c[0]);
+  const _rc=el=>{ if(!el||!el.dataset||el.dataset.r==null||!el.dataset.f) return null; const c=_order2().indexOf(el.dataset.f); if(c<0) return null; return {r:+el.dataset.r,c}; };
+  const _selClear=()=>{ document.querySelectorAll('#resTbl td.selc').forEach(td=>td.classList.remove('selc')); };
+  const _selPaint=()=>{ _selClear(); if(!_sel) return; const order=_order2(); const r0=Math.min(_sel.r0,_sel.r1),r1=Math.max(_sel.r0,_sel.r1),c0=Math.min(_sel.c0,_sel.c1),c1=Math.max(_sel.c0,_sel.c1); for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){ const el=document.querySelector(`#resTbl [data-r="${r}"][data-f="${order[c]}"]`); if(el){ const td=el.closest('td'); if(td) td.classList.add('selc'); } } };
+  document.addEventListener('mousedown',e=>{ const el=e.target.closest&&e.target.closest('#resTbl [data-r][data-f]'); if(!el){ if(!(e.target.closest&&e.target.closest('#resTbl'))){ _sel=null; _selClear(); } return; } const rc=_rc(el); if(!rc) return; if(e.shiftKey&&_sel){ _sel.r1=rc.r; _sel.c1=rc.c; _selPaint(); e.preventDefault(); } else { _sel={r0:rc.r,c0:rc.c,r1:rc.r,c1:rc.c}; _md=true; _selClear(); } });
+  document.addEventListener('mouseover',e=>{ if(!_md||!_sel) return; const el=e.target.closest&&e.target.closest('#resTbl [data-r][data-f]'); if(!el) return; const rc=_rc(el); if(!rc) return; if(rc.r!==_sel.r1||rc.c!==_sel.c1){ _sel.r1=rc.r; _sel.c1=rc.c; try{window.getSelection().removeAllRanges();}catch(_e){} _selPaint(); } });
+  document.addEventListener('mouseup',()=>{ _md=false; });
+  document.addEventListener('copy',e=>{ if(!_sel) return; if(_sel.r0===_sel.r1&&_sel.c0===_sel.c1) return; const order=_order2(); const g=_resGrid(); if(!g) return; const r0=Math.min(_sel.r0,_sel.r1),r1=Math.max(_sel.r0,_sel.r1),c0=Math.min(_sel.c0,_sel.c1),c1=Math.max(_sel.c0,_sel.c1); const lines=[]; for(let r=r0;r<=r1;r++){ const cells=[]; for(let c=c0;c<=c1;c++){ const f=order[c]; const y=g.rows[r]||{}; let v=y[f]==null?'':y[f]; if(f==='durum') v=_durumEff(y); cells.push(String(v).replace(/\t/g,' ').replace(/\n/g,' ')); } lines.push(cells.join('\t')); } try{ e.clipboardData.setData('text/plain',lines.join('\n')); e.preventDefault(); showToast((r1-r0+1)+'×'+(c1-c0+1)+' hücre kopyalandı','success'); }catch(_e){} });
 }
 function exportReservationExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekebilir)','error'); return; }
@@ -6038,6 +6238,28 @@ function exportReservationExcel(){
 const SB_URL='https://jyqwbzyevejyqxfafrtf.supabase.co';
 const SB_KEY='sb_publishable_65daq2tGCWi0fHcERLGwbQ_7zPH8TD2';
 let sb=null, sbUser=null, sbRol=null, _cloudOn=false;
+// ═══ ROL / YETKI ═══
+const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor'};
+const _ACL={
+  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e'},
+  rezervasyon: {home:'e',urun:'-',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-'},
+  ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-'},
+  operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v'},
+  goruntuleme: {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v'},
+  urun:        {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v'}
+};
+function _acl(pageId){ if(!_cloudOn||!sbRol) return 'e'; const grp=_PAGEGRP[pageId]||'home'; const m=_ACL[sbRol]||_ACL.goruntuleme; return m[grp]||'-'; }
+function _applyRoleNav(){ document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=''; return; } t.style.display=(_acl(pg)==='-')?'none':''; }); }
+function _roBanner(show){ let b=document.getElementById('roBar'); if(show){ if(!b){ b=document.createElement('div'); b.id='roBar'; b.textContent='Salt-okunur — bu bölümde yalnızca görüntüleme yetkiniz var'; document.body.appendChild(b); } b.style.display=''; } else if(b){ b.style.display='none'; } }
+// ═══ ROL ÖNİZLEME (yönetici başka rolün gözünden bakar) ═══
+const _ROLAD={yonetici:'Yönetici',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',urun:'Ürün (eski)'};
+let _rolGercek=null,_rolOnizleKim='';
+function _rolOnizle(rol,kim){ if(_rolGercek==null && sbRol!=='yonetici'){ showToast('Yalnız yönetici önizleyebilir','error'); return; } if(_rolGercek==null) _rolGercek=sbRol; sbRol=rol||'goruntuleme'; _rolOnizleKim=kim||''; try{closeModal('modalUsers');}catch(e){} _applyRoleNav(); _rolOnizleBar(); try{showToast('"'+(_ROLAD[sbRol]||sbRol)+'" rolü gözünden önizleniyor','success');}catch(e){} try{showPage('paketlerim');}catch(e){} }
+function _rolOnizleCik(){ if(_rolGercek==null) return; sbRol=_rolGercek; _rolGercek=null; _rolOnizleKim=''; _applyRoleNav(); _rolOnizleBar(); try{_renderUserChip();}catch(e){} try{showPage('paketlerim');}catch(e){} }
+function _rolOnizleBar(){ let b=document.getElementById('rolPvBar'); if(_rolGercek==null){ if(b) b.remove(); return; } if(!b){ b=document.createElement('div'); b.id='rolPvBar'; document.body.appendChild(b); } const roles=['yonetici','rezervasyon','ucak','operasyon','goruntuleme']; b.innerHTML='<span class="rpv-eye">ÖNİZLEME</span><span>'+(_rolOnizleKim?'<b>'+esc(_rolOnizleKim)+'</b> · ':'')+'<b>'+esc(_ROLAD[sbRol]||sbRol)+'</b> gözünden</span><select class="rpv-sel">'+roles.map(r=>'<option value="'+r+'"'+(sbRol===r?' selected':'')+'>'+(_ROLAD[r]||r)+'</option>').join('')+'</select><button type="button" class="rpv-cik">Yöneticiye dön</button>'; }
+document.addEventListener('click',function(e){ const t=e.target; if(!t||!t.closest) return; if(t.closest('.rolpv-btn')){ e.preventDefault(); const b=t.closest('.rolpv-btn'); _rolOnizle(b.getAttribute('data-rol'),b.getAttribute('data-kim')); } else if(t.closest('.rpv-cik')){ e.preventDefault(); _rolOnizleCik(); } });
+document.addEventListener('change',function(e){ const t=e.target; if(t&&t.closest&&t.closest('.rpv-sel')){ _rolOnizle(t.value); } });
+try{ window._rolOnizle=_rolOnizle; window._rolOnizleCik=_rolOnizleCik; }catch(e){}
 const _sigPkg=new Map(), _sigOp=new Map(), _sigKv=new Map();
 const _cloudT={};
 
@@ -6089,6 +6311,8 @@ async function _cloudStart(session){
     sbRol=prof?.rol||'goruntuleme';
     _cloudOn=true;
     _renderUserChip();
+    _applyRoleNav();
+    try{ showPage(((document.querySelector('.page.active')||{id:'page-paketlerim'}).id||'page-paketlerim').replace('page-','')); }catch(e){}
     _setCloud('ok','Bulut: bağlanıyor…');
     await _cloudPull();
     _cloudSubscribe();
@@ -6183,12 +6407,12 @@ function _mutPanel(list,baslik,digerN){
   const R={ucakYok:['#b45309','#fef3c7','UÇAK LİSTESİNDE YOK'],rezvYok:['#0369a1','#e0f2fe','REZV. KAYDI YOK'],ucFark:['#b91c1c','#fee2e2','UÇUŞ UÇLARI FARKLI'],seferUrunYok:['#7e22ce','#f3e8ff','ÜRÜNDE TARİH YOK']};
   let ic2=list.slice(0,20).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:.74rem;padding:3px 0;flex-wrap:wrap">
       <span style="background:${R[x.tip][1]};color:${R[x.tip][0]};font-weight:800;font-size:.58rem;padding:2px 7px;border-radius:9px;white-space:nowrap">${R[x.tip][2]}</span>
-      <b>${esc(x.voucher)}</b><span style="color:var(--muted)">${esc(x.kod)} · ${_fmtDateTR(x.kalkis)}</span><span>${esc(x.detay)}</span></div>`).join('');
-  if(list.length>20) ic2+=`<div style="font-size:.68rem;color:var(--muted)">+${list.length-20} uyarı daha</div>`;
-  if(!list.length) ic2=`<div style="font-size:.72rem;color:var(--muted)">Bu tarihte uyarı yok.</div>`;
-  return `<div class="card" style="border:1.5px solid #fcd34d;background:#fffbeb;padding:.6rem .9rem;margin-bottom:10px">
+      <b>${esc(x.voucher)}</b><span style="color:#6b7280">${esc(x.kod)} · ${_fmtDateTR(x.kalkis)}</span><span>${esc(x.detay)}</span></div>`).join('');
+  if(list.length>20) ic2+=`<div style="font-size:.68rem;color:#6b7280">+${list.length-20} uyarı daha</div>`;
+  if(!list.length) ic2=`<div style="font-size:.72rem;color:#6b7280">Bu tarihte uyarı yok.</div>`;
+  return `<div class="card" style="border:1.5px solid #fcd34d;background:#fffbeb;padding:.6rem .9rem;margin-bottom:10px;color:#3f3f46">
     <div style="font-weight:800;font-size:.78rem;margin-bottom:4px;display:flex;align-items:center;gap:6px"><svg class="ic"><use href="#i-alert"/></svg> Rezervasyon ↔ Uçak mutabakatı ${baslik||''} ${list.length?'('+list.length+')':''}
-    ${digerN?`<span style="font-weight:600;color:var(--muted);font-size:.66rem;margin-left:auto">diğer tarihlerde ${digerN} uyarı daha</span>`:''}</div>
+    ${digerN?`<span style="font-weight:600;color:#6b7280;font-size:.66rem;margin-left:auto">diğer tarihlerde ${digerN} uyarı daha</span>`:''}</div>
     ${ic2}</div>`;
 }
 const _rzGun=(t,n)=>{ const d=new Date(t+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
@@ -7336,7 +7560,22 @@ function rzDetay(){
   document.getElementById('rzKartCard').style.display=r.tip==='transfer'?'none':'';
   document.getElementById('rzTrfCard').style.display=r.tip==='transfer'?'':'none';
   document.getElementById('rzBtnAcilim').style.display=r.tip==='urun'?'':'none';
+  { const _uzP=(r.tip==='urun')?getPackages().find(p=>p.id===r.pkgId):null; const _w=document.getElementById('rzUzatmaWrap');
+    if(_w){ if(_uzP&&_uzP.uzatma&&_uzP.uzatma.aktif){ _w.style.display='inline-flex'; const _sel=document.getElementById('rzUzatma'); if(_sel)_sel.value=String(+r.uzatmaHafta||0); } else _w.style.display='none'; } }
   rzMusteriler(); rzKartlar(); rzTrf(); renderRzUrunKarti();
+}
+function rzUzatmaSet(v){ const r=rzR(); if(!r) return; r.uzatmaHafta=+v||0; rzSave(); _rzUzatmaSync(); }
+function _rzUzatmaSync(){
+  const r=rzR(); if(!r) return; const pkg=getPackages().find(p=>p.id===r.pkgId);
+  r.kartlar=(r.kartlar||[]).filter(k=>!k.uzatma);
+  const uz=pkg&&pkg.uzatma; const hf=+r.uzatmaHafta||0;
+  const ana=r.kartlar.filter(k=>k.tip!=='ulasim');
+  if(uz&&uz.aktif&&hf>0&&ana.length){
+    const son=ana[ana.length-1]; const bas=_rzGun(son.baslangic,+son.gece||0);
+    r.kartlar.push({id:genId(),otel:uz.otel||'',sehir:uz.bolge||'',yildiz:'',pansiyon:uz.pansiyon||'HB',baslangic:bas,gece:hf*(+uz.gece||7),oda:_rzKompOzet(r)||'1×DBL',uyeler:(r.musteriler||[]).map(m=>m.id),konfirme:'Gönderilmedi',not:'Uzatma haftası ('+hf+' hf)',uzatma:true});
+  }
+  rzSave(); rzKartlar();
+  if(uz&&uz.aktif&&hf>0&&!ana.length) showToast('Uzatma kaydedildi — "Açılımı Yap" yapınca uzatma oteli de eklenir','success',4000);
 }
 function _rzUrunler(){
   const r=rzR(); if(!r) return [];
@@ -7538,10 +7777,11 @@ function rzKartlar(){
       if(otKT&&otKT.pansTarih&&k.baslangic){ const f=l.filter(p=>{ const t=otKT.pansTarih[p]; if(!t||(!t.bas&&!t.bit)) return true; return (t.bas||'0000-01-01')<=k.baslangic&&(t.bit||'9999-12-31')>=k.baslangic; }); if(f.length) l=f; }
       if(k.pansiyon&&!l.includes(k.pansiyon)) l.unshift(k.pansiyon); return l; })();
     const odaTL=(otKT?(Array.isArray(otKT.odalar)?otKT.odalar:(Array.isArray(otKT.odaTipleri)?otKT.odaTipleri:[])):[]).filter(x=>x.kod);
-    return `<div class="rzkart${bolgeli?' bolgeli':''}">
+    return `<div class="rzkart${bolgeli?' bolgeli':''}"${k.uzatma?' style="border-left:4px solid #1d4ed8"':''}>
       <div class="rzkart-head" onclick="if(!['INPUT','SELECT','BUTTON'].includes(event.target.tagName)) rzKartAcKapa(${i})" style="cursor:pointer">
         <span style="font-size:.66rem;opacity:.8${_rzKartAcik.has(i)?';transform:rotate(90deg)':''};display:inline-block;transition:transform .15s">▶</span>
         <span class="no">${i+1}</span>
+        ${k.uzatma?'<span style="background:#dbeafe;color:#1d4ed8;font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:6px;white-space:nowrap">UZATMA</span>':''}
         <input value="${(k.otel||'').replace(/"/g,'&quot;')}" list="rzOtelList_${i}" placeholder="${bolgeli?'OTEL SEÇ — şablon: '+esc(k.sehir||'')+' · '+esc(k.pansiyon||''):''}" onchange="rzKOtel(${i},this)">
         <datalist id="rzOtelList_${i}">${_rzOtelOpts(k.sehir)}</datalist>
         <span class="sab">${esc(k.sehir||'')}${k.yildiz?' · '+esc(k.yildiz):''} · ${esc(k.pansiyon||'')}</span>
@@ -7623,6 +7863,8 @@ function rzAcilim(){
       r.kartlar.push({id:genId(),otel:b.otel||'',sehir:b.sehir,yildiz:b.yildiz||'',pansiyon:b.pansiyon,baslangic:t,gece:b.gece,oda:_rzKompOzet(r)||'1×DBL',uyeler:(r.musteriler||[]).map(m=>m.id),konfirme:'Gönderilmedi',not:''});
       t=_rzGun(t,b.gece);
     });
+    { const _uz=pkg.uzatma; const _hf=+r.uzatmaHafta||0;
+      if(_uz&&_uz.aktif&&_hf>0){ r.kartlar.push({id:genId(),otel:_uz.otel||'',sehir:_uz.bolge||'',yildiz:'',pansiyon:_uz.pansiyon||'HB',baslangic:t,gece:_hf*(+_uz.gece||7),oda:_rzKompOzet(r)||'1×DBL',uyeler:(r.musteriler||[]).map(m=>m.id),konfirme:'Gönderilmedi',not:'Uzatma haftası ('+_hf+' hf)',uzatma:true}); t=_rzGun(t,_hf*(+_uz.gece||7)); } }
     rzSave(); rzKartlar(); rzMusteriler();
     const bolgeli=r.kartlar.filter(k=>!(k.otel||'').trim()).length;
     showToast('Açılım: '+r.kartlar.length+' kart'+(bolgeli?' — '+bolgeli+' kartta otel seçilecek':''),'success');
@@ -7965,6 +8207,7 @@ function _cloudSubscribe(){
       .subscribe();
   }catch(e){ console.warn('realtime',e); }
 }
+function _canon(o){ if(o===null||typeof o!=='object') return JSON.stringify(o); if(Array.isArray(o)) return '['+o.map(_canon).join(',')+']'; return '{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+_canon(o[k])).join(',')+'}'; }
 function _onRemote(kind,p){
   try{
     if(kind==='packages'){
@@ -7975,7 +8218,9 @@ function _onRemote(kind,p){
       } else {
         const row=p.new; if(!row||!row.data) return;
         const sig=JSON.stringify(row.data);
-        if(_sigPkg.get(row.id)===sig) return; // kendi yazdığımız
+        if(_sigPkg.get(row.id)===sig) return; // birebir aynı
+        const _loc=_pkgCache.find(x=>x.id===row.id);
+        if(_loc && _canon(_loc)===_canon(row.data)){ _sigPkg.set(row.id,sig); return; } // içerik aynı = kendi kaydımızın yankısı (anahtar sırası farkı), uyarı verme
         _sigPkg.set(row.id,sig);
         const i=_pkgCache.findIndex(x=>x.id===row.id);
         if(i>=0)_pkgCache[i]=row.data; else _pkgCache.push(row.data);
@@ -7990,6 +8235,8 @@ function _onRemote(kind,p){
         const row=p.new; if(!row||!row.data) return;
         const sig=JSON.stringify(row.data);
         if(_sigOp.get(row.id)===sig) return;
+        const _lo=_opCache.find(x=>x.id===row.id);
+        if(_lo && _canon(_lo)===_canon(row.data)){ _sigOp.set(row.id,sig); return; }
         _sigOp.set(row.id,sig);
         const i=_opCache.findIndex(x=>x.id===row.id);
         if(i>=0)_opCache[i]=row.data; else _opCache.push(row.data);
@@ -8025,14 +8272,15 @@ async function openUsersModal(){
   document.getElementById('modalUsers').classList.add('open');
   const {data,error}=await sb.from('profiles').select('*').order('created_at');
   if(error){ el.innerHTML='<div class="section-tip" style="color:var(--danger)">Liste alınamadı: '+esc(error.message)+'</div>'; return; }
-  const roller=[['yonetici','Yönetici'],['urun','Ürün'],['rezervasyon','Rezervasyon'],['ucak','Uçak'],['operasyon','Operasyon'],['goruntuleme','Görüntüleme']];
-  el.innerHTML=(data||[]).map(u=>
-    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">'
-    +'<div style="min-width:0"><div style="font-size:.86rem;font-weight:600;overflow:hidden;text-overflow:ellipsis">'+esc(u.email||u.ad||u.id)+'</div></div>'
+  const roller=[['yonetici','Yönetici'],['rezervasyon','Rezervasyon'],['ucak','Uçak'],['operasyon','Operasyon'],['goruntuleme','Görüntüleme']];
+  el.innerHTML=(data||[]).map(u=>{
+    const opts=roller.slice(); if(u.rol && !opts.some(r=>r[0]===u.rol)) opts.unshift([u.rol,(u.rol||'?')+' (eski)']);
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">'
+    +'<div style="min-width:0"><div style="font-size:.86rem;font-weight:600;overflow:hidden;text-overflow:ellipsis">'+esc(u.email||u.ad||u.id)+'</div></div>'+'<div style="display:flex;gap:6px;align-items:center;flex-shrink:0">'
     +'<select onchange="setUserRol(\''+u.id+'\',this.value)" style="padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"'+(u.id===sbUser.id?' disabled title="Kendi rolünü değiştiremezsin"':'')+'>'
-    +roller.map(r=>'<option value="'+r[0]+'"'+(u.rol===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')
-    +'</select></div>'
-  ).join('')||'<div class="section-tip">Kullanıcı yok.</div>';
+    +opts.map(r=>'<option value="'+r[0]+'"'+(u.rol===r[0]?' selected':'')+'>'+r[1]+'</option>').join('')
+    +'</select>'+(u.id===sbUser.id?'':'<button type="button" class="btn btn-outline btn-sm rolpv-btn" data-rol="'+(u.rol||'goruntuleme')+'" data-kim="'+esc(String(u.email||''))+'" style="padding:3px 9px;white-space:nowrap">Gözünden bak</button>')+'</div></div>';
+  }).join('')||'<div class="section-tip">Kullanıcı yok.</div>';
 }
 async function setUserRol(id,rol){
   const {error}=await sb.from('profiles').update({rol}).eq('id',id);
@@ -8113,6 +8361,7 @@ async function _boot(){
   renderDashboard();
   updateCalc();
   restoreLastState();
+  try{ _initSecCollapse(); }catch(e){}
 }
 // ═══════════════ LOGO ZEMİN DÜZELTME (bir defalık) ═══════════════
 function _whitenDarkEdges(dataUrl){
@@ -9106,7 +9355,7 @@ function _tdYevToplam(g){ const t=_tdN(g.yevmiye.tutar), gn=+g.gunSay||0;
 function _tdAktList(E){
   const out=[]; const seen=new Set();
   (E.uyeler||[]).forEach(u=>{ const pk=getPackages().find(p=>p.id===u.pkgId); if(!pk) return;
-    (pk.aktiviteler||[]).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:+a.fiyat||0,dahil:!!a.dahilMi}); });
+    (pk.aktiviteler||[]).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:+a.fiyat||0,dahil:!!a.dahilMi,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:'')}); });
   });
   return out;
 }
@@ -9208,7 +9457,7 @@ function tdSatisAdd(ozel){
 function tdSatisSet(i,f,v){
   const g=_tdG(); if(!g||!g.satislar[i])return;
   g.satislar[i][f]=String(v).trim();
-  if(f==='ad'){ const E=_tdE(); const a=E?_tdAktList(E).find(x=>x.ad.toLocaleLowerCase('tr')===String(v).trim().toLocaleLowerCase('tr')):null; if(a&&!_tdN(g.satislar[i].satis)){ g.satislar[i].satis=String(a.fiyat||''); } }
+  if(f==='ad'){ const E=_tdE(); const a=E?_tdAktList(E).find(x=>x.ad.toLocaleLowerCase('tr')===String(v).trim().toLocaleLowerCase('tr')):null; if(a){ if(!_tdN(g.satislar[i].satis)) g.satislar[i].satis=String(a.fiyat||''); if(a.komTip&&!g.satislar[i].komTip){ g.satislar[i].komTip=a.komTip; if((a.komDeg!==''&&a.komDeg!=null)&&!_tdN(g.satislar[i].komDeg)) g.satislar[i].komDeg=String(a.komDeg); } } }
   _tdSave(); _tdSatisDom();
 }
 function tdSatisDel(i){ const g=_tdG(); if(!g)return; g.satislar.splice(i,1); _tdSave(); renderOpsGrup(); }
