@@ -842,6 +842,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div class="pkg-section-item" onclick="openSectionModal('card-konaklama')"><svg class="ic"><use href="#i-bed"/></svg> Örnek Konaklama</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-fiyat')"><svg class="ic"><use href="#i-coins"/></svg> Fiyatlandırma</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-uzatma')"><svg class="ic"><use href="#i-calendar"/></svg> Uzatma Haftası</div>
+        <div class="pkg-section-item" onclick="openSectionModal('card-ekstracharges')"><svg class="ic"><use href="#i-coins"/></svg> Ekstra Charges</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-dahil')"><svg class="ic"><use href="#i-list"/></svg> Dahil / Dahil Değil</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-notlar')"><svg class="ic"><use href="#i-pin"/></svg> Önemli Notlar</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-iptal')"><svg class="ic"><use href="#i-stop"/></svg> İptal Şartları</div>
@@ -934,7 +935,10 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <button class="btn btn-outline btn-sm" onclick="showPage('urun')" style="white-space:nowrap">← Geri</button>
         <div id="opdetayHeader" style="display:flex;align-items:center;gap:10px"></div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="newPackageForCurrentOp()">+ Yeni Paket</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;white-space:nowrap"><svg class="ic"><use href="#i-upload"/></svg> Paket İçe Aktar<input type="file" accept=".json" multiple onchange="importPackagesForOp(event)" style="display:none"></label>
+        <button class="btn btn-primary btn-sm" onclick="newPackageForCurrentOp()">+ Yeni Paket</button>
+      </div>
     </div>
     <div id="opdetayYearFilter" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.1rem;align-items:center"></div>
     <div class="pkg-grid" id="opdetayPkgGrid"></div>
@@ -1116,18 +1120,31 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
     <div class="card" id="card-fiyat">
       <div class="card-title" style="justify-content:space-between">
         <span><svg class="ic"><use href="#i-coins"/></svg> Sezon Fiyatlandırması</span>
+        <span style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cocukFiyatiCheckbox" onchange="cocukFiyatiAktif=this.checked;renderSezonlar();markDirty()" style="width:15px;height:15px;accent-color:var(--primary)">
+          <input type="checkbox" id="cocukFiyatiCheckbox" onchange="cocukFiyatiAktif=this.checked;renderSezonlar();renderUzatma();renderOtelUrun();markDirty()" style="width:15px;height:15px;accent-color:var(--primary)">
           Çocuk Fiyatı Ekle
         </label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="otelUrunChk" onchange="otelUrun=this.checked;renderOtelUrun();renderUzatma();markDirty()" style="width:15px;height:15px;accent-color:var(--primary)">
+          Otel ürünü (yaş bazlı)
+        </label>
+        </span>
       </div>
       <p style="font-size:.76rem;color:var(--muted);margin-bottom:.7rem">Havalimanlarında seçilen tarihler burada otomatik görünür. Fiyat girdikçe sezonlar oluşur (en düşük = A). EZZ supplementini buradan ayarlayın.</p>
+      <div id="otelUrunBox"></div>
       <div id="sezonlarTablosu"></div>
     </div>
     <div class="card" id="card-uzatma">
       <div class="card-title"><svg class="ic"><use href="#i-calendar"/></svg> Uzatma Haftası</div>
       <p style="font-size:.76rem;color:var(--muted);margin-bottom:.7rem">Ana tura opsiyonel deniz/uzatma haftası (Badeverlängerung). Tek otel/bölge · sezon bazlı haftalık kişi başı fiyat. Rezervasyon/fatura sonraki fazda.</p>
       <div id="uzatmaBody"></div>
+    </div>
+    <div class="card" id="card-ekstracharges">
+      <div class="card-title"><svg class="ic"><use href="#i-coins"/></svg> Ekstra Charges</div>
+      <p style="font-size:.76rem;color:var(--muted);margin-bottom:.7rem">Operatöre kişi başı fatura edilebilen istisnai kalemler (ör. mağaza atlama / One less shop). "Sezon bazlı" işaretlenirse her sezona ayrı tutar; işaretsizse tek tutar tüm sezon/tarihlere uygulanır.</p>
+      <div id="ekstraCharges"></div>
+      <button class="add-btn" onclick="addEkstraCharge()">+ Ekstra charge ekle</button>
     </div>
     <div class="card" id="card-dahil">
       <div class="card-title"><svg class="ic"><use href="#i-list"/></svg> Dahil / Dahil Değil</div>
@@ -1674,7 +1691,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v088 · 07.07.2026';
+const APP_VER='v095 · 08.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -1692,7 +1709,8 @@ let oteller=[], transferler=[], gunler=[], aktiviteler=[], ekstraMaliyetler=[], 
 let ornekOteller={}; // key: 'sehir|||kalite|||pansiyon' → otel adı
 let fiyatlandirma=[], sezonlar=[], cocukFiyatiAktif=false; let _havAcik=new Set();
 function _uzatmaBos(){ return {aktif:false,ad:'',bolge:'',otel:'',pansiyon:'',gece:7,fiyat:{}}; }
-let uzatma=_uzatmaBos(); let bagajlar=[];
+let uzatma=_uzatmaBos(); let bagajlar=[]; let ekstraCharges=[];
+let otelUrun=false, otelBebekUst=2, otelCocukUst=13, otelMaxCocuk=2;
 let _fiyatSort={col:'tarih',dir:1}, _fiyatFilter={sezon:'',ap:''};
 let dahilItems=[], dahilDegilItems=[], onemliNotlarItems=[];
 let _airportCalStates={}; // {i:{yil,ay}}
@@ -2914,7 +2932,9 @@ function collectData(){
     fiyatlandirma:JSON.parse(JSON.stringify(fiyatlandirma)),
     sezonlar:JSON.parse(JSON.stringify(sezonlar)),
     uzatma:JSON.parse(JSON.stringify(uzatma)),
+    ekstraCharges:JSON.parse(JSON.stringify(ekstraCharges)),
     cocukFiyatiAktif,
+    otelUrun, otelBebekUst, otelCocukUst, otelMaxCocuk,
     ornekOteller:JSON.parse(JSON.stringify(ornekOteller))
   };
 }
@@ -3205,12 +3225,15 @@ function fillForm(d){
   ucuslar=_rawU; varisHavalimani=d.varisHavalimani||''; donusHavalimani=d.donusHavalimani||'';
   const _uoEl=document.getElementById('pkgUcakOperatorde');if(_uoEl)_uoEl.checked=!!d.ucakOperatorde;
   bagajlar = Array.isArray(d.bagajlar) ? d.bagajlar.map(b=>({ad:b.ad||'',fiyat:+b.fiyat||0,dahil:!!b.dahil})) : ((d.bagajDetay||'').trim()?[{ad:d.bagajDetay,fiyat:0,dahil:true}]:[]); if(bagajlar.length&&!bagajlar.some(b=>b.dahil)) bagajlar[0].dahil=true; renderBagajlar();
+  ekstraCharges = Array.isArray(d.ekstraCharges)?d.ekstraCharges.map(c=>({ad:c.ad||'',sezonBazli:!!c.sezonBazli,tutar:+c.tutar||0,sezonTutar:(c.sezonTutar&&typeof c.sezonTutar==='object')?c.sezonTutar:{}})):[]; renderEkstraCharges();
   const _vhEl=document.getElementById('varisHavalimani');if(_vhEl)_vhEl.value=varisHavalimani;
   const _dhEl=document.getElementById('donusHavalimani');if(_dhEl)_dhEl.value=donusHavalimani;
   oteller=d.oteller||[]; ornekOteller=d.ornekOteller||{}; transferler=d.transferler||[];
   gunler=d.gunler||[]; aktiviteler=d.aktiviteler||[]; ekstraMaliyetler=d.ekstraMaliyetler||[];
   cocukFiyatiAktif=d.cocukFiyatiAktif||false;
   const _chk=document.getElementById('cocukFiyatiCheckbox');if(_chk)_chk.checked=cocukFiyatiAktif;
+  otelUrun=!!d.otelUrun; otelBebekUst=d.otelBebekUst!=null?+d.otelBebekUst:2; otelCocukUst=d.otelCocukUst!=null?+d.otelCocukUst:13; otelMaxCocuk=d.otelMaxCocuk!=null?+d.otelMaxCocuk:2;
+  { const _oc=document.getElementById('otelUrunChk'); if(_oc)_oc.checked=otelUrun; } if(typeof renderOtelUrun==='function') renderOtelUrun();
   // Sezonlar: fillForm içinde fiyatlandirma bloğunda yükleniyor
   // Havalimanları: yükle + migrate (eski formatlara uyum)
   havalimanSuppleri=(d.havalimanSuppleri||[]).map(s=>{
@@ -3432,6 +3455,7 @@ function clearForm(){
   _undoStack=[]; _updateUndoBtn();
   ['paketAdi','destinasyonSehir','baslangic','bitis','paketAciklama','maliyetNot','iptalSartlari'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   bagajlar=[]; renderBagajlar();
+  ekstraCharges=[]; renderEkstraCharges();
   dahilItems=[]; dahilDegilItems=[]; onemliNotlarItems=[]; renderDahilLists();
   renderDestinasyonSelect('');
   document.getElementById('gece').value=3;
@@ -3439,6 +3463,7 @@ function clearForm(){
   document.getElementById('marginPct').value=25;
   ucuslar=[];oteller=[];ornekOteller={};transferler=[];gunler=[];aktiviteler=[];ekstraMaliyetler=[];havalimanSuppleri=[];
   fiyatlandirma=[];sezonlar=[];cocukFiyatiAktif=false;_airportCalStates={};_havAcik=new Set();uzatma=_uzatmaBos();
+  otelUrun=false; otelBebekUst=2; otelCocukUst=13; otelMaxCocuk=2; { const _oc=document.getElementById('otelUrunChk'); if(_oc)_oc.checked=false; }
   const cbx=document.getElementById('cocukFiyatiCheckbox'); if(cbx) cbx.checked=false;
   const _uoc=document.getElementById('pkgUcakOperatorde'); if(_uoc) _uoc.checked=false;
   renderAll(); updateCalc(); try{_secCollapseAll();}catch(e){}
@@ -3584,6 +3609,28 @@ function importPackages(evt){
   }); evt.target.value='';
 }
 function importSinglePackage(evt){importPackages(evt);}
+function importPackagesForOp(evt){
+  const opId=currentViewOpId;
+  if(!opId){ showToast('Önce bir operatör açın','error'); evt.target.value=''; return; }
+  const opAd=(getOperators().find(o=>o.id===opId)||{}).ad||'operatör';
+  Array.from(evt.target.files).forEach(file=>{
+    const r=new FileReader(); r.onload=e=>{
+      try{
+        const data=JSON.parse(e.target.result);
+        const arr=Array.isArray(data)?data:[data];
+        if(arr.length && arr[0] && arr[0].rows!==undefined && arr[0].kalkis!==undefined){ showToast('Bu bir sefer/uçak listesi — buraya ürün (paket) JSON’u aktarın','error'); return; }
+        const all=getPackages(); let yeni=0,guncel=0;
+        arr.forEach(pkg=>{ if(!pkg||typeof pkg!=='object') return; if(!pkg.id)pkg.id=genId(); if(!pkg.createdAt)pkg.createdAt=new Date().toISOString(); pkg.updatedAt=new Date().toISOString(); pkg.operatorId=opId; const i=all.findIndex(p=>p.id===pkg.id); if(i>=0){all[i]=pkg;guncel++;}else{all.push(pkg);yeni++;} });
+        setPackages(all);
+        try{renderOpDetailPkgGrid();}catch(_e){}
+        try{renderDashboard();}catch(_e){}
+        if(typeof renderUrunPage==='function'){ try{renderUrunPage();}catch(_e){} }
+        showToast('✅ '+(yeni+guncel)+' paket “'+opAd+'” altına aktarıldı ('+yeni+' yeni, '+guncel+' güncel)','success');
+      }catch(err){ showToast('❌ Geçersiz dosya','error'); }
+    }; r.readAsText(file);
+  });
+  evt.target.value='';
+}
 function _ucakEksikRapor(list,n){
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
@@ -4649,17 +4696,94 @@ function renderUzatma(){
   </div>`;
   if(!sezonlar.length){ h+=`<div style="font-size:.8rem;color:var(--muted);padding:9px 11px;background:var(--light);border-radius:8px">Haftalık fiyat için önce <b>Sezon Fiyatlandırması</b>ndan sezonları oluştur; sonra burada her sezona haftalık fiyat girersin.</div>`; }
   else { h+=`<div style="font-size:.78rem;font-weight:700;color:var(--primary);margin-bottom:6px">Haftalık kişi başı fiyat (uzatma · ${esc(document.getElementById('para')?document.getElementById('para').value:'EUR')})</div>
-    <table class="rzmg" style="max-width:440px"><tr><th style="width:70px">Sezon</th><th>Haftalık DBL</th><th>Haftalık EZ farkı</th></tr>
+    <table class="rzmg" style="max-width:${cocukFiyatiAktif?520:440}px"><tr><th style="width:70px">Sezon</th><th>Haftalık DBL</th><th>Haftalık EZ farkı</th>${cocukFiyatiAktif?'<th>Haftalık ÇOCUK</th>':''}</tr>
     ${sezonlar.map(sz=>{ const fz=uzatma.fiyat[sz.ad]||{}; return `<tr><td style="font-weight:800;color:var(--primary)">${esc(sz.ad)}</td>
       <td><input inputmode="decimal" value="${fz.ciftKisi!=null&&fz.ciftKisi!==0?fz.ciftKisi:(fz.ciftKisi===0?0:'')}" onchange="uzatmaFiyat('${esc(sz.ad)}','ciftKisi',this.value)" style="width:100%;text-align:right"></td>
-      <td><input inputmode="decimal" value="${fz.tekSupp!=null&&fz.tekSupp!==0?fz.tekSupp:(fz.tekSupp===0?0:'')}" onchange="uzatmaFiyat('${esc(sz.ad)}','tekSupp',this.value)" style="width:100%;text-align:right"></td></tr>`; }).join('')}
+      <td><input inputmode="decimal" value="${fz.tekSupp!=null&&fz.tekSupp!==0?fz.tekSupp:(fz.tekSupp===0?0:'')}" onchange="uzatmaFiyat('${esc(sz.ad)}','tekSupp',this.value)" style="width:100%;text-align:right"></td>${cocukFiyatiAktif?`<td><input inputmode="decimal" value="${fz.cocuk!=null&&fz.cocuk!==0?fz.cocuk:(fz.cocuk===0?0:'')}" onchange="uzatmaFiyat('${esc(sz.ad)}','cocuk',this.value)" style="width:100%;text-align:right"></td>`:''}</tr>`; }).join('')}
     </table>`; }
   el.innerHTML=h;
+}
+function _fmtYas(x){ return String(+x||0).replace('.',','); }
+function _yasAlt(x){ x=+x||0; return Number.isInteger(x)?((x-1)+',99'):String(x).replace('.',','); }
+function renderOtelUrun(){
+  const box=document.getElementById('otelUrunBox'); if(!box) return;
+  if(!otelUrun){ box.innerHTML=''; return; }
+  const cur=document.getElementById('para')?.value||'EUR'; const sym=cur==='EUR'?'€':cur==='USD'?'$':cur==='GBP'?'£':'₺';
+  const inp='padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;text-align:center';
+  box.innerHTML=`<div style="margin:6px 0 12px;padding:11px 13px;background:#fff6f0;border:1.5px solid var(--primary);border-radius:11px">
+    <div style="font-size:.82rem;font-weight:800;color:var(--primary);margin-bottom:9px"><svg class="ic" style="vertical-align:-2px"><use href="#i-bed"/></svg> Otel ürünü — yaş &amp; çocuk kuralları</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+      <label style="font-size:.73rem;font-weight:600;color:var(--muted)">Bebek üst yaşı<br><input type="number" step="0.01" min="0" value="${otelBebekUst}" onchange="otelBebekUst=+this.value||0;markDirty();renderOtelUrun()" style="${inp};width:82px"></label>
+      <label style="font-size:.73rem;font-weight:600;color:var(--muted)">Çocuk üst yaşı<br><input type="number" step="0.01" min="0" value="${otelCocukUst}" onchange="otelCocukUst=+this.value||0;markDirty();renderOtelUrun()" style="${inp};width:82px"></label>
+      <label style="font-size:.73rem;font-weight:600;color:var(--muted)">Max çocuk (fiyatlı)<br><input type="number" min="0" value="${otelMaxCocuk}" onchange="otelMaxCocuk=+this.value||0;markDirty();renderOtelUrun()" style="${inp};width:82px"></label>
+    </div>
+    <div style="font-size:.72rem;color:#7c2d12;margin-top:8px;line-height:1.5">Bebek <b>0–${_yasAlt(otelBebekUst)}</b> → ücretsiz · Çocuk <b>${_fmtYas(otelBebekUst)}–${_yasAlt(otelCocukUst)}</b> → çocuk fiyatı · en fazla <b>${otelMaxCocuk}</b> çocuk çocuk fiyatından; fazlası <b>alınmaz / otele triple sorulur</b>.${cocukFiyatiAktif?'':'<br><span style="color:var(--danger);font-weight:700">Çocuk fiyat kolonları için üstteki “Çocuk Fiyatı Ekle”yi de işaretle.</span>'}</div>
+  </div>
+  <div style="margin:0 0 14px;padding:11px 13px;background:var(--light);border:1px solid var(--border);border-radius:11px">
+    <div style="font-size:.8rem;font-weight:800;color:var(--text);margin-bottom:8px">Örnek fiyat hesabı</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <label style="font-size:.72rem;font-weight:600;color:var(--muted)">Sezon<br><select id="ofSezon" onchange="_otelHesapla()" style="${inp};width:74px">${sezonlar.map(x=>'<option>'+esc(x.ad)+'</option>').join('')}</select></label>
+      <label style="font-size:.72rem;font-weight:600;color:var(--muted)">Yetişkin<br><input type="number" min="0" id="ofYet" value="2" oninput="_otelHesapla()" style="${inp};width:66px"></label>
+      <label style="font-size:.72rem;font-weight:600;color:var(--muted)">Çocuk<br><input type="number" min="0" id="ofCoc" value="0" oninput="_otelHesapla()" style="${inp};width:66px"></label>
+      <label style="font-size:.72rem;font-weight:600;color:var(--muted)">Bebek<br><input type="number" min="0" id="ofBeb" value="0" oninput="_otelHesapla()" style="${inp};width:66px"></label>
+      <label style="font-size:.72rem;font-weight:600;color:var(--muted)">Uzatma hafta<br><input type="number" min="0" id="ofUz" value="0" oninput="_otelHesapla()" style="${inp};width:78px"></label>
+    </div>
+    <div id="otelHesapSonuc" style="margin-top:10px"></div>
+  </div>`;
+  _otelHesapla();
+}
+function _otelHesapla(){
+  const out=document.getElementById('otelHesapSonuc'); if(!out) return;
+  const g=id=>{const e=document.getElementById(id);return e?e.value:'';};
+  const sezAd=g('ofSezon'); const sz=sezonlar.find(s=>s.ad===sezAd)||{}; const uzf=(uzatma.fiyat&&uzatma.fiyat[sezAd])||{};
+  const yet=Math.max(0,+g('ofYet')||0), coc=Math.max(0,+g('ofCoc')||0), beb=Math.max(0,+g('ofBeb')||0), uz=Math.max(0,+g('ofUz')||0);
+  const cur=document.getElementById('para')?.value||'EUR'; const sym=cur==='EUR'?'€':cur==='USD'?'$':cur==='GBP'?'£':'₺';
+  const cocF=Math.min(coc, otelMaxCocuk), cocFazla=Math.max(0, coc-otelMaxCocuk);
+  const anaYet = yet*(+sz.ciftKisi||0) + (yet===1?(+sz.tekSupp||0):0);
+  const anaCoc = cocF*(+sz.cocuk||0);
+  const uzYet = uz*( yet*(+uzf.ciftKisi||0) + (yet===1?(+uzf.tekSupp||0):0) );
+  const uzCoc = uz*( cocF*(+uzf.cocuk||0) );
+  const toplam=anaYet+anaCoc+uzYet+uzCoc;
+  const f=n=>Math.round(n).toLocaleString('tr-TR');
+  let h=`<table style="width:100%;max-width:360px;border-collapse:collapse;font-size:.78rem">
+    <tr><td style="padding:2px 0">Ana hafta · yetişkin (${yet}${yet===1?' + tek fark':''})</td><td style="text-align:right;font-weight:600">${f(anaYet)} ${sym}</td></tr>
+    ${cocF?`<tr><td style="padding:2px 0">Ana hafta · çocuk (${cocF})</td><td style="text-align:right;font-weight:600">${f(anaCoc)} ${sym}</td></tr>`:''}
+    ${uz?`<tr><td style="padding:2px 0">Uzatma ${uz} hafta · yetişkin</td><td style="text-align:right;font-weight:600">${f(uzYet)} ${sym}</td></tr>`:''}
+    ${uz&&cocF?`<tr><td style="padding:2px 0">Uzatma ${uz} hafta · çocuk</td><td style="text-align:right;font-weight:600">${f(uzCoc)} ${sym}</td></tr>`:''}
+    <tr style="border-top:2px solid var(--primary)"><td style="padding:4px 0;font-weight:800">TOPLAM</td><td style="text-align:right;font-weight:800;color:var(--primary)">${f(toplam)} ${sym}</td></tr>
+  </table>`;
+  if(beb>0) h+=`<div style="font-size:.72rem;color:#15803d;margin-top:4px;font-weight:600">${beb} bebek ücretsiz (0–${_yasAlt(otelBebekUst)})</div>`;
+  if(cocFazla>0) h+=`<div style="font-size:.72rem;color:var(--danger);font-weight:700;margin-top:2px"><svg class="ic" style="vertical-align:-2px"><use href="#i-alert"/></svg> ${cocFazla} çocuk max sınırın (${otelMaxCocuk}) üstünde — çocuk fiyatı uygulanmaz, otele triple sor.</div>`;
+  out.innerHTML=h;
+}
+function addEkstraCharge(){ ekstraCharges.push({ad:'',sezonBazli:false,tutar:0,sezonTutar:{}}); renderEkstraCharges(); markDirty(); }
+function ekstraChargeSet(i,f,v){ if(!ekstraCharges[i])return; ekstraCharges[i][f]=(f==='tutar')?(+String(v).replace(/[^0-9.]/g,'')||0):v; markDirty(); }
+function ekstraChargeTog(i,el){ if(!ekstraCharges[i])return; ekstraCharges[i].sezonBazli=el.checked; renderEkstraCharges(); markDirty(); }
+function ekstraChargeSezon(i,sez,v){ if(!ekstraCharges[i])return; if(!ekstraCharges[i].sezonTutar||typeof ekstraCharges[i].sezonTutar!=='object') ekstraCharges[i].sezonTutar={}; ekstraCharges[i].sezonTutar[sez]=+String(v).replace(/[^0-9.]/g,'')||0; markDirty(); }
+function renderEkstraCharges(){
+  const el=document.getElementById('ekstraCharges'); if(!el) return;
+  const para=document.getElementById('para')?document.getElementById('para').value:'EUR';
+  if(!ekstraCharges.length){ el.innerHTML=`<div style="font-size:.8rem;color:var(--muted)">Henüz ekstra charge yok. Operatöre kişi başı fatura edilecek istisnai kalemleri buraya ekleyin.</div>`; return; }
+  el.innerHTML=ekstraCharges.map((c,i)=>{
+    let inner=`<div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:7px">
+      <div class="field" style="flex:1;margin-bottom:0"><label>Charge adı</label><input value="${esc(c.ad||'')}" oninput="ekstraChargeSet(${i},'ad',this.value)" placeholder="ör. Mağaza atlama (One less shop)"></div>
+      ${!c.sezonBazli?`<div class="field" style="width:140px;flex-shrink:0;margin-bottom:0"><label>Kişi başı ${esc(para)}</label><input inputmode="decimal" value="${c.tutar?c.tutar:''}" oninput="ekstraChargeSet(${i},'tutar',this.value)"></div>`:''}
+      <button onclick="removeRow(ekstraCharges,${i},renderEkstraCharges)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
+    </div>
+    <label style="display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;margin:0"><input type="checkbox" ${c.sezonBazli?'checked':''} onchange="ekstraChargeTog(${i},this)" style="width:15px;height:15px;accent-color:var(--primary)"> Sezon bazlı fiyatlandır</label>`;
+    if(c.sezonBazli){
+      if(!sezonlar.length){ inner+=`<div style="font-size:.78rem;color:var(--muted);margin-top:6px;padding:8px 10px;background:var(--light);border-radius:8px">Önce <b>Sezon Fiyatlandırması</b>ndan sezon oluşturun.</div>`; }
+      else { inner+=`<table class="rzmg" style="max-width:360px;margin-top:8px"><tr><th style="width:80px">Sezon</th><th>Kişi başı ${esc(para)}</th></tr>
+      ${sezonlar.map(sz=>{const val=(c.sezonTutar||{})[sz.ad]; return `<tr><td style="font-weight:800;color:var(--primary)">${esc(sz.ad)}</td><td><input inputmode="decimal" value="${val?val:''}" onchange="ekstraChargeSezon(${i},'${esc(sz.ad)}',this.value)" style="width:100%;text-align:right"></td></tr>`;}).join('')}
+      </table>`; }
+    }
+    return `<div class="row-item">${inner}</div>`;
+  }).join('');
 }
 function renderAll(){const _vh=document.getElementById('varisHavalimani');if(_vh)_vh.value=varisHavalimani;
 const _dh=document.getElementById('donusHavalimani');if(_dh)_dh.value=donusHavalimani;
 refreshSidebarPkgSwitch();
-renderUcuslar();renderHavalimanSuppleri();renderOteller();renderTransferler();renderGunler();renderKonaklamaOzet();renderAktiviteler();renderEkstraMaliyetler();renderSezonlar();renderUzatma();renderBagajlar();renderDahilLists();}
+renderUcuslar();renderHavalimanSuppleri();renderOteller();renderTransferler();renderGunler();renderKonaklamaOzet();renderAktiviteler();renderEkstraMaliyetler();renderSezonlar();renderUzatma();renderOtelUrun();renderBagajlar();renderEkstraCharges();renderDahilLists();}
 
 // ═══════════════ HESAPLAMA ═══════════════
 function updateCalc(){
