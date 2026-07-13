@@ -843,6 +843,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div class="pkg-section-item" onclick="openSectionModal('card-fiyat')"><svg class="ic"><use href="#i-coins"/></svg> Fiyatlandırma</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-uzatma')"><svg class="ic"><use href="#i-calendar"/></svg> Uzatma Haftası</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-ekstracharges')"><svg class="ic"><use href="#i-coins"/></svg> Ekstra Charges</div>
+        <div class="pkg-section-item" onclick="openSectionModal('card-odaupgrade')"><svg class="ic"><use href="#i-bed"/></svg> Oda Upgrade'leri</div>
+        <div class="pkg-section-item" onclick="openSectionModal('card-grupfiyat')"><svg class="ic"><use href="#i-users"/></svg> Grup Fiyatı</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-dahil')"><svg class="ic"><use href="#i-list"/></svg> Dahil / Dahil Değil</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-notlar')"><svg class="ic"><use href="#i-pin"/></svg> Önemli Notlar</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-iptal')"><svg class="ic"><use href="#i-stop"/></svg> İptal Şartları</div>
@@ -1145,6 +1147,18 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <p style="font-size:.76rem;color:var(--muted);margin-bottom:.7rem">Operatöre kişi başı fatura edilebilen istisnai kalemler (ör. mağaza atlama / One less shop). "Sezon bazlı" işaretlenirse her sezona ayrı tutar; işaretsizse tek tutar tüm sezon/tarihlere uygulanır.</p>
       <div id="ekstraCharges"></div>
       <button class="add-btn" onclick="addEkstraCharge()">+ Ekstra charge ekle</button>
+    </div>
+    <div class="card" id="card-odaupgrade">
+      <div class="card-title"><svg class="ic"><use href="#i-bed"/></svg> Oda Upgrade'leri</div>
+      <p style="font-size:.76rem;color:var(--muted);margin-bottom:.7rem">Satılabilir oda yükseltmeleri (deniz manzarası, yan deniz manzarası vb.). Fiyat KİŞİ BAŞI / GECE; tek kişilik oda için ayrı tutar. Rezervasyonda yolcuya oda tipi seçilince faturaya yansır.</p>
+      <div id="odaUpgrade"></div>
+      <button class="add-btn" onclick="addOdaUpgrade()">+ Oda upgrade ekle</button>
+    </div>
+    <div class="card" id="card-grupfiyat">
+      <div class="card-title"><svg class="ic"><use href="#i-users"/></svg> Grup Fiyatı (Kademeli)</div>
+      <p style="font-size:.76rem;color:var(--muted);margin-bottom:.7rem">Transfer / handling ürünleri için kişi sayısı aralığına göre GRUP başına fiyat (kişi başı DEĞİL). Ör. 1-9 pax 525 €, 10-20 pax 600 €, 21-30 pax 725 €.</p>
+      <div id="grupFiyat"></div>
+      <button class="add-btn" onclick="addGrupFiyat()">+ Grup fiyat kademesi ekle</button>
     </div>
     <div class="card" id="card-dahil">
       <div class="card-title"><svg class="ic"><use href="#i-list"/></svg> Dahil / Dahil Değil</div>
@@ -1691,7 +1705,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v095 · 08.07.2026';
+const APP_VER='v096 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -1709,7 +1723,7 @@ let oteller=[], transferler=[], gunler=[], aktiviteler=[], ekstraMaliyetler=[], 
 let ornekOteller={}; // key: 'sehir|||kalite|||pansiyon' → otel adı
 let fiyatlandirma=[], sezonlar=[], cocukFiyatiAktif=false; let _havAcik=new Set();
 function _uzatmaBos(){ return {aktif:false,ad:'',bolge:'',otel:'',pansiyon:'',gece:7,fiyat:{}}; }
-let uzatma=_uzatmaBos(); let bagajlar=[]; let ekstraCharges=[];
+let uzatma=_uzatmaBos(); let bagajlar=[]; let ekstraCharges=[]; let odaUpgrade=[]; let grupFiyat=[];
 let otelUrun=false, otelBebekUst=2, otelCocukUst=13, otelMaxCocuk=2;
 let _fiyatSort={col:'tarih',dir:1}, _fiyatFilter={sezon:'',ap:''};
 let dahilItems=[], dahilDegilItems=[], onemliNotlarItems=[];
@@ -2482,12 +2496,9 @@ function renderOpDetailPkgGrid(){
       return _allPkgDates(p).some(d=>d.getFullYear()===_opDetayYear);
     }
     return isPkgActive(p);
-  }).sort((a,b)=>{
-    const na=nextDeparture(a), nb=nextDeparture(b);
-    return (na||new Date(0))-(nb||new Date(0));
-  });
+  }).sort((a,b)=>(a.paketKodu||'').localeCompare(b.paketKodu||'','tr',{numeric:true,sensitivity:'base'}));
 
-  const inaktif = _opDetayYear ? [] : pkgs.filter(p=>!isPkgActive(p)).sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
+  const inaktif = _opDetayYear ? [] : pkgs.filter(p=>!isPkgActive(p)).sort((a,b)=>(a.paketKodu||'').localeCompare(b.paketKodu||'','tr',{numeric:true,sensitivity:'base'}));
 
   let html = '';
 
@@ -2933,6 +2944,8 @@ function collectData(){
     sezonlar:JSON.parse(JSON.stringify(sezonlar)),
     uzatma:JSON.parse(JSON.stringify(uzatma)),
     ekstraCharges:JSON.parse(JSON.stringify(ekstraCharges)),
+    odaUpgrade:JSON.parse(JSON.stringify(odaUpgrade)),
+    grupFiyat:JSON.parse(JSON.stringify(grupFiyat)),
     cocukFiyatiAktif,
     otelUrun, otelBebekUst, otelCocukUst, otelMaxCocuk,
     ornekOteller:JSON.parse(JSON.stringify(ornekOteller))
@@ -3226,6 +3239,8 @@ function fillForm(d){
   const _uoEl=document.getElementById('pkgUcakOperatorde');if(_uoEl)_uoEl.checked=!!d.ucakOperatorde;
   bagajlar = Array.isArray(d.bagajlar) ? d.bagajlar.map(b=>({ad:b.ad||'',fiyat:+b.fiyat||0,dahil:!!b.dahil})) : ((d.bagajDetay||'').trim()?[{ad:d.bagajDetay,fiyat:0,dahil:true}]:[]); if(bagajlar.length&&!bagajlar.some(b=>b.dahil)) bagajlar[0].dahil=true; renderBagajlar();
   ekstraCharges = Array.isArray(d.ekstraCharges)?d.ekstraCharges.map(c=>({ad:c.ad||'',sezonBazli:!!c.sezonBazli,tutar:+c.tutar||0,sezonTutar:(c.sezonTutar&&typeof c.sezonTutar==='object')?c.sezonTutar:{}})):[]; renderEkstraCharges();
+  odaUpgrade = Array.isArray(d.odaUpgrade)?d.odaUpgrade.map(u=>({ad:u.ad||'',kisiGece:+u.kisiGece||0,tekGece:+u.tekGece||0})):[]; renderOdaUpgrade();
+  grupFiyat = Array.isArray(d.grupFiyat)?d.grupFiyat.map(g=>({min:(g.min===''||g.min==null)?'':(+g.min||0),max:(g.max===''||g.max==null)?'':(+g.max||0),fiyat:+g.fiyat||0})):[]; renderGrupFiyat();
   const _vhEl=document.getElementById('varisHavalimani');if(_vhEl)_vhEl.value=varisHavalimani;
   const _dhEl=document.getElementById('donusHavalimani');if(_dhEl)_dhEl.value=donusHavalimani;
   oteller=d.oteller||[]; ornekOteller=d.ornekOteller||{}; transferler=d.transferler||[];
@@ -3456,6 +3471,8 @@ function clearForm(){
   ['paketAdi','destinasyonSehir','baslangic','bitis','paketAciklama','maliyetNot','iptalSartlari'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   bagajlar=[]; renderBagajlar();
   ekstraCharges=[]; renderEkstraCharges();
+  odaUpgrade=[]; renderOdaUpgrade();
+  grupFiyat=[]; renderGrupFiyat();
   dahilItems=[]; dahilDegilItems=[]; onemliNotlarItems=[]; renderDahilLists();
   renderDestinasyonSelect('');
   document.getElementById('gece').value=3;
@@ -4756,6 +4773,32 @@ function _otelHesapla(){
   if(cocFazla>0) h+=`<div style="font-size:.72rem;color:var(--danger);font-weight:700;margin-top:2px"><svg class="ic" style="vertical-align:-2px"><use href="#i-alert"/></svg> ${cocFazla} çocuk max sınırın (${otelMaxCocuk}) üstünde — çocuk fiyatı uygulanmaz, otele triple sor.</div>`;
   out.innerHTML=h;
 }
+function addGrupFiyat(){ grupFiyat.push({min:'',max:'',fiyat:0}); renderGrupFiyat(); markDirty(); }
+function grupFiyatSet(i,f,v){ if(!grupFiyat[i])return; if(f==='fiyat'){ grupFiyat[i].fiyat=+String(v).replace(/[^0-9.]/g,'')||0; } else { grupFiyat[i][f]=(v===''?'':(+v||0)); } markDirty(); }
+function renderGrupFiyat(){
+  const el=document.getElementById('grupFiyat'); if(!el) return;
+  const para=document.getElementById('para')?document.getElementById('para').value:'EUR';
+  if(!grupFiyat.length){ el.innerHTML=`<div style="font-size:.8rem;color:var(--muted)">Henüz grup fiyatı yok. Kişi sayısı aralığına göre GRUP başına fiyat (transfer/handling ürünleri için) buraya eklenir.</div>`; return; }
+  el.innerHTML=grupFiyat.map((g,i)=>`<div class="row-item"><div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div class="field" style="width:100px;margin-bottom:0"><label>Min pax</label><input type="number" min="1" value="${g.min!==''&&g.min!=null?g.min:''}" oninput="grupFiyatSet(${i},'min',this.value)"></div>
+      <div class="field" style="width:100px;margin-bottom:0"><label>Max pax</label><input type="number" min="1" value="${g.max!==''&&g.max!=null?g.max:''}" oninput="grupFiyatSet(${i},'max',this.value)"></div>
+      <div class="field" style="width:150px;margin-bottom:0"><label>Grup fiyatı ${esc(para)}</label><input inputmode="decimal" value="${g.fiyat?g.fiyat:''}" oninput="grupFiyatSet(${i},'fiyat',this.value)"></div>
+      <button onclick="removeRow(grupFiyat,${i},renderGrupFiyat)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
+    </div></div>`).join('');
+}
+function addOdaUpgrade(){ odaUpgrade.push({ad:'',kisiGece:0,tekGece:0}); renderOdaUpgrade(); markDirty(); }
+function odaUpgradeSet(i,f,v){ if(!odaUpgrade[i])return; odaUpgrade[i][f]=(f==='ad')?v:(+String(v).replace(/[^0-9.]/g,'')||0); markDirty(); }
+function renderOdaUpgrade(){
+  const el=document.getElementById('odaUpgrade'); if(!el) return;
+  const para=document.getElementById('para')?document.getElementById('para').value:'EUR';
+  if(!odaUpgrade.length){ el.innerHTML=`<div style="font-size:.8rem;color:var(--muted)">Henüz oda upgrade yok. Deniz manzarası vb. satılabilir oda yükseltmeleri (kişi başı/gece) buraya eklenir.</div>`; return; }
+  el.innerHTML=odaUpgrade.map((u,i)=>`<div class="row-item"><div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:160px;margin-bottom:0"><label>Upgrade adı</label><input value="${esc(u.ad||'')}" oninput="odaUpgradeSet(${i},'ad',this.value)" placeholder="ör. Direkt deniz manzarası"></div>
+      <div class="field" style="width:130px;flex-shrink:0;margin-bottom:0"><label>Kişi/gece ${esc(para)}</label><input inputmode="decimal" value="${u.kisiGece?u.kisiGece:''}" oninput="odaUpgradeSet(${i},'kisiGece',this.value)"></div>
+      <div class="field" style="width:150px;flex-shrink:0;margin-bottom:0"><label>Tek kişi/gece ${esc(para)}</label><input inputmode="decimal" value="${u.tekGece?u.tekGece:''}" oninput="odaUpgradeSet(${i},'tekGece',this.value)"></div>
+      <button onclick="removeRow(odaUpgrade,${i},renderOdaUpgrade)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
+    </div></div>`).join('');
+}
 function addEkstraCharge(){ ekstraCharges.push({ad:'',sezonBazli:false,tutar:0,sezonTutar:{}}); renderEkstraCharges(); markDirty(); }
 function ekstraChargeSet(i,f,v){ if(!ekstraCharges[i])return; ekstraCharges[i][f]=(f==='tutar')?(+String(v).replace(/[^0-9.]/g,'')||0):v; markDirty(); }
 function ekstraChargeTog(i,el){ if(!ekstraCharges[i])return; ekstraCharges[i].sezonBazli=el.checked; renderEkstraCharges(); markDirty(); }
@@ -4783,7 +4826,7 @@ function renderEkstraCharges(){
 function renderAll(){const _vh=document.getElementById('varisHavalimani');if(_vh)_vh.value=varisHavalimani;
 const _dh=document.getElementById('donusHavalimani');if(_dh)_dh.value=donusHavalimani;
 refreshSidebarPkgSwitch();
-renderUcuslar();renderHavalimanSuppleri();renderOteller();renderTransferler();renderGunler();renderKonaklamaOzet();renderAktiviteler();renderEkstraMaliyetler();renderSezonlar();renderUzatma();renderOtelUrun();renderBagajlar();renderEkstraCharges();renderDahilLists();}
+renderUcuslar();renderHavalimanSuppleri();renderOteller();renderTransferler();renderGunler();renderKonaklamaOzet();renderAktiviteler();renderEkstraMaliyetler();renderSezonlar();renderUzatma();renderOtelUrun();renderBagajlar();renderEkstraCharges();renderOdaUpgrade();renderGrupFiyat();renderDahilLists();}
 
 // ═══════════════ HESAPLAMA ═══════════════
 function updateCalc(){
