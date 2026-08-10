@@ -421,18 +421,50 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)
 .confirm-btns{display:flex;gap:9px;justify-content:center}
 
 /* ── PRESENTATION ── */
-.pres-cover{position:relative;overflow:hidden;background:#163354;color:#fff;padding:2.7rem 2rem 2.3rem;border-radius:16px;margin-bottom:1.4rem;text-align:center;box-shadow:0 12px 34px rgba(22,51,84,.28)}
+.pres-cover{position:relative;overflow:hidden;background:linear-gradient(135deg,#e8823f 0%,#d2601e 55%,#b5431f 100%);color:#fff;padding:2.3rem 2.3rem 2rem;border-radius:14px;margin-bottom:1.5rem;text-align:left;box-shadow:0 12px 34px rgba(181,67,31,.25)}
+.pres-ovl{font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;opacity:.9;margin-bottom:.6rem;font-weight:600}
+.pres-route{font-size:.95rem;opacity:.95;margin-top:.25rem}
+.pres-hr{height:1px;background:rgba(255,255,255,.35);margin:1.1rem 0 .95rem}
+.pres-meta2{display:grid;grid-template-columns:repeat(4,auto);gap:.75rem 2.4rem;justify-content:start}
+.prs-l{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;opacity:.85;margin-bottom:2px}
+.prs-v{font-size:1rem;font-weight:700}
+.pres-intro{font-family:Georgia,'Times New Roman',serif;font-style:italic;color:#5a5a5a;font-size:.95rem;line-height:1.65;margin:0 0 1.4rem}
+.pres-dbadge{width:46px;min-width:46px;max-width:46px;background:#b5431f;color:#fff;border-radius:9px;padding:8px 4px 9px;text-align:center;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;overflow:hidden;box-sizing:border-box}
+.pres-dbadge span{font-size:.55rem;letter-spacing:.14em;opacity:.85;font-weight:600}
+.pres-dbadge b{font-family:Georgia,'Times New Roman',serif;font-size:1.35rem;line-height:1.1}
+.pres-nuit{font-size:.79rem;color:#b5431f;margin-top:6px;padding-top:5px;border-top:1px dashed #ecd9c4}
+.pres-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pres-cardc{background:#fdf6ee;border:1px solid #ecd9c4;border-radius:11px;padding:14px 16px;color:#3d2f24}
+.pres-cardc h3{font-family:Georgia,'Times New Roman',serif;font-size:.92rem;color:#b5431f;margin:0 0 8px}
+.pres-cardc ul{margin:0;padding-left:1.1rem}
+.pres-cardc li{font-size:.83rem;line-height:1.55;margin-bottom:4px}
+.pres-pill{display:inline-block;background:#b5431f;color:#fff;border-radius:999px;padding:3px 13px;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.pres-pprice{float:right;font-weight:800;color:#b5431f;font-size:.9rem}
+.pres-noteband{background:#f5e7d6;border-radius:9px;padding:12px 16px;font-size:.82rem;line-height:1.6;color:#5a4632;margin:1.4rem 0}
+.pres-noteband b{color:#8c3a1d}
 .pres-cover .cover-bg{position:absolute;inset:0;width:100%;height:100%;z-index:0;border-radius:inherit}
 .pres-cover img{position:relative;z-index:1}
-.pres-cover .dest{position:relative;z-index:1;font-size:.8rem;letter-spacing:3px;text-transform:uppercase;color:#ffd9b8;font-weight:600;margin-bottom:9px}
-.pres-cover h1{position:relative;z-index:1;font-size:2.05rem;font-weight:800;letter-spacing:-.4px;margin-bottom:10px;text-shadow:0 2px 10px rgba(0,0,0,.2)}
+.pres-cover .dest{position:relative;z-index:1;font-size:.8rem;letter-spacing:3px;text-transform:uppercase;color:#ffe3cf;font-weight:600;margin-bottom:9px}
+.pres-cover h1{position:relative;z-index:1;font-family:Georgia,'Times New Roman',serif;font-size:2.1rem;font-weight:700;letter-spacing:-.2px;margin:0;text-shadow:0 2px 10px rgba(0,0,0,.18)}
 .pres-cover p{position:relative;z-index:1}
 .pres-cover .meta{position:relative;z-index:1;display:flex;justify-content:center;gap:9px;font-size:.81rem;margin-top:16px;flex-wrap:wrap}
 .pres-cover .meta>div{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:5px 13px;border-radius:20px;font-weight:500}
 /* ════════ YAZDIRMA / PDF ÇIKTISI ════════ */
 @media print{
+.toast,.res-toast,#resToast{display:none!important;visibility:hidden!important}
+/* ── Sunum sayfalama estetiği ── */
+.pres-cover{page-break-inside:avoid!important;break-inside:avoid!important;page-break-after:avoid!important}
+.pres-intro{page-break-inside:avoid!important;break-inside:avoid!important}
+.pres-section h2,.pres-cap{page-break-after:avoid!important;break-after:avoid!important;page-break-inside:avoid!important}
+.pres-day,.pres-cardc,.pres-noteband,.pres-2col,.pres-nuit{page-break-inside:avoid!important;break-inside:avoid!important}
+.pres-dbadge{page-break-inside:avoid!important;break-inside:avoid!important}
+.pres-section{margin-top:1.1rem!important}
+#sunumContent p,#sunumContent li,#sunumContent .cv{orphans:3;widows:3}
+#sunumContent h1{page-break-after:avoid!important}
+#sunumMapContainer{page-break-inside:avoid!important;break-inside:avoid!important}
+
   @page{ size:A4 portrait; margin:0; }
-  .pres-pfooter{ display:flex !important; position:fixed; left:0; right:0; bottom:0; height:8.5mm; align-items:center; justify-content:center; background:linear-gradient(90deg,#163354,#2f6aa0) !important; color:#fff !important; font-size:7.6pt; font-weight:600; letter-spacing:.3px; }
+  .pres-pfooter{ display:flex !important; position:fixed; left:0; right:0; bottom:0; height:8.5mm; align-items:center; justify-content:center; background:linear-gradient(90deg,#b5431f,#e8823f) !important; color:#fff !important; font-size:7.6pt; font-weight:600; letter-spacing:.3px; }
   *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   html,body{ background:var(--light) !important; width:auto !important; }
   .navbar,.sidebar,#pkgSummary,.nav-tabs,.nav-save-btn,.no-print,#page-sunum>div:first-child{ display:none !important; }
@@ -440,7 +472,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)
   .app-body{ display:block !important; background:var(--light) !important; }
   .main-content,.container{ margin:0 !important; padding:0 !important; max-width:100% !important; width:100% !important; background:var(--light) !important; }
   #sunumContent{ padding:10mm 11mm 14mm !important; }
-  .pres-day{ display:flex !important; gap:12px !important; align-items:flex-start !important; max-width:100% !important; overflow:hidden !important; }
+  .pres-day{ display:grid !important; grid-template-columns:46px minmax(0,1fr) auto !important; gap:12px !important; align-items:stretch !important; max-width:100% !important; overflow:hidden !important; }
   .pres-day>div{ min-width:0 !important; flex:1 1 auto !important; }
   .pres-day>img{ flex:0 0 150px !important; width:150px !important; height:auto !important; max-width:40% !important; }
   #sunumContent table,.page.active table{ width:100% !important; max-width:100% !important; table-layout:auto !important; font-size:7.6pt !important; }
@@ -452,11 +484,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)
   .pres-cover{ box-shadow:none !important; }
 }
 .pres-section{margin:1.4rem 0}
-.pres-section h2{font-size:.97rem;font-weight:700;color:var(--navy);border-left:4px solid var(--primary);padding-left:9px;margin-bottom:11px}
-.pres-cap{caption-side:top;text-align:left;font-size:.97rem;font-weight:700;color:var(--navy);border-left:4px solid var(--primary);padding:0 0 11px 9px}
+.pres-section h2{font-family:Georgia,'Times New Roman',serif;font-size:1.12rem;font-weight:700;color:#b5431f;border-bottom:1.5px solid #ecd9c4;padding-bottom:7px;margin-bottom:13px}
+.pres-cap{caption-side:top;text-align:left;font-family:Georgia,'Times New Roman',serif;font-size:1.12rem;font-weight:700;color:#b5431f;border-bottom:1.5px solid #ecd9c4;padding:0 0 7px;margin-bottom:13px}
 .pres-pfooter{display:none}
-.pres-day{background:var(--light);border-radius:8px;padding:11px 13px;margin-bottom:7px}
-.day-num{background:var(--navy);color:#fff;border-radius:5px;padding:3px 9px;font-size:.75rem;font-weight:700;display:inline-block;margin-bottom:5px}
+.pres-day{background:transparent;border-radius:0;padding:0 0 4px;margin-bottom:13px}
+.day-num{background:transparent;color:#8c3a1d;border-radius:0;padding:0;font-family:Georgia,'Times New Roman',serif;font-size:1.02rem;font-weight:700;display:inline-block;margin-bottom:4px}
 .pres-price-box{background:#fef3c7;border:2px solid var(--primary);border-radius:10px;padding:1.4rem;text-align:center;margin-top:1.4rem}
 .pres-price-box .price{font-size:1.9rem;font-weight:800;color:var(--navy)}
 .pres-price-box .note{font-size:.76rem;color:var(--muted);margin-top:3px}
@@ -650,7 +682,7 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .resgrid td input:focus{outline:2px solid var(--primary);outline-offset:-2px}
 .resgrid tr.farkli td{background:#fdf0d3}.resgrid tr.farkli td.fg,.resgrid tr.farkli td.fd,.resgrid tr.farkli td.fa{background:#edc97e}
 .resgrid tr.reshl td{background:rgba(242,101,34,.16)!important}.resgrid tr.reshl td:first-child input,.resgrid tr.reshl input{font-weight:700}
-.resgrid .rs{position:absolute;right:-4px;top:0;width:8px;height:100%;cursor:col-resize;z-index:25;user-select:none}
+.resgrid .rs{position:absolute;right:-6px;top:0;width:12px;height:100%;cursor:col-resize;z-index:25;user-select:none}
 .resgrid .plus1{position:absolute;right:1px;top:1px;font-size:.55rem;font-weight:800;background:#dbeafe;color:#1d4ed8;border-radius:4px;padding:0 3px;pointer-events:none}
 .resgrid .kisa{position:absolute;right:1px;top:1px;font-size:.55rem;font-weight:800;background:#fee2e2;color:#b91c1c;border-radius:4px;padding:0 3px;pointer-events:none}
 .reschip{font-size:.62rem;font-weight:700;border-radius:9px;padding:1px 7px;white-space:nowrap}
@@ -663,6 +695,18 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .resgrid tr.res-iptal input,.resgrid tr.res-iptal select{color:#b91c1c!important;text-decoration:line-through}
 .resgrid tr.res-iptal td.res-durum select{text-decoration:none}
 .resgrid td.selc{outline:2px solid var(--primary);outline-offset:-2px;background:rgba(242,101,34,.14)!important}
+.resgrid td.anchor{outline:2px solid var(--primary);outline-offset:-2px}
+.resgrid td.cvtd .cv{padding:5px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:25px;cursor:cell;font-size:.75rem}
+.resgrid td.rn{text-align:center;background:var(--light);color:var(--muted);font-size:.66rem;cursor:pointer;user-select:none}
+.resgrid td.rn.selr{background:var(--primary)!important;color:#fff!important;font-weight:700}
+.resgrid th.rnh{text-align:center;font-size:.66rem}
+.resgrid{user-select:none}
+#_resEdt{user-select:text;width:100%;border:2px solid var(--primary);padding:3px 5px;font-size:.75rem;font-family:inherit;outline:none;background:var(--card,#fff);color:var(--text)}
+#resCtx{position:fixed;background:var(--card,#fff);border:1.5px solid var(--border);border-radius:9px;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:99999;min-width:215px;padding:5px;display:none;font-size:.8rem;color:var(--text)}
+#resCtx .ci{padding:7px 12px;border-radius:6px;cursor:pointer;display:flex;gap:8px;align-items:center}
+#resCtx .ci:hover{background:var(--light)}
+#resCtx .ci .ks{margin-left:auto;color:var(--muted);font-size:.68rem}
+#resCtx hr{border:none;border-top:1px solid var(--border);margin:4px 6px}
 .res-mets{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:.7rem}
 .res-met{background:var(--light);border:1px solid var(--border);border-radius:11px;padding:.55rem .85rem}
 .res-met .n{font-size:1.2rem;font-weight:800;line-height:1.1}.res-met .l{font-size:.66rem;color:var(--muted);font-weight:600;margin-top:2px}
@@ -1549,6 +1593,13 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <label>Claude API Anahtarı</label>
         <input type="password" id="txApiKey" placeholder="sk-ant-...">
         <div class="section-tip" style="margin-top:4px">Anahtar yalnızca bu tarayıcıda (IndexedDB) saklanır, hiçbir yere gönderilmez. console.anthropic.com adresinden alınır.</div>
+        <div class="action-row" style="margin-top:8px"><button class="btn btn-outline btn-sm" onclick="txTestClaude()">Bağlantıyı Test Et</button></div>
+        <div class="section-tip" id="txTestSonuc" style="margin-top:6px"></div>
+      </div>
+      <div class="field" id="txStyleField" style="display:none;margin-top:10px">
+        <label>Üslup Notu (isteğe bağlı)</label>
+        <textarea id="txStyleNote" rows="3" placeholder="ör. Samimi ama profesyonel broşür dili; kısa cümleler; Avusturya pazarına uygun ifadeler."></textarea>
+        <div class="section-tip" style="margin-top:4px">Claude çevirisine ek talimat olarak iletilir (turizm broşür dili zaten varsayılan).</div>
       </div>
       <div class="section-tip" style="margin-top:14px" id="txCacheInfo"></div>
       <div class="action-row">
@@ -1705,7 +1756,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v096 · 14.07.2026';
+const APP_VER='v112 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -3027,14 +3078,26 @@ const TX_PROVIDERS={
       const res=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
         headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:8000,messages:[{role:'user',content:'Turizm paket sunumundan alınan aşağıdaki Türkçe metin parçalarını "'+lang+'" dil koduna çevir. Pazarlama tonunu koru. ⟦0⟧ gibi yer tutucuları AYNEN koru. Yalnızca çevirilerden oluşan bir JSON dizisi döndür, başka hiçbir şey yazma.\n\n'+JSON.stringify(texts)}]})
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:8000,messages:[{role:'user',content:(function(){
+        let p='Sen bir tur operatörü broşür çevirmenisin. Aşağıdaki Türkçe metin parçaları bir paket tur sunumundan (broşüründen) alındı; hedef okuyucu yurt dışındaki seyahat acenteleri ve tur operatörleri. Parçaları "'+lang+'" dil koduna çevir.'
+        +'\nKURALLAR:\n- Turizm/broşür dili kullan: davetkâr, akıcı, profesyonel; kelimesi kelimesine değil anlamına göre çevir.'
+        +'\n- Sektör terminolojisini hedef dilin turizm jargonuyla ver (ör. pansiyon tipleri, transfer, rehberlik, opsiyonel tur, tek kişilik oda farkı, uzatma haftası).';
+        if(lang==='de') p+='\n- Almanca için DACH tur operatörü jargonu: ÜF/HP/VP/AI (pansiyon), DZ/EZ, EZ-Zuschlag, Verlängerungswoche, Flughafenzuschlag, Reiseleitung, Ausflug, inklusive/nicht inbegriffen. Broşür üslubu ("Sie"-Form).';
+        if(lang==='fr') p+='\n- Fransızca için circuit/broşür üslubu: circuit accompagné, demi-pension/pension complète, supplément single, excursion optionnelle, nuitée.';
+        if(lang==='en') p+='\n- İngilizce için tour operatör dili: escorted tour, half board/full board, single supplement, optional excursion, overnight.';
+        p+='\n- Şehir ve yer adlarını hedef dildeki yerleşik yazımıyla ver (Marakeş→'+(lang==='de'?'Marrakesch':lang==='fr'?'Marrakech':'Marrakesh')+' gibi); ⟦0⟧ gibi yer tutucuları AYNEN koru (bunlar otel/marka adlarıdır, çevrilmez).'
+        +'\n- Sayı, saat ve fiyat biçimlerini hedef dilin alışkanlığına uydur.';
+        const sn=((_txSettings||{}).styleNote||'').trim();
+        if(sn) p+='\nÜSLUP NOTU (kullanıcıdan): '+sn;
+        p+='\nÇIKTI BİÇİMİ: her parçanın çevirisini sırayla yaz; çeviriler arasına YALNIZCA üç tilde içeren bir satır (~~~) koy. Numara, açıklama, JSON, başka hiçbir şey YAZMA. Parça sayısı: '+texts.length+'.\n\n'+texts.map((t,i)=>'['+(i+1)+']\n'+t).join('\n~~~\n');
+        return p;})()}]})
       });
-      if(!res.ok) throw new Error('API hatası: '+res.status);
+      if(!res.ok){ let msg='API hatası: '+res.status; try{ const j=await res.json(); if(j&&j.error&&j.error.message) msg+=' — '+String(j.error.message).slice(0,160); }catch(_e){} throw new Error(msg); }
       const data=await res.json();
       let t=((data.content||[])[0]||{}).text||'';
-      t=t.replace(/^```(json)?/,'').replace(/```$/,'').trim();
-      const arr=JSON.parse(t);
-      return (Array.isArray(arr)&&arr.length===texts.length)?arr.map(String):null;
+      t=t.replace(/^```[a-z]*\n?/,'').replace(/```\s*$/,'').trim();
+      const arr=t.split(/\n\s*~{3,}\s*\n?/).map(x=>x.replace(/^\s*\[\d+\]\s*\n?/,'').trim());
+      return (arr.length===texts.length)?arr:null;
     }
   }
 };
@@ -3088,6 +3151,8 @@ async function translateSunum(){
   const walker=document.createTreeWalker(content,NodeFilter.SHOW_TEXT,null);
   const items=[]; let node;
   while((node=walker.nextNode())){
+    const pe=node.parentElement;
+    if(pe&&pe.closest&&pe.closest('[data-notx],th,caption')) continue;
     const t=node.textContent.trim();
     if(t.length>2&&/[A-Za-zÇĞİÖŞÜçğıöşüâîû]{2}/.test(t)) items.push({node,src:t});
   }
@@ -3103,7 +3168,7 @@ async function translateSunum(){
 
   const provider=TX_PROVIDERS[_txSettings.provider]||TX_PROVIDERS.gtx;
   const batches=_txMakeBatches(need,provider.batchChars,provider.batchMax);
-  let done=0, failed=0;
+  let done=0, failed=0, fellBack=false, fbErr='';
   if(status) status.textContent=need.length?('Çevriliyor… 0/'+need.length+(fromCache?' · '+fromCache+' önbellekten':'')):(fromCache?'Önbellekten yüklendi':'');
 
   for(const batch of batches){
@@ -3112,7 +3177,7 @@ async function translateSunum(){
     try{ out=await provider.translateBatch(masked.map(m=>m.text),lang); }
     catch(e){
       out=null;
-      if(provider!==TX_PROVIDERS.gtx&&status) status.textContent='Sağlayıcı hatası — ücretsiz servise geçildi';
+      if(provider!==TX_PROVIDERS.gtx){ fellBack=true; fbErr=(e&&e.message)||''; if(status) status.textContent='Sağlayıcı hatası — ücretsiz servise geçildi'; }
     }
     if(!out){
       out=[];
@@ -3120,7 +3185,7 @@ async function translateSunum(){
     }
     batch.forEach((it,i)=>{
       let tx=(out&&out[i])?String(out[i]).trim():'';
-      if(tx&&tx!==masked[i].text){
+      if(tx){
         tx=_txUnmask(tx,masked[i].map);
         it.tx=tx;
         _txCache[it.key]={t:tx,ts:Date.now()}; _txDirty.add(it.key);
@@ -3136,7 +3201,7 @@ async function translateSunum(){
   let applied=0;
   for(const it of items){ if(it.tx){ _txApplyToNode(it.node,it.src,it.tx,it.key); applied++; } }
 
-  if(status) status.textContent=(need.length&&failed===need.length&&!fromCache)?'Çeviri bağlantısı kurulamadı':('Tamamlandı'+(failed?' · '+failed+' parça çevrilemedi':''));
+  if(status) status.textContent=(need.length&&failed===need.length&&!fromCache)?'Çeviri bağlantısı kurulamadı':('Tamamlandı'+(failed?' · '+failed+' parça çevrilemedi':'')+(fellBack?' · Claude hatası'+(fbErr?' ('+fbErr+')':'')+' — ücretsiz servis kullanıldı':''));
   if(resetBtn) resetBtn.style.display='inline-flex';
   if(editBtn) editBtn.style.display=applied?'inline-flex':'none';
 }
@@ -3178,18 +3243,37 @@ document.addEventListener('focusout',function(e){
 async function openTxSettings(){
   await _txEnsureCache();
   document.getElementById('txProviderSel').value=_txSettings.provider||'gtx';
+  const _sn=document.getElementById('txStyleNote'); if(_sn)_sn.value=_txSettings.styleNote||'';
   document.getElementById('txApiKey').value=(_txSettings.keys||{}).claude||'';
   onTxProviderChange();
   const n=Object.keys(_txCache||{}).length, e=Object.values(_txCache||{}).filter(x=>x&&x.e).length;
   document.getElementById('txCacheInfo').textContent=n?('Önbellekte '+n+' çeviri ('+e+' elle düzeltilmiş) saklı. Aynı metinler tekrar çevrilmez; dil değişimi ikinci seferde anında olur.'):'Önbellek boş — ilk çeviriden sonra dolmaya başlar.';
   document.getElementById('modalTxSettings').classList.add('open');
 }
+async function txTestClaude(){
+  const el=document.getElementById('txTestSonuc');
+  const key=(document.getElementById('txApiKey').value||'').trim()||((_txSettings.keys||{}).claude||'');
+  if(!key){ el.textContent='✗ Anahtar boş — önce yapıştırın.'; el.style.color='#dc2626'; return; }
+  el.textContent='Deneniyor…'; el.style.color='';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:50,messages:[{role:'user',content:'Sadece şu kelimeyi Almancaya çevir, tek kelime yaz: Merhaba'}]})});
+    if(!res.ok){ let msg='HTTP '+res.status; try{ const j=await res.json(); if(j&&j.error&&j.error.message) msg+=' — '+j.error.message; }catch(_e){}
+      el.textContent='✗ Hata: '+msg; el.style.color='#dc2626'; return; }
+    const data=await res.json();
+    const t=(((data.content||[])[0]||{}).text||'').trim();
+    el.textContent='✓ Bağlantı çalışıyor — test çevirisi: '+(t||'(boş yanıt)'); el.style.color='#16a34a';
+  }catch(e){ el.textContent='✗ Ağ hatası: '+((e&&e.message)||e)+' (internet/CORS)'; el.style.color='#dc2626'; }
+}
 function onTxProviderChange(){
   const p=document.getElementById('txProviderSel').value;
   document.getElementById('txKeyField').style.display=(p==='claude')?'':'none';
+  const _sf=document.getElementById('txStyleField'); if(_sf)_sf.style.display=(p==='claude')?'':'none';
 }
 function saveTxSettings(){
   _txSettings.provider=document.getElementById('txProviderSel').value;
+  const _sn2=document.getElementById('txStyleNote'); if(_sn2)_txSettings.styleNote=_sn2.value.trim();
   _txSettings.keys=_txSettings.keys||{};
   _txSettings.keys.claude=document.getElementById('txApiKey').value.trim();
   _txSettingsLoaded=true;
@@ -3584,7 +3668,7 @@ function quickCalc(pkg){
   // uçuşlar artık fiyat içermiyor, supplement tablosundan gelecek
   (pkg.oteller||[]).forEach(o=>{const r=Math.ceil(pax/2);total+=(+o.fiyatOdaGece)*(+o.gece)*r;});
   (pkg.transferler||[]).forEach(t=>total+=+t.birimFiyat);
-  (pkg.aktiviteler||[]).filter(a=>a.dahilMi).forEach(a=>total+=(+a.fiyat)*pax);
+  (pkg.aktiviteler||[]).filter(a=>a.dahilMi).forEach(a=>total+=_aktFiyatNum(a.fiyat)*pax);
   (pkg.ekstraMaliyetler||[]).forEach(e=>total+=(+e.birim)*(+e.adet||1));
   const cost=total/pax; const sell=cost*(1+margin/100);
   return{total,cost,sell};
@@ -4204,13 +4288,15 @@ function renderBagajlar(){
       <button onclick="removeRow(bagajlar,${i},renderBagajlar)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
     </div>`).join('') || '<div style="font-size:.78rem;color:var(--muted);padding:4px 0">Seçenek yok — "+ Bagaj seçeneği ekle" (ör. 8 kg dahil 0€, 20 kg +35€).</div>';
 }
+function _aktFiyatNum(v){ const m=String(v==null?'':v).replace(/,/g,'.').match(/\d+(?:\.\d+)?/); return m?+m[0]:0; }
+function _aktFiyatDisp(v){ const t=String(v==null?'':v).trim(); if(!t||t==='0')return ''; return /€/.test(t)?t:t+' €'; }
 function addAktivite(){aktiviteler.push({ad:'',sure:'',fiyat:0,dahilMi:false,komTip:'',komDeg:'',aciklamaAcik:false,aciklama:'',operatoreGoster:false,operatorSatabilir:false,operatorFiyat:''});renderAktiviteler();markDirty();}
 function renderAktiviteler(){
   document.getElementById('aktiviteler').innerHTML=aktiviteler.map((a,i)=>`
     <div class="row-item">
       <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:7px">
         <div class="field" style="flex:1;margin-bottom:0"><label>Aktivite / Paket Adı</label><input value="${esc(a.ad)}" oninput="aktiviteler[${i}].ad=this.value;markDirty()" placeholder="Kültür Paketi, Türk Gecesi, Balon..."></div>
-        <div class="field" style="width:110px;flex-shrink:0;margin-bottom:0"><label>Satış €</label><input type="number" value="${a.fiyat}" min="0" oninput="aktiviteler[${i}].fiyat=+this.value;updateCalc();markDirty()"></div>
+        <div class="field" style="width:120px;flex-shrink:0;margin-bottom:0"><label>Satış €</label><input inputmode="decimal" value="${esc(a.fiyat===0?'':a.fiyat)}" placeholder="200 veya 200-250" oninput="aktiviteler[${i}].fiyat=this.value;updateCalc();markDirty()"></div>
         <button onclick="removeRow(aktiviteler,${i},renderAktiviteler)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
@@ -4836,7 +4922,7 @@ function updateCalc(){
   ucuslar.forEach(u=>{const varis=u.varisHavalimani||u.varisHavalimaniTR||'';const donus=u.donusHavalimani||u.donusHavalimaniTR||'';if(varis||donus)rows.push({k:`<svg class="ic"><use href="#i-plane"/></svg> ${[varis?'Varış:'+varis:'',donus?'Dönüş:'+donus:''].filter(Boolean).join(' / ')}`,b:0,a:'—',t:0});});
   oteller.forEach(o=>{const r=Math.ceil(pax/2);const t=(+o.fiyatOdaGece)*(+o.gece)*r;rows.push({k:`<svg class="ic"><use href="#i-bed"/></svg> ${o.ad||'Otel'} (${o.kategori}⭐ ${o.pansiyon||o.oda||'BB'} ${o.gece}G)`,b:+o.fiyatOdaGece,a:`${r} oda×${o.gece}g`,t});total+=t;});
   transferler.forEach(t=>{rows.push({k:`<svg class="ic"><use href="#i-bus"/></svg> ${t.tip} (${t.arac})`,b:+t.birimFiyat,a:'1 araç',t:+t.birimFiyat});total+=+t.birimFiyat;});
-  aktiviteler.filter(a=>a.dahilMi).forEach(a=>{const t=+a.fiyat*pax;rows.push({k:`<svg class="ic"><use href="#i-ticket"/></svg> ${a.ad||'Aktivite'} (${a.sure})`,b:+a.fiyat,a:pax+' kişi',t});total+=t;});
+  aktiviteler.filter(a=>a.dahilMi).forEach(a=>{const f=_aktFiyatNum(a.fiyat);const t=f*pax;rows.push({k:`<svg class="ic"><use href="#i-ticket"/></svg> ${a.ad||'Aktivite'} (${a.sure})`,b:f,a:pax+' kişi',t});total+=t;});
   gunler.forEach(g=>{const opts=Array.isArray(g.opsiyonelTurlar)?g.opsiyonelTurlar:[];opts.filter(o=>+o.fiyat>0).forEach(o=>{const t=+o.fiyat*pax;rows.push({k:`<svg class="ic"><use href="#i-target"/></svg> ${esc(o.ad||'Opsiyonel')} (${esc(g.baslik)}) — opsiyonel`,b:+o.fiyat,a:pax+' kişi',t,optional:true});});});
   ekstraMaliyetler.forEach(e=>{const t=+e.birim*(+e.adet||1);rows.push({k:`<svg class="ic"><use href="#i-pin"/></svg> ${e.ad||'Ekstra'}`,b:+e.birim,a:e.adet,t});total+=t;});
   const cost=total/pax, sell=cost*(1+margin/100), rev=sell*pax, profit=rev-total;
@@ -4848,7 +4934,7 @@ function updateCalc(){
     const ut=ucuslar.filter(u=>u.dahilMi).reduce((s,u)=>s+(+u.fiyat)*pax,0);
     const ot=oteller.reduce((s,o)=>s+(+o.fiyatOdaGece)*(+o.gece)*Math.ceil(pax/2),0);
     const tt=transferler.reduce((s,t)=>s+(+t.birimFiyat),0);
-    const at=aktiviteler.filter(a=>a.dahilMi).reduce((s,a)=>s+(+a.fiyat)*pax,0);
+    const at=aktiviteler.filter(a=>a.dahilMi).reduce((s,a)=>s+_aktFiyatNum(a.fiyat)*pax,0);
     const et=ekstraMaliyetler.reduce((s,e)=>s+(+e.birim)*(+e.adet||1),0);
     if(ut>0)cats.push({l:'Uçuşlar',v:ut});
     if(tt>0)cats.push({l:'Transferler',v:tt});if(at>0)cats.push({l:'Aktiviteler',v:at});if(et>0)cats.push({l:'Ekstralar',v:et});
@@ -4928,6 +5014,12 @@ async function gTranslate(text, lang){
 // ═══════════════ ÇIKTILAR ═══════════════
 function getActiveOp(){return currentOpId?getOperators().find(o=>o.id===currentOpId):null;}
 
+const SUNUM_L2={
+  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar'},
+  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise'},
+  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes'},
+  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter'}
+};
 function openSunum(lang){
   lang=lang||_sunumLang||'tr';
   _sunumLang=lang;
@@ -4935,38 +5027,47 @@ function openSunum(lang){
   const d=collectData(); const calc=updateCalc(); const op=getActiveOp();
   // Cmd+P üst-sol başlığında "DMC Çıktı" yerine ürün adı + kısa kod görünsün
   try{ document.title=((d.paketAdi||'Sunum')+(d.paketKodu?' — '+d.paketKodu:'')).trim(); }catch(e){}
-  const gunHTML=gunler.map(g=>`
-    <div class="pres-day" style="display:flex;gap:16px;align-items:flex-start">
-      <div style="flex:1;min-width:0">
-        <div style="margin-bottom:6px">
-          <div class="day-num">${esc(g.baslik)}</div>
-        </div>
+  const L2=Object.assign({},SUNUM_L2.tr,SUNUM_L2[lang]||SUNUM_L2.en);
+  const gunHTML=gunler.map((g,gi)=>{
+    const sehir=(g.konaklamaSehir||'').trim();
+    const key=sehir+'|||'+(g.konaklamaKalite||'')+'|||'+(g.konaklamaPansiyon||'BB');
+    const otelAd=(sehir&&d.ornekOteller&&d.ornekOteller[key])?d.ornekOteller[key]:'';
+    let bas=String(g.baslik||'').replace(/^\s*\d+\s*\.?\s*(gün|tag|day|jour)?\s*[-–—:·.]*\s*/i,'').trim(); if(!bas)bas=g.baslik||'';
+    return `
+    <div class="pres-day" style="display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:14px;align-items:stretch">
+      <div class="pres-dbadge" data-notx><span>${L2.day}</span><b>${gi+1}</b></div>
+      <div style="flex:1;min-width:0;padding-top:1px">
+        <div class="day-num">${esc(bas)}</div>
         ${((g.noktalar||[]).filter(Boolean).length||g.mesafe||g.seyahatSuresi)?`
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px;padding-bottom:6px;border-bottom:1px dashed var(--light)">
-          ${(g.noktalar||[]).filter(Boolean).length?`<span style="font-size:.79rem;font-weight:600;color:var(--primary)"><svg class="ic"><use href="#i-pin"/></svg> ${g.noktalar.filter(Boolean).map(n=>esc(n)).join(' → ')}</span>`:''}
-          ${g.mesafe?`<span class="badge badge-blue" style="font-size:.75rem"><svg class="ic"><use href="#i-ruler"/></svg> ${esc(g.mesafe)}</span>`:''}
-          ${g.seyahatSuresi?`<span class="badge badge-blue" style="font-size:.75rem">⏱️ ${esc(g.seyahatSuresi)}</span>`:''}
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+          ${(g.noktalar||[]).filter(Boolean).length?`<span style="font-size:.77rem;font-weight:600;color:#b5431f">${g.noktalar.filter(Boolean).map(n=>esc(n)).join(' → ')}</span>`:''}
+          ${g.mesafe?`<span style="font-size:.72rem;color:#8c6f5a;background:#f5e7d6;border-radius:5px;padding:1px 8px">${esc(g.mesafe)}</span>`:''}
+          ${g.seyahatSuresi?`<span style="font-size:.72rem;color:#8c6f5a;background:#f5e7d6;border-radius:5px;padding:1px 8px">${esc(g.seyahatSuresi)}</span>`:''}
         </div>`:''}
-        ${g.program?`<div style="font-size:.88rem;white-space:pre-line;margin-bottom:5px">${esc(g.program)}</div>`:''}
-        ${(()=>{const _o=_optStr(g.opsiyonelTurlar);return _o?`<div style="background:#fef3c7;border-radius:5px;padding:6px 9px;font-size:.8rem;margin-bottom:5px"><strong><svg class="ic"><use href="#i-target"/></svg> ${L.optional}:</strong> ${_o}</div>`:'';})()}
+        ${g.program?`<div style="font-size:.86rem;line-height:1.6;white-space:pre-line;margin-bottom:4px">${esc(g.program)}</div>`:''}
+        ${(()=>{const _o=_optStr(g.opsiyonelTurlar);return _o?`<div style="background:#fef3c7;border-radius:5px;padding:6px 9px;font-size:.8rem;margin-bottom:5px"><strong data-notx>${L.optional}:</strong> ${_o}</div>`:'';})()}
+        ${sehir?`<div class="pres-nuit"><span data-notx>${L2.nightAt}</span> ${esc(sehir)}${otelAd?` — <b>${esc(otelAd)}</b> <span data-notx>${L2.orSimilar}</span>`:''}</div>`:''}
       </div>
       ${g.gorsel?`<img src="${g.gorsel}" style="width:200px;height:150px;object-fit:cover;border-radius:8px;flex-shrink:0">`:''}
-    </div>`).join('');
+    </div>`;}).join('');
+  document.getElementById('sunumContent').setAttribute('lang',lang);
   document.getElementById('sunumContent').innerHTML=`
     <div class="pres-cover">
-      <svg class="cover-bg" viewBox="0 0 1000 380" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="cgGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#163354"/><stop offset="0.55" stop-color="#244e79"/><stop offset="1" stop-color="#2f6aa0"/></linearGradient><radialGradient id="cgGlow" cx="0.86" cy="0" r="0.6"><stop offset="0" stop-color="#5aa0e6" stop-opacity="0.45"/><stop offset="1" stop-color="#5aa0e6" stop-opacity="0"/></radialGradient><linearGradient id="cgBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2f6aa0"/><stop offset="1" stop-color="#6db3f2"/></linearGradient></defs><rect width="1000" height="380" fill="url(#cgGrad)"/><rect width="1000" height="380" fill="url(#cgGlow)"/><rect y="374" width="1000" height="6" fill="url(#cgBar)"/></svg>
-      ${op&&op.logo?`<img src="${op.logo}" alt="${esc(op.ad)}" style="width:200px;height:auto;object-fit:contain;margin-bottom:12px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2))">`:''}
-      <div class="dest"><svg class="ic"><use href="#i-plane"/></svg> ${esc(d.destinasyon||'Destinasyon')}${d.destinasyonSehir?' — '+esc(d.destinasyonSehir):''}</div>
+      ${op&&op.logo?`<img src="${op.logo}" alt="${esc(op.ad)}" style="position:absolute;top:1.3rem;right:1.5rem;width:150px;height:auto;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2))">`:''}
+      <div class="pres-ovl" data-notx>${L2.ovl} · ${(+d.gece||0)+1} ${L2.days.toUpperCase()} / ${+d.gece||0} ${(L.nights||'Gece').toUpperCase()}</div>
       <h1>${esc(d.paketAdi||'Paket Adı')}</h1>
-      <p style="opacity:.8;font-size:.92rem">${esc(d.paketAciklama||'')}</p>
-      <div class="meta">
-        <div><svg class="ic"><use href="#i-calendar"/></svg> ${d.baslangic?new Date(d.baslangic+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—'} – ${d.bitis?new Date(d.bitis+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—'}</div>
-        <div><svg class="ic"><use href="#i-moon"/></svg> ${d.gece||0} ${L.nights}</div>
-        <div><svg class="ic"><use href="#i-users"/></svg> ${L.minPax} ${d.pax||'—'} ${L.pax||'Kişi'}</div>
-        ${op?`<div><svg class="ic"><use href="#i-building"/></svg> ${esc(op.ad)}</div>`:''}
+      <div class="pres-route">${(()=>{const c=[];gunler.forEach(g=>{const x=(g.konaklamaSehir||'').trim();if(x&&c[c.length-1]!==x&&c.indexOf(x)<0)c.push(x);});return c.length?c.map(esc).join(' · '):esc((d.destinasyon||'')+(d.destinasyonSehir?' — '+d.destinasyonSehir:''));})()}</div>
+      <div class="pres-hr"></div>
+      <div class="pres-meta2" data-notx>
+        <div><div class="prs-l" data-notx>${L2.season}</div><div class="prs-v">${(()=>{const f=x=>x?new Date(x+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}):'';const t=[f(d.baslangic),f(d.bitis)].filter(Boolean).join(' – ');return t||'—';})()}</div></div>
+        <div><div class="prs-l" data-notx>${L2.duration}</div><div class="prs-v" data-notx>${(+d.gece||0)+1} ${L2.days} / ${+d.gece||0} ${L.nights||'Gece'}</div></div>
+        <div><div class="prs-l" data-notx>${L2.reference}</div><div class="prs-v">${esc(d.paketKodu||'—')}</div></div>
+        <div><div class="prs-l" data-notx>${L2.group}</div><div class="prs-v" data-notx>${L.minPax||'Min.'} ${d.pax||'—'} ${L.pax||'Kişi'}</div></div>
+        ${(d.varisHavalimani||d.donusHavalimani)?`<div style="grid-column:1/-1"><div class="prs-l" data-notx>${L2.arrDep}</div><div class="prs-v">${esc([d.varisHavalimani,d.donusHavalimani].filter(Boolean).filter((v,i,arr2)=>arr2.indexOf(v)===i).join(' / '))}</div></div>`:''}
       </div>
     </div>
-    ${gunler.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-map"/></svg> ${L.tourProgram}</h2>${gunHTML}</div>`:''}
+    ${(d.paketAciklama||'').trim()?`<p class="pres-intro">${esc(d.paketAciklama)}</p>`:''}
+    ${gunler.length?`<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-map"/></svg> ${L.tourProgram}</h2>${gunHTML}</div>`:''}
     ${(()=>{
       const fp=d.sezonlar||[];
       const hs=d.havalimanSuppleri||[];
@@ -4974,8 +5075,8 @@ function openSunum(lang){
       if(!fp.length&&!fiyat.length) return '';
       const cur2=document.getElementById('para')?.value||'EUR';
       const sym=cur2==='EUR'?'€':cur2==='USD'?'$':cur2==='GBP'?'£':'₺';
-      const thS='padding:7px 10px;border:1px solid var(--border);font-weight:700;font-size:.78rem;background:var(--light);text-align:center';
-      const tdS='padding:7px 10px;border:1px solid var(--border);font-size:.76rem;vertical-align:top;text-align:center';
+      const thS='padding:7px 10px;border:1px solid #ecd9c4;font-weight:700;font-size:.7rem;background:#f5e7d6;color:#8c3a1d;text-transform:uppercase;letter-spacing:.06em;text-align:center';
+      const tdS='padding:7px 10px;border:1px solid #f0e2d0;font-size:.76rem;vertical-align:top;text-align:center;color:#3d2f24;background:#fff';
       const fmtD=ds=>{const dt=new Date(ds+'T00:00:00');return dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'});};
       const dateToSz={};fiyat.forEach(r=>{
         if(r.sezon||r.apOverride){
@@ -4989,7 +5090,7 @@ function openSunum(lang){
       const hasDates=hs.some(s=>(s.tarihler||[]).length>0);
       let out=`<div class="pres-section">`;
       // Başlığı tablonun caption'ı yap: Safari caption'ı her zaman tablosuyla birlikte taşır
-      const _cap=`<caption class="pres-cap"><svg class="ic"><use href="#i-coins"/></svg> ${L.pricing}</caption>`;
+      const _cap=`<caption class="pres-cap" data-notx><svg class="ic"><use href="#i-coins"/></svg> ${L.pricing}</caption>`;
       if(hasDates){
         out+=`<table style="width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:.8rem">${_cap}<thead><tr>
           <th style="${thS};text-align:left">${L.departure}</th>${fp.map(sz=>`<th style="${thS}">${sz.ad}</th>`).join('')}</tr></thead><tbody>`;
@@ -5019,25 +5120,31 @@ function openSunum(lang){
       if(!suppRows.length) return '';
       const cur2=document.getElementById('para')?.value||'EUR';
       const sym=cur2==='EUR'?'€':cur2==='USD'?'$':cur2==='GBP'?'£':'₺';
-      const thS='padding:7px 10px;border:1px solid var(--border);font-weight:700;font-size:.78rem;background:var(--light);text-align:center';
-      const tdS='padding:7px 10px;border:1px solid var(--border);font-size:.76rem;vertical-align:top;text-align:center';
-      let out=`<div class="pres-section"><h2><svg class="ic"><use href="#i-plane"/></svg> ${L.airportSup||'Havalimanı Supplementleri'}</h2>`;
+      const thS='padding:7px 10px;border:1px solid #ecd9c4;font-weight:700;font-size:.7rem;background:#f5e7d6;color:#8c3a1d;text-transform:uppercase;letter-spacing:.06em;text-align:center';
+      const tdS='padding:7px 10px;border:1px solid #f0e2d0;font-size:.76rem;vertical-align:top;text-align:center;color:#3d2f24;background:#fff';
+      let out=`<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-plane"/></svg> ${L.airportSup||'Havalimanı Supplementleri'}</h2>`;
       out+=`<table style="width:320px;border-collapse:collapse;font-size:.78rem">
         <thead><tr><th style="${thS};text-align:left">${L.departure||'Kalkış'}</th><th style="${thS}">${sym}</th></tr></thead><tbody>`;
       suppRows.forEach(s=>{out+=`<tr><td style="${tdS};text-align:left">${esc(s.havalimani)}</td><td style="${tdS}">${s.supplement||0},- ${sym}</td></tr>`;});
       out+=`</tbody></table></div>`;
       return out;
     })()}
-    ${(()=>{const arr=Array.isArray(d.dahil)?d.dahil.filter(Boolean):(d.dahil||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-check"/></svg> ${L.included}</h2><ul style="margin:0;padding-left:1.2rem">${arr.map(i=>`<li style="margin-bottom:4px;font-size:.85rem">${esc(i)}</li>`).join('')}</ul></div>`:''})()}
-    ${(()=>{const arr=Array.isArray(d.dahilDegil)?d.dahilDegil.filter(Boolean):(d.dahilDegil||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-x"/></svg> ${L.notIncluded}</h2><ul style="margin:0;padding-left:1.2rem">${arr.map(i=>`<li style="margin-bottom:4px;font-size:.85rem">${esc(i)}</li>`).join('')}</ul></div>`:''})()}
-    ${(()=>{ const ea=(d.aktiviteler||[]).filter(a=>a.operatoreGoster&&(a.ad||'').trim()); return ea.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-ticket"/></svg> ${L.extras||'Ek Paketler & Aktiviteler'}</h2>${ea.map(a=>`<div style="margin-bottom:9px"><div style="font-weight:700;font-size:.9rem">${esc(a.ad)}${a.fiyat?` <span style="color:var(--primary)">· ${a.fiyat}€ ${a.dahilMi?'(dahil)':'(opsiyonel)'}</span>`:''}</div>${(a.aciklama||'').trim()?`<div style="font-size:.85rem;opacity:.85;white-space:pre-line;margin-top:2px">${esc(a.aciklama)}</div>`:''}</div>`).join('')}</div>`:''; })()}
-    ${(()=>{const arr=Array.isArray(d.onemliNotlar)?d.onemliNotlar.filter(Boolean):(d.onemliNotlar||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-section"><h2><svg class="ic"><use href="#i-pin"/></svg> ${L.importantNotes||'Önemli Notlar'}</h2><div style="background:#fff8ec;border:1px solid #f3d9a8;border-left:4px solid var(--accent);border-radius:8px;padding:.8rem 1.05rem .8rem .6rem"><ul style="margin:0;padding-left:1.3rem">${arr.map(n=>`<li style="margin-bottom:5px;font-size:.85rem;line-height:1.55">${esc(n)}</li>`).join('')}</ul></div></div>`:''})()}
-    ${(()=>{const pkg=(d.iptalSartlari||'').trim();const eff=(pkg||((op&&op.iptalSartlari)||'')).trim();if(!eff) return '';const arr=eff.split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);if(!arr.length) return '';return `<div class="pres-section"><h2><svg class="ic"><use href="#i-stop"/></svg> ${L.cancellationTerms||'İptal Şartları'}</h2><div style="background:#fef2f2;border:1px solid #f3c2c2;border-left:4px solid #dc2626;border-radius:8px;padding:.8rem 1.05rem .8rem .6rem"><ul style="margin:0;padding-left:1.3rem">${arr.map(n=>`<li style="margin-bottom:5px;font-size:.85rem;line-height:1.55">${esc(n)}</li>`).join('')}</ul></div></div>`;})()}
     ${(()=>{
-      const oteller=d.oteller||[];
-      if(!oteller.length) return '';
-      const thS='padding:7px 10px;border:1px solid var(--border);font-weight:700;font-size:.78rem;background:var(--light);text-align:left';
-      const tdS='padding:7px 10px;border:1px solid var(--border);font-size:.79rem;vertical-align:top';
+      const _sp=v=>Array.isArray(v)?v.filter(Boolean):String(v||'').split('\n').map(x=>x.replace(/^[-•]\s*/,'')).filter(Boolean);
+      const inc=_sp(d.dahil), ninc=_sp(d.dahilDegil);
+      if(!inc.length&&!ninc.length) return '';
+      const card=(bas,arr,ok)=>`<div class="pres-cardc"><h3 data-notx>${ok?'✓ ':''}${bas}</h3><ul>${arr.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
+      return `<div class="pres-section"><h2 data-notx>${L2.services}</h2><div class="pres-2col">${inc.length?card(L2.incTitle||L.included,inc,true):''}${ninc.length?card(L2.nincTitle||L.notIncluded,ninc,false):''}</div></div>`;
+    })()}
+    ${(()=>{ const ea=(d.aktiviteler||[]).filter(a=>a.operatoreGoster&&(a.ad||'').trim()); if(!ea.length) return '';
+      return `<div class="pres-section"><h2 data-notx>${L2.extras}</h2><div class="pres-2col">${ea.map(a=>{
+        const acik=String(a.aciklama||'').split('\n').map(x=>x.replace(/^[-•]\s*/,'')).filter(Boolean);
+        return `<div class="pres-cardc"><span class="pres-pill">${esc(a.ad)}</span>${_aktFiyatDisp(a.fiyat)?`<span class="pres-pprice" data-notx>${esc(_aktFiyatDisp(a.fiyat))} <span style="font-weight:400;font-size:.72rem">(${a.dahilMi?L2.inc:L2.opt})</span></span>`:''}${acik.length?`<ul style="margin-top:4px">${acik.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`;}).join('')}</div></div>`; })()}
+    ${(()=>{const arr=Array.isArray(d.onemliNotlar)?d.onemliNotlar.filter(Boolean):(d.onemliNotlar||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-noteband"><b data-notx>${L2.note}:</b> ${arr.map(esc).join(' &nbsp;·&nbsp; ')}</div>`:''})()}
+    ${(()=>{const pkg=(d.iptalSartlari||'').trim();const eff=(pkg||((op&&op.iptalSartlari)||'')).trim();if(!eff) return '';const arr=eff.split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);if(!arr.length) return '';return `<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-stop"/></svg> ${L.cancellationTerms||'İptal Şartları'}</h2><div style="background:#fef2f2;border:1px solid #f3c2c2;border-left:4px solid #dc2626;border-radius:8px;padding:.8rem 1.05rem .8rem .6rem"><ul style="margin:0;padding-left:1.3rem">${arr.map(n=>`<li style="margin-bottom:5px;font-size:.85rem;line-height:1.55">${esc(n)}</li>`).join('')}</ul></div></div>`;})()}
+    ${(()=>{
+      const thS='padding:7px 10px;border:1px solid #ecd9c4;font-weight:700;font-size:.7rem;background:#f5e7d6;color:#8c3a1d;text-transform:uppercase;letter-spacing:.06em;text-align:left';
+      const tdS='padding:7px 10px;border:1px solid #f0e2d0;font-size:.79rem;vertical-align:top;color:#3d2f24';
       const stars=n=>'⭐'.repeat(Math.min(parseInt(n)||0,5));
       // Günlerden konaklama özeti oluştur
       const konaRows=[];
@@ -5051,22 +5158,22 @@ function openSunum(lang){
       });
       if(!konaRows.length) return '';
       const totalGece=konaRows.reduce((s,r)=>s+(r.gece||0),0);
-      return `<div class="pres-section"><h2><svg class="ic"><use href="#i-bed"/></svg> ${L.hotels||'Örnek Konaklama'}</h2>
+      return `<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-bed"/></svg> ${L2.hotelsTitle}</h2>
         <table style="width:100%;border-collapse:collapse;font-size:.79rem">
           <thead><tr>
-            <th style="${thS}">${L.destination||'Bölge / Şehir'}</th>
-            <th style="${thS};text-align:center">${L.category||'Kalite'}</th>
-            <th style="${thS}">${L.board||'Pansiyon'}</th>
+            <th style="${thS}">${L2.stage}</th>
+            <th style="${thS};text-align:center">${L2.category}</th>
+            <th style="${thS}">${L2.board}</th>
             <th style="${thS};text-align:center">${L.nights||'Gece'}</th>
           </tr></thead><tbody>
-          ${konaRows.map((r,idx2)=>{const key=r.sehir+'|||'+r.kalite+'|||'+r.pan;const otelAd=d.ornekOteller&&d.ornekOteller[key]?d.ornekOteller[key]:'';return`<tr style="background:${idx2%2===0?'#fff':'#f7fafd'}">
+          ${konaRows.map((r,idx2)=>{const key=r.sehir+'|||'+r.kalite+'|||'+r.pan;const otelAd=d.ornekOteller&&d.ornekOteller[key]?d.ornekOteller[key]:'';return`<tr style="background:${idx2%2===0?'#fff':'#fdf6ee'}">
             <td style="${tdS};font-weight:600">${esc(r.sehir)}${otelAd?`<div style="font-size:.74rem;color:var(--muted);font-weight:400">${esc(otelAd)}</div>`:''}</td>
             <td style="${tdS};text-align:center">${esc(r.kalite||'—')}</td>
             <td style="${tdS}">${esc(r.pan)}</td>
             <td style="${tdS};text-align:center">${r.gece}</td>
           </tr>`;}).join('')}
-          <tr style="background:var(--light);font-weight:700">
-            <td style="${tdS}" colspan="3">Toplam</td>
+          <tr style="background:#f5e7d6;font-weight:700">
+            <td style="${tdS};background:transparent" colspan="3">${L2.total}</td>
             <td style="${tdS};text-align:center">${totalGece}</td>
           </tr>
           </tbody></table></div>`;
@@ -5077,7 +5184,7 @@ function openSunum(lang){
       const legStr=legs=>(legs||[]).map(lg=>[lg.from,lg.to].filter(Boolean).join('→')+(lg.kod?' ('+lg.kod+')':'')+(lg.kalkis?' '+lg.kalkis:'')+(lg.inis?'→'+lg.inis:'')).join(', ');
       const rows=hs.filter(s=>s.havalimani&&(s.ornekUcuslar||[]).length);
       if(!rows.length) return '';
-      return `<div class="pres-section"><h2><svg class="ic"><use href="#i-plane"/></svg> ${L.sampleFlights||'Örnek Uçuşlar'}</h2>
+      return `<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-plane"/></svg> ${L2.sampleFlights}</h2>
         ${rows.map(s=>`
           <div style="margin-bottom:1.1rem">
             <div style="font-weight:700;font-size:.87rem;color:var(--primary);margin-bottom:.5rem;padding:.4rem .8rem;background:var(--light);border-radius:6px"><svg class="ic"><use href="#i-pin"/></svg> ${esc(s.havalimani)}</div>
@@ -5094,8 +5201,8 @@ function openSunum(lang){
           </div>`).join('')}
       </div>`;
     })()}
-    ${d.maliyetNot?`<div class="pres-section"><h2><svg class="ic"><use href="#i-list"/></svg> ${L.notes||'Notlar'}</h2><p style="font-size:.85rem;line-height:1.6;white-space:pre-wrap;margin:0">${esc(d.maliyetNot)}</p></div>`:''}
-    <p style="margin-top:1.3rem;font-size:.76rem;color:#999;text-align:center">${L.preparedOn.replace('{date}',new Date().toLocaleDateString('tr-TR'))}</p>
+    ${d.maliyetNot?`<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-list"/></svg> ${L2.notes}</h2><p style="font-size:.85rem;line-height:1.6;white-space:pre-wrap;margin:0">${esc(d.maliyetNot)}</p></div>`:''}
+    <p style="margin-top:1.3rem;font-size:.76rem;color:#999;text-align:center" data-notx>${L.preparedOn.replace('{date}',new Date().toLocaleDateString('tr-TR'))}</p>
     <div id="sunumMapContainer" style="display:none;margin:1.5rem 0">
       <h2 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:.8rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent)"><svg class="ic"><use href="#i-map"/></svg> Rota Haritası</h2>
       <div id="sunumMapStatus" style="font-size:.8rem;color:var(--muted);margin-bottom:6px"></div>
@@ -5166,8 +5273,8 @@ function openSozlesme(){
         const getSezonForAPKon=(tarih,ap)=>{const e=dateToSzKon[tarih];if(!e)return null;return e[ap]||e._default||null;};
         const hasDates=havalimanSuppleri.some(s=>(s.tarihler||[]).length>0);
         if(!hasDates && !fiyatlandirma.length) return '';
-        const thStyle='padding:7px 10px;border:1px solid var(--border);font-weight:700;font-size:.78rem;background:var(--light);text-align:center';
-        const tdStyle='padding:7px 10px;border:1px solid var(--border);font-size:.76rem;vertical-align:top;text-align:center';
+        const thStyle='padding:7px 10px;border:1px solid #ecd9c4;font-weight:700;font-size:.7rem;background:#f5e7d6;color:#8c3a1d;text-transform:uppercase;letter-spacing:.06em;text-align:center';
+        const tdStyle='padding:7px 10px;border:1px solid #f0e2d0;font-size:.76rem;vertical-align:top;text-align:center;color:#3d2f24;background:#fff';
         const fmtD=ds=>{const dt=new Date(ds+'T00:00:00');return dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'});};
         let t=`<h2>KALKIŞ TAKVİMİ</h2><table style="width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:1rem">
           <thead><tr><th style="${thStyle};text-align:left">${L.departure} / Saison</th>${sezonlar.map(sz=>`<th style="${thStyle}">${sz.ad}</th>`).join('')}</tr></thead><tbody>`;
@@ -5269,7 +5376,7 @@ function doPrint(contentId){
       @page{size:A4 portrait;margin:9mm}
       body{padding:0;background:var(--light,#f0f2f5)}
       #sunumContent{max-width:none;padding:0}
-      .pres-day{display:flex!important;gap:12px!important;align-items:flex-start!important;max-width:100%!important;overflow:hidden!important}
+      .pres-day{display:grid!important;grid-template-columns:46px minmax(0,1fr) auto!important;gap:12px!important;align-items:stretch!important;max-width:100%!important;overflow:hidden!important}
       .pres-day>div{min-width:0!important;flex:1 1 auto!important}
       .pres-day>img{flex:0 0 150px!important;width:150px!important;height:auto!important;max-width:40%!important}
       #sunumContent table{width:100%!important;max-width:100%!important;table-layout:auto!important;font-size:7.6pt!important}
@@ -6231,32 +6338,31 @@ function renderRezervasyon(){
   const cols=_resVisCols(), disp=_resDispCols();
   const gCnt=cols.filter(c=>c[0].startsWith('g_')).length, dCnt=cols.filter(c=>c[0].startsWith('d_')).length, aCnt=cols.filter(c=>c[0].startsWith('a_')).length;
   const sepCnt=disp.filter(c=>c===null).length;
-  const total=cols.reduce((t,c)=>t+_resColW(c),0)+sepCnt*_RSEPW+30+30;
-  let gh='<colgroup>'+disp.map(c=>c===null?`<col style="width:${_RSEPW}px">`:`<col style="width:${_resColW(c)}px">`).join('')+'<col style="width:30px"><col style="width:30px"></colgroup>';
-  gh+='<tr class="ghead"><th colspan="'+PCOLS.length+'"></th><th class="sep"></th><th colspan="'+gCnt+'" class="gh-g">GELİŞ</th><th class="sep"></th>'
+  const total=cols.reduce((t,c)=>t+_resColW(c),0)+sepCnt*_RSEPW+30+30+30;
+  let gh='<colgroup><col style="width:30px">'+disp.map(c=>c===null?`<col style="width:${_RSEPW}px">`:`<col style="width:${_resColW(c)}px">`).join('')+'<col style="width:30px"><col style="width:30px"></colgroup>';
+  gh+='<tr class="ghead"><th></th><th colspan="'+PCOLS.length+'"></th><th class="sep"></th><th colspan="'+gCnt+'" class="gh-g">GELİŞ</th><th class="sep"></th>'
     +(aCnt?'<th colspan="'+aCnt+'" class="gh-a">ARA UÇUŞ</th><th class="sep"></th>':'')
     +'<th colspan="'+dCnt+'" class="gh-d">DÖNÜŞ</th><th class="sep"></th><th colspan="2"></th></tr>';
-  gh+='<tr>'+disp.map(c=>{ if(c===null) return '<th class="sep"></th>'; const f=c[0]; const grp=f.startsWith('g_')?' hg':f.startsWith('a_')?' ha':f.startsWith('d_')?' hd':''; return `<th class="${grp.trim()}">${c[1]}<span class="rs" data-f="${f}"></span></th>`; }).join('')+'<th></th><th></th></tr>';
+  gh+='<tr><th class="rnh">#</th>'+disp.map(c=>{ if(c===null) return '<th class="sep"></th>'; const f=c[0]; const grp=f.startsWith('g_')?' hg':f.startsWith('a_')?' ha':f.startsWith('d_')?' hd':''; return `<th class="${grp.trim()}">${c[1]}<span class="rs" data-f="${f}"></span></th>`; }).join('')+'<th></th><th></th></tr>';
   rows.forEach((y,r)=>{
     const st=_durum(y), frk=_farkliMi(y,rows);
     const hlMatch=_hl && ((y.resno||'').toLowerCase().includes(_hl)||((y.soyad||'')+' '+(y.ad||'')).toLowerCase().includes(_hl));
     const _eff=_durumEff(y);
-    gh+=`<tr class="${_eff==='iptal'?'res-iptal ':''}${frk?'farkli ':''}${hlMatch?'reshl':''}">`;
+    gh+=`<tr class="${_eff==='iptal'?'res-iptal ':''}${frk?'farkli ':''}${hlMatch?'reshl':''}"><td class="rn" data-rn="${r}">${r+1}</td>`;
     disp.forEach(c=>{
       if(c===null){ gh+='<td class="sep"></td>'; return; }
       const f=c[0]; const v=y[f]==null?'':y[f];
-      if(f==='durum'){ gh+=`<td class="res-durum">${_resDurumCell(r,y)}</td>`; return; }
+      if(f==='durum'){ gh+=`<td class="res-durum" data-r="${r}" data-f="durum">${_resDurumCell(r,y)}</td>`; return; }
       let tdCls=f.startsWith('g_')?'fg':f.startsWith('d_')?'fd':f.startsWith('a_')?'fa':'';
       let badge='';
       if(/_vs[12]$/.test(f)){ const p=f[0], leg=f.slice(-1); const ks=_dk(y[p+'_ks'+leg]), vs=_dk(v); if(ks!==null&&vs!==null&&vs<ks) badge='<span class="plus1">+1</span>'; }
       if(/_ks2$/.test(f)){ const p=f[0]; const a2=_dk(y[p+'_vs1']), b2=_dk(v); if(a2!==null&&b2!==null){ let bek=b2-a2; if(bek<0)bek+=1440; if(bek<60) badge='<span class="kisa">kısa!</span>'; } }
       const _isTar=/_tarih$/.test(f);
       const _dispV=(_isTar&&/^\d{4}-\d{2}-\d{2}$/.test(String(v)))?String(v).split('-').reverse().join('.'):String(v);
-      const ev=FLIGHTF.has(f)?(_isTar?`onchange="_resSetFlight(${r},'${f}',_pdate(this.value))"`:`onchange="_resSetFlight(${r},'${f}',this.value)"`):`oninput="_resSetP(${r},'${f}',this.value)"`;
       if(f==='bagaj' && _bagOpts.length){ const _has=_bagOpts.some(b=>b.ad===v);
-        gh+=`<td class="${tdCls}"><select data-r="${r}" data-f="bagaj" onchange="_resSetP(${r},'bagaj',this.value)" style="width:100%;border:none;background:transparent;padding:5px 4px;font-size:.75rem;font-family:inherit;color:var(--text);cursor:pointer"><option value=""></option>${_bagOpts.map(b=>`<option value="${esc(b.ad)}"${v===b.ad?' selected':''}>${esc(b.ad)}${b.dahil?' (dahil)':''}${b.fiyat?(' +'+b.fiyat+'€'):''}</option>`).join('')}${(v&&!_has)?`<option value="${esc(v)}" selected>${esc(v)}</option>`:''}</select>${badge}</td>`;
+        gh+=`<td class="${tdCls}" data-r="${r}" data-f="bagaj"><select onchange="_resSetP(${r},'bagaj',this.value)" style="width:100%;border:none;background:transparent;padding:5px 4px;font-size:.75rem;font-family:inherit;color:var(--text);cursor:pointer"><option value=""></option>${_bagOpts.map(b=>`<option value="${esc(b.ad)}"${v===b.ad?' selected':''}>${esc(b.ad)}${b.dahil?' (dahil)':''}${b.fiyat?(' +'+b.fiyat+'€'):''}</option>`).join('')}${(v&&!_has)?`<option value="${esc(v)}" selected>${esc(v)}</option>`:''}</select>${badge}</td>`;
       } else {
-        gh+=`<td class="${tdCls}"><input data-r="${r}" data-f="${f}" value="${_dispV.replace(/"/g,'&quot;')}" ${ev}>${badge}</td>`;
+        gh+=`<td class="${tdCls} cvtd" data-r="${r}" data-f="${f}"><div class="cv">${esc(_dispV)}${badge}&nbsp;</div></td>`;
       }
     });
     gh+=`<td style="padding:3px 5px;text-align:center">${frk?'<span class="reschip rc-frk">farklı PNR</span>':''}</td>`;
@@ -6302,6 +6408,7 @@ function renderRezervasyon(){
     <div class="res-mets" style="margin-top:1rem">${_resMetsAltHTML(rows,pnrs)}</div>
   </div>`;
   _resGridInit();
+  if(window._resXLPaint)_resXLPaint();
   renderUcakGenel();
   if(_hl){ const hr=body.querySelector('tr.reshl'); if(hr) setTimeout(()=>{try{hr.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}},90); }
 }
@@ -6323,9 +6430,9 @@ function _resSetFlight(r,f,v){
 function _resUndoProp(){ if(!_resUndoSnap) return; const g=_resGrid(true); _resUndoSnap.forEach(([i,f,v])=>{ if(g.rows[i]) g.rows[i][f]=v; }); _resUndoSnap=null; setReservations(getReservations()); renderRezervasyon(); _resToast('Geri alındı'); }
 let _resSrT=null;
 function _resSoftRefresh(){ clearTimeout(_resSrT); _resSrT=setTimeout(()=>{ const ae=document.activeElement, pos=ae&&ae.dataset&&ae.dataset.f?{r:ae.dataset.r,f:ae.dataset.f,s:ae.selectionStart}:null; renderRezervasyon(); if(pos){ const el=document.querySelector(`#resTbl input[data-r="${pos.r}"][data-f="${pos.f}"]`); if(el){ el.focus(); try{el.setSelectionRange(pos.s,pos.s);}catch(e){} } } },900); }
-function addResRow(){ if(!_resPkgId||!_resKalkis){showToast('Önce paket ve kalkış seçin','error');return;} const g=_resGrid(true); g.rows.push(_newResRow()); setReservations(getReservations()); renderRezervasyon(); const el=document.querySelector(`#resTbl input[data-r="${g.rows.length-1}"][data-f="resno"]`); if(el)el.focus(); }
+function addResRow(){ if(!_resPkgId||!_resKalkis){showToast('Önce paket ve kalkış seçin','error');return;} const g=_resGrid(true); g.rows.push(_newResRow()); setReservations(getReservations()); renderRezervasyon(); if(window._resXLSelCell)_resXLSelCell(g.rows.length-1,'resno'); }
 function delResRow(r){ const g=_resGrid(); if(!g)return; g.rows.splice(r,1); setReservations(getReservations()); renderRezervasyon(); }
-function _resSearchRows(v){ _resHighlight=v||''; const q=(v||'').toLowerCase().trim(); const g=_resGrid(); const rows=g?g.rows:[]; let first=null; document.querySelectorAll('#resTbl tbody tr, #resTbl tr').forEach(()=>{}); rows.forEach((y,r)=>{ const inp=document.querySelector(`#resTbl input[data-r="${r}"][data-f="resno"]`); const tr=inp?inp.closest('tr'):null; if(!tr)return; const txt=((y.resno||'')+' '+(y.soyad||'')+' '+(y.ad||'')).toLowerCase(); const m=!!q&&txt.includes(q); tr.classList.toggle('reshl',m); if(m&&!first)first=tr; }); if(first){try{first.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}} }
+function _resSearchRows(v){ _resHighlight=v||''; const q=(v||'').toLowerCase().trim(); const g=_resGrid(); const rows=g?g.rows:[]; let first=null; document.querySelectorAll('#resTbl tbody tr, #resTbl tr').forEach(()=>{}); rows.forEach((y,r)=>{ const inp=document.querySelector(`#resTbl td[data-r="${r}"][data-f="resno"]`); const tr=inp?inp.closest('tr'):null; if(!tr)return; const txt=((y.resno||'')+' '+(y.soyad||'')+' '+(y.ad||'')).toLowerCase(); const m=!!q&&txt.includes(q); tr.classList.toggle('reshl',m); if(m&&!first)first=tr; }); if(first){try{first.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}} }
 // ── PNR maliyet ──
 function _resSetPnr(i,f,v){ const g=_pnrGrid(true); const p=g.rows[i]; if(!p)return; p[f]=f==='maliyet'?(parseFloat(v)||0):v; setPnrLedger(getPnrLedger()); renderRezervasyon(); }
 function _resAddPnr(){ const g=_pnrGrid(true); g.rows.push({pnr:'',maliyet:0,para:'TL',hy:'',hesap:'',alim:''}); setPnrLedger(getPnrLedger()); renderRezervasyon(); }
@@ -6347,30 +6454,160 @@ function _resToast(msg,undo){ let t=document.getElementById('resToast'); if(!t){
 // ── sürükleme + klavye + yapıştırma (bir kez) ──
 function _resGridInit(){
   if(window._resGridBound) return; window._resGridBound=true;
+  // ── kolon genişletme (resize) ──
   let rz=null;
-  document.addEventListener('mousedown',e=>{ const gg=e.target.closest&&e.target.closest('#resTbl .rs'); if(!gg)return; e.preventDefault(); const th=gg.parentElement; const idx=[...th.parentElement.children].indexOf(th); const col=document.querySelectorAll('#resTbl colgroup col')[idx]; if(!col)return; rz={f:gg.dataset.f,col,startX:e.clientX,startW:col.getBoundingClientRect().width,w:0}; document.body.style.cursor='col-resize'; });
+  document.addEventListener('mousedown',e=>{ const gg=e.target.closest&&e.target.closest('#resTbl .rs'); if(!gg)return; e.preventDefault(); e.stopPropagation(); const th=gg.parentElement; const idx=[...th.parentElement.children].indexOf(th); const col=document.querySelectorAll('#resTbl colgroup col')[idx]; if(!col)return; rz={f:gg.dataset.f,col,startX:e.clientX,startW:col.getBoundingClientRect().width,w:0}; document.body.style.cursor='col-resize'; },true);
   document.addEventListener('mousemove',e=>{ if(!rz)return; const w=Math.max(36,Math.round(rz.startW+(e.clientX-rz.startX))); rz.col.style.width=w+'px'; rz.w=w; });
   document.addEventListener('mouseup',()=>{ if(!rz)return; if(rz.w){ _resColw[rz.f]=rz.w; try{localStorage.setItem('dmcResColw',JSON.stringify(_resColw));}catch(e){} } rz=null; document.body.style.cursor=''; });
-  document.addEventListener('keydown',e=>{ const el=e.target; if(!el.matches||!el.matches('#resTbl input'))return; const r=+el.dataset.r, f=el.dataset.f; const order=_resVisCols().map(c=>c[0]); const ci=order.indexOf(f); const g=_resGrid(); const n=g?g.rows.length:0; const go=(nr,nf)=>{ const t=document.querySelector(`#resTbl input[data-r="${nr}"][data-f="${nf}"]`); if(t){ e.preventDefault(); el.dispatchEvent(new Event('change')); t.focus(); t.select&&t.select(); } };
-    if(e.key==='Enter'||e.key==='ArrowDown'){ if(r>=n-1&&e.key==='Enter'){ e.preventDefault(); el.dispatchEvent(new Event('change')); addResRow(); } else go(r+1,f); }
-    else if(e.key==='ArrowUp') go(r-1,f);
-    else if(e.key==='ArrowRight'&&el.selectionStart===el.value.length&&ci<order.length-1) go(r,order[ci+1]);
-    else if(e.key==='ArrowLeft'&&el.selectionStart===0&&ci>0) go(r,order[ci-1]);
-  });
-  document.addEventListener('paste',e=>{ const el=e.target; if(!el.matches||!el.matches('#resTbl input'))return; const txt=(e.clipboardData||window.clipboardData).getData('text'); if(!txt||(!txt.includes('\t')&&!txt.includes('\n')))return; e.preventDefault(); const lines=txt.replace(/\r/g,'').split('\n').filter(x=>x.length); const order=_resVisCols().map(c=>c[0]); const g=_resGrid(true); let r=+el.dataset.r; const c0=order.indexOf(el.dataset.f);
-    lines.forEach(line=>{ while(r>=g.rows.length) g.rows.push(_newResRow()); const y=g.rows[r]; line.split('\t').forEach((val,i)=>{ const f=order[c0+i]; if(f) y[f]=val.trim(); }); r++; });
-    setReservations(getReservations()); renderRezervasyon(); showToast(lines.length+' satır yapıştırıldı','success'); });
-  // ── çoklu hücre seçimi + kopyala ──
-  let _sel=null,_md=false;
-  const _order2=()=>_resVisCols().map(c=>c[0]);
-  const _rc=el=>{ if(!el||!el.dataset||el.dataset.r==null||!el.dataset.f) return null; const c=_order2().indexOf(el.dataset.f); if(c<0) return null; return {r:+el.dataset.r,c}; };
-  const _selClear=()=>{ document.querySelectorAll('#resTbl td.selc').forEach(td=>td.classList.remove('selc')); };
-  const _selPaint=()=>{ _selClear(); if(!_sel) return; const order=_order2(); const r0=Math.min(_sel.r0,_sel.r1),r1=Math.max(_sel.r0,_sel.r1),c0=Math.min(_sel.c0,_sel.c1),c1=Math.max(_sel.c0,_sel.c1); for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){ const el=document.querySelector(`#resTbl [data-r="${r}"][data-f="${order[c]}"]`); if(el){ const td=el.closest('td'); if(td) td.classList.add('selc'); } } };
-  document.addEventListener('mousedown',e=>{ const el=e.target.closest&&e.target.closest('#resTbl [data-r][data-f]'); if(!el){ if(!(e.target.closest&&e.target.closest('#resTbl'))){ _sel=null; _selClear(); } return; } const rc=_rc(el); if(!rc) return; if(e.shiftKey&&_sel){ _sel.r1=rc.r; _sel.c1=rc.c; _selPaint(); e.preventDefault(); } else { _sel={r0:rc.r,c0:rc.c,r1:rc.r,c1:rc.c}; _md=true; _selClear(); } });
-  document.addEventListener('mouseover',e=>{ if(!_md||!_sel) return; const el=e.target.closest&&e.target.closest('#resTbl [data-r][data-f]'); if(!el) return; const rc=_rc(el); if(!rc) return; if(rc.r!==_sel.r1||rc.c!==_sel.c1){ _sel.r1=rc.r; _sel.c1=rc.c; try{window.getSelection().removeAllRanges();}catch(_e){} _selPaint(); } });
-  document.addEventListener('mouseup',()=>{ _md=false; });
-  document.addEventListener('copy',e=>{ if(!_sel) return; if(_sel.r0===_sel.r1&&_sel.c0===_sel.c1) return; const order=_order2(); const g=_resGrid(); if(!g) return; const r0=Math.min(_sel.r0,_sel.r1),r1=Math.max(_sel.r0,_sel.r1),c0=Math.min(_sel.c0,_sel.c1),c1=Math.max(_sel.c0,_sel.c1); const lines=[]; for(let r=r0;r<=r1;r++){ const cells=[]; for(let c=c0;c<=c1;c++){ const f=order[c]; const y=g.rows[r]||{}; let v=y[f]==null?'':y[f]; if(f==='durum') v=_durumEff(y); cells.push(String(v).replace(/\t/g,' ').replace(/\n/g,' ')); } lines.push(cells.join('\t')); } try{ e.clipboardData.setData('text/plain',lines.join('\n')); e.preventDefault(); showToast((r1-r0+1)+'×'+(c1-c0+1)+' hücre kopyalandı','success'); }catch(_e){} });
+
+  // ── EXCEL MODELİ: seçim + kopyala/yapıştır + satır işlemleri ──
+  const S=window._resXLS={sel:null,md:false,rdrag:false,extra:new Set(),edit:null,undo:[],key:''};
+  const ord=()=>_resVisCols().map(c=>c[0]);
+  const grd=()=>_resGrid(true);
+  const key=()=>(_resPkgId||'')+'|'+(_resKalkis||'');
+  const NCol=()=>ord().length;
+  const ro=()=>{ if(document.querySelector('.ro-lock #resTbl')){ showToast('Salt-okunur mod — düzenleme kapalı','error'); return true; } return false; };
+  const nrm=()=>({r0:Math.min(S.sel.r0,S.sel.r1),r1:Math.max(S.sel.r0,S.sel.r1),c0:Math.min(S.sel.c0,S.sel.c1),c1:Math.max(S.sel.c0,S.sel.c1)});
+  const tdOf=(r,f)=>document.querySelector(`#resTbl td[data-r="${r}"][data-f="${f}"]`);
+  const proxy=()=>{ let t=document.getElementById('_resClip'); if(!t){ t=document.createElement('textarea'); t.id='_resClip'; t.setAttribute('aria-hidden','true'); t.setAttribute('tabindex','-1'); t.style.cssText='position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;border:0;padding:0;resize:none'; document.body.appendChild(t); } return t; };
+  const proxyFocus=()=>{ if(S.edit)return; if(!S.sel&&!S.extra.size)return; const t=proxy(); let v=''; try{v=selTSV();}catch(_e){} t.value=v||' '; const f=()=>{ if(S.edit)return; if(!S.sel&&!S.extra.size)return; try{t.focus({preventScroll:true});}catch(_e){try{t.focus();}catch(__e){}} try{t.select();}catch(_e){} }; f(); setTimeout(f,0); setTimeout(f,80); };
+  const isProxy=el=>!!(el&&el.id==='_resClip');
+  const kontrol=()=>{ if(S.key!==key()){ S.sel=null; S.extra.clear(); S.edit=null; S.key=key(); } };
+  const durumNorm=v=>{ const t=_norm(String(v||'')); if(!t)return''; const hit=DURUM_OPTS.find(o=>o[0]&&(_norm(o[0])===t||_norm(o[1])===t||_norm(o[0]).startsWith(t))); return hit?hit[0]:''; };
+  const setValRes=(y,f,v)=>{ v=String(v==null?'':v).trim(); if(/_tarih$/.test(f))v=_pdate(v); if(f==='durum')v=durumNorm(v); y[f]=v; };
+  const dispVal=(y,f)=>{ let v=y[f]==null?'':y[f]; if(f==='durum')v=_durumEff(y); v=String(v); if(/_tarih$/.test(f)&&/^\d{4}-\d{2}-\d{2}$/.test(v))v=v.split('-').reverse().join('.'); return v; };
+  window._resXLSelCell=(r,f)=>{ kontrol(); const c=ord().indexOf(f); if(c<0)return; S.sel={r0:r,c0:c,r1:r,c1:c}; S.extra.clear(); _resXLPaint(); proxyFocus(); };
+  const rowList=()=>{ const set=new Set(S.extra); if(S.sel){ const s=nrm(); if(s.c0===0&&s.c1===NCol()-1)for(let r=s.r0;r<=s.r1;r++)set.add(r); } const g=_resGrid(); const n=g?g.rows.length:0; return [...set].filter(r=>r<n).sort((a,b)=>a-b); };
+  window._resXLPaint=()=>{ kontrol();
+    document.querySelectorAll('#resTbl td.selc,#resTbl td.anchor').forEach(td=>td.classList.remove('selc','anchor'));
+    document.querySelectorAll('#resTbl td.rn.selr').forEach(td=>td.classList.remove('selr'));
+    const o=ord();
+    if(S.sel){ const s=nrm(); for(let r=s.r0;r<=s.r1;r++)for(let c=s.c0;c<=s.c1;c++){ const td=tdOf(r,o[c]); if(td)td.classList.add((r===S.sel.r0&&c===S.sel.c0&&(s.r0!==s.r1||s.c0!==s.c1))?'anchor':'selc'); } }
+    S.extra.forEach(r=>{ for(let c=0;c<o.length;c++){ const td=tdOf(r,o[c]); if(td)td.classList.add('selc'); } });
+    rowList().forEach(r=>{ const rn=document.querySelector(`#resTbl td.rn[data-rn="${r}"]`); if(rn)rn.classList.add('selr'); });
+  };
+  // ── undo ──
+  const snap=()=>{ const g=_resGrid(); if(!g)return; S.undo.push({key:key(),rows:JSON.stringify(g.rows)}); if(S.undo.length>30)S.undo.shift(); };
+  const undo=()=>{ const son=S.undo[S.undo.length-1]; if(!son||son.key!==key()){ showToast('Geri alınacak işlem yok','error'); return; } S.undo.pop(); const g=grd(); g.rows=JSON.parse(son.rows); S.extra.clear(); S.edit=null; setReservations(getReservations()); renderRezervasyon(); showToast('Geri alındı','success'); };
+  window._resXLUndo=undo;
+  // ── TSV ──
+  const parseTSV=txt=>{ txt=String(txt||'').replace(/\r\n?/g,'\n'); const out=[[]]; let cur='',q=false; for(let i=0;i<txt.length;i++){ const ch=txt[i]; if(q){ if(ch==='"'){ if(txt[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; } else if(ch==='"'&&cur===''){q=true;} else if(ch==='\t'){out[out.length-1].push(cur);cur='';} else if(ch==='\n'){out[out.length-1].push(cur);cur='';out.push([]);} else cur+=ch; } out[out.length-1].push(cur); while(out.length&&out[out.length-1].every(c=>c===''))out.pop(); return out; };
+  const tsvH=v=>{ v=String(v==null?'':v); return /[\t\n"]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const selTSV=()=>{ const g=_resGrid(); if(!g)return''; const o=ord(); const rl=rowList();
+    if(S.extra.size&&rl.length) return rl.map(r=>o.map(f=>tsvH(dispVal(g.rows[r]||{},f))).join('\t')).join('\n');
+    if(!S.sel)return''; const s=nrm(); const lines=[]; for(let r=s.r0;r<=s.r1;r++){ const cells=[]; for(let c=s.c0;c<=s.c1;c++)cells.push(tsvH(dispVal(g.rows[r]||{},o[c]))); lines.push(cells.join('\t')); } return lines.join('\n'); };
+  const temizle=()=>{ if(!S.sel&&!S.extra.size)return; if(ro())return; snap(); const g=grd(); const o=ord();
+    if(S.extra.size){ rowList().forEach(r=>{ if(g.rows[r])o.forEach(f=>{ if(f!=='durum')g.rows[r][f]=''; else g.rows[r].durum=''; }); }); }
+    if(S.sel){ const s=nrm(); for(let r=s.r0;r<=s.r1;r++)for(let c=s.c0;c<=s.c1;c++){ if(g.rows[r])g.rows[r][o[c]]=''; } }
+    setReservations(getReservations()); renderRezervasyon(); showToast('Temizlendi — Ctrl+Z geri alır','success'); };
+  const insertRows=(at,n)=>{ if(ro())return; snap(); const g=grd(); const yeni=[]; for(let i=0;i<n;i++)yeni.push(_newResRow()); g.rows.splice(at,0,...yeni); S.extra.clear(); S.sel={r0:at,c0:0,r1:at+n-1,c1:NCol()-1}; setReservations(getReservations()); renderRezervasyon(); showToast(n+' satır eklendi — Ctrl+Z geri alır','success'); };
+  const deleteRows=()=>{ const rl=rowList(); if(!rl.length||ro())return; snap(); const g=grd(); rl.slice().reverse().forEach(r=>g.rows.splice(r,1)); S.extra.clear(); const r=Math.min(rl[0],Math.max(0,g.rows.length-1)); S.sel=g.rows.length?{r0:r,c0:0,r1:r,c1:NCol()-1}:null; setReservations(getReservations()); renderRezervasyon(); showToast(rl.length+' satır silindi — Ctrl+Z geri alır','success'); };
+  // ── düzenleme ──
+  const editCommit=()=>{ if(!S.edit)return; const {r,f}=S.edit; const el=document.getElementById('_resEdt'); S.edit=null; if(!el)return; const val=el.value;
+    const g=grd(); const y=g.rows[r]; if(!y){ renderRezervasyon(); return; }
+    const eskiV=y[f]; const yeniV=/_tarih$/.test(f)?_pdate(val):val.trim();
+    if(String(eskiV||'')===String(yeniV||'')){ renderRezervasyon(); return; }
+    snap();
+    if(FLIGHTF.has(f)){ _resSetFlight(r,f,yeniV); } else { setValRes(y,f,val); setReservations(getReservations()); renderRezervasyon(); } };
+  const editCancel=()=>{ if(!S.edit)return; S.edit=null; renderRezervasyon(); };
+  const editStart=(r,f,ilk)=>{ if(ro())return; if(f==='durum'||f==='bagaj')return; // bunlar kendi select'iyle düzenlenir
+    editCommit(); const td=tdOf(r,f); if(!td||!td.classList.contains('cvtd'))return;
+    const g=_resGrid(); const y=g&&g.rows[r]; if(!y)return;
+    S.edit={r,f}; let v=y[f]==null?'':String(y[f]); if(/_tarih$/.test(f)&&/^\d{4}-\d{2}-\d{2}$/.test(v))v=v.split('-').reverse().join('.');
+    td.innerHTML='<input id="_resEdt">'; const inp=td.firstChild; inp.value=ilk!=null?ilk:v; inp.focus(); if(ilk==null)inp.select(); else inp.setSelectionRange(inp.value.length,inp.value.length);
+    inp.addEventListener('keydown',e=>{ const o=ord(); const ci=o.indexOf(f);
+      if(e.key==='Enter'){ e.preventDefault(); const g2=_resGrid(); const son=g2&&r>=g2.rows.length-1; editCommit(); if(son){ addResRow(); } else { S.sel={r0:r+1,c0:ci,r1:r+1,c1:ci}; _resXLPaint(); proxyFocus(); } }
+      else if(e.key==='Tab'){ e.preventDefault(); editCommit(); const nc=Math.max(0,Math.min(ci+(e.shiftKey?-1:1),o.length-1)); S.sel={r0:r,c0:nc,r1:r,c1:nc}; _resXLPaint(); proxyFocus(); }
+      else if(e.key==='Escape'){ e.preventDefault(); editCancel(); S.sel={r0:r,c0:ci,r1:r,c1:ci}; _resXLPaint(); proxyFocus(); } });
+    inp.addEventListener('blur',()=>{ setTimeout(()=>{ if(S.edit&&S.edit.r===r&&S.edit.f===f)editCommit(); },120); }); };
+  // ── kopyala / kes / yapıştır ──
+  document.addEventListener('copy',e=>{ kontrol(); if(S.edit||(!S.sel&&!S.extra.size))return; const ae=document.activeElement; if(ae&&!isProxy(ae)&&ae.matches&&ae.matches('input,select,textarea'))return; if(!document.querySelector('#resTbl'))return; const tsv=selTSV(); e.clipboardData.setData('text/plain',tsv); e.preventDefault(); showToast('Kopyalandı','success'); });
+  document.addEventListener('cut',e=>{ kontrol(); if(S.edit||(!S.sel&&!S.extra.size))return; const ae=document.activeElement; if(ae&&!isProxy(ae)&&ae.matches&&ae.matches('input,select,textarea'))return; if(!document.querySelector('#resTbl'))return; const tsv=selTSV(); e.clipboardData.setData('text/plain',tsv); e.preventDefault(); temizle(); });
+  document.addEventListener('paste',e=>{ kontrol(); if(S.edit||!S.sel)return; const ae=document.activeElement; if(ae&&!isProxy(ae)&&ae.matches&&ae.matches('input,select,textarea'))return; if(!document.querySelector('#resTbl'))return;
+    const txt=(e.clipboardData||window.clipboardData).getData('text'); if(!txt)return; e.preventDefault(); if(ro())return;
+    const mat=parseTSV(txt); if(!mat.length)return; snap();
+    const o=ord(); const g=grd(); const s=nrm(); let eklenen=0;
+    if(mat.length===1&&mat[0].length===1){ for(let r=s.r0;r<=s.r1;r++)for(let c=s.c0;c<=s.c1;c++){ while(r>=g.rows.length){g.rows.push(_newResRow());eklenen++;} setValRes(g.rows[r],o[c],mat[0][0]); } }
+    else{ mat.forEach((line,i)=>{ const r=s.r0+i; while(r>=g.rows.length){g.rows.push(_newResRow());eklenen++;} line.forEach((val,j)=>{ const c=s.c0+j; if(c<o.length)setValRes(g.rows[r],o[c],val); }); });
+      S.sel={r0:s.r0,c0:s.c0,r1:Math.min(s.r0+mat.length-1,g.rows.length-1),c1:Math.min(s.c0+mat[0].length-1,o.length-1)}; }
+    setReservations(getReservations()); renderRezervasyon(); proxyFocus();
+    showToast((mat.length===1&&mat[0].length===1?'Değer dolduruldu':mat.length+' satır yapıştırıldı')+(eklenen?' (+'+eklenen+' yeni satır)':'')+' — Ctrl+Z geri alır','success'); });
+  // ── fare ──
+  document.addEventListener('mousedown',e=>{ if(e.button===2)return; if(e.target.closest&&e.target.closest('#resCtx'))return; kontrol();
+    const rn=e.target.closest&&e.target.closest('#resTbl td.rn[data-rn]');
+    if(rn){ editCommit(); const r=+rn.dataset.rn;
+      if(e.ctrlKey||e.metaKey){ if(S.extra.has(r))S.extra.delete(r); else S.extra.add(r); if(!S.sel)S.sel={r0:r,c0:0,r1:r,c1:NCol()-1}; }
+      else if(e.shiftKey&&S.sel){ S.sel.r1=r; S.sel.c1=NCol()-1; }
+      else{ S.extra.clear(); S.sel={r0:r,c0:0,r1:r,c1:NCol()-1}; S.rdrag=true; }
+      _resXLPaint(); proxyFocus(); e.preventDefault(); return; }
+    const th=e.target.closest&&e.target.closest('#resTbl th');
+    if(th&&!e.target.closest('.rs')){ const rsc=th.querySelector('.rs'); if(rsc&&rsc.dataset.f){ editCommit(); const c=ord().indexOf(rsc.dataset.f); const g=_resGrid(); const n=g?g.rows.length:0; if(c>=0&&n){ S.extra.clear(); S.sel={r0:0,c0:c,r1:n-1,c1:c}; _resXLPaint(); proxyFocus(); e.preventDefault(); } } return; }
+    const td=e.target.closest&&e.target.closest('#resTbl td[data-r][data-f]');
+    if(!td){ if(!(e.target.closest&&e.target.closest('#resTbl'))&&!e.target.closest('#resToast')&&!e.target.closest('#resCtx')){ if(S.edit)editCommit(); S.sel=null; S.extra.clear(); if(document.querySelector('#resTbl'))_resXLPaint(); } return; }
+    if(e.target.closest('select,button,a')||(e.target.tagName==='INPUT'&&e.target.id!=='_resEdt'))return; // durum/bagaj/opsiyon/sil native
+    const r=+td.dataset.r, c=ord().indexOf(td.dataset.f); if(c<0)return;
+    if(S.edit&&S.edit.r===r&&S.edit.f===td.dataset.f)return;
+    editCommit();
+    if(e.shiftKey&&S.sel){ S.sel.r1=r; S.sel.c1=c; } else { S.extra.clear(); S.sel={r0:r,c0:c,r1:r,c1:c}; S.md=true; }
+    _resXLPaint(); proxyFocus(); e.preventDefault(); });
+  document.addEventListener('mouseover',e=>{ if(S.rdrag&&S.sel){ const rn=e.target.closest&&e.target.closest('#resTbl td.rn[data-rn]'); const td=rn||(e.target.closest&&e.target.closest('#resTbl td[data-r]')); if(!td)return; const r=rn?+rn.dataset.rn:+td.dataset.r; if(r!==S.sel.r1){ S.sel.r1=r; S.sel.c1=NCol()-1; _resXLPaint(); } return; }
+    if(!S.md||!S.sel)return; const td=e.target.closest&&e.target.closest('#resTbl td[data-r][data-f]'); if(!td)return; const r=+td.dataset.r, c=ord().indexOf(td.dataset.f); if(c<0)return; if(r!==S.sel.r1||c!==S.sel.c1){ S.sel.r1=r; S.sel.c1=c; try{window.getSelection().removeAllRanges();}catch(_e){} _resXLPaint(); } });
+  document.addEventListener('mouseup',()=>{ if(S.md||S.rdrag){ S.md=false; S.rdrag=false; proxyFocus(); } });
+  document.addEventListener('dblclick',e=>{ const td=e.target.closest&&e.target.closest('#resTbl td.cvtd[data-r][data-f]'); if(td)editStart(+td.dataset.r,td.dataset.f); });
+  // ── klavye ──
+  document.addEventListener('keydown',e=>{ kontrol(); if(S.edit)return; const ae=e.target; if(ae&&!isProxy(ae)&&ae.matches&&ae.matches('input,select,textarea'))return; if(!document.querySelector('#resTbl'))return; if(!S.sel&&!S.extra.size)return;
+    const kt=e.ctrlKey||e.metaKey;
+    if(kt&&e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); return; }
+    if(kt&&(e.key==='+'||e.key==='=')){ e.preventDefault(); const rl=rowList(); const s=S.sel?nrm():{r0:0,r1:0}; insertRows(rl.length?rl[0]:s.r0, rl.length||s.r1-s.r0+1); return; }
+    if(kt&&e.key==='-'){ e.preventDefault(); if(!rowList().length&&S.sel){ const s=nrm(); S.extra.clear(); S.sel={r0:s.r0,c0:0,r1:s.r1,c1:NCol()-1}; } deleteRows(); return; }
+    if(kt)return;
+    if(!S.sel)return;
+    const o=ord();
+    const yon={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1],Enter:[1,0],Tab:[0,e.shiftKey?-1:1]}[e.key];
+    if(yon){ e.preventDefault(); const g=_resGrid(); const n=g?g.rows.length:1;
+      if(e.shiftKey&&e.key.startsWith('Arrow')){ S.sel.r1=Math.max(0,Math.min(n-1,S.sel.r1+yon[0])); S.sel.c1=Math.max(0,Math.min(o.length-1,S.sel.c1+yon[1])); }
+      else{ const r=Math.max(0,Math.min(n-1,S.sel.r0+yon[0])); const c=Math.max(0,Math.min(o.length-1,S.sel.c0+yon[1])); S.sel={r0:r,c0:c,r1:r,c1:c}; }
+      _resXLPaint(); proxyFocus(); const td=tdOf(S.sel.r1,o[S.sel.c1]); if(td&&td.scrollIntoView)td.scrollIntoView({block:'nearest',inline:'nearest'}); return; }
+    if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); temizle(); return; }
+    if(e.key==='F2'){ e.preventDefault(); editStart(S.sel.r0,o[S.sel.c0]); return; }
+    if(e.key.length===1&&!e.altKey){ e.preventDefault(); editStart(S.sel.r0,o[S.sel.c0],e.key); return; } });
+  // ── sağ tık menüsü ──
+  const ctxEl=()=>{ let el=document.getElementById('resCtx'); if(!el){ el=document.createElement('div'); el.id='resCtx'; document.body.appendChild(el);
+      el.addEventListener('click',async ev=>{ const ci=ev.target.closest('.ci'); if(!ci)return; const a=ci.dataset.a; el.style.display='none';
+        const rl=rowList(); const s=S.sel?nrm():null; const n=rl.length||((s?s.r1-s.r0:0)+1);
+        if(a==='ust')insertRows(rl.length?rl[0]:(s?s.r0:0),n);
+        else if(a==='alt')insertRows((rl.length?rl[rl.length-1]:(s?s.r1:0))+1,n);
+        else if(a==='sil'){ if(!rl.length&&s){ S.extra.clear(); S.sel={r0:s.r0,c0:0,r1:s.r1,c1:NCol()-1}; } deleteRows(); }
+        else if(a==='kopyala')document.execCommand('copy');
+        else if(a==='kes')document.execCommand('cut');
+        else if(a==='temizle')temizle();
+        else if(a==='yapistir'){ try{ const txt=await navigator.clipboard.readText(); if(txt){ const pe=new ClipboardEvent('paste',{bubbles:true,cancelable:true}); Object.defineProperty(pe,'clipboardData',{value:{getData:()=>txt}}); document.dispatchEvent(pe); } }catch(_e){ showToast('Tarayıcı pano iznini vermedi — Ctrl+V kullanın','error'); } } }); }
+    return el; };
+  document.addEventListener('contextmenu',e=>{ kontrol();
+    const rn=e.target.closest&&e.target.closest('#resTbl td.rn[data-rn]');
+    const td=e.target.closest&&e.target.closest('#resTbl td[data-r][data-f]');
+    if(!rn&&!td){ const el=document.getElementById('resCtx'); if(el)el.style.display='none'; return; }
+    e.preventDefault(); editCommit();
+    const r=rn?+rn.dataset.rn:+td.dataset.r;
+    const o=ord();
+    const secimde=rowList().includes(r)||(S.sel&&td&&(()=>{ const s=nrm(); const c=o.indexOf(td.dataset.f); return r>=s.r0&&r<=s.r1&&c>=s.c0&&c<=s.c1; })());
+    if(!secimde){ S.extra.clear(); S.sel=rn?{r0:r,c0:0,r1:r,c1:o.length-1}:{r0:r,c0:o.indexOf(td.dataset.f),r1:r,c1:o.indexOf(td.dataset.f)}; _resXLPaint(); }
+    const rl=rowList(); const n=rl.length||((S.sel?nrm().r1-nrm().r0:0)+1); const dagink=S.extra.size>0;
+    const el=ctxEl();
+    el.innerHTML=`<div class="ci${dagink?' dis':''}" data-a="ust">⬆ Üstüne ${n} satır ekle</div>`
+      +`<div class="ci${dagink?' dis':''}" data-a="alt">⬇ Altına ${n} satır ekle</div>`
+      +`<div class="ci" data-a="sil">Satır${n>1?'ları':'ı'} sil (${n})</div><hr>`
+      +`<div class="ci" data-a="kopyala">Kopyala <span class="ks">Ctrl+C</span></div>`
+      +`<div class="ci" data-a="kes">Kes <span class="ks">Ctrl+X</span></div>`
+      +`<div class="ci" data-a="yapistir">Yapıştır <span class="ks">Ctrl+V</span></div>`
+      +`<div class="ci" data-a="temizle">İçeriği temizle <span class="ks">Delete</span></div>`;
+    el.style.display='block';
+    el.style.left=Math.min(e.clientX,innerWidth-el.offsetWidth-8)+'px';
+    el.style.top=Math.min(e.clientY,innerHeight-el.offsetHeight-8)+'px'; });
+  document.addEventListener('mousedown',e=>{ const el=document.getElementById('resCtx'); if(el&&el.style.display==='block'&&!(e.target.closest&&e.target.closest('#resCtx')))el.style.display='none'; });
+  document.addEventListener('scroll',()=>{ const el=document.getElementById('resCtx'); if(el)el.style.display='none'; },true);
 }
+
 function exportReservationExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekebilir)','error'); return; }
   if(!_resPkgId||!_resKalkis){ showToast('Önce paket ve kalkış seçin','error'); return; }
@@ -9522,7 +9759,7 @@ function _tdYevToplam(g){ const t=_tdN(g.yevmiye.tutar), gn=+g.gunSay||0;
 function _tdAktList(E){
   const out=[]; const seen=new Set();
   (E.uyeler||[]).forEach(u=>{ const pk=getPackages().find(p=>p.id===u.pkgId); if(!pk) return;
-    (pk.aktiviteler||[]).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:+a.fiyat||0,dahil:!!a.dahilMi,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:'')}); });
+    (pk.aktiviteler||[]).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:_aktFiyatNum(a.fiyat),dahil:!!a.dahilMi,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:'')}); });
   });
   return out;
 }
