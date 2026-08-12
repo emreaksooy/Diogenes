@@ -894,6 +894,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div class="pkg-section-item" onclick="openSectionModal('card-dahil')"><svg class="ic"><use href="#i-list"/></svg> Dahil / Dahil Değil</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-notlar')"><svg class="ic"><use href="#i-pin"/></svg> Önemli Notlar</div>
         <div class="pkg-section-item" onclick="openSectionModal('card-iptal')"><svg class="ic"><use href="#i-stop"/></svg> İptal Şartları</div>
+        <div class="pkg-section-item" onclick="openSectionModal('card-odeme')"><svg class="ic"><use href="#i-card"/></svg> Ödeme Koşulları</div>
       </div>
       <div class="sidebar-pkg-footer">
         <button class="btn btn-success" style="width:100%;font-size:.82rem;margin-bottom:6px;justify-content:center" onclick="saveCurrentPackage()"><svg class="ic"><use href="#i-save"/></svg> Paketi Kaydet</button>
@@ -1229,6 +1230,13 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <p class="section-tip">Boş bırakılırsa <b>operatörün varsayılan iptal şartları</b> kullanılır. Bu pakete özel şart girmek isterseniz buraya yazın (operatör varsayılanını geçersiz kılar).</p>
       <textarea id="iptalSartlari" rows="5" oninput="markDirty();updateIptalHint()" placeholder="Her satıra bir madde — operatör varsayılanını geçersiz kılar…" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:.88rem;font-family:inherit;line-height:1.6;resize:vertical"></textarea>
       <div id="iptalDefaultHint" style="font-size:.78rem;color:var(--muted);margin-top:6px"></div>
+    </div>
+
+    <div class="card" id="card-odeme">
+      <div class="card-title"><svg class="ic"><use href="#i-card"/></svg> Ödeme Koşulları</div>
+      <p class="section-tip">Boş bırakılırsa <b>operatörün varsayılan ödeme koşulları</b> kullanılır. Bu pakete özel koşul girmek isterseniz buraya yazın (operatör varsayılanını geçersiz kılar).</p>
+      <textarea id="odemeKosullari" rows="5" oninput="markDirty();updateOdemeHint()" placeholder="Her satıra bir madde — ör. Rezervasyonda %25 ön ödeme…" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:.88rem;font-family:inherit;line-height:1.6;resize:vertical"></textarea>
+      <div id="odemeDefaultHint" style="font-size:.78rem;color:var(--muted);margin-top:6px"></div>
     </div>
     </div>
   </div>
@@ -1626,6 +1634,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <div class="op-tabs">
         <button type="button" class="op-tab active" data-optab="bilgiler" onclick="opTab('bilgiler')"><svg class="ic"><use href="#i-file"/></svg> Bilgiler</button>
         <button type="button" class="op-tab" data-optab="iptal" onclick="opTab('iptal')"><svg class="ic"><use href="#i-stop"/></svg> İptal Şartları</button>
+        <button type="button" class="op-tab" data-optab="odeme" onclick="opTab('odeme')"><svg class="ic"><use href="#i-card"/></svg> Ödeme Koşulları</button>
       </div>
 
       <div class="op-tabpane" id="opPane-bilgiler">
@@ -1657,6 +1666,14 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
           <label><svg class="ic"><use href="#i-stop"/></svg> Varsayılan İptal Şartları</label>
           <textarea id="opIptalSartlari" rows="8" placeholder="Her satıra bir madde. Ör:&#10;30+ gün önce iptal: ücretsiz&#10;15–29 gün: %50 kesinti&#10;0–14 gün / gelmeme: %100 kesinti" style="width:100%;min-height:160px;line-height:1.6;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:.88rem;font-family:inherit;resize:vertical"></textarea>
           <p class="section-tip" style="margin-top:6px">Bu operatörün tüm paketlerinde varsayılan iptal şartı olarak kullanılır. Bir pakette ayrıca girilirse o paket için bu varsayılan geçersiz olur.</p>
+        </div>
+      </div>
+
+      <div class="op-tabpane" id="opPane-odeme" style="display:none">
+        <div class="field field-full">
+          <label><svg class="ic"><use href="#i-card"/></svg> Varsayılan Ödeme Koşulları</label>
+          <textarea id="opOdemeKosullari" rows="8" placeholder="Her satıra bir madde. Ör:&#10;Rezervasyonda %25 ön ödeme&#10;Kalan tutar varıştan 30 gün önce&#10;Havale ile EUR hesabına" style="width:100%;min-height:160px;line-height:1.6;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:.88rem;font-family:inherit;resize:vertical"></textarea>
+          <p class="section-tip" style="margin-top:6px">Tüm paketlerde varsayılan ödeme koşulu olarak kullanılır; pakette ayrıca girilirse o paket için geçersiz olur.</p>
         </div>
       </div>
     </div>
@@ -1753,7 +1770,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v126 · 14.07.2026';
+const APP_VER='v128 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2714,7 +2731,7 @@ function openOpModal(id=null) {
   const setV = (elId, val) => document.getElementById(elId).value = val||'';
   setV('opAd', op?.ad); setV('opYetkili', op?.yetkili); setV('opUlke', op?.ulke);
   setV('opEmail', op?.email); setV('opTel', op?.tel);
-  setV('opAdres', op?.adres); setV('opNotlar', op?.notlar); setV('opIptalSartlari', op?.iptalSartlari);
+  setV('opAdres', op?.adres); setV('opNotlar', op?.notlar); setV('opIptalSartlari', op?.iptalSartlari); setV('opOdemeKosullari', op?.odemeKosullari);
   // Logo preview
   const preview = document.getElementById('opLogoPreview');
   const initEl  = document.getElementById('opLogoInitials');
@@ -2845,6 +2862,7 @@ function saveOperator(){
     adres:   document.getElementById('opAdres').value.trim(),
     notlar:  document.getElementById('opNotlar').value.trim(),
     iptalSartlari: document.getElementById('opIptalSartlari').value.trim(),
+    odemeKosullari: document.getElementById('opOdemeKosullari').value.trim(),
   };
   if(editingOpId){
     const i = ops.findIndex(o=>o.id===editingOpId);
@@ -2984,6 +3002,7 @@ function collectData(){
     paketAciklama:v('paketAciklama'),
     onemliNotlar:[...onemliNotlarItems],
     iptalSartlari:v('iptalSartlari'),
+    odemeKosullari:v('odemeKosullari'),
     dahil:[...dahilItems], dahilDegil:[...dahilDegilItems],
     marginPct:v('marginPct'), maliyetNot:v('maliyetNot'),
     operatorId: currentOpId,
@@ -3319,7 +3338,7 @@ function fillForm(d){
   set('destinasyonSehir',d.destinasyonSehir);
   set('baslangic',d.baslangic); set('bitis',d.bitis);
   set('gece',d.gece||3); set('pax',d.pax||20);
-  set('para',d.para||'EUR'); set('paketAciklama',d.paketAciklama); set('iptalSartlari',d.iptalSartlari||''); updateIptalHint();
+  set('para',d.para||'EUR'); set('paketAciklama',d.paketAciklama); set('iptalSartlari',d.iptalSartlari||''); updateIptalHint(); set('odemeKosullari',d.odemeKosullari||''); updateOdemeHint();
   // dahil/dahilDegil: eski format string → dizi, yeni format dizi
   const toArr = v => Array.isArray(v) ? v : (v||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);
   dahilItems = toArr(d.dahil); dahilDegilItems = toArr(d.dahilDegil); onemliNotlarItems = toArr(d.onemliNotlar);
@@ -3549,6 +3568,15 @@ function newPackage(){
   else go();
 }
 
+function updateOdemeHint(){
+  const el=document.getElementById('odemeDefaultHint'); if(!el) return;
+  const pkgVal=(document.getElementById('odemeKosullari')?.value||'').trim();
+  const op=(typeof getActiveOp==='function')?getActiveOp():null;
+  const opVal=((op&&op.odemeKosullari)||'').trim();
+  if(pkgVal){ el.innerHTML='✏️ Bu pakete özel ödeme koşulları kullanılıyor (operatör varsayılanı geçersiz).'; }
+  else if(opVal){ el.innerHTML='✔️ Operatör varsayılanı kullanılacak:<br><span style="white-space:pre-line;color:var(--text)">'+esc(opVal)+'</span>'; }
+  else { el.innerHTML='⚠️ Ne pakette ne operatörde ödeme koşulu tanımlı — sunumda bu bölüm görünmez.'; }
+}
 function updateIptalHint(){
   const el=document.getElementById('iptalDefaultHint'); if(!el) return;
   const pkgVal=(document.getElementById('iptalSartlari')?.value||'').trim();
@@ -3560,7 +3588,7 @@ function updateIptalHint(){
 }
 function clearForm(){
   _undoStack=[]; _updateUndoBtn();
-  ['paketAdi','destinasyonSehir','baslangic','bitis','paketAciklama','maliyetNot','iptalSartlari'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['paketAdi','destinasyonSehir','baslangic','bitis','paketAciklama','maliyetNot','iptalSartlari','odemeKosullari'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   bagajlar=[]; renderBagajlar();
   ekstraCharges=[]; renderEkstraCharges();
   odaUpgrade=[]; renderOdaUpgrade();
@@ -5068,10 +5096,10 @@ async function gTranslate(text, lang){
 function getActiveOp(){return currentOpId?getOperators().find(o=>o.id===currentOpId):null;}
 
 const SUNUM_L2={
-  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar',extTitle:'Uzatma Haftası',weekly:'Haftalık',opPrice:'Operatör satış fiyatı',depAirport:'Kalkış Havalimanı',fromDep:'{H} kalkışları için: '},
-  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise',extTitle:'Verlängerungswoche',weekly:'Wöchentlich',opPrice:'EK (Einkauf)',depAirport:'Abflughafen',fromDep:'Ab {H}: '},
-  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly',opPrice:'Operator price',depAirport:'Departure airport',fromDep:'From {H}: '},
-  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire',opPrice:'Prix opérateur',depAirport:'Aéroport de départ',fromDep:'Au départ de {H} : '}
+  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar',extTitle:'Uzatma Haftası',weekly:'Haftalık',opPrice:'Operatör satış fiyatı',depAirport:'Kalkış Havalimanı',fromDep:'{H} kalkışları için: ',payTerms:'Ödeme Koşulları'},
+  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise',extTitle:'Verlängerungswoche',weekly:'Wöchentlich',opPrice:'EK (Einkauf)',depAirport:'Abflughafen',fromDep:'Ab {H}: ',payTerms:'Zahlungsbedingungen'},
+  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly',opPrice:'Operator price',depAirport:'Departure airport',fromDep:'From {H}: ',payTerms:'Payment Terms'},
+  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire',opPrice:'Prix opérateur',depAirport:'Aéroport de départ',fromDep:'Au départ de {H} : ',payTerms:'Conditions de paiement'}
 };
 function openSunum(lang){
   lang=lang||_sunumLang||'tr';
@@ -5212,6 +5240,7 @@ function openSunum(lang){
         return `<div class="pres-cardc"><span class="pres-pill">${esc(a.ad)}</span>${_aktFiyatDisp(a.fiyat)?`<span class="pres-pprice" data-notx>${esc(_aktFiyatDisp(a.fiyat))} <span style="font-weight:400;font-size:.72rem">(${a.dahilMi?L2.inc:L2.opt})</span></span>`:''}${(a.operatorSatabilir&&_aktFiyatDisp(a.operatorFiyat))?`<div style="text-align:right;font-size:.78rem;color:#8c3a1d;margin-top:2px" data-notx>${L2.opPrice}: <b>${esc(_aktFiyatDisp(a.operatorFiyat))}</b></div>`:''}${acik.length?`<ul style="margin-top:4px">${acik.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`;}).join('')}</div></div>`; })()}
     ${(()=>{const arr=Array.isArray(d.onemliNotlar)?d.onemliNotlar.filter(Boolean):(d.onemliNotlar||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-noteband"><b data-notx>${L2.note}:</b> ${arr.map(esc).join(' &nbsp;·&nbsp; ')}</div>`:''})()}
     ${(()=>{const pkg=(d.iptalSartlari||'').trim();const eff=(pkg||((op&&op.iptalSartlari)||'')).trim();if(!eff) return '';const arr=eff.split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);if(!arr.length) return '';return `<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-stop"/></svg> ${L.cancellationTerms||'İptal Şartları'}</h2><div style="background:#fef2f2;border:1px solid #f3c2c2;border-left:4px solid #dc2626;border-radius:8px;padding:.8rem 1.05rem .8rem .6rem"><ul style="margin:0;padding-left:1.3rem">${arr.map(n=>`<li style="margin-bottom:5px;font-size:.85rem;line-height:1.55">${esc(n)}</li>`).join('')}</ul></div></div>`;})()}
+    ${(()=>{const pkg=(d.odemeKosullari||'').trim();const eff=(pkg||((op&&op.odemeKosullari)||'')).trim();if(!eff) return '';const arr=eff.split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);if(!arr.length) return '';return `<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-card"/></svg> ${L2.payTerms}</h2><div style="background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;border-radius:8px;padding:.8rem 1.05rem .8rem .6rem"><ul style="margin:0;padding-left:1.3rem">${arr.map(n=>`<li style="margin-bottom:5px;font-size:.85rem;line-height:1.55;color:#1e3a5f">${esc(n)}</li>`).join('')}</ul></div></div>`;})()}
     ${(()=>{
       const thS='padding:7px 10px;border:1px solid #ecd9c4;font-weight:700;font-size:.7rem;background:#f5e7d6;color:#8c3a1d;text-transform:uppercase;letter-spacing:.06em;text-align:left';
       const tdS='padding:7px 10px;border:1px solid #f0e2d0;font-size:.79rem;vertical-align:top;color:#3d2f24';
