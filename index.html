@@ -1751,7 +1751,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v123 · 14.07.2026';
+const APP_VER='v124 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -1895,7 +1895,7 @@ function updatePkgTabBar(id){
   if(pkg){
     const op=getOperators().find(o=>o.id===pkg.operatorId);
     const initials=((op&&op.ad)?op.ad:'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
-    if(logoEl) logoEl.innerHTML=(op&&op.logo)?`<img src="${op.logo}" alt="">`:esc(initials);
+    if(logoEl) logoEl.innerHTML=(op&&op.logo)?`<img class="oplg" src="${op.logo}" alt="">`:esc(initials);
     if(nameEl) nameEl.innerHTML=esc(pkg.paketAdi||'Yeni Paket')+(pkg.paketKodu?` <span class="ptb-code">${esc(pkg.paketKodu)}</span>`:'');
   } else { if(logoEl) logoEl.innerHTML=''; if(nameEl) nameEl.textContent='Yeni Paket'; }
   if(id) bar.querySelectorAll('.ptb-tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-ptab')===id));
@@ -2327,7 +2327,7 @@ function renderDashboardUpcoming(){
     const daysColor = diff<=3?'#dc2626':diff<=7?'#d97706':'#059669';
     const opInitials = (op?.ad||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const opAvatar = op?.logo
-      ? `<img src="${op.logo}" style="width:100%;height:100%;object-fit:contain;background:#fff;padding:7%;border-radius:50%">`
+      ? `<img class="oplg" src="${op.logo}" style="width:100%;height:100%;object-fit:contain;background:#fff;padding:7%;border-radius:50%">`
       : opInitials;
     return `<div class="dash-upcoming-item" onclick="showOpPackages('${op?.id||''}')">
       <div class="dash-dep-badge">
@@ -2360,7 +2360,7 @@ function _opCardsHTML(){
       const aktifCount   = opPkgs.filter(p=>isPkgActive(p)).length;
       const inaktifCount = opPkgs.length - aktifCount;
       const initials = (op.ad||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-      const avatarInner = op.logo ? `<img src="${op.logo}" alt="">` : initials;
+      const avatarInner = op.logo ? `<img class="oplg" src="${op.logo}" alt="">` : initials;
       // Sonraki kalkış tarihi (tüm paketler içinden en yakın)
       const allNext = opPkgs.map(p=>nextDeparture(p)).filter(Boolean).sort((a,b)=>a-b);
       const nextLabel = allNext.length ? allNext[0].toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'}) : null;
@@ -4305,6 +4305,29 @@ function renderBagajlar(){
       <button onclick="removeRow(bagajlar,${i},renderBagajlar)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
     </div>`).join('') || '<div style="font-size:.78rem;color:var(--muted);padding:4px 0">Seçenek yok — "+ Bagaj seçeneği ekle" (ör. 8 kg dahil 0€, 20 kg +35€).</div>';
 }
+window._lgCache={};
+function _logoFixAll(){
+  document.querySelectorAll('img.oplg:not([data-lgfx])').forEach(img=>{
+    img.dataset.lgfx='1';
+    const src=img.getAttribute('src')||''; if(!src)return;
+    const key=src.slice(0,80)+'|'+src.length;
+    const uygula=k=>{ if(k){ img.style.background='linear-gradient(135deg,#24405e,#3c6285)'; } };
+    if(key in _lgCache){ uygula(_lgCache[key]); return; }
+    const im=new Image();
+    im.onload=()=>{ try{
+      const c=document.createElement('canvas'); c.width=c.height=24;
+      const x=c.getContext('2d'); x.drawImage(im,0,0,24,24);
+      const dd=x.getImageData(0,0,24,24).data;
+      let n=0,l=0,seffaf=0;
+      for(let i=0;i<dd.length;i+=4){ const a=dd[i+3]; if(a<40){seffaf++;continue;} n++; l+=(0.299*dd[i]+0.587*dd[i+1]+0.114*dd[i+2])/255; }
+      const top=n+seffaf; const avg=n?l/n:0;
+      const koyu=top>0 && (seffaf/top)>0.25 && avg>0.8; // şeffaf zeminli + açık renk logo
+      _lgCache[key]=koyu; uygula(koyu);
+    }catch(e){} };
+    im.src=src;
+  });
+}
+try{ new MutationObserver(()=>{ clearTimeout(window._lgT); window._lgT=setTimeout(_logoFixAll,180); }).observe(document.body,{childList:true,subtree:true}); setTimeout(_logoFixAll,400); }catch(e){}
 function _aktFiyatNum(v){ const m=String(v==null?'':v).replace(/,/g,'.').match(/\d+(?:\.\d+)?/); return m?+m[0]:0; }
 function _aktFiyatDisp(v){ const t=String(v==null?'':v).trim(); if(!t||t==='0')return ''; return /€/.test(t)?t:t+' €'; }
 function addAktivite(){aktiviteler.push({ad:'',sure:'',fiyat:0,dahilMi:false,komTip:'',komDeg:'',aciklamaAcik:false,aciklama:'',operatoreGoster:false,operatorSatabilir:false,operatorFiyat:''});renderAktiviteler();markDirty();}
