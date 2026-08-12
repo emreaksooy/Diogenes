@@ -1756,7 +1756,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v113 · 14.07.2026';
+const APP_VER='v118 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -5015,10 +5015,10 @@ async function gTranslate(text, lang){
 function getActiveOp(){return currentOpId?getOperators().find(o=>o.id===currentOpId):null;}
 
 const SUNUM_L2={
-  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar',extTitle:'Uzatma Haftası',weekly:'Haftalık'},
-  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise',extTitle:'Verlängerungswoche',weekly:'Wöchentlich'},
-  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly'},
-  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire'}
+  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar',extTitle:'Uzatma Haftası',weekly:'Haftalık',opPrice:'Operatör satış fiyatı',depAirport:'Kalkış Havalimanı'},
+  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise',extTitle:'Verlängerungswoche',weekly:'Wöchentlich',opPrice:'EK (Einkauf)',depAirport:'Abflughafen'},
+  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly',opPrice:'Operator price',depAirport:'Departure airport'},
+  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire',opPrice:'Prix opérateur',depAirport:'Aéroport de départ'}
 };
 function openSunum(lang){
   lang=lang||_sunumLang||'tr';
@@ -5124,7 +5124,7 @@ function openSunum(lang){
       const tdS='padding:7px 10px;border:1px solid #f0e2d0;font-size:.76rem;vertical-align:top;text-align:center;color:#3d2f24;background:#fff';
       let out=`<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-plane"/></svg> ${L.airportSup||'Havalimanı Supplementleri'}</h2>`;
       out+=`<table style="width:320px;border-collapse:collapse;font-size:.78rem">
-        <thead><tr><th style="${thS};text-align:left">${L.departure||'Kalkış'}</th><th style="${thS}">${sym}</th></tr></thead><tbody>`;
+        <thead><tr><th style="${thS};text-align:left">${L2.depAirport}</th><th style="${thS}">${sym}</th></tr></thead><tbody>`;
       suppRows.forEach(s=>{out+=`<tr><td style="${tdS};text-align:left">${esc(s.havalimani)}</td><td style="${tdS}">${s.supplement||0},- ${sym}</td></tr>`;});
       out+=`</tbody></table></div>`;
       return out;
@@ -5132,6 +5132,11 @@ function openSunum(lang){
     ${(()=>{
       const _sp=v=>Array.isArray(v)?v.filter(Boolean):String(v||'').split('\n').map(x=>x.replace(/^[-•]\s*/,'')).filter(Boolean);
       const inc=_sp(d.dahil), ninc=_sp(d.dahilDegil);
+      // ekstra (ücretli) valiz seçenekleri → dahil olmayanlara
+      (d.bagajlar||[]).filter(b=>!b.dahil&&(b.ad||'').trim()).forEach(b=>{
+        const et=b.ad+(b.fiyat?' (+'+b.fiyat+' €)':'');
+        if(!ninc.some(x=>_norm(x)===_norm(et))) ninc.push(et);
+      });
       if(!inc.length&&!ninc.length) return '';
       const card=(bas,arr,ok)=>`<div class="pres-cardc"><h3 data-notx>${ok?'✓ ':''}${bas}</h3><ul>${arr.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
       return `<div class="pres-section"><h2 data-notx>${L2.services}</h2><div class="pres-2col">${inc.length?card(L2.incTitle||L.included,inc,true):''}${ninc.length?card(L2.nincTitle||L.notIncluded,ninc,false):''}</div></div>`;
@@ -5139,7 +5144,7 @@ function openSunum(lang){
     ${(()=>{ const ea=(d.aktiviteler||[]).filter(a=>a.operatoreGoster&&(a.ad||'').trim()); if(!ea.length) return '';
       return `<div class="pres-section"><h2 data-notx>${L2.extras}</h2><div class="pres-2col">${ea.map(a=>{
         const acik=String(a.aciklama||'').split('\n').map(x=>x.replace(/^[-•]\s*/,'')).filter(Boolean);
-        return `<div class="pres-cardc"><span class="pres-pill">${esc(a.ad)}</span>${_aktFiyatDisp(a.fiyat)?`<span class="pres-pprice" data-notx>${esc(_aktFiyatDisp(a.fiyat))} <span style="font-weight:400;font-size:.72rem">(${a.dahilMi?L2.inc:L2.opt})</span></span>`:''}${acik.length?`<ul style="margin-top:4px">${acik.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`;}).join('')}</div></div>`; })()}
+        return `<div class="pres-cardc"><span class="pres-pill">${esc(a.ad)}</span>${_aktFiyatDisp(a.fiyat)?`<span class="pres-pprice" data-notx>${esc(_aktFiyatDisp(a.fiyat))} <span style="font-weight:400;font-size:.72rem">(${a.dahilMi?L2.inc:L2.opt})</span></span>`:''}${(a.operatorSatabilir&&_aktFiyatDisp(a.operatorFiyat))?`<div style="text-align:right;font-size:.78rem;color:#8c3a1d;margin-top:2px" data-notx>${L2.opPrice}: <b>${esc(_aktFiyatDisp(a.operatorFiyat))}</b></div>`:''}${acik.length?`<ul style="margin-top:4px">${acik.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`;}).join('')}</div></div>`; })()}
     ${(()=>{const arr=Array.isArray(d.onemliNotlar)?d.onemliNotlar.filter(Boolean):(d.onemliNotlar||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);return arr.length?`<div class="pres-noteband"><b data-notx>${L2.note}:</b> ${arr.map(esc).join(' &nbsp;·&nbsp; ')}</div>`:''})()}
     ${(()=>{const pkg=(d.iptalSartlari||'').trim();const eff=(pkg||((op&&op.iptalSartlari)||'')).trim();if(!eff) return '';const arr=eff.split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);if(!arr.length) return '';return `<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-stop"/></svg> ${L.cancellationTerms||'İptal Şartları'}</h2><div style="background:#fef2f2;border:1px solid #f3c2c2;border-left:4px solid #dc2626;border-radius:8px;padding:.8rem 1.05rem .8rem .6rem"><ul style="margin:0;padding-left:1.3rem">${arr.map(n=>`<li style="margin-bottom:5px;font-size:.85rem;line-height:1.55">${esc(n)}</li>`).join('')}</ul></div></div>`;})()}
     ${(()=>{
@@ -5187,7 +5192,7 @@ function openSunum(lang){
       const uf=sz=>(uz.fiyat&&uz.fiyat[sz])||{};
       const hasF=fp.some(sz=>{const f=uf(sz.ad);return f.ciftKisi||f.tekSupp;});
       let out=`<div class="pres-section"><h2 data-notx>${L2.extTitle}</h2>
-        <div style="font-size:.87rem;margin-bottom:9px">${uz.otel?`<b>${esc(uz.otel)}</b>`:''}${uz.bolge?` — ${esc(uz.bolge)}`:''}${uz.pansiyon?` · ${esc(uz.pansiyon)}`:''} · <span data-notx>${+uz.gece||7} ${L.nights||'Gece'}</span>${uz.ad?` · ${esc(uz.ad)}`:''}</div>`;
+        <div style="font-size:.87rem;margin-bottom:9px">${uz.otel?`<b>${esc(uz.otel)}</b>`:''}${uz.bolge?` — ${esc(uz.bolge)}`:''}${uz.pansiyon?` · ${esc(uz.pansiyon)}`:''} · <span data-notx>${+uz.gece||7} ${L.nights||'Gece'}</span>${(uz.ad&&_norm(uz.ad)!==_norm(uz.otel||'')&&!_norm(uz.ad).includes(_norm(uz.otel||'x')))?` · ${esc(uz.ad)}`:''}</div>`;
       if(hasF){
         out+=`<table style="width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:.4rem"><thead><tr><th style="${thS};text-align:left">${L.price}</th>${fp.map(sz=>`<th style="${thS}">${esc(sz.ad)}</th>`).join('')}</tr></thead><tbody>
           <tr><td style="${tdS};text-align:left;font-weight:600" data-notx>${L2.weekly} ${L.dblPP} ${sym3}</td>${fp.map(sz=>`<td style="${tdS};font-weight:700;color:#1a3c5e">${uf(sz.ad).ciftKisi||'—'}</td>`).join('')}</tr>
@@ -5219,7 +5224,6 @@ function openSunum(lang){
           </div>`).join('')}
       </div>`;
     })()}
-    ${d.maliyetNot?`<div class="pres-section"><h2 data-notx><svg class="ic"><use href="#i-list"/></svg> ${L2.notes}</h2><p style="font-size:.85rem;line-height:1.6;white-space:pre-wrap;margin:0">${esc(d.maliyetNot)}</p></div>`:''}
     <p style="margin-top:1.3rem;font-size:.76rem;color:#999;text-align:center" data-notx>${L.preparedOn.replace('{date}',new Date().toLocaleDateString('tr-TR'))}</p>
     <div id="sunumMapContainer" style="display:none;margin:1.5rem 0">
       <h2 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:.8rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent)"><svg class="ic"><use href="#i-map"/></svg> Rota Haritası</h2>
