@@ -1100,11 +1100,6 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <label style="display:flex;align-items:center;gap:9px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:9px 12px;margin-bottom:12px;cursor:pointer;font-size:.84rem;font-weight:600;color:#92400e">
         <input type="checkbox" id="pkgUcakOperatorde" onchange="markDirty()" style="width:16px;height:16px;flex-shrink:0"> <span><svg class="ic"><use href="#i-plane"/></svg> <b>Uçuş operatör tarafından alınır</b> <span style="font-weight:400">— bizim uçak/bilet modülümüzde takip edilmez</span></span>
       </label>
-      <div class="field field-full" style="margin-bottom:12px">
-        <label><svg class="ic"><use href="#i-box"/></svg> Bagaj Seçenekleri <span style="font-weight:400;color:var(--muted);font-size:.75rem">— dahil olan 0€; satılabilir upgrade'lere ek ücret. Uçak listesinde yolcuya seçilir.</span></label>
-        <div id="bagajlar"></div>
-        <button class="add-btn" onclick="addBagaj()">+ Bagaj seçeneği ekle</button>
-      </div>
       <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px">
         <div class="field" style="flex:1;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Varış Havalimanı (TR)</label><input id="varisHavalimani" value="" oninput="varisHavalimani=this.value.toUpperCase().trim();markDirty()" placeholder="SAW, IST, AYT..."></div>
         <div class="field" style="flex:1;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Dönüş Havalimanı (TR)</label><input id="donusHavalimani" value="" oninput="donusHavalimani=this.value.toUpperCase().trim();markDirty()" placeholder="AYT, IST, SAW..."></div>
@@ -1756,7 +1751,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v119 · 14.07.2026';
+const APP_VER='v123 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -3321,7 +3316,7 @@ function fillForm(d){
   const _rawU=d.araUcuslar||(d.ucuslar||[]).filter(u=>u.from&&u.to)||[];
   ucuslar=_rawU; varisHavalimani=d.varisHavalimani||''; donusHavalimani=d.donusHavalimani||'';
   const _uoEl=document.getElementById('pkgUcakOperatorde');if(_uoEl)_uoEl.checked=!!d.ucakOperatorde;
-  bagajlar = Array.isArray(d.bagajlar) ? d.bagajlar.map(b=>({ad:b.ad||'',fiyat:+b.fiyat||0,dahil:!!b.dahil})) : ((d.bagajDetay||'').trim()?[{ad:d.bagajDetay,fiyat:0,dahil:true}]:[]); if(bagajlar.length&&!bagajlar.some(b=>b.dahil)) bagajlar[0].dahil=true; renderBagajlar();
+  bagajlar = Array.isArray(d.bagajlar) ? d.bagajlar.map(b=>({ad:b.ad||'',fiyat:+b.fiyat||0,dahil:!!b.dahil,havalimanlari:b.havalimanlari||''})) : ((d.bagajDetay||'').trim()?[{ad:d.bagajDetay,fiyat:0,dahil:true}]:[]); if(bagajlar.length&&!bagajlar.some(b=>b.dahil)) bagajlar[0].dahil=true; renderBagajlar();
   ekstraCharges = Array.isArray(d.ekstraCharges)?d.ekstraCharges.map(c=>({ad:c.ad||'',sezonBazli:!!c.sezonBazli,tutar:+c.tutar||0,sezonTutar:(c.sezonTutar&&typeof c.sezonTutar==='object')?c.sezonTutar:{}})):[]; renderEkstraCharges();
   odaUpgrade = Array.isArray(d.odaUpgrade)?d.odaUpgrade.map(u=>({ad:u.ad||'',kisiGece:+u.kisiGece||0,tekGece:+u.tekGece||0})):[]; renderOdaUpgrade();
   grupFiyat = Array.isArray(d.grupFiyat)?d.grupFiyat.map(g=>({min:(g.min===''||g.min==null)?'':(+g.min||0),max:(g.max===''||g.max==null)?'':(+g.max||0),fiyat:+g.fiyat||0})):[]; renderGrupFiyat();
@@ -3849,6 +3844,20 @@ function renderHavalimanSuppleri(){
           <button onclick="addOrnekUcus(${i})" style="padding:3px 10px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:.74rem;font-weight:700;cursor:pointer;font-family:inherit">+ Örnek Uçuş Ekle</button>
         </div>
         <div id="ornekUcuslar_${i}">${renderOrnekUcuslarHTML(i)}</div>
+      </div>
+      <div style="margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:.76rem;color:var(--muted);font-weight:600">Valiz Seçenekleri${_hsKodlar(s).length?' ('+_hsKodlar(s).join(', ')+')':''}</span>
+          <button onclick="hsBagAdd(${i})" style="padding:3px 10px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:.74rem;font-weight:700;cursor:pointer;font-family:inherit">+ Valiz Ekle</button>
+        </div>
+        ${_hsBagIdx(i).map(bi=>{const b=bagajlar[bi];return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+          <input value="${esc(b.ad)}" placeholder="ör. 20 kg valiz" oninput="hsBagSet(${bi},'ad',this.value)" style="flex:1;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:.8rem;font-family:inherit">
+          <input type="number" min="0" value="${b.fiyat||0}" oninput="hsBagSet(${bi},'fiyat',this.value)" title="Ek ücret €" style="width:74px;padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-size:.8rem;font-family:inherit;text-align:right">
+          <span style="font-size:.76rem;color:var(--muted)">€</span>
+          <label style="display:flex;align-items:center;gap:4px;font-size:.74rem;color:${b.dahil?'var(--primary)':'var(--muted)'};font-weight:${b.dahil?'700':'400'};white-space:nowrap;cursor:pointer"><input type="checkbox" ${b.dahil?'checked':''} onchange="hsBagSet(${bi},'dahil',this.checked)" style="accent-color:var(--primary)"> dahil</label>
+          <input value="${esc(b.havalimanlari||'')}" title="Havalimanları (boş = tüm kalkışlar)" placeholder="tümü" oninput="hsBagSet(${bi},'havalimanlari',this.value.toUpperCase())" style="width:92px;padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;font-size:.76rem;font-family:inherit;text-transform:uppercase">
+          <button onclick="hsBagDel(${bi})" style="background:#fee2e2;color:#dc2626;border:none;border-radius:5px;width:26px;height:26px;cursor:pointer;font-size:13px;flex-shrink:0">×</button>
+        </div>`;}).join('')||'<div style="font-size:.74rem;color:var(--muted);padding:2px 0">Bu havalimanına özel valiz yok.</div>'}
       </div>`:''}
     </div>`;
   }).join('');
@@ -4276,7 +4285,14 @@ function renderGunler(){
     </div></div>`).join('');
 }
 
-function addBagaj(){ bagajlar.push({ad:'',fiyat:0,dahil:bagajlar.length===0}); renderBagajlar(); markDirty(); }
+function _bagHav(b){ return String(b&&b.havalimanlari||'').split(/[,;\s]+/).map(x=>x.trim().toUpperCase()).filter(Boolean); }
+function _bagMatch(b,kod){ const l=_bagHav(b); kod=String(kod||'').trim().toUpperCase(); return !l.length||!kod||l.includes(kod); }
+function addBagaj(){ bagajlar.push({ad:'',fiyat:0,dahil:bagajlar.length===0,havalimanlari:''}); renderBagajlar(); markDirty(); }
+function _hsKodlar(sx){ return String(sx&&sx.havalimani||'').split(/[+,\/]/).map(x=>x.trim().toUpperCase()).filter(Boolean); }
+function _hsBagIdx(i){ const kod=_hsKodlar(havalimanSuppleri[i]); const out=[]; bagajlar.forEach((b,bi)=>{ const l=_bagHav(b); if(!l.length||(kod.length&&kod.some(k=>l.includes(k)))) out.push(bi); }); return out; }
+function hsBagAdd(i){ const kod=_hsKodlar(havalimanSuppleri[i]); bagajlar.push({ad:'',fiyat:0,dahil:false,havalimanlari:kod.join(', ')}); renderBagajlar(); renderHavalimanSuppleri(); markDirty(); }
+function hsBagSet(bi,f,v){ if(!bagajlar[bi])return; if(f==='fiyat')bagajlar[bi].fiyat=+v||0; else if(f==='dahil')bagajlar[bi].dahil=!!v; else bagajlar[bi][f]=v; renderBagajlar(); markDirty(); }
+function hsBagDel(bi){ bagajlar.splice(bi,1); renderBagajlar(); renderHavalimanSuppleri(); markDirty(); }
 function _bagajDahil(i){ bagajlar.forEach((b,j)=>b.dahil=(j===i)); renderBagajlar(); markDirty(); }
 function renderBagajlar(){
   const el=document.getElementById('bagajlar'); if(!el) return;
@@ -4284,6 +4300,7 @@ function renderBagajlar(){
     <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:5px">
       <div class="field" style="flex:1;margin-bottom:0"><label>Bagaj adı</label><input value="${esc(b.ad)}" oninput="bagajlar[${i}].ad=this.value;markDirty()" placeholder="ör. 8 kg el bagajı (dahil) · 20 kg valiz"></div>
       <div class="field" style="width:120px;margin-bottom:0"><label>Ek ücret €</label><input type="number" min="0" value="${b.fiyat||0}" oninput="bagajlar[${i}].fiyat=+this.value||0;markDirty()"></div>
+      <div class="field" style="width:150px;margin-bottom:0"><label>Havalimanı (boş=tümü)</label><input value="${esc(b.havalimanlari||'')}" oninput="bagajlar[${i}].havalimanlari=this.value.toUpperCase();markDirty()" placeholder="ZRH, GVA"></div>
       <label style="display:flex;align-items:center;gap:5px;font-size:.74rem;color:${b.dahil?'var(--primary)':'var(--muted)'};font-weight:${b.dahil?'700':'400'};margin-bottom:9px;white-space:nowrap;cursor:pointer"><input type="radio" name="bagajDahilR" ${b.dahil?'checked':''} onclick="_bagajDahil(${i})" style="accent-color:var(--primary)"> Varsayılan (dahil)</label>
       <button onclick="removeRow(bagajlar,${i},renderBagajlar)" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
     </div>`).join('') || '<div style="font-size:.78rem;color:var(--muted);padding:4px 0">Seçenek yok — "+ Bagaj seçeneği ekle" (ör. 8 kg dahil 0€, 20 kg +35€).</div>';
@@ -5015,10 +5032,10 @@ async function gTranslate(text, lang){
 function getActiveOp(){return currentOpId?getOperators().find(o=>o.id===currentOpId):null;}
 
 const SUNUM_L2={
-  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar',extTitle:'Uzatma Haftası',weekly:'Haftalık',opPrice:'Operatör satış fiyatı',depAirport:'Kalkış Havalimanı'},
-  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise',extTitle:'Verlängerungswoche',weekly:'Wöchentlich',opPrice:'EK (Einkauf)',depAirport:'Abflughafen'},
-  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly',opPrice:'Operator price',depAirport:'Departure airport'},
-  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire',opPrice:'Prix opérateur',depAirport:'Aéroport de départ'}
+  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar',extTitle:'Uzatma Haftası',weekly:'Haftalık',opPrice:'Operatör satış fiyatı',depAirport:'Kalkış Havalimanı',fromDep:'{H} kalkışları için: '},
+  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise',extTitle:'Verlängerungswoche',weekly:'Wöchentlich',opPrice:'EK (Einkauf)',depAirport:'Abflughafen',fromDep:'Ab {H}: '},
+  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly',opPrice:'Operator price',depAirport:'Departure airport',fromDep:'From {H}: '},
+  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire',opPrice:'Prix opérateur',depAirport:'Aéroport de départ',fromDep:'Au départ de {H} : '}
 };
 function openSunum(lang){
   lang=lang||_sunumLang||'tr';
@@ -5132,11 +5149,23 @@ function openSunum(lang){
     ${(()=>{
       const _sp=v=>Array.isArray(v)?v.filter(Boolean):String(v||'').split('\n').map(x=>x.replace(/^[-•]\s*/,'')).filter(Boolean);
       const inc=_sp(d.dahil), ninc=_sp(d.dahilDegil);
-      // ekstra (ücretli) valiz seçenekleri → dahil olmayanlara
-      (d.bagajlar||[]).filter(b=>!b.dahil&&(b.ad||'').trim()).forEach(b=>{
-        const et=b.ad+(b.fiyat?' (+'+b.fiyat+' €)':'');
-        if(!ninc.some(x=>_norm(x)===_norm(et))) ninc.push(et);
-      });
+      // valiz seçenekleri: aynı içerik (ad+fiyat+dahil) farklı havalimanlarında → TEK satırda birleşir; önek başta
+      (()=>{
+        const grup={};
+        (d.bagajlar||[]).filter(b=>(b.ad||'').trim()).forEach(b=>{
+          const key=_norm(b.ad)+'|'+(+b.fiyat||0)+'|'+(b.dahil?1:0);
+          if(!grup[key]) grup[key]={ad:b.ad,fiyat:+b.fiyat||0,dahil:!!b.dahil,kod:new Set(),genel:false};
+          const l=_bagHav(b);
+          if(l.length) l.forEach(k=>grup[key].kod.add(k)); else grup[key].genel=true;
+        });
+        Object.values(grup).forEach(g=>{
+          const kodlar=[...g.kod];
+          const onek=(!g.genel&&kodlar.length)?L2.fromDep.replace('{H}',kodlar.join(', ')):'';
+          const et=onek+g.ad+(g.fiyat?' (+'+g.fiyat+' €)':'');
+          if(!g.dahil){ if(!ninc.some(x=>_norm(x)===_norm(et))) ninc.push(et); }
+          else if(onek){ if(!inc.some(x=>_norm(x)===_norm(et))) inc.push(et); }
+        });
+      })();
       if(!inc.length&&!ninc.length) return '';
       const card=(bas,arr,ok)=>`<div class="pres-cardc"><h3 data-notx>${ok?'✓ ':''}${bas}</h3><ul>${arr.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
       return `<div class="pres-section"><h2 data-notx>${L2.services}</h2><div class="pres-2col">${inc.length?card(L2.incTitle||L.included,inc,true):''}${ninc.length?card(L2.nincTitle||L.notIncluded,ninc,false):''}</div></div>`;
@@ -6381,8 +6410,8 @@ function renderRezervasyon(){
       if(/_ks2$/.test(f)){ const p=f[0]; const a2=_dk(y[p+'_vs1']), b2=_dk(v); if(a2!==null&&b2!==null){ let bek=b2-a2; if(bek<0)bek+=1440; if(bek<60) badge='<span class="kisa">kısa!</span>'; } }
       const _isTar=/_tarih$/.test(f);
       const _dispV=(_isTar&&/^\d{4}-\d{2}-\d{2}$/.test(String(v)))?String(v).split('-').reverse().join('.'):String(v);
-      if(f==='bagaj' && _bagOpts.length){ const _has=_bagOpts.some(b=>b.ad===v);
-        gh+=`<td class="${tdCls}" data-r="${r}" data-f="bagaj"><select onchange="_resSetP(${r},'bagaj',this.value)" style="width:100%;border:none;background:transparent;padding:5px 4px;font-size:.75rem;font-family:inherit;color:var(--text);cursor:pointer"><option value=""></option>${_bagOpts.map(b=>`<option value="${esc(b.ad)}"${v===b.ad?' selected':''}>${esc(b.ad)}${b.dahil?' (dahil)':''}${b.fiyat?(' +'+b.fiyat+'€'):''}</option>`).join('')}${(v&&!_has)?`<option value="${esc(v)}" selected>${esc(v)}</option>`:''}</select>${badge}</td>`;
+      if(f==='bagaj' && _bagOpts.length){ const _bo=_bagOpts.filter(b=>_bagMatch(b,y.g_k1)); const _has=_bo.some(b=>b.ad===v);
+        gh+=`<td class="${tdCls}" data-r="${r}" data-f="bagaj"><select onchange="_resSetP(${r},'bagaj',this.value)" style="width:100%;border:none;background:transparent;padding:5px 4px;font-size:.75rem;font-family:inherit;color:var(--text);cursor:pointer"><option value=""></option>${_bo.map(b=>`<option value="${esc(b.ad)}"${v===b.ad?' selected':''}>${esc(b.ad)}${b.dahil?' (dahil)':''}${b.fiyat?(' +'+b.fiyat+'€'):''}</option>`).join('')}${(v&&!_has)?`<option value="${esc(v)}" selected>${esc(v)}</option>`:''}</select>${badge}</td>`;
       } else {
         gh+=`<td class="${tdCls} cvtd" data-r="${r}" data-f="${f}"><div class="cv">${esc(_dispV)}${badge}&nbsp;</div></td>`;
       }
