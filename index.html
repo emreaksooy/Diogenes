@@ -1753,7 +1753,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v125 · 14.07.2026';
+const APP_VER='v126 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2755,12 +2755,21 @@ function compressImage(dataUrl, maxPx, quality){
       const canvas = document.createElement('canvas');
       canvas.width=w; canvas.height=h;
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h); // şeffaf PNG zemini beyaz kalsın
       ctx.drawImage(img,0,0,w,h);
-      // WebP destekleniyorsa kullan (genellikle %30 daha küçük, aynı kalite)
+      // Şeffaflık var mı? (beyaz logolar için alfa korunmalı — beyaza gömme YOK)
+      let seffaf=false;
+      try{ const dd=ctx.getImageData(0,0,w,h).data; let t=0,esik=w*h*0.02; for(let i=3;i<dd.length;i+=4){ if(dd[i]<250){ if(++t>esik){seffaf=true;break;} } } }catch(e){}
+      if(seffaf){
+        const webpA = canvas.toDataURL('image/webp', quality); // webp alfayı korur (Safari desteklemezse png döner)
+        const png   = canvas.toDataURL('image/png');
+        resolve((webpA.indexOf('data:image/webp')===0 && webpA.length<png.length) ? webpA : png);
+        return;
+      }
+      // Opak görsel: beyaz zemin + webp/jpeg (eski yol)
+      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img,0,0,w,h);
       const webp = canvas.toDataURL('image/webp', quality);
       const jpeg = canvas.toDataURL('image/jpeg', quality);
-      // Hangisi daha küçükse onu seç
       resolve(webp.length < jpeg.length ? webp : jpeg);
     };
     img.src=dataUrl;
