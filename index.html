@@ -1756,7 +1756,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v118 · 14.07.2026';
+const APP_VER='v119 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -3082,7 +3082,7 @@ const TX_PROVIDERS={
         let p='Sen bir tur operatörü broşür çevirmenisin. Aşağıdaki Türkçe metin parçaları bir paket tur sunumundan (broşüründen) alındı; hedef okuyucu yurt dışındaki seyahat acenteleri ve tur operatörleri. Parçaları "'+lang+'" dil koduna çevir.'
         +'\nKURALLAR:\n- Turizm/broşür dili kullan: davetkâr, akıcı, profesyonel; kelimesi kelimesine değil anlamına göre çevir.'
         +'\n- Sektör terminolojisini hedef dilin turizm jargonuyla ver (ör. pansiyon tipleri, transfer, rehberlik, opsiyonel tur, tek kişilik oda farkı, uzatma haftası).';
-        if(lang==='de') p+='\n- Almanca için DACH tur operatörü jargonu: ÜF/HP/VP/AI (pansiyon), DZ/EZ, EZ-Zuschlag, Verlängerungswoche, Flughafenzuschlag, Reiseleitung, Ausflug, inklusive/nicht inbegriffen. Broşür üslubu ("Sie"-Form).';
+        if(lang==='de') p+='\n- Almanca için DACH tur operatörü jargonu: ÜF/HP/VP/AI (pansiyon), DZ/EZ, EZ-Zuschlag, Verlängerungswoche, Flughafenzuschlag, Reiseleitung, Ausflug, inklusive/nicht inbegriffen. Broşür üslubu ("Sie"-Form). Sabit karşılıklar: "tanınmış/bilinen havayolu" → "renommierte Fluggesellschaft"; "tarifeli uçuş" → "Linienflug"; "özel/kiralık uçuş" → "Charterflug".';
         if(lang==='fr') p+='\n- Fransızca için circuit/broşür üslubu: circuit accompagné, demi-pension/pension complète, supplément single, excursion optionnelle, nuitée.';
         if(lang==='en') p+='\n- İngilizce için tour operatör dili: escorted tour, half board/full board, single supplement, optional excursion, overnight.';
         p+='\n- Şehir ve yer adlarını hedef dildeki yerleşik yazımıyla ver (Marakeş→'+(lang==='de'?'Marrakesch':lang==='fr'?'Marrakech':'Marrakesh')+' gibi); ⟦0⟧ gibi yer tutucuları AYNEN koru (bunlar otel/marka adlarıdır, çevrilmez).'
