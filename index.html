@@ -1770,7 +1770,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v131 · 14.07.2026';
+const APP_VER='v132 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -5138,10 +5138,14 @@ function openSunum(lang){
   document.getElementById('sunumContent').setAttribute('lang',lang);
   document.getElementById('sunumContent').innerHTML=`
     <div class="pres-cover">
-      ${op&&op.logo?`<img src="${op.logo}" alt="${esc(op.ad)}" style="position:absolute;top:1.3rem;right:1.5rem;width:150px;height:auto;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2))">`:''}
-      <div class="pres-ovl" data-notx>${L2.ovl} · ${(+d.gece||0)+1} ${L2.days.toUpperCase()} / ${+d.gece||0} ${(L.nights||'Gece').toUpperCase()}</div>
-      <h1>${esc(d.paketAdi||'Paket Adı')}</h1>
-      <div class="pres-route">${(()=>{const c=[];gunler.forEach(g=>{const x=(g.konaklamaSehir||'').trim();if(x&&c[c.length-1]!==x&&c.indexOf(x)<0)c.push(x);});return c.length?c.map(esc).join(' · '):esc((d.destinasyon||'')+(d.destinasyonSehir?' — '+d.destinasyonSehir:''));})()}</div>
+      <div style="display:flex;gap:1.6rem;align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div class="pres-ovl" data-notx>${L2.ovl} · ${(+d.gece||0)+1} ${L2.days.toUpperCase()} / ${+d.gece||0} ${(L.nights||'Gece').toUpperCase()}</div>
+          <h1>${esc(d.paketAdi||'Paket Adı')}</h1>
+          <div class="pres-route">${(()=>{const c=[];gunler.forEach(g=>{const x=(g.konaklamaSehir||'').trim();if(x&&c[c.length-1]!==x&&c.indexOf(x)<0)c.push(x);});return c.length?c.map(esc).join(' · '):esc((d.destinasyon||'')+(d.destinasyonSehir?' — '+d.destinasyonSehir:''));})()}</div>
+        </div>
+        ${op&&op.logo?`<img src="${op.logo}" alt="${esc(op.ad)}" style="width:150px;height:auto;max-height:90px;object-fit:contain;flex-shrink:0;margin-top:.2rem;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2))">`:''}
+      </div>
       <div class="pres-hr"></div>
       <div class="pres-meta2" data-notx>
         <div><div class="prs-l" data-notx>${L2.season}</div><div class="prs-v">${(()=>{const f=x=>x?new Date(x+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}):'';const t=[f(d.baslangic),f(d.bitis)].filter(Boolean).join(' – ');return t||'—';})()}</div></div>
