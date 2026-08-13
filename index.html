@@ -1770,7 +1770,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v129 · 14.07.2026';
+const APP_VER='v131 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2650,7 +2650,7 @@ function renderOpList() {
     el.innerHTML = ops.map(op=>{
       const initials = (op.ad||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
       const avatarHTML = op.logo
-        ? `<div class="op-avatar"><img src="${op.logo}" alt="${esc(op.ad)}"></div>`
+        ? `<div class="op-avatar"><img class="oplg" src="${op.logo}" alt="${esc(op.ad)}"></div>`
         : `<div class="op-avatar">${initials}</div>`;
       const isSelected = op.id === currentOpId;
       return `<div class="op-item ${isSelected?'selected':''}" onclick="selectOperator('${op.id}')">
@@ -2687,7 +2687,7 @@ function updateOpSelectAvatar() {
   const op = getOperators().find(o=>o.id===currentOpId);
   if(!op){ avatarEl.innerHTML=''; detailEl.style.display='none'; return; }
   const initials = (op.ad||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  avatarEl.innerHTML = op.logo ? `<img src="${op.logo}" style="width:100%;height:100%;object-fit:contain;background:#fff;padding:7%;border-radius:50%">` : initials;
+  avatarEl.innerHTML = op.logo ? `<img class="oplg" src="${op.logo}" style="width:100%;height:100%;object-fit:contain;background:#fff;padding:7%;border-radius:50%">` : initials;
   // Detay satırı
   const parts = [op.yetkili, op.email, op.tel, op.ulke].filter(Boolean);
   if(parts.length){ detailEl.textContent = parts.join(' · '); detailEl.style.display='block'; }
@@ -3649,7 +3649,7 @@ function renderPkgFilterChips() {
     const isActive = pkgFilterOpId === op.id;
     const initials = (op.ad||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const avatar = op.logo
-      ? `<img src="${op.logo}" style="width:18px;height:18px;border-radius:50%;object-fit:contain;background:#fff;padding:1px;vertical-align:middle;margin-right:5px">`
+      ? `<img class="oplg" src="${op.logo}" style="width:18px;height:18px;border-radius:50%;object-fit:contain;background:#fff;padding:1px;vertical-align:middle;margin-right:5px">`
       : `<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${isActive?'rgba(255,255,255,0.3)':'var(--primary)'};color:white;font-size:.55rem;font-weight:700;vertical-align:middle;margin-right:5px">${initials}</span>`;
     html += `<button onclick="setPkgFilter('${op.id}')" style="padding:4px 12px;border-radius:20px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid ${isActive?'var(--primary)':'var(--border)'};background:${isActive?'var(--primary)':'white'};color:${isActive?'white':'var(--text)'};display:inline-flex;align-items:center;gap:0">${avatar}${esc(op.ad)} (${count})</button>`;
   });
@@ -3689,7 +3689,7 @@ function renderPkgGrid(){
     const date=pkg.updatedAt?new Date(pkg.updatedAt).toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'}):'—';
     const op=pkg.operatorId?ops.find(o=>o.id===pkg.operatorId):null;
     const isActive=pkg.id===currentId;
-    const opBadge=op?`<div class="pkg-op-badge"><div class="pkg-op-avatar">${op.logo?`<img src="${op.logo}" alt="">`:(op.ad||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div><span style="font-size:.75rem;color:var(--muted)">${esc(op.ad)}</span></div>`:'';
+    const opBadge=op?`<div class="pkg-op-badge"><div class="pkg-op-avatar">${op.logo?`<img class="oplg" src="${op.logo}" alt="">`:(op.ad||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div><span style="font-size:.75rem;color:var(--muted)">${esc(op.ad)}</span></div>`:'';
     html+=`<div class="pkg-card ${isActive?'active-pkg':''}">
       <div class="pkg-card-header"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${pkg.paketKodu?`<span style="font-family:monospace;font-size:.9rem;font-weight:700;letter-spacing:1.5px;background:var(--primary);color:white;border-radius:5px;padding:2px 9px">${esc(pkg.paketKodu)}</span>`:'<span style="font-size:.72rem;color:var(--muted);font-style:italic">kodsuz</span>'}${isActive?'<span style="font-size:.68rem;background:var(--accent);border-radius:4px;padding:1px 5px">Aktif</span>':''}</div><div class="pkg-name" style="margin-top:5px">${esc(pkg.paketAdi||'İsimsiz Paket')}</div><div class="pkg-dest" style="margin-top:3px"><svg class="ic"><use href="#i-pin"/></svg> ${esc(pkg.destinasyon||'—')}</div></div>
       <div class="pkg-card-body">
@@ -5201,7 +5201,7 @@ function openSunum(lang){
     })()}
     ${(()=>{
       const hs=d.havalimanSuppleri||[];
-      const suppRows=hs.filter(s=>s.havalimani);
+      const suppRows=hs.filter(s=>s.havalimani).slice().sort((a,b)=>((+a.supplement||0)-(+b.supplement||0))||String(a.havalimani).localeCompare(String(b.havalimani),'tr'));
       if(!suppRows.length) return '';
       const cur2=document.getElementById('para')?.value||'EUR';
       const sym=cur2==='EUR'?'€':cur2==='USD'?'$':cur2==='GBP'?'£':'₺';
@@ -9506,7 +9506,7 @@ function _renderAracFirmaYon(box){
     <div class="otld-grid" style="grid-template-columns:290px 1fr 250px">
       <div>
         <div class="card" style="padding:0;overflow:hidden">
-          <div class="otld-hero" style="height:110px">${f.logo?`<img src="${f.logo}" style="max-width:78%;max-height:78%;object-fit:contain;background:#fff;border-radius:10px;padding:6px">`:`<svg class="ic" style="width:44px;height:44px;color:#fff;opacity:.5"><use href="#i-bus"/></svg>`}</div>
+          <div class="otld-hero" style="height:110px">${f.logo?`<img class="oplg" src="${f.logo}" style="max-width:78%;max-height:78%;object-fit:contain;background:#fff;border-radius:10px;padding:6px">`:`<svg class="ic" style="width:44px;height:44px;color:#fff;opacity:.5"><use href="#i-bus"/></svg>`}</div>
           <div class="otld-kimlik">
             <div class="kd">${esc(f.kod||'')}</div>
             <h3>${esc(f.ad||'(adsız)')}</h3>
