@@ -1086,7 +1086,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div class="field"><label>Başlangıç Tarihi</label><input type="date" id="baslangic" onchange="markDirty()"></div>
         <div class="field"><label>Bitiş Tarihi</label><input type="date" id="bitis" onchange="markDirty()"></div>
         <div class="field"><label>Geceleme Sayısı <span style="font-weight:400;color:var(--muted);text-transform:none">(gün sayısından otomatik)</span></label><input type="number" id="gece" min="1" value="3" onchange="updateCalc();markDirty()"></div>
-        <div class="field"><label>Minimum Katılımcı</label><input type="number" id="pax" min="1" value="20" onchange="updateCalc();markDirty()"></div>
+        <div class="field"><label>Minimum Katılımcı</label><div style="display:flex;gap:6px"><input type="number" id="pax" min="1" value="20" onchange="updateCalc();markDirty()" style="flex:1"><select id="paxBirim" onchange="markDirty()" style="width:92px;flex-shrink:0"><option value="kisi">Kişi</option><option value="oda">Oda</option><option value="kabin">Kabin</option></select></div></div>
         <div class="field"><label>Para Birimi</label>
           <select id="para" onchange="markDirty()">
             <option value="EUR">€ EUR</option><option value="USD">$ USD</option>
@@ -1770,7 +1770,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v135 · 14.07.2026';
+const APP_VER='v136 · 14.07.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -3002,7 +3002,8 @@ function collectData(){
     paketAdi:v('paketAdi'), paketKodu:v('paketKodu'), destinasyon:v('destinasyon'),
     destinasyonSehir:v('destinasyonSehir'),
     baslangic:v('baslangic'), bitis:v('bitis'),
-    gece:v('gece'), pax:v('pax'), para:v('para'),
+    gece:v('gece'), pax:v('pax'),
+    paxBirim:(document.getElementById('paxBirim')||{}).value||'kisi', para:v('para'),
     paketAciklama:v('paketAciklama'),
     onemliNotlar:[...onemliNotlarItems],
     iptalSartlari:v('iptalSartlari'),
@@ -3341,7 +3342,7 @@ function fillForm(d){
   renderDestinasyonSelect(d.destinasyon); // select'i ülke listesiyle doldur
   set('destinasyonSehir',d.destinasyonSehir);
   set('baslangic',d.baslangic); set('bitis',d.bitis);
-  set('gece',d.gece||3); set('pax',d.pax||20);
+  set('gece',d.gece||3); set('pax',d.pax||20); set('paxBirim',d.paxBirim||'kisi');
   set('para',d.para||'EUR'); set('paketAciklama',d.paketAciklama); set('iptalSartlari',d.iptalSartlari||''); updateIptalHint(); set('odemeKosullari',d.odemeKosullari||''); updateOdemeHint();
   // dahil/dahilDegil: eski format string → dizi, yeni format dizi
   const toArr = v => Array.isArray(v) ? v : (v||'').split('\n').map(s=>s.replace(/^[-•]\s*/,'')).filter(Boolean);
@@ -5100,10 +5101,10 @@ async function gTranslate(text, lang){
 function getActiveOp(){return currentOpId?getOperators().find(o=>o.id===currentOpId):null;}
 
 const SUNUM_L2={
-  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar',extTitle:'Uzatma Haftası',weekly:'Haftalık',opPrice:'Operatör satış fiyatı',depAirport:'Kalkış Havalimanı',fromDep:'{H} kalkışları için: ',payTerms:'Ödeme Koşulları'},
-  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise',extTitle:'Verlängerungswoche',weekly:'Wöchentlich',opPrice:'EK (Einkauf)',depAirport:'Abflughafen',fromDep:'Ab {H}: ',payTerms:'Zahlungsbedingungen'},
-  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly',opPrice:'Operator price',depAirport:'Departure airport',fromDep:'From {H}: ',payTerms:'Payment Terms'},
-  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire',opPrice:'Prix opérateur',depAirport:'Aéroport de départ',fromDep:'Au départ de {H} : ',payTerms:'Conditions de paiement'}
+  tr:{ovl:'REHBERLİ TUR',days:'Gün',season:'Sezon',duration:'Süre',reference:'Referans',group:'Grup',arrDep:'Varış / Dönüş',day:'GÜN',nightAt:'Geceleme:',orSimilar:'veya benzeri',services:'Hizmetler',incTitle:'Fiyata Dahil',nincTitle:'Fiyata Dahil Değil',extras:'Ek Paketler & Aktiviteler',note:'Not',inc:'dahil',opt:'opsiyonel',hotelsTitle:'Örnek Oteller',stage:'Bölge / Şehir',category:'Kalite',board:'Pansiyon',total:'Toplam',sampleFlights:'Örnek Uçuşlar',notes:'Notlar',extTitle:'Uzatma Haftası',weekly:'Haftalık',opPrice:'Operatör satış fiyatı',depAirport:'Kalkış Havalimanı',fromDep:'{H} kalkışları için: ',payTerms:'Ödeme Koşulları',birim:{kisi:'Kişi',oda:'Oda',kabin:'Kabin'}},
+  de:{ovl:'BEGLEITETE RUNDREISE',days:'Tage',season:'Saison',duration:'Dauer',reference:'Referenz',group:'Gruppe',arrDep:'Ankunft / Abflug',day:'TAG',nightAt:'Übernachtung:',orSimilar:'oder ähnlich',services:'Leistungen im Überblick',incTitle:'Inklusive',nincTitle:'Nicht inbegriffen',extras:'Zusatzpakete & Aktivitäten',note:'Hinweis',inc:'inklusive',opt:'optional',hotelsTitle:'Beispielhotels',stage:'Ort / Region',category:'Kategorie',board:'Verpflegung',total:'Gesamt',sampleFlights:'Flugbeispiele',notes:'Hinweise',extTitle:'Verlängerungswoche',weekly:'Wöchentlich',opPrice:'EK (Einkauf)',depAirport:'Abflughafen',fromDep:'Ab {H}: ',payTerms:'Zahlungsbedingungen',birim:{kisi:'Pers.',oda:'Zimmer',kabin:'Kabinen'}},
+  en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly',opPrice:'Operator price',depAirport:'Departure airport',fromDep:'From {H}: ',payTerms:'Payment Terms',birim:{kisi:'pax',oda:'rooms',kabin:'cabins'}},
+  fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire',opPrice:'Prix opérateur',depAirport:'Aéroport de départ',fromDep:'Au départ de {H} : ',payTerms:'Conditions de paiement',birim:{kisi:'pers.',oda:'chambres',kabin:'cabines'}}
 };
 function openSunum(lang){
   lang=lang||_sunumLang||'tr';
@@ -5151,7 +5152,7 @@ function openSunum(lang){
         <div><div class="prs-l" data-notx>${L2.season}</div><div class="prs-v">${(()=>{const f=x=>x?new Date(x+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'}):'';const t=[f(d.baslangic),f(d.bitis)].filter(Boolean).join(' – ');return t||'—';})()}</div></div>
         <div><div class="prs-l" data-notx>${L2.duration}</div><div class="prs-v" data-notx>${(+d.gece||0)+1} ${L2.days} / ${+d.gece||0} ${L.nights||'Gece'}</div></div>
         <div><div class="prs-l" data-notx>${L2.reference}</div><div class="prs-v">${esc(d.paketKodu||'—')}</div></div>
-        <div><div class="prs-l" data-notx>${L2.group}</div><div class="prs-v" data-notx>${L.minPax||'Min.'} ${d.pax||'—'} ${L.pax||'Kişi'}</div></div>
+        <div><div class="prs-l" data-notx>${L2.group}</div><div class="prs-v" data-notx>${L.minPax||'Min.'} ${d.pax||'—'} ${(L2.birim||{})[d.paxBirim||'kisi']||L.pax||'Kişi'}</div></div>
         ${(d.varisHavalimani||d.donusHavalimani)?`<div style="grid-column:1/-1"><div class="prs-l" data-notx>${L2.arrDep}</div><div class="prs-v">${esc([d.varisHavalimani,d.donusHavalimani].filter(Boolean).filter((v,i,arr2)=>arr2.indexOf(v)===i).join(' / '))}</div></div>`:''}
       </div>
     </div>
