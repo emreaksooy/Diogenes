@@ -1780,7 +1780,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v164 · 19.08.2026';
+const APP_VER='v165 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2659,7 +2659,7 @@ function _setSaveUI(state){
   }
 }
 window.addEventListener('beforeunload',function(e){
-  const kuyruk=Object.keys(_cloudT||{}).some(k=>_cloudT[k]);
+  const kuyruk=!!(window._cloudBekleyen&&window._cloudBekleyen.size);
   if(isDirty||window._pushBusy||kuyruk){ e.preventDefault(); e.returnValue=''; }
 });
 
@@ -9201,6 +9201,7 @@ function _pkgRow(p){
 
 function _cloudQueue(kind){
   if(!_cloudOn) return;
+  (window._cloudBekleyen=window._cloudBekleyen||new Set()).add(kind);
   clearTimeout(_cloudT[kind]);
   _cloudT[kind]=setTimeout(()=>_cloudPushKind(kind).catch(e=>{
     const m=(e&&(e.message||e.error_description))||'yetki/bağlantı';
@@ -9217,7 +9218,7 @@ async function _cloudPushKind(kind){
   if(!_cloudOn) return;
   window._pushBusy=(window._pushBusy||0)+1;
   try{ _setCloud('ok','Bulut: gönderiliyor… ('+kind+')'); }catch(e){}
-  try{ const r=await _cloudPushKindIc(kind); (window._cloudHata=window._cloudHata||new Set()).delete(kind); return r; }
+  try{ const r=await _cloudPushKindIc(kind); (window._cloudHata=window._cloudHata||new Set()).delete(kind); window._cloudBekleyen&&window._cloudBekleyen.delete(kind); return r; }
   finally{ window._pushBusy--;
     if(!window._pushBusy){ const H=window._cloudHata; 
       if(H&&H.size){ try{_setCloud('err','Bulut YAZMA HATASI ('+[...H].join(', ')+') — tıkla: detay');}catch(e){} }
