@@ -840,7 +840,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   </div>
   <div style="flex:1"></div>
   <span class="save-status" id="saveStatus"><span class="dot"></span><span id="saveStatusTxt">Hazır</span></span>
-  <span class="save-status" id="cloudStatus" title="Bulut bağlantısı"><span class="dot"></span><span id="cloudStatusTxt">Bulut: —</span></span>
+  <span class="save-status" id="cloudStatus" title="Bulut bağlantısı — tıkla: hata günlüğü" onclick="hataGunluguAc()" style="cursor:pointer"><span class="dot"></span><span id="cloudStatusTxt">Bulut: —</span></span>
   <span id="userChip" style="display:none;align-items:center;gap:6px;font-size:.78rem;color:var(--text);white-space:nowrap"></span>
   <button class="theme-toggle" id="themeToggle" onclick="toggleDark()" title="Koyu temaya geç"><svg class="ic"><use href="#i-moon"/></svg></button>
   <button class="nav-undo-btn" id="navUndoBtn" onclick="undoLast()" title="Geri alınacak işlem yok" disabled style="opacity:.4"><svg class="ic"><use href="#i-undo"/></svg> Geri Al</button>
@@ -1395,13 +1395,16 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <h2 style="font-size:1.05rem;margin-right:auto"><svg class="ic ic-lg"><use href="#i-users"/></svg> Rezervasyon</h2>
         <button class="btn btn-outline btn-sm" onclick="rzMailAc()"><svg class="ic"><use href="#i-download"/></svg> Mailden Aktar</button>
         <button class="btn btn-primary btn-sm" onclick="rzYeni()"><svg class="ic"><use href="#i-plus"/></svg> Yeni Rezervasyon</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('rzSejourFile').click()"><svg class="ic"><use href="#i-file"/></svg> Sejour'dan Aktar</button>
+        <input type="file" id="rzSejourFile" accept=".xls,.xlsx" style="display:none" onchange="rzSejourImport(event)">
       </div>
       <div class="rzmets" id="rzMets"></div>
       <div style="display:flex;gap:8px;margin-bottom:.8rem;flex-wrap:wrap">
         <input id="rzAra" placeholder="Ara: voucher, soyad, otel…" style="min-width:220px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit" oninput="renderRezvListe()">
-        <select id="rzFTip" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm tipler</option><option value="urun">Ürün</option><option value="otel">Sadece Otel</option><option value="transfer">Sadece Transfer</option></select>
+        <select id="rzFTip" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm tipler</option><option value="urun">Ürün</option><option value="otel">Sadece Otel</option><option value="transfer">Sadece Transfer</option><option value="urunsuz">⚠ Ürün eşleşmeyen</option></select>
+        <button class="btn btn-outline btn-sm" onclick="rzKodEsle()" title="Eşleşmemiş ürün kodlarını tanımlı ürünlere bağlar">↻ Kodları Yeniden Eşle</button>
         <select id="rzFOp" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm operatörler</option></select>
-        <select id="rzFDurum" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm durumlar</option><option value="bekliyor">Açılım bekliyor</option><option value="acildi">Açıldı</option></select>
+        <select id="rzFDurum" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm durumlar</option><option value="aktif">Aktif (iptal hariç)</option><option value="iptal">İptal</option><option value="bekliyor">Açılım bekliyor</option><option value="acildi">Açıldı</option></select>
       </div>
       <div class="card" style="padding:.4rem .6rem"><table class="rzlst" id="rzLst"></table></div>
     </div>
@@ -1414,6 +1417,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <select id="rzOtelTurF" onchange="rzOtelRender()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm türler</option><option value="otel">Otel</option><option value="tekne">Tekne / Yat</option><option value="apart">Apart</option><option value="pansiyon">Pansiyon</option></select>
         <span style="flex:1"></span>
         <button class="btn btn-primary btn-sm" onclick="rzOtelAdd()">+ Otel Ekle</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('otelImportFile').click()"><svg class="ic"><use href="#i-file"/></svg> Otel İçe Aktar</button>
+        <input type="file" id="otelImportFile" accept=".json" style="display:none" onchange="otelImport(event)">
       </div>
       <div class="card" style="padding:.4rem .6rem">
         <table class="rzmg" id="rzOtelTbl"></table>
@@ -1462,6 +1467,10 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         </div>
         <div id="rzUKListe"></div>
         <div id="rzUkAlt" style="font-size:.68rem;color:var(--muted);margin-top:6px"></div>
+      </div>
+      <div class="card" id="rzFiyatCard" style="display:none;border-left:4px solid var(--primary);border-radius:0 13px 13px 0">
+        <div class="card-title"><svg class="ic"><use href="#i-coins"/></svg> Fiyat Özeti <span style="font-weight:500;color:var(--muted);font-size:.68rem;margin-left:auto">Gerçek yolcu yaşlarıyla — doğum tarihlerinden otomatik</span></div>
+        <div id="rzFiyatOzet"></div>
       </div>
       <div class="card" id="rzNotCard">
         <div class="card-title"><svg class="ic"><use href="#i-pin"/></svg> Voucher Notu</div>
@@ -1770,7 +1779,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v136 · 14.07.2026';
+const APP_VER='v163 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -1799,7 +1808,12 @@ let _airportCalStates={}; // {i:{yil,ay}}
 const IDB_NAME='dmc_db', IDB_STORE='kv';
 function _idbOpen(){return new Promise((res,rej)=>{let r;try{r=indexedDB.open(IDB_NAME,1);}catch(e){return rej(e);}r.onupgradeneeded=()=>{try{r.result.createObjectStore(IDB_STORE);}catch(e){}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function idbGet(key){return _idbOpen().then(db=>new Promise((res,rej)=>{const t=db.transaction(IDB_STORE,'readonly').objectStore(IDB_STORE).get(key);t.onsuccess=()=>res(t.result);t.onerror=()=>rej(t.error);})).catch(()=>undefined);}
-function idbSet(key,val){return _idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(val,key);tx.oncomplete=()=>res(true);tx.onerror=()=>rej(tx.error);})).catch(()=>false);}
+function idbSet(key,val){return _idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(val,key);tx.oncomplete=()=>res(true);tx.onerror=()=>rej(tx.error);})).catch(e=>{
+  const msg=(e&&(e.name+': '+e.message))||'bilinmeyen';
+  console.error('IDB YAZMA HATASI',key,msg);
+  try{_hataKaydet('YEREL/'+key,msg);}catch(_e){}
+  try{ if(!window._idbErrT||Date.now()-window._idbErrT>30000){ window._idbErrT=Date.now(); showToast('⚠️ YEREL KAYIT HATASI ('+key+'): '+msg+' — veri tarayıcıya yazılamıyor! Sayfayı kapatmadan bana bildirin.','error',10000); } }catch(_e){}
+  return false;});}
 
 // Bellek-içi önbellek (senkron API korunur) + IndexedDB'ye kalıcılaştırma
 let _pkgCache=[], _opCache=[];
@@ -1817,7 +1831,12 @@ let _ogCache=null, _ogSaveT=null;
 const getReservations = () => _resCache;
 const setReservations = a => { _resCache=a; clearTimeout(_resSaveT); _resSaveT=setTimeout(()=>idbSet('reservations', _resCache),250); _cloudQueue('reservations'); return true; };
 const getRezv         = () => _rezvCache;
-const setRezv         = a => { _rezvCache=a; clearTimeout(_rezvSaveT); _rezvSaveT=setTimeout(()=>idbSet('rezervasyonlar', _rezvCache),250); _cloudQueue('rezervasyonlar'); return true; };
+const setRezv         = a => {
+  try{ const eski=(_rezvCache||[]).length, yeni=(a||[]).length;
+    if(yeni<eski-2){ const st=String(new Error().stack||'').split('\n').slice(1,4).join(' | ');
+      _hataKaydet&&_hataKaydet('REZV-DÜŞÜŞ',eski+' → '+yeni+' · '+st);
+      console.warn('REZV DÜŞÜŞ',eski,'→',yeni,st); } }catch(e){}
+  _rezvCache=a; clearTimeout(_rezvSaveT); _rezvSaveT=setTimeout(()=>idbSet('rezervasyonlar', _rezvCache),250); _cloudQueue('rezervasyonlar'); return true; };
 const getPnrLedger    = () => _pnrCache;
 const setPnrLedger    = a => { _pnrCache=a; clearTimeout(_pnrSaveT); _pnrSaveT=setTimeout(()=>idbSet('pnrLedger', _pnrCache),250); _cloudQueue('pnrLedger'); return true; };
 const getOperasyon    = () => _opsCache;
@@ -2638,7 +2657,10 @@ function _setSaveUI(state){
     if(st)st.className='save-status'; if(sx)sx.textContent='Hazır';
   }
 }
-window.addEventListener('beforeunload',function(e){ if(isDirty){ e.preventDefault(); e.returnValue=''; } });
+window.addEventListener('beforeunload',function(e){
+  const kuyruk=Object.keys(_cloudT||{}).some(k=>_cloudT[k]);
+  if(isDirty||window._pushBusy||kuyruk){ e.preventDefault(); e.returnValue=''; }
+});
 
 // ═══════════════ OPERATORS ═══════════════
 function renderOpList() {
@@ -3060,7 +3082,7 @@ function _txSaveCache(){
     }
     idbSet('txCache',_txCache);
     if(_cloudOn&&_txDirty.size){
-      const rows=[..._txDirty].filter(k=>_txCache[k]).map(k=>({key:k,t:_txCache[k].t,e:!!_txCache[k].e}));
+      const rows=[..._txDirty].filter(k=>_txCache[k]).map(k=>({key:k,t:_txCache[k].t,e:!!_txCache[k].e,ts:new Date().toISOString()}));
       _txDirty.clear();
       if(rows.length) sb.from('tx_cache').upsert(rows).then(r=>{ if(r.error) console.warn('tx push',r.error); });
     }
@@ -4878,6 +4900,7 @@ function renderUzatma(){
     <label style="display:block"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Uzatma adı</span>${fld('ad','ör. Side deniz haftası')}</label>
     <label style="display:block"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Bölge</span>${fld('bolge','ör. Side')}</label>
     <label style="display:block"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Otel</span>${fld('otel','otel adı')}</label>
+    <label style="display:block"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Sejour uzatma kodu <span style="font-weight:400">(virgüllü = 1., 2. hafta)</span></span>${fld('sejourKodlar','ör. CAP77 veya CAP77, CAP777')}</label>
     <div style="display:flex;gap:10px">
       <label style="display:block;flex:1"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Pansiyon</span>${fld('pansiyon','HB, AI…')}</label>
       <label style="display:block;width:84px"><span style="font-size:.74rem;font-weight:600;color:var(--muted)">Gece</span><input type="number" min="1" value="${uzatma.gece||7}" oninput="uzatmaSet('gece',this.value)" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit"></label>
@@ -6333,6 +6356,7 @@ function renderUcakGenel(){
 let _resHighlight='';
 function ucakOpen(pkgId,kalkis){
   _resPkgId=pkgId; _resKalkis=kalkis;
+  try{localStorage.setItem('dmc_lastUcak',pkgId+'|'+kalkis);}catch(e){}
   _resHighlight=(typeof _ucakFilter!=='undefined' && _ucakFilter && _ucakFilter.voucher)?_ucakFilter.voucher:'';
   const ps=document.getElementById('resPkgSel'); if(ps) ps.value=pkgId;
   onResPkgChange(true);
@@ -6350,7 +6374,7 @@ function _ucakView(detail){
   if(l) l.style.display=detail?'none':'';
   if(d) d.style.display=detail?'':'none';
 }
-function ucakBack(){ _ucakView(false); renderUcakGenel(); window.scrollTo(0,0); }
+function ucakBack(){ try{localStorage.removeItem('dmc_lastUcak');}catch(e){} _ucakView(false); renderUcakGenel(); window.scrollTo(0,0); }
 function renderRezervasyonPage(){
   renderUcakGenel();
   const sel=document.getElementById('resPkgSel'); if(!sel) return;
@@ -6798,6 +6822,15 @@ function _sbInit(){
   }catch(e){}
   return false;
 }
+window._hataLog=window._hataLog||[];
+function _hataKaydet(kaynak,msg){
+  try{ window._hataLog.unshift({t:new Date().toLocaleTimeString('tr-TR'),kaynak,msg:String(msg).slice(0,200)}); window._hataLog=window._hataLog.slice(0,30); }catch(e){}
+}
+function hataGunluguAc(){
+  const L=window._hataLog||[];
+  const metin=L.length?L.map(x=>x.t+' ['+x.kaynak+'] '+x.msg).join('\n\n'):'Hata kaydı yok — her şey yolunda görünüyor.';
+  showConfirm('🩺','Sistem Hata Günlüğü (son '+L.length+')',metin+'\n\nBu pencerenin ekran görüntüsünü destek için paylaşabilirsiniz.','Tamam',()=>{});
+}
 function _setCloud(state,msg){
   const el=document.getElementById('cloudStatus'), tx=document.getElementById('cloudStatusTxt');
   if(!el) return;
@@ -6947,6 +6980,96 @@ function _mutPanel(list,baslik,digerN){
 const _rzGun=(t,n)=>{ const d=new Date(t+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
 const _rzTrT=t=>t?String(t).split('-').reverse().join('.'):'—';
 const _rzTarih=t=>{ const m=String(t||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/); return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''; };
+function _rzGw(r){ const say={}; (r.musteriler||[]).forEach(m=>{const g=(m.gelis||'').trim().toUpperCase(); if(g)say[g]=(say[g]||0)+1;}); let en='',n=0; Object.keys(say).forEach(k=>{if(say[k]>n){en=k;n=say[k];}}); return en; }
+function _rzFiyatHesap(r,pkg){
+  const uyar=[], satir=[], para=(pkg.para==='USD'?'$':pkg.para==='TRY'?'₺':pkg.para==='GBP'?'£':'€');
+  const gw=_rzGw(r);
+  // sezon: kalkış tarihi + (varsa) gateway override
+  const fk=(pkg.fiyatlandirma||[]).find(x=>x.tarih===r.kalkis);
+  let sezAd=fk?(fk.sezon||''):'';
+  if(fk&&fk.apOverride&&gw){ const k=Object.keys(fk.apOverride).find(key=>String(key).toUpperCase().split(/[+,\/\s]+/).includes(gw)); if(k)sezAd=fk.apOverride[k]; }
+  const sez=(pkg.sezonlar||[]).find(x=>x.ad===sezAd);
+  if(!fk) uyar.push('Kalkış tarihi ürünün kalkış takviminde yok — sezon bulunamadı.');
+  else if(!sez) uyar.push('Sezon "'+(sezAd||'?')+'" ürün sezonlarında tanımlı değil.');
+  // yaş sınıflandırma
+  const bebU=+pkg.otelBebekUst||2, cocU=pkg.otelUrun?(+pkg.otelCocukUst||13):13, maxC=pkg.otelUrun?(+pkg.otelMaxCocuk||2):99;
+  let yet=0,beb=0; const cocY=[]; let dogumsuz=0;
+  const iptalM=(r.musteriler||[]).filter(m=>m.iptal&&(m.ad||m.soyad));
+  (r.musteriler||[]).forEach(m=>{ if(!(m.ad||m.soyad)||m.iptal)return; const y=_rzYas(m.dogum,r.kalkis);
+    if(y===''){ yet++; dogumsuz++; }
+    else if(y<bebU) beb++;
+    else if(y<cocU) cocY.push(y);
+    else yet++; });
+  if(dogumsuz) uyar.push(dogumsuz+' kişide doğum tarihi yok — yetişkin sayıldı.');
+  const kisiToplam=yet+cocY.length+beb;
+  if(!kisiToplam) return {satir:[],toplam:0,para,uyar:['Müşteri girilmemiş.'],kirilim:{yet:0,coc:0,beb:0},sezAd};
+  let toplam=0;
+  const ekle=(ad,tutar)=>{ satir.push({ad,tutar}); toplam+=tutar; };
+  // GRUP FİYATLI ürün (transfer/handling): kişi fiyatı yerine kademe
+  if(Array.isArray(pkg.grupFiyat)&&pkg.grupFiyat.length){
+    const kd=pkg.grupFiyat.find(g=>{const mn=+g.min||1,mx=+g.max||999;return kisiToplam>=mn&&kisiToplam<=mx;});
+    if(kd) ekle('Grup fiyatı ('+(kd.min||1)+'–'+(kd.max||'∞')+' kişi, '+kisiToplam+' kişi)', +kd.fiyat||0);
+    else uyar.push(kisiToplam+' kişi için grup fiyat kademesi tanımlı değil.');
+  } else if(sez){
+    const DBL=+sez.ciftKisi||0, EZZ=+sez.tekSupp||0, KID=+sez.cocuk||0;
+    ekle(yet+' × DZ kişi başı ('+sezAd+')', yet*DBL);
+    if(yet===1&&EZZ) ekle('Tek kişi farkı (EZZ)', EZZ);
+    if(cocY.length){
+      const say=Math.min(cocY.length,maxC);
+      if(pkg.cocukFiyatiAktif&&KID) ekle(say+' × Çocuk ('+cocY.join(', ')+' yaş)', say*KID);
+      else { ekle(say+' × Çocuk — çocuk fiyatı tanımsız, DZ uygulandı', say*DBL); uyar.push('Üründe çocuk fiyatı tanımlı değil.'); }
+      if(cocY.length>say) uyar.push('Maks. '+maxC+' çocuk — fazlası için otele triple sorulmalı.');
+    }
+    if(beb) satir.push({ad:beb+' × Bebek (0–'+bebU+' yaş) — ücretsiz',tutar:0});
+    // havalimanı farkı
+    if(gw){ const hs=(pkg.havalimanSuppleri||[]).find(h=>String(h.havalimani||'').toUpperCase().split(/[+,\/\s]+/).includes(gw));
+      const sup=hs?(+hs.supplement||0):0;
+      if(sup) ekle((yet+cocY.length)+' × Havalimanı farkı ('+gw+')',(yet+cocY.length)*sup); }
+    // uzatma
+    const hf=+r.uzatmaHafta||0, uz=pkg.uzatma;
+    if(hf&&uz&&uz.aktif){ const uf=(uz.fiyat||{})[sezAd]||{};
+      const uD=+uf.ciftKisi||0,uE=+uf.tekSupp||0,uK=+uf.cocuk||0;
+      if(uD){ let h=yet*uD+(yet===1?uE:0); const say=Math.min(cocY.length,maxC); if(pkg.cocukFiyatiAktif&&uK)h+=say*uK; else h+=say*uD*(cocY.length?1:0)*0 + (say&&!(pkg.cocukFiyatiAktif&&uK)?say*uD:0);
+        ekle(hf+' hafta uzatma ('+(uz.otel||uz.bolge||'')+')', hf*h); }
+      else uyar.push('Uzatma fiyatı "'+(sezAd||'?')+'" sezonu için tanımlı değil.'); }
+  }
+  // oda upgrade'leri (kişi/gece; tek kişilik kartta tekGece)
+  (r.ukartlar||[]).forEach(k=>{
+    if(!k.upgrade) return;
+    const u=(pkg.odaUpgrade||[]).find(x=>_norm(x.ad||'')===_norm(k.upgrade));
+    if(!u){ uyar.push('Kart '+(k.no||'?')+' upgrade "'+k.upgrade+'" üründe tanımlı değil.'); return; }
+    const g=+k.gece||+pkg.gece||0;
+    const aktifU=(k.uyeler||[]).filter(id=>{const m=(r.musteriler||[]).find(x=>x.id===id);return m&&!m.iptal;});
+    const n=aktifU.length||1;
+    const tut=(n===1&&+u.tekGece)?g*(+u.tekGece):n*g*(+u.kisiGece||0);
+    if(g&&tut) ekle('Kart '+(k.no||'?')+' '+(k.tip||'')+' — '+u.ad+' ('+(n===1?'tek kişi':(n+' kişi'))+' × '+g+' gece)',tut);
+    else if(!g) uyar.push('Kart '+(k.no||'?')+' upgrade için gece sayısı yok.');
+  });
+  if(iptalM.length){
+    satir.push({ad:iptalM.length+' kişi İPTAL ('+iptalM.map(m=>(m.soyad||'')+(m.iptalTarihi?' '+m.iptalTarihi.split('-').reverse().join('.'):'')).join(', ')+') — iptal şartına göre cezası ayrıca hesaplanır',tutar:0});
+  }
+  return {satir,toplam,para,uyar,kirilim:{yet,coc:cocY.length,beb},sezAd};
+}
+function rzFiyatOzet(){
+  const box=document.getElementById('rzFiyatOzet'), card=document.getElementById('rzFiyatCard');
+  if(!box||!card) return;
+  const r=(typeof rzR==='function')?rzR():null;
+  const pkg=(r&&r.tip==='urun')?getPackages().find(p=>p.id===r.pkgId):null;
+  if(!r||!pkg){ card.style.display='none'; return; }
+  card.style.display='';
+  const h=_rzFiyatHesap(r,pkg);
+  const fmt=n=>(+n||0).toLocaleString('tr-TR');
+  box.innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:9px;font-size:.74rem;font-weight:700">
+      <span style="background:var(--light);border-radius:20px;padding:2px 10px">${h.kirilim.yet} Yetişkin</span>
+      ${h.kirilim.coc?`<span style="background:#fef3c7;color:#92400e;border-radius:20px;padding:2px 10px">${h.kirilim.coc} Çocuk</span>`:''}
+      ${h.kirilim.beb?`<span style="background:#dbeafe;color:#1e40af;border-radius:20px;padding:2px 10px">${h.kirilim.beb} Bebek</span>`:''}
+      ${h.sezAd?`<span style="background:var(--primary-soft,#fff3ec);color:var(--primary);border-radius:20px;padding:2px 10px">Sezon ${esc(h.sezAd)}</span>`:''}
+    </div>
+    ${h.satir.length?`<table style="width:100%;border-collapse:collapse;font-size:.82rem">${h.satir.map(x=>`<tr><td style="padding:4px 6px;border-bottom:1px dashed var(--border)">${esc(x.ad)}</td><td style="padding:4px 6px;border-bottom:1px dashed var(--border);text-align:right;font-weight:600;white-space:nowrap">${x.tutar?fmt(x.tutar)+' '+h.para:'—'}</td></tr>`).join('')}
+      <tr><td style="padding:7px 6px;font-weight:800">TOPLAM</td><td style="padding:7px 6px;text-align:right;font-weight:800;color:var(--primary);font-size:.95rem;white-space:nowrap">${fmt(h.toplam)} ${h.para}</td></tr></table>`:''}
+    ${h.uyar.length?`<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:7px 11px;font-size:.76rem;color:#92400e;margin-top:8px">${h.uyar.map(esc).join('<br>')}</div>`:''}`;
+}
 const _rzYas=(dogum,ref)=>{ if(!dogum) return ''; const d=new Date(dogum), q=new Date(ref||new Date()); if(isNaN(d)||isNaN(q)) return ''; let y=q.getFullYear()-d.getFullYear(); if(q<new Date(q.getFullYear(),d.getMonth(),d.getDate())) y--; return y; };
 const rzR=()=>getRezv().find(r=>r.id===_rzCur);
 const rzSave=()=>setRezv(getRezv());
@@ -6995,7 +7118,7 @@ function rzMonGoster(){
   if(!list.length) h+='<tbody><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:18px">Henüz ürün rezervasyonu yok</td></tr></tbody>';
   document.getElementById('rzMonTbl').innerHTML=h;
 }
-function rzListeGoster(){ _rzCur=null; _rzViewShow('rzVListe'); renderRezvListe(); }
+function rzListeGoster(){ _rzCur=null; try{localStorage.removeItem('dmc_lastRezv');}catch(e){} _rzViewShow('rzVListe'); renderRezvListe(); }
 function rzOtelGoster(){ _rzCur=null; _otlPopAcik=null; _rzViewShow('rzVOtel'); rzOtelRender(); }
 function rzOtelRender(){
   const t=getTanimlar()||{}; const list=Array.isArray(t.oteller)?t.oteller:[];
@@ -7040,6 +7163,34 @@ function _otlTurUI(){
   if(g('otlAraKapali')) g('otlAraKapali').style.display=c.ara?'none':'';
 }
 let _otlEdit=-1, _otlSon=[], _otlAraT=null, _otlAraSeq=0;
+function otelImport(evt){
+  const f=evt.target.files[0]; evt.target.value=''; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=e=>{ try{
+    const data=JSON.parse(e.target.result);
+    const liste=Array.isArray(data)?data:(data.oteller||[]);
+    if(!liste.length){ showToast('Dosyada otel bulunamadı','error'); return; }
+    const t=getTanimlar()||{}; t.oteller=Array.isArray(t.oteller)?t.oteller:[]; t.bolgeler=Array.isArray(t.bolgeler)?t.bolgeler:[];
+    let yeni=0, atla=0, bolgeYeni=0;
+    (Array.isArray(data.bolgeler)?data.bolgeler:[]).forEach(b=>{ const ad=(b.ad||'').trim(); if(!ad)return;
+      const dup=t.bolgeler.find(x=>_norm(x.ad)===_norm(ad)&&_norm(x.sehir||'')===_norm(b.sehir||''));
+      if(!dup){ t.bolgeler.push({ad,sehir:(b.sehir||'').trim(),once:''}); bolgeYeni++; } });
+    liste.forEach(o=>{ const kod=String(o.kod||'').toUpperCase().trim(); const ad=(o.ad||'').trim(); if(!ad)return;
+      const varK=kod&&t.oteller.some(x=>String(x.kod||'').toUpperCase()===kod);
+      const varA=t.oteller.some(x=>_norm(x.ad)===_norm(ad)&&(!_norm(x.sehir||'')||!_norm(o.sehir||'')||_norm(x.sehir||'')===_norm(o.sehir||'')));
+      if(varK||varA){ atla++; return; }
+      const tur=(o.tur==='tekne'||o.tur==='apart'||o.tur==='pansiyon')?o.tur:'otel';
+      const yn={kod:kod||_otlKodUret(ad,-1),ad,tur,sehir:o.sehir||'',bolge:o.bolge||'',yildiz:o.yildiz||'',detay:o.detay||'',tel:o.tel||'',email:o.email||'',adres:o.adres||'',lat:o.lat||'',lon:o.lon||'',
+        odalar:(OTL_ODA_SABLON[tur]||OTL_ODA_SABLON.otel).map(_odaS),
+        odaTipleri:[{kod:'STD',ad:'STANDART ROOM',aciklama:''}],
+        pansiyonlar:tur==='tekne'?['FB']:['BB','HB'],
+        donemler:[]};
+      t.oteller.push(yn); yeni++; });
+    setTanimlar(t); try{rzOtelRender&&rzOtelRender();}catch(_e){}
+    showToast(yeni+' otel eklendi'+(atla?' · '+atla+' zaten vardı (atlandı)':'')+(bolgeYeni?' · '+bolgeYeni+' bölge tanımlandı':''),'success');
+  }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); } };
+  rd.readAsText(f,'utf-8');
+}
 function rzOtelAdd(){ rzOtelModalAc(-1); }
 function rzOtelEdit(i){ rzOtelModalAc(i); }
 function rzOtelModalAc(i){
@@ -7823,14 +7974,23 @@ function rzOtelDetSil(){ const o=_otlDetO(); if(!o)return;
 }
 function renderRezvListe(){
   const rez=getRezv();
+  if(!window._rzFRestore){ window._rzFRestore=true;
+    try{ const f=JSON.parse(localStorage.getItem('dmc_rzFiltre')||'{}');
+      if(f.ara!=null)document.getElementById('rzAra').value=f.ara;
+      if(f.tip!=null)rzFTip.value=f.tip; if(f.op!=null)rzFOp.value=f.op; if(f.durum!=null)rzFDurum.value=f.durum;
+    }catch(e){} }
   const ara=(document.getElementById('rzAra').value||'').toLocaleLowerCase('tr').replace(/ı/g,'i');
   const ft=rzFTip.value, fo=rzFOp.value, fd=rzFDurum.value;
+  try{localStorage.setItem('dmc_rzFiltre',JSON.stringify({ara:document.getElementById('rzAra').value||'',tip:ft,op:fo,durum:fd}));}catch(e){}
   const ops=[...new Set(rez.map(r=>r.operator).filter(Boolean))].sort();
   if(rzFOp.options.length!==ops.length+1){ const cur=rzFOp.value; rzFOp.innerHTML='<option value="">Tüm operatörler</option>'+ops.map(o=>`<option>${esc(o)}</option>`).join(''); rzFOp.value=cur; }
   let list=rez.filter(r=>{
-    if(ft&&r.tip!==ft) return false;
+    if(ft==='urunsuz'){ const pkgVar=r.pkgId&&getPackages().some(p=>p.id===r.pkgId); if(!((r.urunKod&&!pkgVar)||(r.tip==='urun'&&!pkgVar))) return false; }
+    else if(ft&&r.tip!==ft) return false;
     if(fo&&r.operator!==fo) return false;
-    if(fd&&rzDurum(r)!==fd) return false;
+    if(fd==='iptal'){ if(r.durum!=='iptal') return false; }
+    else if(fd==='aktif'){ if(r.durum==='iptal') return false; }
+    else if(fd&&rzDurum(r)!==fd) return false;
     if(ara){
       const blob=((r.voucher||'')+' '+(r.operator||'')+' '+(r.urunKod||'')+' '+(r.musteriler||[]).map(m=>m.soyad+' '+m.ad).join(' ')+' '+(r.kartlar||[]).map(k=>k.otel).join(' ')).toLocaleLowerCase('tr').replace(/ı/g,'i');
       if(!blob.includes(ara)) return false;
@@ -7844,10 +8004,12 @@ function renderRezvListe(){
     const d=rzDurum(r);
     const hk=(r.kartlar||[]).filter(k=>k.tip!=='ulasim');
     const konf=hk.length?`${hk.filter(k=>k.konfirme==='Evet').length}/${hk.length}`:'—';
-    h+=`<tr onclick="rzAc('${r.id}')">
-      <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span></td>
+    h+=`<tr onclick="rzAc('${r.id}')"${r.durum==='iptal'?' style="background:#fef2f2"':''}>
+      <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span>${r.durum==='iptal'?' <span style="background:#dc2626;color:#fff;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">İPTAL</span>':''}</td>
       <td>${esc(r.operator||'—')}</td><td><b>${esc(r.voucher||'—')}</b></td>
-      <td>${r.tip==='urun'?`<b>${esc(r.urunKod||'?')}</b> · ${_rzTrT(r.kalkis)}`:(r.tip==='otel'?esc((r.kartlar||[])[0]?r.kartlar[0].otel:'—'):esc((r.transferler||[])[0]?(r.transferler[0].nereden+'→'+r.transferler[0].nereye):'—'))}</td>
+      <td>${(()=>{ const pkgVar=r.pkgId&&getPackages().some(p=>p.id===r.pkgId);
+        if(r.tip==='urun'||(r.urunKod&&!pkgVar)) return `<b>${esc(r.urunKod||'?')}</b>${(!pkgVar)?' <span style="background:#fef3c7;color:#92400e;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 5px" title="Bu kod üründe tanımlı değil — ürünü tanımlayıp Sejour dosyasını yeniden yükleyin">KOD EŞLEŞMEDİ</span>':''} · ${_rzTrT(r.kalkis)}`;
+        return r.tip==='otel'?esc((r.kartlar||[])[0]?r.kartlar[0].otel:'—'):esc((r.transferler||[])[0]?(r.transferler[0].nereden+'→'+r.transferler[0].nereye):'—'); })()}</td>
       <td>${(r.musteriler||[]).slice(0,2).map(m=>esc(m.soyad||'')).join(', ')}${(r.musteriler||[]).length>2?' +'+(r.musteriler.length-2):''}</td>
       <td><b>${(r.musteriler||[]).length}</b></td><td>${_rzTrT(r.satisTarihi)}</td>
       <td>${r.tip==='urun'?(d==='acildi'?'<span class="rzchip rzc-ok">açıldı</span>':'<span class="rzchip rzc-bek">açılım bekliyor</span>'):'<span class="rzchip" style="background:#e5e7eb;color:#4b5563">—</span>'}</td>
@@ -7863,13 +8025,232 @@ function renderRezvListe(){
     `<div class="rzmet"><div class="n">${rez.reduce((t,r)=>t+(r.musteriler||[]).length,0)}</div><div class="l">Toplam yolcu</div></div>`+
     `<div class="rzmet"><div class="n">${rez.filter(r=>r.satisTarihi===bugun).length}</div><div class="l">Bugün gelen</div></div>`;
 }
+function _sjTarih(v){ // Excel serial ya da metin → ISO
+  if(v==null||v==='') return '';
+  if(typeof v==='number'&&v>20000){ const d=new Date(Date.UTC(1899,11,30)+v*86400000); return d.toISOString().slice(0,10); }
+  return _pdate(v)||'';
+}
+function _sjIsim(t){ // "SOYAD, AD" | "SOYAD / AD" | "AD SOYAD"
+  t=String(t||'').replace(/\s+/g,' ').trim();
+  if(!t) return null;
+  if(t.includes(',')){ const p=t.split(','); return {soyad:p[0].trim(),ad:p.slice(1).join(',').trim()}; }
+  if(t.includes('/')){ const p=t.split('/'); return {soyad:p[0].trim(),ad:p.slice(1).join('/').trim()}; }
+  const w=t.split(' ');
+  if(w.length===1) return {soyad:w[0],ad:''};
+  return {soyad:w[w.length-1],ad:w.slice(0,-1).join(' ')};
+}
+const _SJ_ODA={DBL:'DBL',TWI:'DBL','1/2W':'DBL','1/2M':'DBL',SGL:'SGL',SNG:'SGL',TRP:'TRP',TPL:'TRP',QUAD:'QUAD',FAM:'FAM'};
+function _sjKartlar(satirlar,IX,musteriler,otelAdCoz,uyeYokCb){
+  const {iOtel,iGir,iCik,iOda,iOdaT,iAd,iKartNo,iDogum}=IX;
+  const kmap={};
+  satirlar.forEach(r=>{
+    const otel=String(r[iOtel]||'').trim(); if(!otel) return;
+    const gir=_sjTarih(r[iGir]), cik=_sjTarih(r[iCik]);
+    const kk=(iKartNo>=0&&r[iKartNo]!=null&&r[iKartNo]!=='')?('no:'+r[iKartNo]):(otel+'|'+gir+'|'+cik);
+    (kmap[kk]=kmap[kk]||{otel,gir,cik,no:(iKartNo>=0?r[iKartNo]:''),kisiler:[],oda:String(r[iOda]||'').trim(),odaT:String(r[iOdaT]||'').trim()}).kisiler.push({p:_sjIsim(r[iAd]),dogum:(iDogum!=null&&iDogum>=0&&r[iDogum])?_sjTarih(r[iDogum]):''});
+  });
+  const out=[];
+  Object.values(kmap).sort((a,b)=>String(a.gir).localeCompare(String(b.gir))).forEach(k=>{
+    const esle=_sjEsle(musteriler);
+    const uyeler=[];
+    k.kisiler.forEach(x=>{ if(!x.p)return; const m=esle(x.p,x.dogum); if(m&&!uyeler.includes(m.id)) uyeler.push(m.id); else if(!m&&uyeYokCb) uyeYokCb(); });
+    const uy=uyeler.length?uyeler:musteriler.map(m=>m.id);
+    const ulasim=(k.oda==='TRF')||/UCUS|UÇUŞ|IC HAT|TREN|FERIBOT/i.test(k.otel);
+    if(ulasim){
+      const utip=/TREN/i.test(k.otel)?'Tren / YHT':/FERIBOT/i.test(k.otel)?'Feribot':'İç Uçuş';
+      out.push({id:genId(),tip:'ulasim',utip:utip,guzergah:otelAdCoz(k.otel),saat:'',pnr:'',durum:'Alınacak',baslangic:k.gir,gece:0,uyeler:uy,not:'Sejour açılımı'+(k.no?' · kart #'+parseInt(k.no):'')});
+    } else {
+      const gece=(k.gir&&k.cik)?Math.max(1,Math.round((Date.parse(k.cik)-Date.parse(k.gir))/86400000)):1;
+      out.push({id:genId(),otel:otelAdCoz(k.otel),sehir:'',yildiz:'',pansiyon:'BB',baslangic:k.gir,gece:gece,oda:(k.oda||'')+(k.odaT?('/'+k.odaT):''),uyeler:uy,konfirme:'Gönderilmedi',not:'Sejour açılımı'+(k.no?' · kart #'+parseInt(k.no):'')});
+    }
+  });
+  return out;
+}
+function _sjEsle(musteriler){
+  const kullanilan=new Set();
+  return function(p,dogum){
+    if(!p) return null;
+    const adaylar=musteriler.filter(x=>_norm((x.soyad||'')+'|'+(x.ad||''))===_norm(p.soyad+'|'+p.ad));
+    if(!adaylar.length) return null;
+    let m=null;
+    if(dogum) m=adaylar.find(x=>x.dogum===dogum&&!kullanilan.has(x.id))||adaylar.find(x=>x.dogum===dogum);
+    if(!m) m=adaylar.find(x=>!kullanilan.has(x.id))||adaylar[0];
+    kullanilan.add(m.id);
+    return m;
+  };
+}
+function _sjRota(v){ v=String(v||'').trim().toUpperCase(); return (v.length===6&&/^[A-Z]{6}$/.test(v))?(v.slice(0,3)+'-'+v.slice(3)):v; }
+function _sjUkartlar(satirlar,iOda,iAd,iGir,iCik,musteriler,iSira,iDogum){
+  const esle=_sjEsle(musteriler);
+  const sirali=(iSira!=null&&iSira>=0)?satirlar.slice().sort((a,b)=>(+a[iSira]||0)-(+b[iSira]||0)):satirlar;
+  const out=[]; let kart=null, no=0; const kullanildi=new Set();
+  sirali.forEach(r=>{
+    const odaK=_SJ_ODA[String(r[iOda]||'').trim().toUpperCase()]; if(!odaK) return;
+    const dg=(iDogum!=null&&iDogum>=0&&r[iDogum])?_sjTarih(r[iDogum]):'';
+    const m=esle(_sjIsim(r[iAd]),dg); if(!m||kullanildi.has(m.id)) return;
+    const kap=RZ_ODA_KAP[odaK]||2;
+    if(!kart||kart.tip!==odaK||kart.uyeler.length>=kap){
+      const gir=_sjTarih(r[iGir]), cik=_sjTarih(r[iCik]);
+      const gece=(gir&&cik)?Math.max(1,Math.round((Date.parse(cik)-Date.parse(gir))/86400000)):0;
+      kart={id:genId(),no:++no,tip:odaK,uyeler:[],baslangic:gir||'',gece:gece};
+      out.push(kart);
+    }
+    kart.uyeler.push(m.id); kullanildi.add(m.id);
+  });
+  return out;
+}
+function rzSejourImport(evt){
+  const f=evt.target.files[0]; evt.target.value=''; if(!f) return;
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const rd=new FileReader();
+  rd.onload=e=>{ try{
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    const sh=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(sh,{header:1,raw:true});
+    if(!rows.length){ showToast('Dosya boş','error'); return; }
+    const hdr=rows[0].map(x=>String(x||'').trim());
+    const H=n=>hdr.findIndex(h=>_norm(h)===_norm(n));
+    const iTip=H('Rez. Tipi'), iOp=H('Operatör'), iV=H('Voucher'), iOtel=H('Otel Adı'), iAd=H('Misafir Adı'),
+          iGir=H('Giriş Tarihi'), iCik=H('Çıkış Tarihi'), iG1=H('Grup1'), iG2=H('Grup2'), iG3=H('Grup3'), iOpAd=H('Operatör Adı'), iOda=H('Oda'), iOdaT=H('Oda Tipi'),
+          iSira=H('Müşt.Sıra'), iGelis=H('Geliş Yeri'), iDonus=H('Dönüş Yeri'), iDogum=H('Doğum Tarihi'), iKartNo=hdr.findIndex(h=>String(h).trim()==='#'), iKayit=H('İlk Kayıt Tarihi');
+    if(iV<0||iAd<0){ showToast('Bu dosya Sejour "Rezervasyon Detay" formatında değil (Voucher/Misafir Adı kolonu yok)','error'); return; }
+    // operatör eşleme: Sejour adı/kodu → sistem operatörü (boşluksuz _norm karşılaştırma + başlangıç eşleşmesi)
+    const ops=getOperators();
+    const opBul=(kod,ad)=>{ const k=_norm(kod).replace(/ /g,''), a=_norm(ad).replace(/ /g,'');
+      return ops.find(o=>{ const n=_norm(o.ad||'').replace(/ /g,''); return n&&(n===a||n===k||(a&&(n.startsWith(a)||a.startsWith(n)))||(k&&n.startsWith(k))); })||null; };
+    // voucher bazında grupla
+    const grup={}; let iptal=0, acilim=0, bos=0;
+    rows.slice(1).forEach(r=>{
+      const v=String(r[iV]||'').trim(); const isim=String(r[iAd]||'').trim();
+      if(!v||!isim){ bos++; return; }
+      const tip=String(r[iTip]||'').trim();
+      const key=String(r[iOp]||'').trim()+'|'+v;
+      const gg=(grup[key]=grup[key]||{opKod:String(r[iOp]||'').trim(),opAd:String(r[iOpAd]||'').trim(),voucher:v,satirlar:[],iptaller:[]});
+      if(tip==='İptal'){ gg.iptaller.push(r); iptal++; } else gg.satirlar.push(r);
+    });
+    let rezv=getRezv();
+    const sejN=rezv.filter(x=>x.opUcusNot==='Sejour aktarımı').length;
+    if(sejN&&!window._sjTemizSoruldu&&window.confirm('Daha önce Sejour\'dan aktarılmış '+sejN+' rezervasyon var.\n\nTEMİZLEYİP baştan yüklemek için Tamam.\nMevcutları koruyup eksikleri eklemek için Vazgeç.')){
+      rezv=rezv.filter(x=>x.opUcusNot!=='Sejour aktarımı');
+      setRezv(rezv);
+      showToast(sejN+' eski Sejour kaydı temizlendi','success');
+    }
+    window._sjTemizSoruldu=true; // oturumda bir kez sor (2. dosya eklemeli çalışır)
+    let yeni=0, atla=0, kartN=0, kartVoucher=0, uyeYok=0, iptalRez=0; const kodYok=new Set(), opYok=new Set();
+    const otelAdCoz=ad=>{ const t=getTanimlar()||{}; const o=(t.oteller||[]).find(x=>_norm(x.ad||'')===_norm(ad)); return o?o.ad:ad; };
+    Object.values(grup).forEach(g=>{
+      // VOUCHER SİSTEMDE VARSA: bu dosya açılım (rooming) dosyası → konaklama kartlarını bağla
+      const mevcut=rezv.find(x=>x.voucher&&_norm(x.voucher||'')===_norm(g.voucher));
+      if(mevcut){
+        // ürün dosyası tekrar mı? (satırların 'oteli' tanımlı otellerde yok = ürün kartı adı)
+        const tOteller=(getTanimlar()||{}).oteller||[];
+        const gercekOtel=g.satirlar.some(r=>{ const oa=String(r[iOtel]||'').trim(); return oa&&tOteller.some(o=>_norm(o.ad||'')===_norm(oa)); });
+        if(!gercekOtel&&mevcut.tip==='urun'){
+          if(!(mevcut.ukartlar||[]).length&&iOda>=0){
+            mevcut.ukartlar=_sjUkartlar(g.satirlar.length?g.satirlar:g.iptaller,iOda,iAd,iGir,iCik,mevcut.musteriler||[],iSira,iDogum);
+            if(mevcut.ukartlar.length){ kartVoucher++; kartN+=mevcut.ukartlar.length; }
+            else atla++;
+          } else atla++;
+          return;
+        }
+        // müşteri zenginleştirme: doğum / rota / satış tarihi (boş alanlara)
+        const tumSatir=g.satirlar.concat(g.iptaller);
+        { const esleE=_sjEsle(mevcut.musteriler||[]); const islenen=new Set();
+          tumSatir.forEach(r=>{ const p=_sjIsim(r[iAd]); if(!p) return;
+            const dg=(iDogum>=0&&r[iDogum])?_sjTarih(r[iDogum]):'';
+            const anahtar=_norm(p.soyad+'|'+p.ad+'|'+dg); if(islenen.has(anahtar)) return; islenen.add(anahtar);
+            const m=esleE(p,dg); if(!m) return;
+            if(dg&&!m.dogum) m.dogum=dg;
+            if(iGelis>=0&&r[iGelis]&&(!m.gelis||m.gelis.length<=3)) m.gelis=_sjRota(r[iGelis]);
+            if(iDonus>=0&&r[iDonus]&&(!m.donus||m.donus.length<=3)) m.donus=_sjRota(r[iDonus]); }); }
+        if(iKayit>=0){ let sat=''; tumSatir.forEach(r=>{ const k2=_sjTarih(r[iKayit]); if(k2&&(!sat||k2<sat)) sat=k2; }); if(sat) mevcut.satisTarihi=sat; }
+        if(!g.satirlar.length&&g.iptaller.length&&mevcut.durum!=='iptal'){ mevcut.durum='iptal'; mevcut.not=('İPTAL REZERVASYON'+(mevcut.not?' · '+mevcut.not:'')); iptalRez++; }
+        // konaklama kartları (ortak kurucu; kart no # öncelikli)
+        mevcut.kartlar=mevcut.kartlar||[];
+        let eklendi=0;
+        _sjKartlar(g.satirlar,{iOtel,iGir,iCik,iOda,iOdaT,iAd,iKartNo,iDogum},mevcut.musteriler||[],otelAdCoz,()=>{uyeYok++;}).forEach(k=>{
+          if(mevcut.kartlar.some(x=>_norm((x.otel||x.guzergah)||'')===_norm((k.otel||k.guzergah)||'')&&String(x.baslangic||'')===String(k.baslangic||''))) return;
+          mevcut.kartlar.push(k); eklendi++; kartN++;
+        });
+        if(eklendi){ kartVoucher++; mevcut.kartlar.sort((a,b)=>String(a.baslangic||'').localeCompare(String(b.baslangic||''))); }
+        else atla++;
+        return;
+      }
+      const tumIptal=!g.satirlar.length&&g.iptaller.length;
+      const kaynak=g.satirlar.length?g.satirlar:g.iptaller;
+      const ilk=kaynak[0];
+      const kod=String(ilk[iG1]||'').trim().toUpperCase();
+      let pkg=null, uzHafta=0;
+      if(kod){ pkg=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(kod));
+        if(!pkg){ const uzm=_uzKodBul(kod); if(uzm){ pkg=uzm.pkg; uzHafta=uzm.hafta; } }
+        if(!pkg){ kodYok.add(kod); } }
+      const op=opBul(g.opKod,g.opAd); if(!op) opYok.add(g.opAd||g.opKod);
+      // kalkış = en erken giriş; satış = en erken ilk kayıt
+      let kalkis='', satis='';
+      kaynak.forEach(r=>{ const t=_sjTarih(r[iGir]); if(t&&(!kalkis||t<kalkis)) kalkis=t;
+        if(iKayit>=0){ const k2=_sjTarih(r[iKayit]); if(k2&&(!satis||k2<satis)) satis=k2; } });
+      const gw=String(ilk[iG3]||'').trim().toUpperCase();
+      // müşteriler (aynı isim mükerrer olmasın)
+      const gorulen=new Set(); const musteriler=[];
+      const dogumVar=iDogum>=0;
+      kaynak.forEach(r=>{ const p=_sjIsim(r[iAd]); if(!p) return;
+        // ürün dosyasında (doğum kolonu yok) her satır bir kişidir — tekilleştirme YOK;
+        // açılım dosyasında kişi = isim+doğum (aynı isimli iki kişi ayrışır)
+        if(dogumVar){ const nk=_norm(p.soyad+'|'+p.ad+'|'+String(r[iDogum]||'')); if(gorulen.has(nk)) return; gorulen.add(nk); }
+        const m=_rzYeniM(); m.ad=p.ad; m.soyad=p.soyad;
+        if(iDogum>=0&&r[iDogum]) m.dogum=_sjTarih(r[iDogum]);
+        m.gelis=(iGelis>=0&&r[iGelis])?_sjRota(r[iGelis]):(gw||'');
+        m.donus=(iDonus>=0&&r[iDonus])?_sjRota(r[iDonus]):(gw||'');
+        musteriler.push(m); });
+      // karışık iptal: iptal kişiler nota
+      const iptalIsim=[]; if(!tumIptal&&g.iptaller.length){ g.iptaller.forEach(r=>{ const p=_sjIsim(r[iAd]); if(p) iptalIsim.push(p.soyad+' '+p.ad); }); }
+      if(!musteriler.length){ atla++; return; }
+      const rec={id:genId(),tip:pkg?'urun':'otel',operator:op?op.ad:(g.opAd||g.opKod),voucher:g.voucher,
+        durum:tumIptal?'iptal':'',
+        uzatmaHafta:uzHafta||0,
+        pkgId:pkg?pkg.id:'',urunKod:kod,kalkis:kalkis,satisTarihi:satis||new Date().toISOString().slice(0,10),
+        not:(pkg?'':(String(ilk[iOtel]||'').trim()+' '+_sjTarih(ilk[iGir])+'–'+_sjTarih(ilk[iCik])).trim())+((ilk[iOda]||ilk[iOdaT])?(' · '+String(ilk[iOda]||'').trim()+'/'+String(ilk[iOdaT]||'').trim()):''),
+        odaKomp:'',ukartlar:(iOda>=0?_sjUkartlar(kaynak,iOda,iAd,iGir,iCik,musteriler,iSira,iDogum):[]),opUcusNot:'Sejour aktarımı',musteriler:musteriler,kartlar:[],transferler:[]};
+      { const tOteller2=(getTanimlar()||{}).oteller||[];
+        const gercek2=kaynak.some(r2=>{ const oa=String(r2[iOtel]||'').trim(); return oa&&tOteller2.some(o=>_norm(o.ad||'')===_norm(oa)); });
+        if(gercek2){ rec.kartlar=_sjKartlar(kaynak,{iOtel,iGir,iCik,iOda,iOdaT,iAd,iKartNo,iDogum},musteriler,otelAdCoz,()=>{uyeYok++;}); if(rec.kartlar.length){ kartN+=rec.kartlar.length; kartVoucher++; } } }
+      if(iptalIsim.length) rec.not=((rec.not||'')+' · İPTAL edilenler: '+[...new Set(iptalIsim)].join(', ')).trim();
+      if(tumIptal){ rec.not=('İPTAL REZERVASYON'+(rec.not?' · '+rec.not:'')); iptalRez++; }
+      rezv.push(rec); yeni++;
+    });
+    setRezv(rezv); rzSave&&rzSave(); try{rzListeGoster&&rzListeGoster();}catch(_e){}
+    // yerel disk doğrulaması: 2 sn sonra idb'den geri oku, tutmuyorsa BÜYÜK uyarı
+    setTimeout(async()=>{ try{
+      const disk=await idbGet('rezervasyonlar');
+      const dn=Array.isArray(disk)?disk.length:0;
+      if(dn!==rezv.length){
+        _hataKaydet('YEREL/dogrulama','Bellekte '+rezv.length+' rezervasyon var ama diske '+dn+' yazılabildi!');
+        showToast('⚠️ YEREL DİSK DOĞRULAMASI BAŞARISIZ: bellekte '+rezv.length+', diskte '+dn+' kayıt. Sayfayı YENİLEMEYİN — durumu bildirin!','error',12000);
+      } else console.log('Yerel disk doğrulandı:',dn,'rezervasyon');
+    }catch(e){} },2000);
+    let msg=yeni+' rezervasyon aktarıldı';
+    if(kartN) msg+=' · '+kartVoucher+' voucher\'a '+kartN+' kart (konaklama/oda) bağlandı';
+    if(uyeYok) msg+=' · '+uyeYok+' isim rezervasyonda bulunamadı (kart tüm üyelere açıldı)';
+    if(atla) msg+=' · '+atla+' zaten vardı/boş (atlandı)';
+    if(iptalRez) msg+=' · '+iptalRez+' İPTAL rezervasyon (fatura/iptal şartı için) işaretlendi';
+    else if(iptal) msg+=' · '+iptal+' iptal satırı not edildi';
+    showToast(msg,'success');
+    if(kodYok.size||opYok.size){
+      const parca=[];
+      if(kodYok.size) parca.push('Üründe eşleşmeyen kodlar (rezervasyon OTEL tipiyle alındı): '+[...kodYok].join(', '));
+      if(opYok.size) parca.push('Eşleşmeyen operatörler (ad olduğu gibi yazıldı): '+[...opYok].join(', '));
+      showConfirm('⚠️','Sejour Aktarım Raporu',parca.join('\n\n')+'\n\nEksik ürünleri tanımlayıp dosyayı YENİDEN yükleyebilirsin — var olan voucherlar atlanır.','Tamam',()=>{});
+    }
+  }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); } };
+  rd.readAsArrayBuffer(f);
+}
 function rzYeni(){ document.getElementById('rzTipModal').classList.add('open'); }
 function rzYeniTip(tip){
   document.getElementById('rzTipModal').classList.remove('open');
   const r={id:genId(),tip,operator:'',voucher:'',pkgId:'',urunKod:'',kalkis:'',satisTarihi:new Date().toISOString().slice(0,10),not:'',odaKomp:'',ukartlar:[],opUcusNot:'',musteriler:[],kartlar:[],transferler:[]};
   getRezv().push(r); rzSave(); rzAc(r.id);
 }
-function rzAc(id){ _rzCur=id; _rzViewShow('rzVDetay'); document.querySelectorAll('.rz-navitem').forEach(el=>el.classList.toggle('active-ops',el.getAttribute('data-rt')==='ekran')); rzDetay(); }
+function rzAc(id){ _rzCur=id; try{localStorage.setItem('dmc_lastRezv',id);}catch(e){} _rzViewShow('rzVDetay'); document.querySelectorAll('.rz-navitem').forEach(el=>el.classList.toggle('active-ops',el.getAttribute('data-rt')==='ekran')); rzDetay(); }
 function rzSil(){
   const r=rzR(); if(!r) return;
   showConfirm('🗑️','Rezervasyonu Sil',(r.operator||'')+' / '+(r.voucher||'—')+' silinecek.','Evet, Sil',()=>{
@@ -7969,7 +8350,7 @@ function rzUKTip(kid,tip){
   if(_rzSecUK===kid&&!(k.uyeler||[]).length){ _rzSecSet=new Set(); const kap=RZ_ODA_KAP[tip]||2; _rzOdasiz(r).filter(m=>true).slice(0,kap).forEach(m=>_rzSecSet.add(m.id)); }
   rzSave(); renderRzUrunKarti(); rzMusteriler();
 }
-function rzUKSet(kid,f,v){ const r=rzR(); const k=r.ukartlar.find(x=>x.id===kid); if(!k) return; k[f]=f==='gece'?(parseInt(v)||0):v; rzSave(); renderRzUrunKarti(); }
+function rzUKSet(kid,f,v){ const r=rzR(); const k=r.ukartlar.find(x=>x.id===kid); if(!k) return; k[f]=f==='gece'?(parseInt(v)||0):v; rzSave(); renderRzUrunKarti(); try{rzFiyatOzet();}catch(e){} }
 function rzUKSil(kid){
   const r=rzR(); const k=r.ukartlar.find(x=>x.id===kid);
   showConfirm('🗑️','Ürün Kartını Sil','Kart '+(k?k.no:'')+' silinecek; içindeki kişiler odasız kalır.','Sil',()=>{
@@ -7988,6 +8369,8 @@ function renderRzUrunKarti(){
   _rzUKMigrate(r);
   const liste=document.getElementById('rzUKListe');
   const kartlar=r.ukartlar||[];
+  const pkgUK=getPackages().find(p=>p.id===r.pkgId)||{};
+  const upgListe=(pkgUK.odaUpgrade||[]).filter(u=>(u.ad||'').trim());
   liste.innerHTML=kartlar.length?kartlar.map(k=>{
     const kap=RZ_ODA_KAP[k.tip]||2, n=(k.uyeler||[]).length, secimde=_rzSecUK===k.id, acik=secimde||_rzUKAcik.has(k.id);
     const uyeAd=(r.musteriler||[]).filter(m=>k.uyeler.includes(m.id)).map(m=>esc(m.soyad||'?')+' '+esc(((m.ad||'')[0]||''))+'.').join(', ');
@@ -8017,6 +8400,7 @@ function renderRzUrunKarti(){
           <div class="field"><label>Başlangıç</label><input type="date" value="${k.baslangic||''}" onchange="rzUKSet('${k.id}','baslangic',this.value)"></div>
           <div class="field"><label>Gece</label><input type="number" min="0" style="width:56px" value="${k.gece||0}" onchange="rzUKSet('${k.id}','gece',this.value)"></div>
           <div class="field"><label>Bitiş</label><input value="${bitis?_rzTrT(bitis):'—'}" disabled style="background:var(--light);width:96px"></div>
+          ${upgListe.length?`<div class="field"><label>Oda Upgrade</label><select onchange="rzUKSet('${k.id}','upgrade',this.value)" style="min-width:170px"><option value="">Standart</option>${upgListe.map(u=>`<option value="${esc(u.ad)}" ${_norm(k.upgrade||'')===_norm(u.ad)?'selected':''}>${esc(u.ad)} (+${+u.kisiGece||0}€ kişi/gece)</option>`).join('')}</select></div>`:''}
           <button class="btn btn-outline btn-sm" onclick="rzUKSecBaslat('${k.id}',${n?'false':'true'})">Kişileri Düzenle</button>
           <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="rzUKSil('${k.id}')">Kartı Sil</button>
         </div>
@@ -8028,6 +8412,7 @@ function renderRzUrunKarti(){
         <span style="background:#fff;color:var(--navy);border-radius:6px;font-weight:800;font-size:.72rem;padding:1px 8px">Kart ${k.no}</span>
         <select onclick="event.stopPropagation()" onchange="rzUKTip('${k.id}',this.value)" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:2px 6px;font-size:.78rem;font-family:inherit">${RZ_ODA_TIPLERI.map(t=>`<option style="color:var(--text)" ${k.tip===t?'selected':''}>${t}</option>`).join('')}</select>
         <span style="font-size:.74rem;font-weight:700${n>kap?';color:#fca5a5':''}">${n}/${kap}${n>kap?' AŞIM':''}</span>
+        ${k.upgrade?`<span style="background:#f59e0b;color:#fff;border-radius:6px;font-size:.66rem;font-weight:800;padding:1px 7px;white-space:nowrap">↑ ${esc(k.upgrade)}</span>`:''}
         <span style="font-size:.74rem;opacity:.85;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${uyeAd||'—'}</span>
         <span style="font-size:.7rem;opacity:.8">${_rzTrT(k.baslangic)}${k.gece?' · '+k.gece+'g':''}</span>
       </div>
@@ -8091,9 +8476,9 @@ function rzDetay(){
   document.getElementById('rzBtnAcilim').style.display=r.tip==='urun'?'':'none';
   { const _uzP=(r.tip==='urun')?getPackages().find(p=>p.id===r.pkgId):null; const _w=document.getElementById('rzUzatmaWrap');
     if(_w){ if(_uzP&&_uzP.uzatma&&_uzP.uzatma.aktif){ _w.style.display='inline-flex'; const _sel=document.getElementById('rzUzatma'); if(_sel)_sel.value=String(+r.uzatmaHafta||0); } else _w.style.display='none'; } }
-  rzMusteriler(); rzKartlar(); rzTrf(); renderRzUrunKarti();
+  rzMusteriler(); rzKartlar(); rzTrf(); renderRzUrunKarti(); rzFiyatOzet();
 }
-function rzUzatmaSet(v){ const r=rzR(); if(!r) return; r.uzatmaHafta=+v||0; rzSave(); _rzUzatmaSync(); }
+function rzUzatmaSet(v){ const r=rzR(); if(!r) return; r.uzatmaHafta=+v||0; rzSave(); _rzUzatmaSync(); try{rzFiyatOzet();}catch(e){} }
 function _rzUzatmaSync(){
   const r=rzR(); if(!r) return; const pkg=getPackages().find(p=>p.id===r.pkgId);
   r.kartlar=(r.kartlar||[]).filter(k=>!k.uzatma);
@@ -8157,20 +8542,21 @@ function rzUrunSec(pkgId){
 // ── müşteri grid ──
 function rzMusteriler(){
   const r=rzR(); if(!r) return;
-  let h='<tr>'+RZ_MCOLS.map(c=>`<th style="width:${c[2]}px">${c[1]}</th>`).join('')+'<th style="width:40px">Yaş</th><th style="width:72px">Oda</th><th style="width:120px">Kartlar</th><th style="width:30px"></th></tr>';
+  let h='<tr>'+RZ_MCOLS.map(c=>`<th style="width:${c[2]}px">${c[1]}</th>`).join('')+'<th style="width:40px">Yaş</th><th style="width:72px">Oda</th><th style="width:120px">Kartlar</th><th style="width:60px">İptal</th><th style="width:30px"></th></tr>';
   (r.musteriler||[]).forEach((m,i)=>{
     const kartlar=(r.kartlar||[]).map((k,ki)=>(k.uyeler||[]).includes(m.id)?(ki+1):null).filter(x=>x!==null).join('-')||'—';
-    h+='<tr>'+RZ_MCOLS.map((c,ci)=>{
+    h+='<tr'+(m.iptal?' style="background:#fef2f2"':'')+'>'+RZ_MCOLS.map((c,ci)=>{
       const ek=c[0]==='unvan'?` onchange="this.value=_rzUnvan(this.value);rzMSet(${i},'unvan',this.value)" title="1=Mr. 2=Mrs. 3=Chd. 4=Inf. 5=Grp." placeholder="—"`:'';
-      return `<td><input data-r="${i}" data-c="${ci}" value="${String(m[c[0]]||'').replace(/"/g,'&quot;')}" ${c[0]==='dogum'?'type="date"':''} oninput="rzMSet(${i},'${c[0]}',this.value)"${ek}></td>`;
+      return `<td><input data-r="${i}" data-c="${ci}" value="${String(m[c[0]]||'').replace(/"/g,'&quot;')}" ${c[0]==='dogum'?'type="date"':''} oninput="rzMSet(${i},'${c[0]}',this.value)"${ek}${m.iptal?' style="text-decoration:line-through;color:#b91c1c"':''}></td>`;
     }).join('');
-    h+=`<td class="ro">${_rzYas(m.dogum,r.kalkis)||''}</td><td class="ro" style="white-space:nowrap;font-weight:700;color:${_rzUKOda(m,r)?'var(--text)':'#b91c1c'}">${_rzOdaAd(m,r)}</td><td class="ro">${kartlar}</td><td><button class="rowdel" onclick="rzMSil(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer">✕</button></td></tr>`;
+    h+=`<td class="ro">${_rzYas(m.dogum,r.kalkis)||''}</td><td class="ro" style="white-space:nowrap;font-weight:700;color:${_rzUKOda(m,r)?'var(--text)':'#b91c1c'}">${_rzOdaAd(m,r)}</td><td class="ro">${kartlar}</td><td class="ro" style="text-align:center"><input type="checkbox" ${m.iptal?'checked':''} onchange="rzMIptal(${i},this.checked)" title="${m.iptal?('İptal: '+_rzTrT(m.iptalTarihi)):'Kişiyi iptal işaretle'}" style="accent-color:#dc2626">${m.iptal?`<div style="font-size:.6rem;color:#b91c1c;font-weight:700">${_rzTrT(m.iptalTarihi)}</div>`:''}</td><td><button class="rowdel" onclick="rzMSil(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer">✕</button></td></tr>`;
   });
   document.getElementById('rzMTbl').innerHTML=h;
-  const ms=r.musteriler||[];
+  const msT=r.musteriler||[]; const ms=msT.filter(m=>!m.iptal); const ipt=msT.length-ms.length;
   const yet=ms.filter(m=>!['Chd.','Inf.'].includes(m.unvan)).length, coc=ms.filter(m=>m.unvan==='Chd.').length, beb=ms.filter(m=>m.unvan==='Inf.').length;
-  document.getElementById('rzMOzet').textContent='Yetişkin: '+yet+' · Çocuk: '+coc+' · Bebek: '+beb+' · Toplam PAX: '+ms.length;
+  document.getElementById('rzMOzet').textContent='Yetişkin: '+yet+' · Çocuk: '+coc+' · Bebek: '+beb+' · Toplam PAX: '+ms.length+(ipt?' · İPTAL: '+ipt:'');
   renderRzUrunKarti();
+  try{rzFiyatOzet();}catch(e){}
 }
 function rzMSet(i,f,v){
   const r=rzR(); if(!r||!r.musteriler[i])return;
@@ -8198,6 +8584,10 @@ let _rzSmT=null;
 function _rzSoftM(){ clearTimeout(_rzSmT); _rzSmT=setTimeout(()=>{const ae=document.activeElement,pos=ae&&ae.dataset&&ae.dataset.c!=null?{r:ae.dataset.r,c:ae.dataset.c,s:ae.selectionStart}:null; rzMusteriler(); if(pos){const el=document.querySelector(`#rzMTbl input[data-r="${pos.r}"][data-c="${pos.c}"]`); if(el){el.focus(); try{el.setSelectionRange(pos.s,pos.s);}catch(e){}}}},900); }
 function _rzYeniM(){ return {id:genId(),unvan:'',ad:'',soyad:'',dogum:'',milliyet:'',gelis:'',donus:'',paket:''}; }
 function rzMEkle(){ const r=rzR(); if(!r)return; const m=_rzYeniM(); r.musteriler.push(m); (r.kartlar||[]).forEach(k=>(k.uyeler=k.uyeler||[]).push(m.id)); rzSave(); rzMusteriler(); rzKartlar(); const el=document.querySelector(`#rzMTbl input[data-r="${r.musteriler.length-1}"][data-c="0"]`); if(el)el.focus(); }
+function rzMIptal(i,v){ const r=rzR(); if(!r)return; const m=r.musteriler[i]; if(!m)return;
+  m.iptal=!!v; m.iptalTarihi=v?new Date().toISOString().slice(0,10):'';
+  rzSave(); rzMusteriler(); rzKartlar&&rzKartlar(); renderRzUrunKarti&&renderRzUrunKarti(); try{rzFiyatOzet();}catch(e){}
+  showToast(v?((m.soyad||'')+' iptal işaretlendi — fiyat özeti güncellendi'):((m.soyad||'')+' iptal kaldırıldı'),'success'); }
 function rzMSil(i){ const r=rzR(); if(!r)return; const m=r.musteriler[i];
   showConfirm('🗑️','Müşteriyi Sil',(m.soyad||'Müşteri')+' '+(m.ad||'')+' silinecek.','Sil',()=>{
     (r.kartlar||[]).forEach(k=>k.uyeler=(k.uyeler||[]).filter(u=>u!==m.id));
@@ -8365,6 +8755,32 @@ function rzKUye(i,mid){
   else k.uyeler.push(mid);
   rzSave(); rzKartlar(); rzMusteriler();
 }
+function _uzKodBul(kod){
+  const k=_norm(kod||''); if(!k) return null;
+  for(const p of getPackages()){
+    const uz=p.uzatma; if(!uz||!uz.aktif||!(uz.sejourKodlar||'').trim()) continue;
+    const kodlar=String(uz.sejourKodlar).split(',').map(x=>_norm(x)).filter(Boolean);
+    const i=kodlar.indexOf(k);
+    if(i>=0) return {pkg:p,hafta:i+1};
+  }
+  return null;
+}
+function rzKodEsle(){
+  const rezv=getRezv(); let bagli=0; const kalan=new Set();
+  rezv.forEach(r=>{
+    const kod=(r.urunKod||'').trim(); if(!kod) return;
+    const pkgVar=r.pkgId&&getPackages().some(p=>p.id===r.pkgId);
+    if(pkgVar) return;
+    const pkg=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(kod));
+    if(pkg){ r.pkgId=pkg.id; r.tip='urun'; bagli++; }
+    else { const uzm=_uzKodBul(kod);
+      if(uzm){ r.pkgId=uzm.pkg.id; r.tip='urun'; r.uzatmaHafta=uzm.hafta; bagli++; }
+      else kalan.add(kod.toUpperCase()); }
+  });
+  if(bagli){ rzSave(); try{renderRezvListe();}catch(e){} }
+  if(!bagli&&!kalan.size){ showToast('Eşleşmemiş kod yok — hepsi bağlı','success'); return; }
+  showToast(bagli+' rezervasyon ürüne bağlandı'+(kalan.size?' · hâlâ eşleşmeyen: '+[...kalan].slice(0,8).join(', ')+(kalan.size>8?'…':''):''),bagli?'success':'error',6000);
+}
 function rzKartEkle(){
   const r=rzR(); if(!r)return;
   const son=(r.kartlar||[])[r.kartlar.length-1];
@@ -8513,7 +8929,7 @@ function _docSplit(col){
 }
 function _docJoin(col,rows){
   if(col==='res'){ _resCache=rows.map(r=>r.data).filter(Boolean); idbSet('reservations',_resCache); }
-  else if(col==='rezv'){ _rezvCache=rows.map(r=>r.data).filter(Boolean); idbSet('rezervasyonlar',_rezvCache); }
+  else if(col==='rezv'){ const eski=(_rezvCache||[]).length; _rezvCache=rows.map(r=>r.data).filter(Boolean); if(_rezvCache.length<eski-2){try{_hataKaydet&&_hataKaydet('REZV-JOIN',eski+' → '+_rezvCache.length+' (bulut tam çekimi)');}catch(e){}} idbSet('rezervasyonlar',_rezvCache); }
   else if(col==='pnr'){ _pnrCache=rows.map(r=>r.data).filter(Boolean); idbSet('pnrLedger',_pnrCache); }
   else if(col==='ops'){ _opsCache=rows.map(r=>r.data).filter(Boolean); idbSet('operasyon',_opsCache); }
   else if(col==='transfer'){
@@ -8530,7 +8946,7 @@ function _docJoin(col,rows){
 function _docApplyOne(col,id,data){
   const arrUp=(arr,find)=>{ const i=arr.findIndex(find); if(data){ if(i>=0)arr[i]=data; else arr.push(data); } else if(i>=0)arr.splice(i,1); };
   if(col==='res'){ arrUp(_resCache,x=>x&&x.id===id); idbSet('reservations',_resCache); }
-  else if(col==='rezv'){ arrUp(_rezvCache,x=>x&&x.id===id); idbSet('rezervasyonlar',_rezvCache); }
+  else if(col==='rezv'){ if(!data){ try{_hataKaydet&&_hataKaydet('REZV-SİL(remote)','id='+id);}catch(e){} } arrUp(_rezvCache,x=>x&&x.id===id); idbSet('rezervasyonlar',_rezvCache); }
   else if(col==='pnr'){ arrUp(_pnrCache,x=>x&&x.id===id); idbSet('pnrLedger',_pnrCache); }
   else if(col==='ops'){ arrUp(_opsCache,x=>x&&(x.pkgId+'|'+x.kalkis)===id); idbSet('operasyon',_opsCache); }
   else if(col==='transfer'){
@@ -8567,7 +8983,7 @@ async function _docPush(col){
   const del=[...sig.keys()].filter(id=>!cur.has(id));
   for(let i=0;i<ups.length;i+=50){
     const r=await sb.from('doc_rows').upsert(ups.slice(i,i+50));
-    if(r.error){ ups.forEach(u=>sig.delete(u.id)); throw r.error; }
+    if(r.error){ ups.slice(i).forEach(u=>sig.delete(u.id)); throw r.error; } // yalnız gönderilemeyenler geri alınır
   }
   if(del.length){
     const r=await sb.from('doc_rows').delete().eq('col',col).in('id',del);
@@ -8605,7 +9021,7 @@ async function _dailyBackup(){
   }catch(e){ console.warn('günlük yedek',e); }
 }
 
-async function _cloudPull(){
+async function _cloudPullFull(){
   const [pk,op,kv,dr]=await Promise.all([
     sb.from('packages').select('id,data'),
     sb.from('operators').select('id,data'),
@@ -8631,11 +9047,22 @@ async function _cloudPull(){
                   ops:['operasyon',Array.isArray(kvMap.operasyon)?kvMap.operasyon:null],
                   transfer:['transfer',(kvMap.transfer&&typeof kvMap.transfer==='object')?kvMap.transfer:null],
                   opsgrup:['opsgrup',(kvMap.opsgrup&&typeof kvMap.opsgrup==='object')?kvMap.opsgrup:null]};
+    const _COL2KIND={res:'reservations',pnr:'pnrLedger',ops:'operasyon',transfer:'transfer',opsgrup:'opsgrup',rezv:'rezervasyonlar'};
     Object.keys(docBy).forEach(col=>{
       if(docBy[col].length){
+        // KORUMA: buluta hiç gitmemiş yerel satırlar (eski sig'de yok) kaybolmasın
+        const eskiSig=new Set(_docSig[col].keys());
+        const yerel=_docSplit(col);
         _docJoin(col,docBy[col]);
         _docSig[col].clear();
         docBy[col].forEach(r=>_docSig[col].set(r.id,JSON.stringify(r.data)));
+        let kurtarilan=0;
+        yerel.forEach(r=>{
+          if(_docSig[col].has(r.id)) return;      // bulutta var
+          if(eskiSig.has(r.id)) return;           // daha önce senkronize olmuştu → bulut sildi, biz de sileriz
+          _docApplyOne(col,r.id,r.data); kurtarilan++;  // hiç gitmemiş yerel kayıt → koru
+        });
+        if(kurtarilan){ console.warn(col+': '+kurtarilan+' yerel kayıt buluta hiç gitmemişti — korundu, yeniden gönderiliyor'); _cloudQueue(_COL2KIND[col]||col); }
       } else {
         const kind=legacy[col][0], val=legacy[col][1];
         if(val!==null){
@@ -8645,6 +9072,11 @@ async function _cloudPull(){
           else if(col==='transfer'){ _trCache=val; idbSet('transfer',val); }
           else if(col==='opsgrup'){ _ogCache=val; idbSet('opsgrup',val); }
           _cloudQueue(kind); // eski toplu kaydı satır-bazlıya BİR KEZ taşı
+        } else if(col==='res'||col==='pnr'){
+          // uçak verisi bulutta hiç yoksa (temizlenmiş) yerel eski kopya da boşaltılır; bulut tek doğru kaynak
+          if(col==='res'&&_resCache.length){ _resCache=[]; idbSet('reservations',_resCache); }
+          if(col==='pnr'&&_pnrCache.length){ _pnrCache=[]; idbSet('pnrLedger',_pnrCache); }
+          _docSig[col]&&_docSig[col].clear();
         }
       }
     });
@@ -8655,14 +9087,69 @@ async function _cloudPull(){
   } else if(_pkgCache.length||_opCache.length){
     showConfirm('⚠️','Buluta Taşı','Bulut veritabanı boş. Bu tarayıcıdaki '+_pkgCache.length+' paket ve '+_opCache.length+' operatör buluta yüklensin mi? (İlk kurulumda bir kez yapılır)','Evet, Yükle',()=>{ _cloudPushAll(); });
   }
-  try{
-    const tc=await sb.from('tx_cache').select('key,t,e');
+}
+
+async function _cloudPullIncre(last){
+  // saat kaymalarına karşı 10 dk tolerans
+  const since=new Date(Date.parse(last)-10*60*1000).toISOString();
+  const [pk,op,kv,dr,pkIds,opIds,drIds]=await Promise.all([
+    sb.from('packages').select('id,data').gt('updated_at',since),
+    sb.from('operators').select('id,data').gt('updated_at',since),
+    sb.from('kv_store').select('key,data').not('key','like','yedek\\_%').gt('updated_at',since),
+    sb.from('doc_rows').select('col,id,parent,data').gt('updated_at',since),
+    sb.from('packages').select('id'),
+    sb.from('operators').select('id'),
+    sb.from('doc_rows').select('col,id')
+  ]);
+  const hata=[pk,op,kv,dr,pkIds,opIds,drIds].find(r=>r.error);
+  if(hata) throw hata.error;
+  let degisti=0;
+  // paketler: merge + uzak id diff ile silme
+  (pk.data||[]).forEach(r=>{ if(!r.data)return; const i=_pkgCache.findIndex(p=>p&&p.id===r.id); if(i>=0)_pkgCache[i]=r.data; else _pkgCache.push(r.data); _sigPkg.set(r.id,JSON.stringify(r.data)); degisti++; });
+  { const uzak=new Set((pkIds.data||[]).map(r=>r.id)); const once=_pkgCache.length; _pkgCache=_pkgCache.filter(p=>p&&uzak.has(p.id)); if(_pkgCache.length!==once)degisti++; }
+  idbSet('packages',_pkgCache);
+  (op.data||[]).forEach(r=>{ if(!r.data)return; const i=_opCache.findIndex(o=>o&&o.id===r.id); if(i>=0)_opCache[i]=r.data; else _opCache.push(r.data); _sigOp.set(r.id,JSON.stringify(r.data)); degisti++; });
+  { const uzak=new Set((opIds.data||[]).map(r=>r.id)); const once=_opCache.length; _opCache=_opCache.filter(o=>o&&uzak.has(o.id)); if(_opCache.length!==once)degisti++; }
+  idbSet('operators',_opCache);
+  // kv: yalnız bilinen anahtarlar
+  (kv.data||[]).forEach(r=>{
+    if(r.key==='tanimlar'&&r.data&&typeof r.data==='object'){ _tanimCache=r.data; idbSet('tanimlar',_tanimCache); _sigKv.set('tanimlar',JSON.stringify(r.data)); degisti++; }
+    else if(r.key==='gorevler'&&Array.isArray(r.data)){ _gorevCache=r.data; idbSet('gorevler',_gorevCache); _sigKv.set('gorevler',JSON.stringify(r.data)); degisti++; }
+    else if(r.key==='duyurular'&&Array.isArray(r.data)){ _duyuruCache=r.data; idbSet('duyurular',_duyuruCache); _sigKv.set('duyurular',JSON.stringify(r.data)); degisti++; }
+    else if(r.key==='ekip'&&Array.isArray(r.data)){ _ekipCache=r.data; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(r.data)); degisti++; }
+  });
+  // doc_rows: satır satır merge + uzak id diff ile silme
+  (dr.data||[]).forEach(r=>{ if(!_docSig[r.col])return; const sig=JSON.stringify(r.data); if(_docSig[r.col].get(r.id)===sig)return; _docSig[r.col].set(r.id,sig); _docApplyOne(r.col,r.id,r.data); degisti++; });
+  { const uzak={}; (drIds.data||[]).forEach(r=>{ (uzak[r.col]=uzak[r.col]||new Set()).add(r.id); });
+    Object.keys(_docSig).forEach(col=>{ const set=uzak[col]||new Set(); [..._docSig[col].keys()].forEach(id=>{ if(!set.has(id)){ _docSig[col].delete(id); _docApplyOne(col,id,null); degisti++; } }); }); }
+  if(degisti){ renderOpList(); renderOperatorSelect(); renderDashboard(); if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); } }
+}
+
+function _txCloudPull(last){
+  // çeviri önbelleği ARKA PLANDA — açılışı bekletmez
+  setTimeout(async()=>{ try{
+    let q=sb.from('tx_cache').select('key,t,e');
+    if(last) q=q.gt('ts',new Date(Date.parse(last)-10*60*1000).toISOString());
+    const tc=await q;
     if(!tc.error&&tc.data&&tc.data.length){
       await _txEnsureCache();
       tc.data.forEach(r=>{ const c=_txCache[r.key]; if(!c||(r.e&&!c.e)) _txCache[r.key]={t:r.t,e:r.e?1:0,ts:Date.now()}; });
       idbSet('txCache',_txCache);
     }
-  }catch(e){}
+  }catch(e){} },800);
+}
+
+async function _cloudPull(){
+  const _now=new Date().toISOString();
+  let _last=''; try{ _last=localStorage.getItem('dmcSyncTs')||''; }catch(e){}
+  let increOK=false;
+  if(_last&&(_pkgCache.length||_opCache.length)){
+    try{ await _cloudPullIncre(_last); increOK=true; }
+    catch(e){ console.warn('Artımlı eşitleme başarısız, tam çekime dönüldü:',e); }
+  }
+  if(!increOK) await _cloudPullFull();
+  try{ localStorage.setItem('dmcSyncTs',_now); }catch(e){}
+  _txCloudPull(increOK?_last:'');
 }
 
 async function _cloudPushAll(){
@@ -8695,11 +9182,27 @@ function _cloudQueue(kind){
   if(!_cloudOn) return;
   clearTimeout(_cloudT[kind]);
   _cloudT[kind]=setTimeout(()=>_cloudPushKind(kind).catch(e=>{
-    _setCloud('err','Bulut: yazma hatası');
-    showToast('Buluta yazılamadı: '+(e.message||'yetkiniz yok'),'error',5000);
+    const m=(e&&(e.message||e.error_description))||'yetki/bağlantı';
+    console.error('BULUT YAZMA HATASI',kind,e);
+    _hataKaydet('BULUT/'+kind,m);
+    (window._cloudHata=window._cloudHata||new Set()).add(kind);
+    _setCloud('err','Bulut YAZMA HATASI ('+kind+') — tıkla: detay');
+    showToast('Buluta yazılamadı ('+kind+'): '+m,'error',8000);
+    clearTimeout(_cloudT['retry_'+kind]);
+    _cloudT['retry_'+kind]=setTimeout(()=>_cloudQueue(kind),15000); // 15 sn sonra otomatik yeniden dene
   }),800);
 }
 async function _cloudPushKind(kind){
+  if(!_cloudOn) return;
+  window._pushBusy=(window._pushBusy||0)+1;
+  try{ _setCloud('ok','Bulut: gönderiliyor… ('+kind+')'); }catch(e){}
+  try{ const r=await _cloudPushKindIc(kind); (window._cloudHata=window._cloudHata||new Set()).delete(kind); return r; }
+  finally{ window._pushBusy--;
+    if(!window._pushBusy){ const H=window._cloudHata; 
+      if(H&&H.size){ try{_setCloud('err','Bulut YAZMA HATASI ('+[...H].join(', ')+') — tıkla: detay');}catch(e){} }
+      else { try{_setCloud('ok','Bulut: eşitlendi');}catch(e){} } } }
+}
+async function _cloudPushKindIc(kind){
   if(!_cloudOn) return;
   if(kind==='packages'){
     const ups=[]; const cur=new Set();
@@ -8855,6 +9358,20 @@ function restoreLastState(){
     return;
   }
 
+  // Uçak detay: son açık kalkışı geri aç
+  if(page==='ucak'){
+    let u=''; try{u=localStorage.getItem('dmc_lastUcak')||'';}catch(e){}
+    showPage('ucak');
+    if(u){ const [pid,kal]=u.split('|'); if(pid&&kal&&getPackages().find(p=>p.id===pid)){ try{ucakOpen(pid,kal);}catch(e){} } }
+    return;
+  }
+  // Rezervasyon detay: son açık kaydı geri aç
+  if(page==='rezervasyon'){
+    let rid=''; try{rid=localStorage.getItem('dmc_lastRezv')||'';}catch(e){}
+    showPage('rezervasyon');
+    if(rid&&(getRezv()||[]).find(x=>x.id===rid)){ try{rzAc(rid);}catch(e){} }
+    return;
+  }
   // Operatör detay sayfası: kayıtlı operatörü geri aç
   if(page==='opdetay'){
     const opId=hashParams.op||localStorage.getItem('dmc_lastOp');
@@ -8875,6 +9392,11 @@ async function _boot(){
   let res = await idbGet('reservations'); _resCache = Array.isArray(res)?res:[];
   let rzv = await idbGet('rezervasyonlar'); _rezvCache = Array.isArray(rzv)?rzv:[];
   let pnr = await idbGet('pnrLedger');    _pnrCache = Array.isArray(pnr)?pnr:[];
+  // BİR DEFALIK TEMİZLİK (14.07.2026, Emre isteği): uçak listeleri sıfırlandı — yerel eski kopyalar da silinir
+  try{ if(!localStorage.getItem('dmcUcakSifirla_20260714')){
+    if(_resCache.length||_pnrCache.length){ _resCache=[]; _pnrCache=[]; idbSet('reservations',[]); idbSet('pnrLedger',[]); console.log('Uçak listeleri bir defalık temizlendi'); }
+    localStorage.setItem('dmcUcakSifirla_20260714','1');
+  } }catch(e){}
   let opsD = await idbGet('operasyon');    _opsCache = Array.isArray(opsD)?opsD:[];
   let tnm = await idbGet('tanimlar');      _tanimCache = (tnm&&typeof tnm==='object')?tnm:null;
   let grv = await idbGet('gorevler');      _gorevCache  = Array.isArray(grv)?grv:null;
@@ -8963,7 +9485,13 @@ function _isoDiff(a,b){ return Math.round((new Date(b+'T00:00:00')-new Date(a+'T
 function _opsRec(create){ const all=getOperasyon(); let r=all.find(x=>x.pkgId===_opsPkgId&&x.kalkis===_opsKalkis); if(!r&&create){ r={pkgId:_opsPkgId,kalkis:_opsKalkis,magazalar:[],oteller:[]}; all.push(r); setOperasyon(all);} return r; }
 function _opsGet(pkgId,kalkis){ return getOperasyon().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis)||{}; }
 function _opsSet(f,v){ const r=_opsRec(true); r[f]=v; setOperasyon(getOperasyon()); }
-function _opsPax(pkgId,kalkis){ const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!g)return 0; return (g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length; }
+function _opsPax(pkgId,kalkis){
+  const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+  const ucak=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length:0;
+  let rezvP=0;
+  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis&&r.durum!=='iptal'){ rezvP+=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length; } }); }catch(e){}
+  return Math.max(ucak,rezvP);
+}
 function _opsCity(pkg,dayNo){ const g=(pkg.gunler||[])[dayNo-1]; if(!g)return ''; const n=(g.noktalar||[]).filter(x=>x&&x.trim()); return (n.length?n[n.length-1]:'')||g.konaklamaSehir||''; }
 const _OPS_ALIAS={'aga limanı':'Göcek','ağa limanı':'Göcek','manastır koyu':'Göcek, Fethiye','tersane koyu':'Göcek','batık hamam koyu':'Göcek','bedri rahmi koyu':'Göcek','gemiler adası':'Fethiye','koca kalamaki':'Göcek','sarsala koyu':'Göcek'};
 function _opsGeoName(name){ const k=(name||'').toLowerCase().trim(); const usr=(getTanimlar().yerDuzeltme||[]).find(x=>((x.yer||'').toLowerCase().trim())===k); if(usr&&(usr.sehir||'').trim()) return usr.sehir; return _OPS_ALIAS[k]||name; }
@@ -8985,7 +9513,7 @@ function _opsActiveOn(iso){
 }
 function renderOperasyonPage(){
   const box=document.getElementById('opsGunluk'); if(!box) return;
-  if(!_opsDate) _opsDate=_opsToday();
+  if(!_opsDate){ let sv=''; try{sv=localStorage.getItem('dmc_opsDate')||'';}catch(e){} _opsDate=(sv&&sv>=_opsToday())?sv:_opsToday(); }
   const di=document.getElementById('opsDateInput'); if(di) di.value=_opsDate;
   // hızlı git operatörleri
   const fo=document.getElementById('opsFltOp');
@@ -9013,8 +9541,8 @@ function renderOperasyonPage(){
   }).join('');
   box.innerHTML=html;
 }
-function opsNavDate(d){ _opsDate=_isoAdd(_opsDate||_opsToday(),d); renderOperasyonPage(); }
-function opsSetDate(v){ _opsDate=v||_opsToday(); renderOperasyonPage(); }
+function opsNavDate(d){ _opsDate=_isoAdd(_opsDate||_opsToday(),d); try{localStorage.setItem('dmc_opsDate',_opsDate);}catch(e){} renderOperasyonPage(); }
+function opsSetDate(v){ _opsDate=v||_opsToday(); try{localStorage.setItem('dmc_opsDate',_opsDate);}catch(e){} renderOperasyonPage(); }
 function _opsView(det){ const l=document.getElementById('opsListe'),d=document.getElementById('opsDetay'); if(l)l.style.display=det?'none':''; if(d)d.style.display=det?'':'none'; }
 function opsBack(){ _opsView(false); renderOperasyonPage(); window.scrollTo(0,0); }
 function opsOpen(pkgId,kalkis){
@@ -9050,7 +9578,7 @@ function _opsFltTarih(){ const id=document.getElementById('opsFltPkg').value, dt
 let _opsTab=(function(){try{return localStorage.getItem('dmc_opsTab')||'anasayfa';}catch(e){return 'anasayfa';}})(), _opsTanimCat=(function(){try{return localStorage.getItem('dmc_opsTanimCat')||'';}catch(e){return '';}})(), _opsTrDate='';
 
 let _opsCalYM=null, _opsMap=null, _opsMapDate='';
-function _opsUpcoming(n){ const today=_opsToday(); const out=[]; getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{(_resDepartureDates(pkg)||[]).forEach(k=>{ if(k>=today && _opsGorunur(pkg.id,k)) out.push({pkg,kalkis:k}); });}); return out.sort((a,b)=>a.kalkis.localeCompare(b.kalkis)).slice(0,n); }
+function _opsUpcoming(n){ const today=_opsToday(); const out=[]; getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{(_resDepartureDates(pkg)||[]).forEach(k=>{ if(k>=today && _opsPax(pkg.id,k)>0) out.push({pkg,kalkis:k}); });}); return out.sort((a,b)=>a.kalkis.localeCompare(b.kalkis)).slice(0,n); }
 function _opsMapCountry(pkg){ const d=(pkg.destinasyon||'').toUpperCase(); if(d.includes('MAROK')||d.includes('FAS')) return 'Morocco'; if(d.includes('TÜRK')||d.includes('TURK')) return 'Türkiye'; return ''; }
 function _opsCalNav(d){ let m=_opsCalYM.m+d,y=_opsCalYM.y; if(m<0){m=11;y--;} if(m>11){m=0;y++;} _opsCalYM={y,m}; renderOpsAnasayfa(); }
 function opsCalPick(iso){ opsTab('gunluk'); opsSetDate(iso); }
@@ -9095,11 +9623,11 @@ function renderOpsAnasayfa(){
     <div class="opsa-grid">
       <div class="card">${_opsCalHTML()}</div>
       <div class="card"><div class="ops-ct"><svg class="ic"><use href="#i-clock"/></svg> Yaklaşan Turlar</div>
-        ${yak.length?yak.map(it=>`<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">${_fmtDateTR(it.kalkis)}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}</div></span><span style="color:var(--muted);font-size:.76rem">${gunFar(it.kalkis)}</span></div>`).join(''):'<p style="color:var(--muted);font-size:.85rem">Yaklaşan kalkış yok.</p>'}
+        ${yak.length?yak.map(it=>{const p=_opsPax(it.pkg.id,it.kalkis);return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">${_fmtDateTR(it.kalkis)}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}</div></span><span style="background:var(--primary-soft,#fff3ec);color:var(--primary);border-radius:14px;padding:1px 9px;font-size:.74rem;font-weight:800;white-space:nowrap">${p} kişi</span><span style="color:var(--muted);font-size:.76rem;width:52px;text-align:right">${gunFar(it.kalkis)}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Yaklaşan kalkış yok.</p>'}
       </div>
     </div>
     <div class="card"><div class="ops-ct"><svg class="ic"><use href="#i-list"/></svg> Bugün Aktif Turlar <span style="color:var(--muted);font-weight:600;font-size:.8rem">(${aktif.length})</span></div>
-      ${aktif.length?aktif.map(it=>{const rec=_opsGet(it.pkg.id,it.kalkis);const sehir=_opsCity(it.pkg,it.dayNo);const rh=(_opsGrupReh(it.pkg.id,it.kalkis)||rec.rehberAd||'').trim();return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">Gün ${it.dayNo}/${it.toplam}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' ':'')+(it.pkg.paketAdi||''))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}${sehir?' · '+esc(sehir):''}</div></span><span class="ops-badge ${rh?'ok':''}">${rh?esc(rh):'rehber yok'}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Bugün yürüyen tur yok.</p>'}
+      ${aktif.length?aktif.map(it=>{const rec=_opsGet(it.pkg.id,it.kalkis);const sehir=_opsCity(it.pkg,it.dayNo);const rh=(_opsGrupReh(it.pkg.id,it.kalkis)||rec.rehberAd||'').trim();const p=_opsPax(it.pkg.id,it.kalkis);return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">Gün ${it.dayNo}/${it.toplam}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' ':'')+(it.pkg.paketAdi||''))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}${sehir?' · '+esc(sehir):''}</div></span><span style="background:var(--primary-soft,#fff3ec);color:var(--primary);border-radius:14px;padding:1px 9px;font-size:.74rem;font-weight:800;white-space:nowrap">${p} kişi</span><span class="ops-badge ${rh?'ok':''}">${rh?esc(rh):'rehber yok'}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Bugün yürüyen tur yok.</p>'}
     </div>`;
   _opsRenderMap();
 }
@@ -9145,7 +9673,7 @@ let _rehEdit=null, _rehFilter='', _tanimFilter='', _rehDilFilter='', _rehDiller=
 const DIL_LISTE=['Türkçe','Almanca','İngilizce','İspanyolca','Fransızca','İtalyanca','Rusça','Arapça','Portekizce','Hollandaca','Lehçe','Çince','Japonca','Yunanca','Bulgarca','Rumence','Farsça','Ukraynaca'];
 const _DILCODE={tr:'Türkçe',alm:'Almanca',de:'Almanca',ger:'Almanca',eng:'İngilizce',en:'İngilizce',ing:'İngilizce',esp:'İspanyolca',isp:'İspanyolca',es:'İspanyolca',fr:'Fransızca',fra:'Fransızca',it:'İtalyanca',ita:'İtalyanca',rus:'Rusça',ru:'Rusça',ar:'Arapça',arp:'Arapça'};
 function _dilNorm(x){ x=(x||'').trim(); if(!x)return''; const hit=DIL_LISTE.find(d=>_trLow(d)===_trLow(x)); if(hit)return hit; return _DILCODE[x.toLowerCase()]||x; }
-function _rehDilArr(r){ if(r.diller&&r.diller.length) return r.diller.slice(); return (r.dil||'').split(/[,·\/]/).map(x=>_dilNorm(x)).filter(Boolean); }
+function _rehDilArr(r){ if(Array.isArray(r.diller)&&r.diller.length) return r.diller.slice(); const kaynak=(typeof r.diller==='string'&&r.diller)?r.diller:(r.dil||''); return String(kaynak).split(/[,·\/]/).map(x=>_dilNorm(x)).filter(Boolean); }
 function _rehDilToggle(dl,el){ const i=_rehDiller.indexOf(dl); if(i>=0)_rehDiller.splice(i,1); else _rehDiller.push(dl); if(el)el.classList.toggle('active'); }
 function _rehDilFilterSet(v){ _rehDilFilter=v; renderOpsTanim(); }
 function _rehFilterSet(v){ _rehFilter=v; renderOpsTanim(); const el=document.getElementById('rehSearch'); if(el){ el.focus(); const x=el.value; el.value=''; el.value=x; } }
@@ -9861,15 +10389,36 @@ function _tdInit(g,E){
   if(typeof g.hesapKapali!=='boolean') g.hesapKapali=false;
 }
 function _tdKisiler(E){
-  const out=[];
+  const out=[]; const vGorunen=new Set();
   (E.uyeler||[]).forEach(u=>{
     const grid=getReservations().find(x=>x.pkgId===u.pkgId&&x.kalkis===u.kalkis); if(!grid) return;
-    (grid.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===u.resno).forEach(r=>{
+    const satirlar=(grid.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===u.resno);
+    if(satirlar.length) vGorunen.add(String(u.resno||'').trim());
+    satirlar.forEach(r=>{
       out.push({resno:u.resno,ad:r.ad||'',soyad:r.soyad||'',oda:r.oda||'',
         gelis:[(r.g_hy||''),(r.g_u1||'')&&((r.g_u1||'')+'→'+(r.g_v2||r.g_v1||'')),(r.g_ks1||'')].filter(Boolean).join(' · '),
         donus:[(r.d_hy||''),(r.d_u1||'')&&((r.d_u1||'')+'→'+(r.d_v2||r.d_v1||'')),(r.d_ks1||'')].filter(Boolean).join(' · ')});
     });
   });
+  // REZERVASYON MODÜLÜNDEN TAMAMLA (uçak listesinde olmayan voucherlar)
+  try{
+    const g=(typeof _tdG==='function')?_tdG():null;
+    const seferler=new Set(); (E.uyeler||[]).forEach(u=>seferler.add((u.pkgId||'')+'|'+(u.kalkis||'')));
+    if(g&&g.sefer&&g.sefer.pkgId) seferler.add(g.sefer.pkgId+'|'+g.sefer.kalkis);
+    const uyeResno=new Set((E.uyeler||[]).map(u=>String(u.resno||'').trim()).filter(Boolean));
+    (getRezv()||[]).forEach(r=>{
+      if(r.tip!=='urun'||r.durum==='iptal') return;
+      if(!seferler.has((r.pkgId||'')+'|'+(r.kalkis||''))) return;
+      const v=String(r.voucher||'').trim();
+      if(vGorunen.has(v)) return;
+      if(uyeResno.size&&!uyeResno.has(v)) return; // bölünmüş grupta yalnız kendi üyeleri
+      (r.musteriler||[]).forEach(m=>{
+        if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
+        const uk=(r.ukartlar||[]).find(k=>(k.uyeler||[]).includes(m.id));
+        out.push({resno:v,ad:m.ad||'',soyad:m.soyad||'',oda:uk?(uk.tip||''):'',gelis:m.gelis||'',donus:m.donus||''});
+      });
+    });
+  }catch(e){}
   return out;
 }
 function _tdRezv(resno){ return (getRezv()||[]).find(r=>String(r.voucher||'').trim()===String(resno||'').trim())||null; }
@@ -10060,7 +10609,7 @@ function renderTurDosyasi(box){
       <td>${d==='acildi'?'<span class="rzchip rzc-ok">açıldı</span>':d==='bekliyor'?'<span class="rzchip rzc-bek">açılım bekliyor</span>':'<span style="color:var(--muted);font-size:.7rem">rezv. kaydı yok</span>'}</td></tr>`;
     });
     h+=`</table>`;
-    if(!kisiler.length) h+='<div style="font-size:.78rem;color:var(--muted);padding:10px 2px">Bu grubun rezervasyonlarında isim bulunamadı (uçak listelerinden gelir).</div>';
+    if(!kisiler.length) h+='<div style="font-size:.78rem;color:var(--muted);padding:10px 2px">Bu grubun rezervasyonlarında isim bulunamadı (uçak listesi veya rezervasyon modülünden gelir).</div>';
     if(bekleyen) h+=`<div style="margin-top:10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:9px 12px;font-size:.76rem"><b>${bekleyen}</b> yolcunun otel açılımı yapılmamış — Sejour'daki gibi kaybolmaz, burada uyarır. Rezervasyon ekibine iletin.</div>`;
   }
   // ═ REHBER ═
