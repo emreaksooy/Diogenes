@@ -1841,7 +1841,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v172 · 19.08.2026';
+const APP_VER='v173 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2532,6 +2532,8 @@ function _allPkgDates(pkg){
   const add=str=>{if(!str||seen.has(str))return;const dt=new Date(str+'T00:00:00');if(!isNaN(dt)){seen.add(str);dates.push(dt);}};
   // Yeni format: fiyatlandirma — tarihler burada zaten unique
   (pkg.fiyatlandirma||[]).forEach(r=>add(r.tarih));
+  // Rezervasyonlardan gelen kalkışlar (takvimde olmayan tarihli rezervasyonlar da görünsün)
+  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkg.id&&r.durum!=='iptal'&&r.kalkis) add(r.kalkis); }); }catch(e){}
   // havalimanSuppleri.tarihler (her havalimanı aynı tarihi taşıyabilir → dedup)
   (pkg.havalimanSuppleri||[]).forEach(s=>{
     (s.tarihler||[]).forEach(t=>add(typeof t==='string'?t:(t.tarih||'')));
@@ -9850,6 +9852,12 @@ function _isoDiff(a,b){ return Math.round((new Date(b+'T00:00:00')-new Date(a+'T
 function _opsRec(create){ const all=getOperasyon(); let r=all.find(x=>x.pkgId===_opsPkgId&&x.kalkis===_opsKalkis); if(!r&&create){ r={pkgId:_opsPkgId,kalkis:_opsKalkis,magazalar:[],oteller:[]}; all.push(r); setOperasyon(all);} return r; }
 function _opsGet(pkgId,kalkis){ return getOperasyon().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis)||{}; }
 function _opsSet(f,v){ const r=_opsRec(true); r[f]=v; setOperasyon(getOperasyon()); }
+// Operasyon tarihleri: ürünün kalkış takvimi + REZERVASYONLARDAN gelen kalkışlar (takvimde olmayan tarihli rezervasyonlar da tur oluşturur)
+function _opsTarihler(pkg){
+  const set=new Set(_resDepartureDates(pkg)||[]);
+  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkg.id&&r.durum!=='iptal'&&r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) set.add(r.kalkis); }); }catch(e){}
+  return [...set].sort();
+}
 function _opsPax(pkgId,kalkis){
   const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
   const ucak=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length:0;
@@ -9869,7 +9877,7 @@ function _opsGorunur(pkgId,kalkis){
 function _opsActiveOn(iso){
   const out=[]; getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{
     const gece=parseInt(pkg.gece)||0;
-    (_resDepartureDates(pkg)||[]).forEach(k=>{
+    (_opsTarihler(pkg)||[]).forEach(k=>{
       const end=_isoAdd(k,gece);
       if(iso>=k && iso<=end){ const dayNo=_isoDiff(k,iso)+1; out.push({pkg,kalkis:k,end,dayNo,toplam:gece+1}); }
     });
@@ -9937,13 +9945,13 @@ function _opsGrupReh(pkgId,kalkis){
   }catch(e){ return ''; }
 }
 function _opsFltOp(){ const op=document.getElementById('opsFltOp').value; const fp=document.getElementById('opsFltPkg'); const pk=getPackages().filter(p=>p.operatorId===op); fp.innerHTML='<option value="">Ürün…</option>'+pk.map(p=>`<option value="${p.id}">${esc((p.paketKodu?p.paketKodu+' · ':'')+(p.paketAdi||'Adsız'))}</option>`).join(''); document.getElementById('opsFltTarih').innerHTML='<option value="">Tarih…</option>'; }
-function _opsFltPkg(){ const id=document.getElementById('opsFltPkg').value; const pkg=getPackages().find(p=>p.id===id); const ts=document.getElementById('opsFltTarih'); const dates=pkg?_resDepartureDates(pkg):[]; ts.innerHTML='<option value="">Tarih…</option>'+dates.map(d=>`<option value="${d}">${_fmtDateTR(d)}</option>`).join(''); }
+function _opsFltPkg(){ const id=document.getElementById('opsFltPkg').value; const pkg=getPackages().find(p=>p.id===id); const ts=document.getElementById('opsFltTarih'); const dates=pkg?_opsTarihler(pkg):[]; ts.innerHTML='<option value="">Tarih…</option>'+dates.map(d=>`<option value="${d}">${_fmtDateTR(d)}</option>`).join(''); }
 function _opsFltTarih(){ const id=document.getElementById('opsFltPkg').value, dt=document.getElementById('opsFltTarih').value; if(id&&dt) opsOpen(id,dt); }
 
 let _opsTab=(function(){try{return localStorage.getItem('dmc_opsTab')||'anasayfa';}catch(e){return 'anasayfa';}})(), _opsTanimCat=(function(){try{return localStorage.getItem('dmc_opsTanimCat')||'';}catch(e){return '';}})(), _opsTrDate='';
 
 let _opsCalYM=null, _opsMap=null, _opsMapDate='';
-function _opsUpcoming(n){ const today=_opsToday(); const out=[]; getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{(_resDepartureDates(pkg)||[]).forEach(k=>{ if(k>=today && _opsPax(pkg.id,k)>0) out.push({pkg,kalkis:k}); });}); return out.sort((a,b)=>a.kalkis.localeCompare(b.kalkis)).slice(0,n); }
+function _opsUpcoming(n){ const today=_opsToday(); const out=[]; getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{(_opsTarihler(pkg)||[]).forEach(k=>{ if(k>=today && _opsPax(pkg.id,k)>0) out.push({pkg,kalkis:k}); });}); return out.sort((a,b)=>a.kalkis.localeCompare(b.kalkis)).slice(0,n); }
 function _opsMapCountry(pkg){ const d=(pkg.destinasyon||'').toUpperCase(); if(d.includes('MAROK')||d.includes('FAS')) return 'Morocco'; if(d.includes('TÜRK')||d.includes('TURK')) return 'Türkiye'; return ''; }
 function _opsCalNav(d){ let m=_opsCalYM.m+d,y=_opsCalYM.y; if(m<0){m=11;y--;} if(m>11){m=0;y++;} _opsCalYM={y,m}; renderOpsAnasayfa(); }
 function opsCalPick(iso){ opsTab('gunluk'); opsSetDate(iso); }
@@ -9953,7 +9961,7 @@ function _opsCalHTML(){
   const startDow=(new Date(y,m,1).getDay()+6)%7;
   const days=new Date(y,m+1,0).getDate();
   const cnt={};
-  getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>(_resDepartureDates(pkg)||[]).forEach(k=>{const dt=new Date(k+'T00:00:00'); if(dt.getFullYear()===y&&dt.getMonth()===m&&_opsGorunur(pkg.id,k)){const dd=dt.getDate(); cnt[dd]=(cnt[dd]||0)+1;}}));
+  getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>(_opsTarihler(pkg)||[]).forEach(k=>{const dt=new Date(k+'T00:00:00'); if(dt.getFullYear()===y&&dt.getMonth()===m&&_opsGorunur(pkg.id,k)){const dd=dt.getDate(); cnt[dd]=(cnt[dd]||0)+1;}}));
   const today=_opsToday();
   let cells=''; for(let i=0;i<startDow;i++) cells+='<div class="opsc-cell empty"></div>';
   for(let dd=1;dd<=days;dd++){ const iso=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+dd).slice(-2); const c=cnt[dd]||0;
