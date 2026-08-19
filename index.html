@@ -1858,7 +1858,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v177 · 19.08.2026';
+const APP_VER='v178 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8353,7 +8353,9 @@ function renderRezvListe(){
   document.getElementById('rzLst').innerHTML=h;
   rzTopluBarGuncel();
   const bugun=new Date().toISOString().slice(0,10);
+  const filtreliMi=list.length!==rez.length;
   document.getElementById('rzMets').innerHTML=
+    (filtreliMi?`<div class="rzmet" style="border:1.5px solid #2563eb;background:#eff6ff"><div class="n" style="color:#1d4ed8">${list.length}</div><div class="l" style="color:#1d4ed8;font-weight:700">Filtrelenen · ${list.reduce((t,r)=>t+(r.musteriler||[]).length,0)} yolcu</div></div>`:'')+
     `<div class="rzmet"><div class="n">${rez.length}</div><div class="l">Rezervasyon</div></div>`+
     `<div class="rzmet"><div class="n" style="color:${rez.filter(r=>rzDurum(r)==='bekliyor').length?'#b91c1c':'#065f46'}">${rez.filter(r=>rzDurum(r)==='bekliyor').length}</div><div class="l">Açılım bekleyen</div></div>`+
     `<div class="rzmet"><div class="n">${rez.reduce((t,r)=>t+(r.musteriler||[]).length,0)}</div><div class="l">Toplam yolcu</div></div>`+
