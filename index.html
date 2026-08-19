@@ -1858,7 +1858,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v176 · 19.08.2026';
+const APP_VER='v177 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8286,14 +8286,16 @@ function renderRezvListe(){
   const kf=window._rzKolF;
   try{localStorage.setItem('dmc_rzKolF',JSON.stringify(kf));}catch(e){}
   const fold=t=>String(t||'').toLocaleLowerCase('tr').replace(/ı/g,'i');
+  const tfold=t=>fold(t).replace(/[-\/]/g,'.');
   let list=rez.filter(r=>{
     if(kf.tip&&r.tip!==kf.tip) return false;
     if(kf.op&&!fold(r.operator).includes(fold(kf.op))) return false;
     if(kf.voucher&&!fold(r.voucher).includes(fold(kf.voucher))) return false;
-    if(kf.urun){ const blob=fold((r.urunKod||'')+' '+(r.kalkis||'')+' '+_rzTrT(r.kalkis)+' '+((r.kartlar||[])[0]?(r.kartlar[0].otel||''):'')); if(!blob.includes(fold(kf.urun))) return false; }
+    if(kf.urun){ const blob=fold((r.urunKod||'')+' '+((r.kartlar||[])[0]?(r.kartlar[0].otel||''):'')); if(!blob.includes(fold(kf.urun))) return false; }
+    if(kf.kalkis){ const kt=r.kalkis||((r.kartlar||[]).find(k=>k.baslangic)||{}).baslangic||''; if(!(tfold(kt)+' '+tfold(_rzTrT(kt))).includes(tfold(kf.kalkis))) return false; }
     if(kf.musteri&&!fold((r.musteriler||[]).map(m=>(m.soyad||'')+' '+(m.ad||'')).join(' ')).includes(fold(kf.musteri))) return false;
     if(kf.pax&&(r.musteriler||[]).length<(+kf.pax||0)) return false;
-    if(kf.satis&&!(fold(_rzTrT(r.satisTarihi))+' '+fold(r.satisTarihi)).includes(fold(kf.satis))) return false;
+    if(kf.satis&&!(tfold(_rzTrT(r.satisTarihi))+' '+tfold(r.satisTarihi)).includes(tfold(kf.satis))) return false;
     if(kf.durum==='iptal'&&r.durum!=='iptal') return false;
     if(kf.durum==='aktif'&&r.durum==='iptal') return false;
     if((kf.durum==='bekliyor'||kf.durum==='acildi')&&rzDurum(r)!==kf.durum) return false;
@@ -8316,16 +8318,17 @@ function renderRezvListe(){
   const tumSecili=list.length&&list.every(r=>window._rzSec.has(r.id));
   const kfi='style="width:100%;box-sizing:border-box;padding:4px 6px;border:1.2px solid var(--border);border-radius:6px;font-size:.72rem;font-family:inherit;background:#fff"';
   const kfAktif=Object.values(kf).some(v=>v);
-  let h='<thead><tr><th style="width:30px"><input type="checkbox" '+(tumSecili?'checked ':'')+'onclick="event.stopPropagation()" onchange="rzSecTum(this.checked)" title="Filtredeki tümünü seç"></th><th>Tip</th><th>Operatör</th><th>Voucher</th><th>Ürün · Kalkış</th><th>Müşteriler</th><th>Pax</th><th>Satış</th><th>Durum</th><th>Konfirme</th></tr>'
+  let h='<thead><tr><th style="width:30px"><input type="checkbox" '+(tumSecili?'checked ':'')+'onclick="event.stopPropagation()" onchange="rzSecTum(this.checked)" title="Filtredeki tümünü seç"></th><th>Tip</th><th>Operatör</th><th>Voucher</th><th>Ürün</th><th>Kalkış</th><th>Müşteriler</th><th>Pax</th><th>Satış</th><th>Durum</th><th>Konfirme</th></tr>'
    +'<tr class="rzkolf">'
    +'<th>'+(kfAktif?'<button onclick="window._rzKolF={};renderRezvListe()" title="Kolon filtrelerini temizle" style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;cursor:pointer;font-size:.7rem;padding:3px 5px">✕</button>':'')+'</th>'
    +'<th><select id="rzKF_tip" '+kfi+' onchange="rzKolF(\'tip\',this.value)"><option value="">—</option><option value="urun"'+(kf.tip==='urun'?' selected':'')+'>Ürün</option><option value="otel"'+(kf.tip==='otel'?' selected':'')+'>Otel</option><option value="transfer"'+(kf.tip==='transfer'?' selected':'')+'>Transfer</option></select></th>'
    +'<th><input id="rzKF_op" '+kfi+' value="'+esc(kf.op||'')+'" placeholder="ara…" oninput="rzKolF(\'op\',this.value)"></th>'
    +'<th><input id="rzKF_voucher" '+kfi+' value="'+esc(kf.voucher||'')+'" placeholder="ara…" oninput="rzKolF(\'voucher\',this.value)"></th>'
-   +'<th><input id="rzKF_urun" '+kfi+' value="'+esc(kf.urun||'')+'" placeholder="kod / tarih…" oninput="rzKolF(\'urun\',this.value)"></th>'
+   +'<th><input id="rzKF_urun" '+kfi+' value="'+esc(kf.urun||'')+'" placeholder="kod…" oninput="rzKolF(\'urun\',this.value)"></th>'
+   +'<th><input id="rzKF_kalkis" '+kfi+' value="'+esc(kf.kalkis||'')+'" placeholder="GG.AA…" oninput="rzKolF(\'kalkis\',this.value)"></th>'
    +'<th><input id="rzKF_musteri" '+kfi+' value="'+esc(kf.musteri||'')+'" placeholder="soyad…" oninput="rzKolF(\'musteri\',this.value)"></th>'
    +'<th><input id="rzKF_pax" '+kfi+' value="'+esc(kf.pax||'')+'" placeholder="≥" inputmode="numeric" style="width:44px;padding:4px 4px;border:1.2px solid var(--border);border-radius:6px;font-size:.72rem;font-family:inherit" oninput="rzKolF(\'pax\',this.value)"></th>'
-   +'<th><input id="rzKF_satis" '+kfi+' value="'+esc(kf.satis||'')+'" placeholder="GG-AA…" oninput="rzKolF(\'satis\',this.value)"></th>'
+   +'<th><input id="rzKF_satis" '+kfi+' value="'+esc(kf.satis||'')+'" placeholder="GG.AA…" oninput="rzKolF(\'satis\',this.value)"></th>'
    +'<th><select id="rzKF_durum" '+kfi+' onchange="rzKolF(\'durum\',this.value)"><option value="">—</option><option value="aktif"'+(kf.durum==='aktif'?' selected':'')+'>Aktif</option><option value="iptal"'+(kf.durum==='iptal'?' selected':'')+'>İptal</option><option value="bekliyor"'+(kf.durum==='bekliyor'?' selected':'')+'>Açılım bekliyor</option><option value="acildi"'+(kf.durum==='acildi'?' selected':'')+'>Açıldı</option></select></th>'
    +'<th></th></tr></thead><tbody>';
   list.forEach(r=>{
@@ -8337,15 +8340,16 @@ function renderRezvListe(){
       <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span>${r.durum==='iptal'?' <span style="background:#dc2626;color:#fff;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">İPTAL</span>':''}</td>
       <td>${esc(r.operator||'—')}</td><td><b>${esc(r.voucher||'—')}</b></td>
       <td>${(()=>{ const pkgVar=r.pkgId&&getPackages().some(p=>p.id===r.pkgId);
-        if(r.tip==='urun'||(r.urunKod&&!pkgVar)) return `<b>${esc(r.urunKod||'?')}</b>${(!pkgVar)?' <span style="background:#fef3c7;color:#92400e;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 5px" title="Bu kod üründe tanımlı değil — ürünü tanımlayıp Sejour dosyasını yeniden yükleyin">KOD EŞLEŞMEDİ</span>':''} · ${_rzTrT(r.kalkis)}`;
+        if(r.tip==='urun'||(r.urunKod&&!pkgVar)) return `<b>${esc(r.urunKod||'?')}</b>${(!pkgVar)?' <span style="background:#fef3c7;color:#92400e;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 5px" title="Bu kod üründe tanımlı değil — ürünü tanımlayıp Sejour dosyasını yeniden yükleyin">KOD EŞLEŞMEDİ</span>':''}`;
         return r.tip==='otel'?esc((r.kartlar||[])[0]?r.kartlar[0].otel:'—'):esc((r.transferler||[])[0]?(r.transferler[0].nereden+'→'+r.transferler[0].nereye):'—'); })()}</td>
+      <td>${(()=>{ const kt=r.kalkis||((r.kartlar||[]).find(k=>k.baslangic)||{}).baslangic||''; return kt?_rzTrT(kt):'—'; })()}</td>
       <td>${(r.musteriler||[]).slice(0,2).map(m=>esc(m.soyad||'')).join(', ')}${(r.musteriler||[]).length>2?' +'+(r.musteriler.length-2):''}</td>
       <td><b>${(r.musteriler||[]).length}</b></td><td>${_rzTrT(r.satisTarihi)}</td>
       <td>${r.tip==='urun'?(d==='acildi'?'<span class="rzchip rzc-ok">açıldı</span>':'<span class="rzchip rzc-bek">açılım bekliyor</span>'):'<span class="rzchip" style="background:#e5e7eb;color:#4b5563">—</span>'}</td>
       <td>${konf}</td></tr>`;
   });
   h+='</tbody>';
-  if(!list.length) h+='<tbody><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
+  if(!list.length) h+='<tbody><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
   document.getElementById('rzLst').innerHTML=h;
   rzTopluBarGuncel();
   const bugun=new Date().toISOString().slice(0,10);
