@@ -1858,7 +1858,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v178 · 19.08.2026';
+const APP_VER='v179 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2141,6 +2141,12 @@ function showPage(id, tabEl) {
   // nav tab highlight: opdetay gösterilirken "Paketlerim" tabı aktif kalsın
   const tabId = ['opdetay','paket','maliyet','cikti','harita','sunum','urun'].includes(id) ? 'urun' : id;
   (tabEl||document.querySelector(`[data-page="${tabId}"]`))?.classList.add('active');
+  // Sidebar'dan tıklanınca (tabEl dolu) departmanın ANA sayfası açılır; sayfa yenilemede (tabEl yok) son görünüm korunur
+  if(tabEl){
+    if(id==='rezervasyon'){ _rzCur=null; try{document.querySelectorAll('.rz-navitem').forEach(el=>el.classList.toggle('active-ops',el.getAttribute('data-rt')==='ekran'));}catch(e){} }
+    if(id==='operasyon') _opsTab='anasayfa';
+    if(id==='ucak'){ try{_ucakView(false);}catch(e){} }
+  }
   if(id==='maliyet') updateCalc();
   if(id==='paketlerim') renderDashboard();
   if(id==='yonetim') renderYonetim();
