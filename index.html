@@ -1403,6 +1403,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <input id="rzAra" placeholder="Ara: voucher, soyad, otel…" style="min-width:220px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit" oninput="renderRezvListe()">
         <select id="rzFTip" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm tipler</option><option value="urun">Ürün</option><option value="otel">Sadece Otel</option><option value="transfer">Sadece Transfer</option><option value="urunsuz">⚠ Ürün eşleşmeyen</option></select>
         <button class="btn btn-outline btn-sm" onclick="rzKodEsle()" title="Eşleşmemiş ürün kodlarını tanımlı ürünlere bağlar">↻ Kodları Yeniden Eşle</button>
+        <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="rzCiftTemizle()" title="Aynı voucher'ın mükerrer kopyalarını temizler (en dolu kopya kalır)">⧉ Çiftleri Temizle</button>
         <select id="rzFOp" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm operatörler</option></select>
         <select id="rzFDurum" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm durumlar</option><option value="aktif">Aktif (iptal hariç)</option><option value="iptal">İptal</option><option value="bekliyor">Açılım bekliyor</option><option value="acildi">Açıldı</option></select>
       </div>
@@ -1779,7 +1780,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v163 · 19.08.2026';
+const APP_VER='v164 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8764,6 +8765,26 @@ function _uzKodBul(kod){
     if(i>=0) return {pkg:p,hafta:i+1};
   }
   return null;
+}
+function rzCiftTemizle(){
+  const rezv=getRezv();
+  const grup={};
+  rezv.forEach(r=>{ const v=String(r.voucher||'').trim(); if(!v) return;
+    const k=_norm(r.operator||'')+'|'+_norm(v); (grup[k]=grup[k]||[]).push(r); });
+  const silinecek=new Set(); let ciftV=0;
+  const skor=r=>((r.kartlar||[]).length*1000)+((r.musteriler||[]).length*10)+((r.ukartlar||[]).length)+(r.pkgId?5000:0);
+  Object.values(grup).forEach(list=>{
+    if(list.length<2) return;
+    ciftV++;
+    let en=list[0]; list.forEach(r=>{ if(skor(r)>skor(en)) en=r; });
+    list.forEach(r=>{ if(r!==en) silinecek.add(r.id); });
+  });
+  if(!silinecek.size){ showToast('Mükerrer kayıt yok — temiz','success'); return; }
+  showConfirm('⧉','Çiftleri Temizle',ciftV+" voucher'da toplam "+silinecek.size+' mükerrer kopya bulundu. Her voucher için EN DOLU kopya (kartlar+müşteriler+ürün bağı) tutulacak, diğerleri yerelden ve buluttan silinecek. Devam?','Evet, Temizle',()=>{
+    setRezv(getRezv().filter(r=>!silinecek.has(r.id)));
+    try{renderRezvListe();}catch(e){}
+    showToast(silinecek.size+' mükerrer kopya silindi — '+getRezv().length+' rezervasyon kaldı','success',6000);
+  });
 }
 function rzKodEsle(){
   const rezv=getRezv(); let bagli=0; const kalan=new Set();
