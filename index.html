@@ -859,6 +859,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <button class="nav-tab" data-page="ucak" onclick="showPage('ucak',this)"><svg class="ic"><use href="#i-plane"/></svg> Uçak / Bilet</button>
       <button class="nav-tab" data-page="operasyon" onclick="showPage('operasyon',this)"><svg class="ic"><use href="#i-calendar"/></svg> Operasyon</button>
       <button class="nav-tab" data-page="rapor" onclick="showPage('rapor',this)"><svg class="ic"><use href="#i-chart"/></svg> Rapor</button>
+      <div class="nav-group">Yönetim</div>
+      <button class="nav-tab" data-page="yonetim" onclick="showPage('yonetim',this)"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli</button>
     </nav>
     <div class="sidebar-ctx">
     <!-- OPS mode -->
@@ -978,6 +980,40 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   </div>
 
   <!-- PAGE: OPERATÖR PAKETLERİ -->
+  <div id="page-yonetim" class="page">
+    <div class="card">
+      <div class="card-title"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetici</span></div>
+      <div id="ynOzet" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg class="ic"><use href="#i-file"/></svg> Yedekleme</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="ynYedekIndir()">⬇ Tam Yedek İndir (JSON)</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('ynYedekFile').click()">⬆ Yedekten Geri Yükle</button>
+        <input type="file" id="ynYedekFile" accept=".json" style="display:none" onchange="ynYedekYukle(event)">
+        <span style="font-size:.74rem;color:var(--muted)">Yedek: tüm ürün/operatör/otel/rezervasyon/uçak/operasyon verisi tek dosyada. Bulut ayrıca her gün otomatik yedek alır.</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#dc2626"><svg class="ic"><use href="#i-trash"/></svg> Sıfırlama <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Geri alınamaz — önce yedek alın</span></div>
+      <div id="ynSifirla" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:.82rem">
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ynS_rezv"> Rezervasyonlar</label>
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ynS_ucak"> Uçak listeleri + PNR</label>
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ynS_ops"> Operasyon kayıtları</label>
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ynS_trf"> Transferler</label>
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ynS_grup"> Gruplar</label>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;font-weight:700" onclick="ynSifirla()">Seçilenleri Sıfırla</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg class="ic"><use href="#i-clock"/></svg> Değişiklik Kayıtları (bulut) <button class="btn btn-outline btn-sm" style="margin-left:10px" onclick="ynAuditYukle()">↻ Yenile</button></div>
+      <div id="ynAudit" style="font-size:.78rem;overflow-x:auto"><p style="color:var(--muted)">Yüklemek için Yenile'ye basın.</p></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg class="ic"><use href="#i-stop"/></svg> Oturum Hata Günlüğü <button class="btn btn-outline btn-sm" style="margin-left:10px" onclick="window._hataLog=[];renderYonetim()">Temizle</button></div>
+      <div id="ynHata" style="font-size:.78rem"></div>
+    </div>
+  </div>
   <div id="page-opdetay" class="page">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
       <div style="display:flex;align-items:center;gap:12px">
@@ -1780,7 +1816,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v165 · 19.08.2026';
+const APP_VER='v166 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2065,6 +2101,7 @@ function showPage(id, tabEl) {
   (tabEl||document.querySelector(`[data-page="${tabId}"]`))?.classList.add('active');
   if(id==='maliyet') updateCalc();
   if(id==='paketlerim') renderDashboard();
+  if(id==='yonetim') renderYonetim();
   if(id==='paket') refreshSidebarPkgSwitch();
   if(id==='harita') renderHarita();
   if(id==='ucak') renderRezervasyonPage();
@@ -6793,9 +6830,9 @@ const SB_URL='https://jyqwbzyevejyqxfafrtf.supabase.co';
 const SB_KEY='sb_publishable_65daq2tGCWi0fHcERLGwbQ_7zPH8TD2';
 let sb=null, sbUser=null, sbRol=null, _cloudOn=false;
 // ═══ ROL / YETKI ═══
-const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor'};
+const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim'};
 const _ACL={
-  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e'},
+  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e'},
   rezervasyon: {home:'e',urun:'-',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-'},
   ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-'},
   operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v'},
@@ -6831,6 +6868,81 @@ function hataGunluguAc(){
   const L=window._hataLog||[];
   const metin=L.length?L.map(x=>x.t+' ['+x.kaynak+'] '+x.msg).join('\n\n'):'Hata kaydı yok — her şey yolunda görünüyor.';
   showConfirm('🩺','Sistem Hata Günlüğü (son '+L.length+')',metin+'\n\nBu pencerenin ekran görüntüsünü destek için paylaşabilirsiniz.','Tamam',()=>{});
+}
+function renderYonetim(){
+  const oz=document.getElementById('ynOzet'); if(!oz) return;
+  const rezv=getRezv()||[], res=getReservations()||[];
+  const yolcu=rezv.reduce((t,r)=>t+((r.musteriler||[]).length),0);
+  const ucakY=res.reduce((t,g)=>t+((g.rows||[]).filter(x=>x&&((x.ad||'').trim()||(x.soyad||'').trim())).length),0);
+  const kart=(l,n)=>`<div class="rzmet"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+  oz.innerHTML=kart('Rezervasyon',rezv.length)+kart('Yolcu',yolcu)+kart('İptal',rezv.filter(r=>r.durum==='iptal').length)
+    +kart('Uçak listesi',res.length)+kart('Uçak yolcusu',ucakY)
+    +kart('Ürün',getPackages().length)+kart('Operatör',getOperators().length)
+    +kart('Otel',(getTanimlar().oteller||[]).length)+kart('Bölge',(getTanimlar().bolgeler||[]).length);
+  const hb=document.getElementById('ynHata');
+  const L=window._hataLog||[];
+  if(hb) hb.innerHTML=L.length?('<table class="rzmg"><tr><th style="width:70px">Saat</th><th style="width:150px">Kaynak</th><th>Mesaj</th></tr>'+L.map(x=>`<tr><td>${esc(x.t)}</td><td>${esc(x.kaynak)}</td><td>${esc(x.msg)}</td></tr>`).join('')+'</table>'):'<p style="color:var(--muted)">Bu oturumda hata yok.</p>';
+}
+async function ynAuditYukle(){
+  const el=document.getElementById('ynAudit'); if(!el) return;
+  if(!_cloudOn||!sb){ el.innerHTML='<p style="color:var(--muted)">Bulut bağlantısı yok — değişiklik kayıtları bulutta tutulur.</p>'; return; }
+  el.innerHTML='<p style="color:var(--muted)">Yükleniyor…</p>';
+  try{
+    const r=await sb.from('audit_log').select('ts,email,tablo,kayit_id,islem').order('ts',{ascending:false}).limit(150);
+    if(r.error) throw r.error;
+    const T={INSERT:['Eklendi','#dcfce7;color:#166534'],UPDATE:['Güncellendi','#e0f2fe;color:#0369a1'],DELETE:['Silindi','#fee2e2;color:#b91c1c']};
+    el.innerHTML=(r.data&&r.data.length)?('<table class="rzmg"><tr><th style="width:130px">Zaman</th><th style="width:170px">Kim</th><th style="width:90px">Tablo</th><th style="width:80px">İşlem</th><th>Kayıt</th></tr>'+r.data.map(x=>{
+      const t=T[x.islem]||[x.islem,'#f3f4f6;color:#374151'];
+      return `<tr><td>${new Date(x.ts).toLocaleString('tr-TR')}</td><td>${esc(x.email||'—')}</td><td>${esc(x.tablo||'')}</td><td><span style="background:${t[1]};border-radius:5px;padding:1px 7px;font-size:.68rem;font-weight:700">${t[0]}</span></td><td style="font-family:ui-monospace,monospace;font-size:.7rem">${esc(String(x.kayit_id||'').slice(0,60))}</td></tr>`;
+    }).join('')+'</table>'):'<p style="color:var(--muted)">Kayıt yok.</p>';
+  }catch(e){ el.innerHTML='<p style="color:#b91c1c">Okunamadı: '+esc((e&&e.message)||e)+'</p>'; }
+}
+function ynYedekIndir(){
+  const veri={surum:APP_VER,tarih:new Date().toISOString(),
+    packages:getPackages(),operators:getOperators(),tanimlar:getTanimlar(),
+    rezervasyonlar:getRezv(),reservations:getReservations(),pnrLedger:getPnrLedger(),
+    operasyon:getOperasyon(),transfer:getTransfer(),opsgrup:getOpsGrup()};
+  const blob=new Blob([JSON.stringify(veri)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='dmc-yedek-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  showToast('Yedek indirildi: '+a.download,'success');
+}
+function ynYedekYukle(evt){
+  const f=evt.target.files[0]; evt.target.value=''; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{ try{
+    const v=JSON.parse(e.target.result);
+    if(!v||!Array.isArray(v.packages)){ showToast('Geçersiz yedek dosyası','error'); return; }
+    showConfirm('⬆','Yedekten Geri Yükle','Yedek: '+(v.tarih?new Date(v.tarih).toLocaleString('tr-TR'):'?')+' · '+v.packages.length+' ürün · '+((v.rezervasyonlar||[]).length)+' rezervasyon.\n\nMEVCUT TÜM VERİNİN yerine geçecek (bulut dahil). Devam?','Evet, Geri Yükle',()=>{
+      setPackages(v.packages||[]); setOperators(v.operators||[]);
+      if(v.tanimlar) setTanimlar(v.tanimlar);
+      setRezv(v.rezervasyonlar||[]); setReservations(v.reservations||[]); setPnrLedger(v.pnrLedger||[]);
+      setOperasyon(v.operasyon||[]); if(v.transfer) setTransfer(v.transfer); if(v.opsgrup) setOpsGrup(v.opsgrup);
+      renderYonetim(); try{renderDashboard();}catch(e2){}
+      showToast('Yedek geri yüklendi — bulut eşitlemesinin bitmesini bekleyin','success',7000);
+    });
+  }catch(err){ showToast('Dosya okunamadı: '+err.message,'error'); } };
+  rd.readAsText(f,'utf-8');
+}
+function ynSifirla(){
+  const sec=[];
+  if(document.getElementById('ynS_rezv').checked) sec.push('rezv');
+  if(document.getElementById('ynS_ucak').checked) sec.push('ucak');
+  if(document.getElementById('ynS_ops').checked) sec.push('ops');
+  if(document.getElementById('ynS_trf').checked) sec.push('trf');
+  if(document.getElementById('ynS_grup').checked) sec.push('grup');
+  if(!sec.length){ showToast('Sıfırlanacak alanları işaretleyin','error'); return; }
+  const AD={rezv:'Rezervasyonlar',ucak:'Uçak listeleri + PNR',ops:'Operasyon kayıtları',trf:'Transferler',grup:'Gruplar'};
+  showConfirm('🗑️','Seçilenleri Sıfırla',sec.map(x=>AD[x]).join(', ')+' TÜM EKİP İÇİN (buluttan da) silinecek. GERİ ALINAMAZ — yedek aldınız mı?','Evet, Sıfırla',()=>{
+    if(sec.includes('rezv')) setRezv([]);
+    if(sec.includes('ucak')){ setReservations([]); setPnrLedger([]); }
+    if(sec.includes('ops')) setOperasyon([]);
+    if(sec.includes('trf')) setTransfer({seq:1,gruplar:{},sat:{}});
+    if(sec.includes('grup')) setOpsGrup({gruplar:{},seq:1});
+    renderYonetim(); try{renderDashboard();}catch(e){}
+    showToast(sec.map(x=>AD[x]).join(', ')+' sıfırlandı','success',6000);
+  });
 }
 function _setCloud(state,msg){
   const el=document.getElementById('cloudStatus'), tx=document.getElementById('cloudStatusTxt');
