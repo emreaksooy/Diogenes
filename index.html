@@ -1841,7 +1841,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v169 · 19.08.2026';
+const APP_VER='v171 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8737,7 +8737,13 @@ function renderRzUrunKarti(){
 function rzDetay(){
   const r=rzR(); if(!r){ rzListeGoster(); return; }
   const tipAd={urun:'ÜRÜN REZERVASYONU',otel:'SADECE OTEL',transfer:'SADECE TRANSFER'};
-  document.getElementById('rzTipBadge').innerHTML=`<span class="rztipb rztb-${r.tip}" style="font-size:.72rem;padding:5px 12px">${tipAd[r.tip]||r.tip}</span>`;
+  document.getElementById('rzTipBadge').innerHTML=`<span class="rztipb rztb-${r.tip}" style="font-size:.72rem;padding:5px 12px">${tipAd[r.tip]||r.tip}</span>
+    <select onchange="rzTipDegistir(this.value)" title="Rezervasyon tipini değiştir" style="margin-left:6px;padding:4px 6px;border:1.5px dashed var(--border);border-radius:7px;font-size:.7rem;color:var(--muted);background:transparent;cursor:pointer">
+      <option value="">tip değiştir…</option>
+      ${r.tip!=='urun'?'<option value="urun">→ Ürün rezervasyonu (ürüne bağla)</option>':''}
+      ${r.tip!=='otel'?'<option value="otel">→ Sadece Otel</option>':''}
+      ${r.tip!=='transfer'?'<option value="transfer">→ Sadece Transfer</option>':''}
+    </select>`;
   rzOp.value=r.operator||''; document.getElementById('rzOpListesi').innerHTML=_rzOpAdlar().map(o=>`<option value="${esc(o)}">`).join('');
   rzVoucher.value=r.voucher||''; rzSatis.value=r.satisTarihi||''; rzNot.value=r.not||'';
   document.getElementById('rzOpUcusSatir').textContent=r.opUcusNot?('Operatör uçuş beyanı: '+r.opUcusNot):'';
@@ -8756,6 +8762,14 @@ function rzDetay(){
   { const _uzP=(r.tip==='urun')?getPackages().find(p=>p.id===r.pkgId):null; const _w=document.getElementById('rzUzatmaWrap');
     if(_w){ if(_uzP&&_uzP.uzatma&&_uzP.uzatma.aktif){ _w.style.display='inline-flex'; const _sel=document.getElementById('rzUzatma'); if(_sel)_sel.value=String(+r.uzatmaHafta||0); } else _w.style.display='none'; } }
   rzMusteriler(); rzKartlar(); rzTrf(); renderRzUrunKarti(); rzFiyatOzet();
+}
+function rzTipDegistir(v){
+  const r=rzR(); if(!r||!v||v===r.tip){ rzDetay(); return; }
+  const yap=()=>{ r.tip=v; rzSave(); rzDetay();
+    if(v==='urun') showToast('Tip değişti — şimdi Ürün alanına ürün kodunu yazıp bağlayın, kalkış tarihini seçin','success',5000);
+    else showToast('Rezervasyon tipi değiştirildi','success'); };
+  if(v!=='urun'&&r.pkgId) showConfirm('⚠️','Tip Değişiyor','Bu rezervasyon bir ürüne bağlı. Tipi değiştirirsen ürün bağı korunur ama ürün alanları gizlenir. Devam?','Değiştir',yap);
+  else yap();
 }
 function rzUzatmaSet(v){ const r=rzR(); if(!r) return; r.uzatmaHafta=+v||0; rzSave(); _rzUzatmaSync(); try{rzFiyatOzet();}catch(e){} }
 function _rzUzatmaSync(){
@@ -9320,14 +9334,37 @@ async function _dailyBackup(){
   }catch(e){ console.warn('günlük yedek',e); }
 }
 
+// Supabase tek sorguda en fazla 1000 satır döndürür — TÜM satırları sayfa sayfa çek.
+// Bu eksikti: doc_rows 1000'i aşınca fazlası "silinmiş" sanılıp yerelden de siliniyordu (rezervasyon kayıplarının kök nedeni).
+async function _sbAll(mk){
+  let out=[], from=0; const step=1000;
+  for(let guard=0; guard<50; guard++){
+    const r=await mk(from,from+step-1);
+    if(r.error) return r;
+    out=out.concat(r.data||[]);
+    if(!r.data||r.data.length<step) return {data:out,error:null};
+    from+=step;
+  }
+  return {data:out,error:null};
+}
+function _pullDususKontrol(etiket,onceki){
+  try{
+    const simdiki=(getRezv()||[]).length;
+    if(onceki>10&&simdiki<onceki*0.7){
+      _hataKaydet&&_hataKaydet('PULL-DÜŞÜŞ',etiket+': rezv '+onceki+'→'+simdiki+' — bulut çekimi sonrası ciddi azalma',new Error('pull-drop').stack);
+      console.error('PULL-DÜŞÜŞ',etiket,onceki,'→',simdiki);
+    }
+  }catch(e){}
+}
 async function _cloudPullFull(){
+  const _rezvOnce=(getRezv()||[]).length;
   const [pk,op,kv,dr]=await Promise.all([
-    sb.from('packages').select('id,data'),
-    sb.from('operators').select('id,data'),
-    sb.from('kv_store').select('key,data').not('key','like','yedek\\_%'),
-    sb.from('doc_rows').select('col,id,parent,data')
+    _sbAll((a,b)=>sb.from('packages').select('id,data').order('id').range(a,b)),
+    _sbAll((a,b)=>sb.from('operators').select('id,data').order('id').range(a,b)),
+    _sbAll((a,b)=>sb.from('kv_store').select('key,data').not('key','like','yedek\\_%').order('key').range(a,b)),
+    _sbAll((a,b)=>sb.from('doc_rows').select('col,id,parent,data').order('col').order('id').range(a,b))
   ]);
-  if(pk.error||op.error) throw (pk.error||op.error);
+  if(pk.error||op.error||dr.error) throw (pk.error||op.error||dr.error);
   const cloudHasData=(pk.data||[]).length||(op.data||[]).length;
   if(cloudHasData){
     _pkgCache=(pk.data||[]).map(r=>r.data).filter(Boolean);
@@ -9383,6 +9420,7 @@ async function _cloudPullFull(){
     _opCache.forEach(o=>_sigOp.set(o.id,JSON.stringify(o)));
     renderOpList(); renderOperatorSelect(); renderDashboard();
     if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); }
+    _pullDususKontrol('tam çekim',_rezvOnce);
   } else if(_pkgCache.length||_opCache.length){
     showConfirm('⚠️','Buluta Taşı','Bulut veritabanı boş. Bu tarayıcıdaki '+_pkgCache.length+' paket ve '+_opCache.length+' operatör buluta yüklensin mi? (İlk kurulumda bir kez yapılır)','Evet, Yükle',()=>{ _cloudPushAll(); });
   }
@@ -9391,14 +9429,15 @@ async function _cloudPullFull(){
 async function _cloudPullIncre(last){
   // saat kaymalarına karşı 10 dk tolerans
   const since=new Date(Date.parse(last)-10*60*1000).toISOString();
+  const _rezvOnce=(getRezv()||[]).length;
   const [pk,op,kv,dr,pkIds,opIds,drIds]=await Promise.all([
-    sb.from('packages').select('id,data').gt('updated_at',since),
-    sb.from('operators').select('id,data').gt('updated_at',since),
-    sb.from('kv_store').select('key,data').not('key','like','yedek\\_%').gt('updated_at',since),
-    sb.from('doc_rows').select('col,id,parent,data').gt('updated_at',since),
-    sb.from('packages').select('id'),
-    sb.from('operators').select('id'),
-    sb.from('doc_rows').select('col,id')
+    _sbAll((a,b)=>sb.from('packages').select('id,data').gt('updated_at',since).order('id').range(a,b)),
+    _sbAll((a,b)=>sb.from('operators').select('id,data').gt('updated_at',since).order('id').range(a,b)),
+    _sbAll((a,b)=>sb.from('kv_store').select('key,data').not('key','like','yedek\\_%').gt('updated_at',since).order('key').range(a,b)),
+    _sbAll((a,b)=>sb.from('doc_rows').select('col,id,parent,data').gt('updated_at',since).order('col').order('id').range(a,b)),
+    _sbAll((a,b)=>sb.from('packages').select('id').order('id').range(a,b)),
+    _sbAll((a,b)=>sb.from('operators').select('id').order('id').range(a,b)),
+    _sbAll((a,b)=>sb.from('doc_rows').select('col,id').order('col').order('id').range(a,b))
   ]);
   const hata=[pk,op,kv,dr,pkIds,opIds,drIds].find(r=>r.error);
   if(hata) throw hata.error;
@@ -9422,14 +9461,15 @@ async function _cloudPullIncre(last){
   { const uzak={}; (drIds.data||[]).forEach(r=>{ (uzak[r.col]=uzak[r.col]||new Set()).add(r.id); });
     Object.keys(_docSig).forEach(col=>{ const set=uzak[col]||new Set(); [..._docSig[col].keys()].forEach(id=>{ if(!set.has(id)){ _docSig[col].delete(id); _docApplyOne(col,id,null); degisti++; } }); }); }
   if(degisti){ renderOpList(); renderOperatorSelect(); renderDashboard(); if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); } }
+  _pullDususKontrol('artımlı çekim',_rezvOnce);
 }
 
 function _txCloudPull(last){
   // çeviri önbelleği ARKA PLANDA — açılışı bekletmez
   setTimeout(async()=>{ try{
-    let q=sb.from('tx_cache').select('key,t,e');
-    if(last) q=q.gt('ts',new Date(Date.parse(last)-10*60*1000).toISOString());
-    const tc=await q;
+    const tc=await _sbAll((a,b)=>{ let q=sb.from('tx_cache').select('key,t,e');
+      if(last) q=q.gt('ts',new Date(Date.parse(last)-10*60*1000).toISOString());
+      return q.order('key').range(a,b); });
     if(!tc.error&&tc.data&&tc.data.length){
       await _txEnsureCache();
       tc.data.forEach(r=>{ const c=_txCache[r.key]; if(!c||(r.e&&!c.e)) _txCache[r.key]={t:r.t,e:r.e?1:0,ts:Date.now()}; });
