@@ -920,6 +920,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <div class="sidebar-list">
         <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa</div>
         <div class="pkg-section-item ops-navitem" data-ot="gunluk" onclick="opsTab('gunluk')"><svg class="ic"><use href="#i-list"/></svg> Günlük Liste</div>
+        <div class="pkg-section-item ops-navitem" data-ot="rehtak" onclick="opsTab('rehtak')"><svg class="ic"><use href="#i-calendar"/></svg> Rehber Takvimi</div>
         <div class="pkg-section-item ops-navitem" data-ot="grup" onclick="opsTab('grup')"><svg class="ic"><use href="#i-users"/></svg> Gruplar</div>
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> Transfer</div>
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> Tanımlamalar</div>
@@ -1627,6 +1628,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
           </div>
           <div id="opsGunluk"></div>
         </div>
+        <div id="opsPane_rehtak" style="display:none"></div>
         <div id="opsPane_grup" style="display:none"></div>
         <div id="opsPane_transfer" style="display:none"></div>
         <div id="opsPane_tanim" style="display:none"></div>
@@ -1858,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v180 · 19.08.2026';
+const APP_VER='v181 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10166,11 +10168,118 @@ function _opsMapLbl(){ const el=document.getElementById('opsMapDateLbl'); if(el)
 function opsMapDate(v){ _opsMapDate=v||_opsToday(); _opsMapLbl(); _opsRenderMap(); }
 function opsMapNav(d){ _opsMapDate=_isoAdd(_opsMapDate||_opsToday(),d); _opsMapLbl(); _opsRenderMap(); }
 function opsMapQuick(n){ _opsMapDate=_isoAdd(_opsToday(),n); _opsMapLbl(); _opsRenderMap(); }
+/* ══ REHBER TAKVİMİ (Gantt) ══ */
+let _rtAy=null, _rtSecTur=null;
+function _rtAyStr(d){ return d.toISOString().slice(0,7); }
+function rtAyNav(n){ const [y,m]=(_rtAy||_rtAyStr(new Date())).split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); _rtAy=d.toISOString().slice(0,7); _rtSecTur=null; renderRehberTakvim(); }
+function _rtTurlar(){ // bu ayla kesişen tüm seferler
+  const [y,m]=_rtAy.split('-').map(Number);
+  const ayBas=_rtAy+'-01', ayGun=new Date(Date.UTC(y,m,0)).getUTCDate(), aySon=_rtAy+'-'+String(ayGun).padStart(2,'0');
+  const out=[];
+  getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{
+    const gece=parseInt(pkg.gece)||0;
+    (_opsTarihler(pkg)||[]).forEach(k=>{
+      const end=_isoAdd(k,gece);
+      if(end<ayBas||k>aySon) return;
+      const rec=_opsGet(pkg.id,k);
+      const pax=_opsPax(pkg.id,k);
+      if(!pax&&!(rec.rehberAd||'').trim()) return;
+      out.push({pkgId:pkg.id,kalkis:k,end,kod:pkg.paketKodu||pkg.paketAdi||'—',pax,rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()});
+    });
+  });
+  return out;
+}
+function _rtCakisir(a1,a2,b1,b2){ return a1<=b2&&b1<=a2; }
+function _rtRehYuk(rehAd,turlar){ // bu ay içindeki saha günü
+  const [y,m]=_rtAy.split('-').map(Number);
+  const ayBas=_rtAy+'-01', ayGun=new Date(Date.UTC(y,m,0)).getUTCDate(), aySon=_rtAy+'-'+String(ayGun).padStart(2,'0');
+  let g=0; turlar.filter(t=>t.rehberAd===rehAd).forEach(t=>{ const b=t.kalkis>ayBas?t.kalkis:ayBas, e=t.end<aySon?t.end:aySon; g+=_isoDiff(b,e)+1; });
+  return g;
+}
+function rtTurSec(key){ _rtSecTur=(_rtSecTur===key)?null:key; renderRehberTakvim(); }
+function rtAta(rehId){
+  if(!_rtSecTur) return;
+  const [pkgId,kalkis]=_rtSecTur.split('|');
+  const turlar=_rtTurlar(); const tur=turlar.find(t=>t.pkgId===pkgId&&t.kalkis===kalkis); if(!tur) return;
+  const reh=(getTanimlar().rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
+  const cak=turlar.filter(t=>t.rehberAd===(reh.ad||'')&&!(t.pkgId===pkgId&&t.kalkis===kalkis)&&_rtCakisir(t.kalkis,t.end,tur.kalkis,tur.end));
+  const yap=()=>{
+    const all=getOperasyon(); let r=all.find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+    if(!r){ r={pkgId,kalkis,magazalar:[],oteller:[]}; all.push(r); }
+    r.rehberId=reh.id; r.rehberAd=reh.ad||''; r.rehberTel=reh.tel||''; r.rehberDil=Array.isArray(reh.diller)?reh.diller.join(', '):(reh.dil||'');
+    setOperasyon(all); _rtSecTur=null; renderRehberTakvim();
+    showToast(tur.kod+' → '+reh.ad+' atandı','success');
+  };
+  if(cak.length) showConfirm('⚠️','Tarih Çakışması',(reh.ad||'')+' rehberinin bu tarihlerde başka turu var: '+cak.map(c=>c.kod+' ('+_fmtDateTR(c.kalkis)+')').join(', ')+'. Yine de atansın mı?','Yine de Ata',yap);
+  else yap();
+}
+function rtKaldir(pkgId,kalkis){
+  const all=getOperasyon(); const r=all.find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!r) return;
+  showConfirm('⚠️','Atama Kaldırılsın mı?',(r.rehberAd||'')+' bu turdan çıkarılacak.','Kaldır',()=>{ r.rehberId=''; r.rehberAd=''; setOperasyon(all); renderRehberTakvim(); });
+}
+function renderRehberTakvim(){
+  const box=document.getElementById('opsPane_rehtak'); if(!box) return;
+  if(!_rtAy) _rtAy=_rtAyStr(new Date());
+  const [y,m]=_rtAy.split('-').map(Number);
+  const ayGun=new Date(Date.UTC(y,m,0)).getUTCDate();
+  const ayBas=_rtAy+'-01', aySon=_rtAy+'-'+String(ayGun).padStart(2,'0');
+  const ayAd=new Date(Date.UTC(y,m-1,1)).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+  const bugun=new Date().toISOString().slice(0,10);
+  const turlar=_rtTurlar();
+  const atanmamis=turlar.filter(t=>!t.rehberAd);
+  const rehberler=(getTanimlar().rehberler||[]).slice();
+  const secTur=_rtSecTur?turlar.find(t=>(t.pkgId+'|'+t.kalkis)===_rtSecTur):null;
+  // seçili tur varken: en az yüklü üstte, çakışanlar işaretli
+  rehberler.forEach(r=>{ r._yuk=_rtRehYuk(r.ad||'',turlar); r._cak=secTur?turlar.some(t=>t.rehberAd===(r.ad||'')&&_rtCakisir(t.kalkis,t.end,secTur.kalkis,secTur.end)):false; });
+  if(secTur) rehberler.sort((a,b)=>(a._cak-b._cak)||(a._yuk-b._yuk)||String(a.ad||'').localeCompare(b.ad||'','tr'));
+  else rehberler.sort((a,b)=>String(a.ad||'').localeCompare(b.ad||'','tr'));
+  const gunKol='repeat('+ayGun+',minmax(22px,1fr))';
+  const gunNo=iso=>_isoDiff(ayBas,iso)+1;
+  const bar=t=>{
+    const b=t.kalkis>ayBas?t.kalkis:ayBas, e=t.end<aySon?t.end:aySon;
+    return {c1:gunNo(b),c2:gunNo(e)+1,tasBas:t.kalkis<ayBas,tasSon:t.end>aySon};
+  };
+  let h='<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+   +'<button class="btn btn-outline btn-sm" onclick="rtAyNav(-1)">◀</button>'
+   +'<b style="font-size:1rem;min-width:140px;text-align:center;text-transform:capitalize">'+esc(ayAd)+'</b>'
+   +'<button class="btn btn-outline btn-sm" onclick="rtAyNav(1)">▶</button>'
+   +'<span style="font-size:.76rem;color:var(--muted)">Önce havuzdan tura tıkla, sonra rehber satırına tıkla. Atamayı kaldırmak için çubuğa tıkla.</span></div></div>';
+  // Atanmamış havuzu
+  h+='<div class="card" style="margin-bottom:12px"><div style="font-weight:800;font-size:.82rem;margin-bottom:8px;color:#b45309">ATANMAMIŞ TURLAR ('+atanmamis.length+')</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  h+=atanmamis.length?atanmamis.map(t=>{ const key=t.pkgId+'|'+t.kalkis; const sec=_rtSecTur===key;
+    return '<div onclick="rtTurSec(\''+key+'\')" style="cursor:pointer;border:2px solid '+(sec?'#b5431f':'#fcd34d')+';background:'+(sec?'#b5431f':'#fef3c7')+';color:'+(sec?'#fff':'#92400e')+';border-radius:9px;padding:6px 11px;font-size:.76rem;font-weight:700">'+esc(t.kod)+'<div style="font-weight:600;font-size:.68rem;opacity:.85">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>';
+  }).join(''):'<span style="font-size:.8rem;color:#065f46;font-weight:600">Bu ayın tüm turları atanmış ✓</span>';
+  h+='</div>'+(secTur?'<div style="margin-top:8px;font-size:.78rem;color:#b5431f;font-weight:700">Seçili: '+esc(secTur.kod)+' — şimdi aşağıdan bir rehbere tıkla</div>':'')+'</div>';
+  // Gantt
+  h+='<div class="card" style="overflow-x:auto"><div style="min-width:'+(190+ayGun*24)+'px">';
+  // gün başlığı
+  h+='<div style="display:grid;grid-template-columns:180px '+gunKol+';gap:0;border-bottom:1.5px solid var(--border);padding-bottom:3px;margin-bottom:2px">'
+   +'<div style="font-size:.72rem;font-weight:800;color:var(--muted)">REHBER · ay yükü</div>'
+   +Array.from({length:ayGun},(_,i)=>{ const iso=_rtAy+'-'+String(i+1).padStart(2,'0'); const bg=iso===bugun?'background:#fff3ec;border-radius:4px;':''; return '<div style="text-align:center;font-size:.62rem;color:var(--muted);'+bg+'">'+(i+1)+'</div>'; }).join('')+'</div>';
+  if(!rehberler.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Rehber tanımlı değil — Operasyon &gt; Tanımlamalar bölümünden rehber ekleyin.</p>';
+  rehberler.forEach(reh=>{
+    const rTur=turlar.filter(t=>t.rehberAd===(reh.ad||''));
+    const tik=_rtSecTur?(' onclick="rtAta(\''+reh.id+'\')" '):'';
+    const stil=_rtSecTur?(reh._cak?'background:#fef2f2;outline:1.5px dashed #dc2626;':'background:#f0fdf4;outline:1.5px dashed #16a34a;cursor:pointer;'):'';
+    h+='<div'+tik+'style="display:grid;grid-template-columns:180px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:34px;position:relative;'+stil+'border-radius:6px">'
+     +'<div style="font-size:.78rem;font-weight:700;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(reh.ad||'—')
+     +' <span style="font-weight:600;color:var(--muted);font-size:.68rem">'+reh._yuk+' gün</span>'
+     +(_rtSecTur&&reh._cak?' <span style="color:#dc2626;font-size:.64rem;font-weight:800">ÇAKIŞIYOR</span>':'')+'</div>';
+    rTur.forEach(t=>{ const b=bar(t);
+      const cak=rTur.some(o=>o!==t&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end));
+      h+='<div onclick="event.stopPropagation();rtKaldir(\''+t.pkgId+'\',\''+t.kalkis+'\')" title="'+esc(t.kod)+' '+_fmtDateTR(t.kalkis)+'→'+_fmtDateTR(t.end)+' · '+t.pax+' pax — atamayı kaldırmak için tıkla" style="grid-row:1;grid-column:'+(b.c1+1)+'/'+(b.c2+1)+';height:22px;line-height:22px;background:'+(cak?'#dc2626':'#1a3c5e')+';color:#fff;border-radius:'+(b.tasBas?'0':'6px')+' '+(b.tasSon?'0 0':'6px 6px')+' '+(b.tasBas?'0':'6px')+';font-size:.64rem;font-weight:800;padding:0 6px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:1px">'+esc(t.kod)+' · '+t.pax+'</div>';
+    });
+    h+='</div>';
+  });
+  h+='</div></div>';
+  box.innerHTML=h;
+}
 function opsTab(t){
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
-  ['anasayfa','gunluk','grup','transfer','tanim'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
+  ['anasayfa','gunluk','rehtak','grup','transfer','tanim'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
   if(t==='anasayfa') renderOpsAnasayfa();
+  else if(t==='rehtak') renderRehberTakvim();
   else if(t==='gunluk') renderOperasyonPage();
   else if(t==='grup') renderOpsGrup();
   else if(t==='transfer') renderOpsTransfer();
