@@ -1841,7 +1841,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v173 · 19.08.2026';
+const APP_VER='v174 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9298,21 +9298,23 @@ async function _docPush(col){
   const del=[...sig.keys()].filter(id=>!cur.has(id));
   for(let i=0;i<ups.length;i+=50){
     const dilim=ups.slice(i,i+50);
-    const r=await sb.from('doc_rows').upsert(dilim);
+    let r; try{ r=await sb.from('doc_rows').upsert(dilim); }catch(e){ r={error:e}; }
     if(r.error){ // toplu gitmedi (ör. statement timeout) → tek tek dene
       const fail=[]; let sonHata=r.error;
       for(const u of dilim){
-        let r2=await sb.from('doc_rows').upsert(u);
-        if(r2.error){ await new Promise(x=>setTimeout(x,700)); r2=await sb.from('doc_rows').upsert(u); }
+        let r2; try{ r2=await sb.from('doc_rows').upsert(u); }catch(e){ r2={error:e}; }
+        if(r2.error){ await new Promise(x=>setTimeout(x,700)); try{ r2=await sb.from('doc_rows').upsert(u); }catch(e){ r2={error:e}; } }
         if(r2.error){ fail.push(u); sig.delete(u.id); sonHata=r2.error; }
       }
       if(fail.length){ ups.slice(i+50).forEach(u=>sig.delete(u.id)); throw new Error(fail.length+' satır gönderilemedi ('+col+') — '+(sonHata&&sonHata.message||'')); }
     }
   }
-  if(del.length){
-    const r=await sb.from('doc_rows').delete().eq('col',col).in('id',del);
-    if(r.error) throw r.error;
-    del.forEach(id=>sig.delete(id));
+  // Silme id'leri URL'de taşınır — binlerce id tek istekte Safari'yi patlatıyordu ("TypeError: Load failed"). 100'lük parçalar.
+  for(let i=0;i<del.length;i+=100){
+    const parca=del.slice(i,i+100);
+    let r; try{ r=await sb.from('doc_rows').delete().eq('col',col).in('id',parca); }catch(e){ r={error:e}; }
+    if(r.error) throw new Error('Silme gönderilemedi ('+col+', '+(i+parca.length)+'/'+del.length+') — '+(r.error.message||r.error));
+    parca.forEach(id=>sig.delete(id));
   }
 }
 function _onDocRemote(p){
@@ -9563,13 +9565,13 @@ async function _cloudPushKindIc(kind){
     if(ups.length){
       const fail=[]; let sonHata=null;
       for(const u of ups){
-        let r=await sb.from('packages').upsert(u);
-        if(r.error){ await new Promise(x=>setTimeout(x,900)); r=await sb.from('packages').upsert(u); }
+        let r; try{ r=await sb.from('packages').upsert(u); }catch(e){ r={error:e}; }
+        if(r.error){ await new Promise(x=>setTimeout(x,900)); try{ r=await sb.from('packages').upsert(u); }catch(e){ r={error:e}; } }
         if(r.error){ fail.push(u.id); _sigPkg.delete(u.id); sonHata=r.error; }
       }
       if(fail.length) throw new Error(fail.length+'/'+ups.length+' paket gönderilemedi — '+(sonHata&&sonHata.message||''));
     }
-    if(del.length){ const r=await sb.from('packages').delete().in('id',del); if(r.error) throw r.error; del.forEach(id=>_sigPkg.delete(id)); }
+    for(let i=0;i<del.length;i+=100){ const p=del.slice(i,i+100); let r; try{ r=await sb.from('packages').delete().in('id',p); }catch(e){ r={error:e}; } if(r.error) throw r.error; p.forEach(id=>_sigPkg.delete(id)); }
   } else if(kind==='operators'){
     const ups=[]; const cur=new Set();
     _opCache.forEach(o=>{ if(!o||!o.id) return; cur.add(o.id); const sig=JSON.stringify(o); if(_sigOp.get(o.id)!==sig){ ups.push({id:o.id,data:o,updated_at:new Date().toISOString(),updated_by:sbUser.id}); _sigOp.set(o.id,sig); } });
@@ -9582,7 +9584,7 @@ async function _cloudPushKindIc(kind){
         if(fail.length) throw new Error(fail.length+'/'+ups.length+' operatör gönderilemedi — '+(sonHata&&sonHata.message||''));
       }
     }
-    if(del.length){ const r=await sb.from('operators').delete().in('id',del); if(r.error) throw r.error; del.forEach(id=>_sigOp.delete(id)); }
+    for(let i=0;i<del.length;i+=100){ const p=del.slice(i,i+100); let r; try{ r=await sb.from('operators').delete().in('id',p); }catch(e){ r={error:e}; } if(r.error) throw r.error; p.forEach(id=>_sigOp.delete(id)); }
   } else if(_KIND2COL[kind]){
     await _docPush(_KIND2COL[kind]);
   } else if(kind==='tanimlar'||kind==='gorevler'||kind==='duyurular'||kind==='ekip'){
