@@ -1457,6 +1457,23 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <select id="rzFOp" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm operatörler</option></select>
         <select id="rzFDurum" onchange="renderRezvListe()" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">Tüm durumlar</option><option value="aktif">Aktif (iptal hariç)</option><option value="iptal">İptal</option><option value="bekliyor">Açılım bekliyor</option><option value="acildi">Açıldı</option></select>
       </div>
+      <div id="rzTopluBar" style="display:none;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:8px 12px;margin-bottom:.8rem;align-items:center;gap:10px;flex-wrap:wrap">
+        <b style="font-size:.82rem;color:#1d4ed8"><span id="rzSecN">0</span> seçili</b>
+        <select id="rzTopluAks" onchange="rzTopluAksiyon()" style="padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit">
+          <option value="">Toplu işlem seç…</option>
+          <option value="urun">Ürüne bağla</option>
+          <option value="kalkis">Kalkış tarihi ata</option>
+          <option value="operator">Operatör ata</option>
+          <option value="iptal">İptal işaretle</option>
+          <option value="aktif">İptali kaldır</option>
+          <option value="sil">Sil</option>
+        </select>
+        <input id="rzTopluUrun" list="rzTopluUrunL" placeholder="Ürün kodu…" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit;width:150px"><datalist id="rzTopluUrunL"></datalist>
+        <input id="rzTopluKalkis" type="date" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit">
+        <input id="rzTopluOp" list="rzTopluOpL" placeholder="Operatör…" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit;width:150px"><datalist id="rzTopluOpL"></datalist>
+        <button class="btn btn-primary btn-sm" onclick="rzTopluUygula()">Uygula</button>
+        <button class="btn btn-outline btn-sm" onclick="window._rzSec.clear();renderRezvListe()">Seçimi temizle</button>
+      </div>
       <div class="card" style="padding:.4rem .6rem"><table class="rzlst" id="rzLst"></table></div>
     </div>
 
@@ -1841,7 +1858,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v174 · 19.08.2026';
+const APP_VER='v175 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8280,12 +8297,16 @@ function renderRezvListe(){
   });
   list.sort((a,b)=>String(b.satisTarihi||'').localeCompare(String(a.satisTarihi||'')));
   const tipAd={urun:'ÜRÜN',otel:'OTEL',transfer:'TRANSFER'};
-  let h='<thead><tr><th>Tip</th><th>Operatör</th><th>Voucher</th><th>Ürün · Kalkış</th><th>Müşteriler</th><th>Pax</th><th>Satış</th><th>Durum</th><th>Konfirme</th></tr></thead><tbody>';
+  window._rzSec=window._rzSec||new Set();
+  window._rzSonListe=list.map(r=>r.id);
+  const tumSecili=list.length&&list.every(r=>window._rzSec.has(r.id));
+  let h='<thead><tr><th style="width:30px"><input type="checkbox" '+(tumSecili?'checked ':'')+'onclick="event.stopPropagation()" onchange="rzSecTum(this.checked)" title="Filtredeki tümünü seç"></th><th>Tip</th><th>Operatör</th><th>Voucher</th><th>Ürün · Kalkış</th><th>Müşteriler</th><th>Pax</th><th>Satış</th><th>Durum</th><th>Konfirme</th></tr></thead><tbody>';
   list.forEach(r=>{
     const d=rzDurum(r);
     const hk=(r.kartlar||[]).filter(k=>k.tip!=='ulasim');
     const konf=hk.length?`${hk.filter(k=>k.konfirme==='Evet').length}/${hk.length}`:'—';
     h+=`<tr onclick="rzAc('${r.id}')"${r.durum==='iptal'?' style="background:#fef2f2"':''}>
+      <td onclick="event.stopPropagation()"><input type="checkbox" ${window._rzSec.has(r.id)?'checked ':''}onchange="rzSecTog('${r.id}',this.checked)"></td>
       <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span>${r.durum==='iptal'?' <span style="background:#dc2626;color:#fff;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">İPTAL</span>':''}</td>
       <td>${esc(r.operator||'—')}</td><td><b>${esc(r.voucher||'—')}</b></td>
       <td>${(()=>{ const pkgVar=r.pkgId&&getPackages().some(p=>p.id===r.pkgId);
@@ -8297,8 +8318,9 @@ function renderRezvListe(){
       <td>${konf}</td></tr>`;
   });
   h+='</tbody>';
-  if(!list.length) h+='<tbody><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
+  if(!list.length) h+='<tbody><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
   document.getElementById('rzLst').innerHTML=h;
+  rzTopluBarGuncel();
   const bugun=new Date().toISOString().slice(0,10);
   document.getElementById('rzMets').innerHTML=
     `<div class="rzmet"><div class="n">${rez.length}</div><div class="l">Rezervasyon</div></div>`+
@@ -9079,6 +9101,62 @@ function rzCiftTemizle(){
     try{renderRezvListe();}catch(e){}
     showToast(silinecek.size+' mükerrer kopya silindi — '+getRezv().length+' rezervasyon kaldı','success',6000);
   });
+}
+function rzSecTog(id,on){ window._rzSec=window._rzSec||new Set(); on?window._rzSec.add(id):window._rzSec.delete(id); rzTopluBarGuncel(); }
+function rzSecTum(on){ window._rzSec=window._rzSec||new Set(); (window._rzSonListe||[]).forEach(id=>on?window._rzSec.add(id):window._rzSec.delete(id)); renderRezvListe(); }
+function rzTopluBarGuncel(){
+  const bar=document.getElementById('rzTopluBar'); if(!bar) return;
+  const n=(window._rzSec||new Set()).size;
+  bar.style.display=n?'flex':'none';
+  const ne=document.getElementById('rzSecN'); if(ne) ne.textContent=n;
+}
+function rzTopluAksiyon(){
+  const a=document.getElementById('rzTopluAks').value;
+  document.getElementById('rzTopluUrun').style.display=a==='urun'?'':'none';
+  document.getElementById('rzTopluKalkis').style.display=(a==='urun'||a==='kalkis')?'':'none';
+  document.getElementById('rzTopluOp').style.display=a==='operator'?'':'none';
+  if(a==='urun'){ const dl=document.getElementById('rzTopluUrunL'); if(dl) dl.innerHTML=getPackages().filter(p=>pkgDurum(p)!=='arsiv').map(p=>`<option value="${esc(p.paketKodu||'')}">${esc(p.paketAdi||'')}</option>`).join(''); }
+  if(a==='operator'){ const dl=document.getElementById('rzTopluOpL'); if(dl) dl.innerHTML=_rzOpAdlar().map(o=>`<option value="${esc(o)}">`).join(''); }
+}
+function rzTopluUygula(){
+  const a=document.getElementById('rzTopluAks').value;
+  const sec=[...(window._rzSec||new Set())];
+  if(!a){ showToast('Önce toplu işlem seçin','error'); return; }
+  if(!sec.length){ showToast('Seçili rezervasyon yok','error'); return; }
+  const rez=getRezv(); const hedef=rez.filter(r=>sec.includes(r.id));
+  const yap=()=>{
+    let n=0;
+    if(a==='urun'){
+      const kod=(document.getElementById('rzTopluUrun').value||'').trim();
+      if(!kod){ showToast('Ürün kodu girin','error'); return; }
+      const pkg=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(kod));
+      const uzm=pkg?null:_uzKodBul(kod);
+      if(!pkg&&!uzm){ showToast('"'+kod+'" kodu ürünlerde tanımlı değil','error',5000); return; }
+      const kalkis=document.getElementById('rzTopluKalkis').value||'';
+      hedef.forEach(r=>{ r.tip='urun'; r.urunKod=kod;
+        if(pkg){ r.pkgId=pkg.id; } else { r.pkgId=uzm.pkg.id; r.uzatmaHafta=uzm.hafta; }
+        if(kalkis) r.kalkis=kalkis; n++; });
+    } else if(a==='kalkis'){
+      const kalkis=document.getElementById('rzTopluKalkis').value;
+      if(!kalkis){ showToast('Kalkış tarihi seçin','error'); return; }
+      hedef.forEach(r=>{ r.kalkis=kalkis; n++; });
+    } else if(a==='operator'){
+      const op=(document.getElementById('rzTopluOp').value||'').trim();
+      if(!op){ showToast('Operatör adı girin','error'); return; }
+      hedef.forEach(r=>{ r.operator=op; n++; });
+    } else if(a==='iptal'){
+      const bugun=new Date().toISOString().slice(0,10);
+      hedef.forEach(r=>{ r.durum='iptal'; if(!r.iptalTarihi) r.iptalTarihi=bugun; n++; });
+    } else if(a==='aktif'){
+      hedef.forEach(r=>{ if(r.durum==='iptal'){ r.durum=''; r.iptalTarihi=''; } n++; });
+    } else if(a==='sil'){
+      for(let i=rez.length-1;i>=0;i--) if(sec.includes(rez[i].id)){ rez.splice(i,1); n++; }
+    }
+    rzSave(); window._rzSec.clear(); renderRezvListe();
+    showToast(n+' rezervasyon güncellendi','success');
+  };
+  if(a==='sil') showConfirm('⚠️','Toplu Silme',sec.length+' rezervasyon kalıcı olarak silinecek. Emin misiniz?','Sil',yap);
+  else yap();
 }
 function rzKodEsle(){
   const rezv=getRezv(); let bagli=0; const kalan=new Set();
