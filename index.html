@@ -1841,7 +1841,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v171 · 19.08.2026';
+const APP_VER='v172 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9295,8 +9295,17 @@ async function _docPush(col){
   });
   const del=[...sig.keys()].filter(id=>!cur.has(id));
   for(let i=0;i<ups.length;i+=50){
-    const r=await sb.from('doc_rows').upsert(ups.slice(i,i+50));
-    if(r.error){ ups.slice(i).forEach(u=>sig.delete(u.id)); throw r.error; } // yalnız gönderilemeyenler geri alınır
+    const dilim=ups.slice(i,i+50);
+    const r=await sb.from('doc_rows').upsert(dilim);
+    if(r.error){ // toplu gitmedi (ör. statement timeout) → tek tek dene
+      const fail=[]; let sonHata=r.error;
+      for(const u of dilim){
+        let r2=await sb.from('doc_rows').upsert(u);
+        if(r2.error){ await new Promise(x=>setTimeout(x,700)); r2=await sb.from('doc_rows').upsert(u); }
+        if(r2.error){ fail.push(u); sig.delete(u.id); sonHata=r2.error; }
+      }
+      if(fail.length){ ups.slice(i+50).forEach(u=>sig.delete(u.id)); throw new Error(fail.length+' satır gönderilemedi ('+col+') — '+(sonHata&&sonHata.message||'')); }
+    }
   }
   if(del.length){
     const r=await sb.from('doc_rows').delete().eq('col',col).in('id',del);
@@ -9548,13 +9557,29 @@ async function _cloudPushKindIc(kind){
     const ups=[]; const cur=new Set();
     _pkgCache.forEach(p=>{ if(!p||!p.id) return; cur.add(p.id); const sig=JSON.stringify(p); if(_sigPkg.get(p.id)!==sig){ ups.push(_pkgRow(p)); _sigPkg.set(p.id,sig); } });
     const del=[..._sigPkg.keys()].filter(id=>!cur.has(id));
-    if(ups.length){ const r=await sb.from('packages').upsert(ups); if(r.error){ ups.forEach(u=>_sigPkg.delete(u.id)); throw r.error; } }
+    // Görselli paketler büyük — hepsi tek sorguda gidince "statement timeout" oluyordu. TEK TEK gönder + 1 retry.
+    if(ups.length){
+      const fail=[]; let sonHata=null;
+      for(const u of ups){
+        let r=await sb.from('packages').upsert(u);
+        if(r.error){ await new Promise(x=>setTimeout(x,900)); r=await sb.from('packages').upsert(u); }
+        if(r.error){ fail.push(u.id); _sigPkg.delete(u.id); sonHata=r.error; }
+      }
+      if(fail.length) throw new Error(fail.length+'/'+ups.length+' paket gönderilemedi — '+(sonHata&&sonHata.message||''));
+    }
     if(del.length){ const r=await sb.from('packages').delete().in('id',del); if(r.error) throw r.error; del.forEach(id=>_sigPkg.delete(id)); }
   } else if(kind==='operators'){
     const ups=[]; const cur=new Set();
     _opCache.forEach(o=>{ if(!o||!o.id) return; cur.add(o.id); const sig=JSON.stringify(o); if(_sigOp.get(o.id)!==sig){ ups.push({id:o.id,data:o,updated_at:new Date().toISOString(),updated_by:sbUser.id}); _sigOp.set(o.id,sig); } });
     const del=[..._sigOp.keys()].filter(id=>!cur.has(id));
-    if(ups.length){ const r=await sb.from('operators').upsert(ups); if(r.error){ ups.forEach(u=>_sigOp.delete(u.id)); throw r.error; } }
+    if(ups.length){
+      let r=await sb.from('operators').upsert(ups);
+      if(r.error){ // toplu gitmedi → tek tek
+        const fail=[]; let sonHata=r.error;
+        for(const u of ups){ const r2=await sb.from('operators').upsert(u); if(r2.error){ fail.push(u.id); _sigOp.delete(u.id); sonHata=r2.error; } }
+        if(fail.length) throw new Error(fail.length+'/'+ups.length+' operatör gönderilemedi — '+(sonHata&&sonHata.message||''));
+      }
+    }
     if(del.length){ const r=await sb.from('operators').delete().in('id',del); if(r.error) throw r.error; del.forEach(id=>_sigOp.delete(id)); }
   } else if(_KIND2COL[kind]){
     await _docPush(_KIND2COL[kind]);
