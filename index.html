@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v201 · 20.08.2026';
+const APP_VER='v202 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10376,7 +10376,7 @@ function rtTurSec(key){ const S=window._rtSecSet; S.has(key)?S.delete(key):S.add
 function rtSecTemizle(){ window._rtSecSet.clear(); renderRehberTakvim(); }
 function rtAta(rehId){
   const S=[...window._rtSecSet]; if(!S.length) return;
-  const turlar=_rtTurlar(_rtBas,_rtSon);
+  const turlar=_rtTurlar('1900-01-01','2999-12-31'); // filtreyle genişleyen şeritte pencere dışı turlar da atanabilir
   const secTurlar=S.map(k=>{const [p,d]=k.split('|');return turlar.find(t=>t.pkgId===p&&t.kalkis===d);}).filter(Boolean);
   if(!secTurlar.length) return;
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
