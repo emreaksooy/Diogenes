@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v192 · 20.08.2026';
+const APP_VER='v193 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10340,6 +10340,8 @@ function opsMapQuick(n){ _opsMapDate=_isoAdd(_opsToday(),n); _opsMapLbl(); _opsR
 let _rtAy=null; window._rtSecSet=window._rtSecSet||new Set();
 let _rtGorunum=(()=>{try{return localStorage.getItem('dmc_rtGorunum')||'tur';}catch(e){return 'tur';}})();
 function rtGorunumSec(v){ _rtGorunum=v; try{localStorage.setItem('dmc_rtGorunum',v);}catch(e){} renderRehberTakvim(); }
+let _rtFltOp='', _rtFltKod='';
+function rtFltSet(alan,v){ if(alan==='op')_rtFltOp=v; else _rtFltKod=v; renderRehberTakvim(); }
 function _rtAyStr(d){ return d.toISOString().slice(0,7); }
 function rtAyNav(n){ const [y,m]=(_rtAy||_rtAyStr(new Date())).split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); _rtAy=d.toISOString().slice(0,7); window._rtSecSet.clear(); renderRehberTakvim(); }
 function _rtTurlar(){
@@ -10406,7 +10408,12 @@ function renderRehberTakvim(){
   const ayBas=_rtAy+'-01', aySon=_rtAy+'-'+String(ayGun).padStart(2,'0');
   const ayAd=new Date(Date.UTC(y,m-1,1)).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
   const bugun=new Date().toISOString().slice(0,10);
-  const turlar=_rtTurlar();
+  const _tumTurlar=_rtTurlar();
+  const _opSecenek=[...new Set(_tumTurlar.map(t=>t.op).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const _kodSecenek=[...new Set(_tumTurlar.map(t=>t.kod).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  if(_rtFltOp&&!_opSecenek.includes(_rtFltOp)) _rtFltOp='';
+  if(_rtFltKod&&!_kodSecenek.includes(_rtFltKod)) _rtFltKod='';
+  const turlar=_tumTurlar.filter(t=>(!_rtFltOp||t.op===_rtFltOp)&&(!_rtFltKod||t.kod===_rtFltKod));
   const S=window._rtSecSet;
   [...S].forEach(k=>{ const [p,d]=k.split('|'); if(!turlar.some(t=>t.pkgId===p&&t.kalkis===d)) S.delete(k); });
   const secTurlar=[...S].map(k=>{const [p,d]=k.split('|');return turlar.find(t=>t.pkgId===p&&t.kalkis===d);}).filter(Boolean);
@@ -10417,6 +10424,9 @@ function renderRehberTakvim(){
    +'<button class="btn btn-outline btn-sm" onclick="rtAyNav(1)">▶</button>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#f59e0b;border-radius:3px;display:inline-block"></span> Açıkta ('+acikta+')</span>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#16a34a;border-radius:3px;display:inline-block"></span> Rehberli ('+(turlar.length-acikta)+')</span>'
+   +'<select onchange="rtFltSet(\'op\',this.value)" style="padding:6px 9px;border:1.5px solid '+(_rtFltOp?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit'+(_rtFltOp?';background:#eff6ff':'')+'"><option value="">Tüm operatörler</option>'+_opSecenek.map(o=>'<option value="'+esc(o)+'"'+(o===_rtFltOp?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>'
+   +'<select onchange="rtFltSet(\'kod\',this.value)" style="padding:6px 9px;border:1.5px solid '+(_rtFltKod?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit'+(_rtFltKod?';background:#eff6ff':'')+'"><option value="">Tüm turlar</option>'+_kodSecenek.map(k=>'<option value="'+esc(k)+'"'+(k===_rtFltKod?' selected':'')+'>'+esc(k)+'</option>').join('')+'</select>'
+   +((_rtFltOp||_rtFltKod)?'<button onclick="_rtFltOp=\'\';_rtFltKod=\'\';renderRehberTakvim()" style="border:none;background:#fee2e2;color:#dc2626;border-radius:7px;cursor:pointer;font-size:.74rem;font-weight:700;padding:6px 10px">✕ Filtre</button>':'')
    +'<span style="display:inline-flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden">'
    +'<button onclick="rtGorunumSec(\'tur\')" style="border:none;cursor:pointer;padding:6px 12px;font-size:.76rem;font-weight:700;background:'+(_rtGorunum!=='rehber'?'#1a3c5e':'transparent')+';color:'+(_rtGorunum!=='rehber'?'#fff':'var(--muted)')+'">Turlar</button>'
    +'<button onclick="rtGorunumSec(\'rehber\')" style="border:none;cursor:pointer;padding:6px 12px;font-size:.76rem;font-weight:700;background:'+(_rtGorunum==='rehber'?'#1a3c5e':'transparent')+';color:'+(_rtGorunum==='rehber'?'#fff':'var(--muted)')+'">Rehberler</button></span>'
