@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v194 · 20.08.2026';
+const APP_VER='v195 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10340,8 +10340,10 @@ function opsMapQuick(n){ _opsMapDate=_isoAdd(_opsToday(),n); _opsMapLbl(); _opsR
 window._rtSecSet=window._rtSecSet||new Set();
 let _rtGorunum=(()=>{try{return localStorage.getItem('dmc_rtGorunum')||'tur';}catch(e){return 'tur';}})();
 function rtGorunumSec(v){ _rtGorunum=v; try{localStorage.setItem('dmc_rtGorunum',v);}catch(e){} renderRehberTakvim(); }
-let _rtFltOp='', _rtFltKod='';
-function rtFltSet(alan,v){ if(alan==='op')_rtFltOp=v; else _rtFltKod=v; renderRehberTakvim(); }
+const _rtFlt={op:new Set(),kod:new Set(),reh:new Set()};
+function rtFltAc(alan){ window._rtFltAcik=(window._rtFltAcik===alan)?null:alan; renderRehberTakvim(); }
+function rtFltTog(alan,vEnc){ const v=decodeURIComponent(vEnc); const S=_rtFlt[alan]; S.has(v)?S.delete(v):S.add(v); renderRehberTakvim(); }
+function rtFltTemizle(alan){ if(alan){_rtFlt[alan].clear();} else {_rtFlt.op.clear();_rtFlt.kod.clear();_rtFlt.reh.clear();} renderRehberTakvim(); }
 let _rtBas=null,_rtSon=null; const _RT_GW=24; // gün sütun genişliği px
 function _rtAyBasi(iso){ return String(iso).slice(0,7)+'-01'; }
 function _rtAyEkle(iso,n){ const p=String(iso).split('-').map(Number); return new Date(Date.UTC(p[0],p[1]-1+n,1)).toISOString().slice(0,10); }
@@ -10427,9 +10429,25 @@ function renderRehberTakvim(){
   const _tumTurlar=_rtTurlar(bas,son);
   const _opSecenek=[...new Set(_tumTurlar.map(t=>t.op).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   const _kodSecenek=[...new Set(_tumTurlar.map(t=>t.kod).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
-  if(_rtFltOp&&!_opSecenek.includes(_rtFltOp)) _rtFltOp='';
-  if(_rtFltKod&&!_kodSecenek.includes(_rtFltKod)) _rtFltKod='';
-  const turlar=_tumTurlar.filter(t=>(!_rtFltOp||t.op===_rtFltOp)&&(!_rtFltKod||t.kod===_rtFltKod));
+  const _rehSecenek=[{v:'__acik',ad:'⚠ Atanmamış'}].concat((getTanimlar().rehberler||[]).map(r=>({v:r.ad||'',ad:r.ad||'—'})).filter(x=>x.v).sort((a,b)=>a.ad.localeCompare(b.ad,'tr')));
+  const turlar=_tumTurlar.filter(t=>
+    (!_rtFlt.op.size||_rtFlt.op.has(t.op))
+    &&(!_rtFlt.kod.size||_rtFlt.kod.has(t.kod))
+    &&(!_rtFlt.reh.size||(t.rehberAd?_rtFlt.reh.has(t.rehberAd):_rtFlt.reh.has('__acik'))));
+  const _fltBtn=(alan,ad,secenekler)=>{
+    const S=_rtFlt[alan]; const acik=window._rtFltAcik===alan;
+    let hh='<span style="position:relative;display:inline-block">'
+     +'<button onclick="rtFltAc(\''+alan+'\')" style="cursor:pointer;padding:6px 10px;border:1.5px solid '+(S.size?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-weight:600;font-family:inherit;background:'+(S.size?'#eff6ff':'#fff')+';color:'+(S.size?'#1d4ed8':'var(--text)')+'">'+ad+(S.size?' ('+S.size+')':'')+' ▾</button>';
+    if(acik){
+      hh+='<div style="position:absolute;top:calc(100% + 4px);left:0;z-index:60;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:8px;min-width:200px;max-height:270px;overflow:auto">'
+       +secenekler.map(o=>{ const v=(typeof o==='string')?o:o.v, et=(typeof o==='string')?o:o.ad;
+          return '<label style="display:flex;gap:7px;align-items:center;font-size:.78rem;padding:3px 4px;cursor:pointer;white-space:nowrap"><input type="checkbox" '+(S.has(v)?'checked ':'')+'onchange="rtFltTog(\''+alan+'\',\''+encodeURIComponent(v)+'\')"> '+esc(et)+'</label>'; }).join('')
+       +'<div style="display:flex;gap:6px;margin-top:7px;border-top:1px solid var(--border);padding-top:7px">'
+       +'<button onclick="rtFltTemizle(\''+alan+'\')" style="flex:1;border:1px solid var(--border);background:#fff;border-radius:7px;cursor:pointer;font-size:.72rem;padding:4px">Temizle</button>'
+       +'<button onclick="rtFltAc(null)" style="flex:1;border:none;background:#1a3c5e;color:#fff;border-radius:7px;cursor:pointer;font-size:.72rem;font-weight:700;padding:4px">Tamam</button></div></div>';
+    }
+    return hh+'</span>';
+  };
   const S=window._rtSecSet;
   [...S].forEach(k=>{ const [p,d]=k.split('|'); if(!_tumTurlar.some(t=>t.pkgId===p&&t.kalkis===d)) S.delete(k); });
   const secTurlar=[...S].map(k=>{const [p,d]=k.split('|');return _tumTurlar.find(t=>t.pkgId===p&&t.kalkis===d);}).filter(Boolean);
@@ -10440,9 +10458,10 @@ function renderRehberTakvim(){
    +'<button class="btn btn-outline btn-sm" onclick="rtKaydir(1)" title="Bir ay ileri kaydır">▶</button>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#f59e0b;border-radius:3px;display:inline-block"></span> Açıkta ('+acikta+')</span>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#16a34a;border-radius:3px;display:inline-block"></span> Rehberli ('+(turlar.length-acikta)+')</span>'
-   +'<select onchange="rtFltSet(\'op\',this.value)" style="padding:6px 9px;border:1.5px solid '+(_rtFltOp?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit'+(_rtFltOp?';background:#eff6ff':'')+'"><option value="">Tüm operatörler</option>'+_opSecenek.map(o=>'<option value="'+esc(o)+'"'+(o===_rtFltOp?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>'
-   +'<select onchange="rtFltSet(\'kod\',this.value)" style="padding:6px 9px;border:1.5px solid '+(_rtFltKod?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit'+(_rtFltKod?';background:#eff6ff':'')+'"><option value="">Tüm turlar</option>'+_kodSecenek.map(k=>'<option value="'+esc(k)+'"'+(k===_rtFltKod?' selected':'')+'>'+esc(k)+'</option>').join('')+'</select>'
-   +((_rtFltOp||_rtFltKod)?'<button onclick="_rtFltOp=\'\';_rtFltKod=\'\';renderRehberTakvim()" style="border:none;background:#fee2e2;color:#dc2626;border-radius:7px;cursor:pointer;font-size:.74rem;font-weight:700;padding:6px 10px">✕ Filtre</button>':'')
+   +_fltBtn('op','Operatör',_opSecenek)
+   +_fltBtn('kod','Tur',_kodSecenek)
+   +_fltBtn('reh','Rehber',_rehSecenek)
+   +((_rtFlt.op.size||_rtFlt.kod.size||_rtFlt.reh.size)?'<button onclick="rtFltTemizle()" style="border:none;background:#fee2e2;color:#dc2626;border-radius:7px;cursor:pointer;font-size:.74rem;font-weight:700;padding:6px 10px">✕ Filtreleri temizle</button>':'')
    +'<span style="display:inline-flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden">'
    +'<button onclick="rtGorunumSec(\'tur\')" style="border:none;cursor:pointer;padding:6px 12px;font-size:.76rem;font-weight:700;background:'+(_rtGorunum!=='rehber'?'#1a3c5e':'transparent')+';color:'+(_rtGorunum!=='rehber'?'#fff':'var(--muted)')+'">Turlar</button>'
    +'<button onclick="rtGorunumSec(\'rehber\')" style="border:none;cursor:pointer;padding:6px 12px;font-size:.76rem;font-weight:700;background:'+(_rtGorunum==='rehber'?'#1a3c5e':'transparent')+';color:'+(_rtGorunum==='rehber'?'#fff':'var(--muted)')+'">Rehberler</button></span>'
