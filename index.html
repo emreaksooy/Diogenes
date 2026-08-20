@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v185 · 20.08.2026';
+const APP_VER='v186 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8481,8 +8481,16 @@ function rzSejourImport(evt){
   rd.onload=e=>{ try{
     const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
     const sh=wb.Sheets[wb.SheetNames[0]];
-    const rows=XLSX.utils.sheet_to_json(sh,{header:1,raw:true});
+    let rows=XLSX.utils.sheet_to_json(sh,{header:1,raw:true});
     if(!rows.length){ showToast('Dosya boş','error'); return; }
+    // başlık satırı her zaman ilk satır olmayabilir — ilk 15 satırda ara
+    let hdrIdx=rows.findIndex((r,i)=>i<15&&Array.isArray(r)&&r.some(x=>String(x||'').trim()==='Voucher')&&r.some(x=>{const t=String(x||'').trim();return t==='Misafir Adı'||t==='Otel Adı';}));
+    if(hdrIdx>0) rows=rows.slice(hdrIdx);
+    if(hdrIdx<0){
+      // hiç bulunamadı: mevcut ilk satırla devam et (eski davranış), hata mesajı kolon listesini de göstersin
+      const g=(rows[0]||[]).map(x=>String(x||'').trim()).filter(Boolean).slice(0,8).join(', ');
+      if(!(rows[0]||[]).some(x=>String(x||'').trim()==='Voucher')){ showToast('Bu dosyada başlık satırı bulunamadı. İlk satırda görünenler: '+(g||'(boş)')+' — doğru dosyayı (Rezervasyon Detay, Misafir Adı kolonlu) seçtiğinizden emin olun','error',10000); return; }
+    }
     const hdr=rows[0].map(x=>String(x||'').trim());
     const H=n=>hdr.findIndex(h=>_norm(h)===_norm(n));
     const iTip=H('Rez. Tipi'), iOp=H('Operatör'), iV=H('Voucher'), iOtel=H('Otel Adı'), iAd=H('Misafir Adı'),
