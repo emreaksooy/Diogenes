@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v209 · 20.08.2026';
+const APP_VER='v210 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10427,6 +10427,15 @@ function rtAta(rehId){
     showConfirm('⚠️','Tarih Çakışması',parca.join('\n\n')+'\n\nYine de atansın mı?','Yine de Ata',yap);
   } else yap();
 }
+function rtOzetExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const aoa=window._rtOzetAoa; if(!aoa||!aoa.length){ showToast('Önce Rehberler görünümünü açın','error'); return; }
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=aoa[0].map((h,i)=>({wch:Math.max(12,String(h).length+2)}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Rehber Dağılımı');
+  XLSX.writeFile(wb,'rehber-operator-dagilimi_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
 function rtBolAc(){ window._rtBolum=window._rtBolum?null:1; renderRehberTakvim(); }
 function rtBolSet(rzId,b,v){ window._rtBolSecim=window._rtBolSecim||{}; (window._rtBolSecim[rzId]=window._rtBolSecim[rzId]||{})[b]=Math.max(0,parseInt(v)||0); }
 function rtBolKaydet(){
@@ -10634,7 +10643,18 @@ function renderRehberTakvim(){
         const hucre=(rT2,op)=>{ const g=rT2.filter(t=>(t.op||'—')===op); if(!g.length) return '<td style="padding:5px 9px;border:1px solid #e5e9f0;text-align:center;color:#cbd5e1">—</td>';
           return '<td style="padding:5px 9px;border:1px solid #e5e9f0;text-align:center;white-space:nowrap"><b>'+g.length+'</b> grup · <b>'+g.reduce((t2,x)=>t2+(+x.pax||0),0)+'</b> pax</td>'; };
         const thS='padding:6px 9px;border:1px solid #e5e9f0;background:#1a3c5e;color:#fff;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap';
-        let oz='</div></div></div><div class="card" style="margin-top:12px;overflow-x:auto"><div style="font-weight:800;font-size:.85rem;margin-bottom:8px;color:#1a3c5e">Rehber × Operatör Dağılımı'+(fltAktif?' <span style="font-weight:600;font-size:.72rem;color:var(--muted)">(filtreli)</span>':'')+'</div>'
+        // Excel için veri (aynı filtreli set): Rehber | her op için Grup+Pax | Toplam Grup | Toplam Pax
+        {
+          const aoa=[['Rehber'].concat(opList.flatMap(o=>[o+' Grup',o+' Pax'])).concat(['Toplam Grup','Toplam Pax'])];
+          const veriSatir=(ad,rT2)=>{ const row=[ad];
+            opList.forEach(o=>{ const g=rT2.filter(t=>(t.op||'—')===o); row.push(g.length||0, g.reduce((t2,x)=>t2+(+x.pax||0),0)||0); });
+            row.push(rT2.length, rT2.reduce((t2,x)=>t2+(+x.pax||0),0)); return row; };
+          rehberler.forEach(reh=>{ const rT2=turlar.filter(t=>t.rehberAd===(reh.ad||'')); if(rT2.length) aoa.push(veriSatir(reh.ad||'—',rT2)); });
+          if(acikTur.length&&(!_rtFlt.reh.size||_rtFlt.reh.has('__acik'))) aoa.push(veriSatir('ATANMAMIŞ',acikTur));
+          aoa.push(veriSatir('TOPLAM',turlar));
+          window._rtOzetAoa=aoa;
+        }
+        let oz='</div></div></div><div class="card" style="margin-top:12px;overflow-x:auto"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-weight:800;font-size:.85rem;color:#1a3c5e">Rehber × Operatör Dağılımı'+(fltAktif?' <span style="font-weight:600;font-size:.72rem;color:var(--muted)">(filtreli)</span>':'')+'</div><button class="btn btn-outline btn-sm" onclick="rtOzetExcel()">⬇ Excel İndir</button></div>'
          +'<table style="border-collapse:collapse;font-size:.78rem;min-width:400px"><tr><th style="'+thS+';text-align:left">Rehber</th>'+opList.map(o=>'<th style="'+thS+'">'+esc(o)+'</th>').join('')+'<th style="'+thS+'">Toplam</th></tr>';
         const satirOz=(ad,rT2,vurgu)=>'<tr'+(vurgu?' style="background:#fff7e6"':'')+'><td style="padding:5px 9px;border:1px solid #e5e9f0;font-weight:700;white-space:nowrap">'+ad+'</td>'
           +opList.map(o=>hucre(rT2,o)).join('')
