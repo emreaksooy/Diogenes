@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v183 · 19.08.2026';
+const APP_VER='v184 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9996,6 +9996,14 @@ function _opsTarihler(pkg){
   try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkg.id&&r.durum!=='iptal'&&r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) set.add(r.kalkis); }); }catch(e){}
   return [...set].sort();
 }
+function _opsPaxDetay(pkgId,kalkis){
+  const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+  const ucak=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length:0;
+  let rezvP=0, rezvSay=0;
+  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis&&r.durum!=='iptal'){ const n=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length; if(n){rezvP+=n; rezvSay++;} } }); }catch(e){}
+  return {ucak,rezvP,rezvSay};
+}
+function _rtPaxTip(t){ const d=_opsPaxDetay(t.pkgId,t.kalkis); return ' (uçak listesi: '+d.ucak+' · rezervasyon: '+d.rezvP+' yolcu / '+d.rezvSay+' kayıt)'; }
 function _opsPax(pkgId,kalkis){
   const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
   const ucak=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length:0;
@@ -10279,7 +10287,7 @@ function renderRehberTakvim(){
     const bg=sec?'#b5431f':(t.rehberAd?(cakisan?'#dc2626':'#16a34a'):'#f59e0b');
     h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
      +'<div style="font-size:.74rem;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><b>'+esc(t.kod)+'</b>'+(t.op?' · '+esc(t.op):'')+'<div style="font-size:.66rem;color:var(--muted)">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>'
-     +'<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+' pax'+(t.rehberAd?' · Rehber: '+esc(t.rehberAd):' · AÇIKTA')+'" style="grid-row:1;grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+bg+';color:#fff;border-radius:'+(t.kalkis<ayBas?'0':'7px')+' '+(t.end>aySon?'0 0':'7px 7px')+' '+(t.kalkis<ayBas?'0':'7px')+';font-size:.64rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'
+     +'<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+' pax'+_rtPaxTip(t)+(t.rehberAd?' · Rehber: '+esc(t.rehberAd):' · AÇIKTA')+'" style="grid-row:1;grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+bg+';color:#fff;border-radius:'+(t.kalkis<ayBas?'0':'7px')+' '+(t.end>aySon?'0 0':'7px 7px')+' '+(t.kalkis<ayBas?'0':'7px')+';font-size:.64rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'
      +esc(t.kod)+' · '+t.pax
      +'<div style="font-weight:700;font-size:.62rem;opacity:.95">'+(t.rehberAd?esc(t.rehberAd):'— açıkta —')+'</div></div>'
      +'</div>';
