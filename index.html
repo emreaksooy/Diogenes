@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v208 · 20.08.2026';
+const APP_VER='v209 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10535,7 +10535,7 @@ function renderRehberTakvim(){
    +'<span style="font-size:.74rem;color:var(--muted)">Şerit kaydırılabilir — uca gelince sonraki/önceki ay kendiliğinden eklenir.</span></div>';
   if(secTurlar.length){
     const rehberler=(getTanimlar().rehberler||[]).slice();
-    rehberler.forEach(r=>{ r._yuk=_rtRehYuk(r.ad||'',_tumTurlar,bas,son);
+    rehberler.forEach(r=>{ r._yuk=_rtRehYuk(r.ad||'',turlar,bas,son);
       r._cak=secTurlar.some(st=>_tumTurlar.some(t=>t.rehberAd===(r.ad||'')&&!S.has(t.pkgId+'|'+t.kalkis)&&_rtCakisir(t.kalkis,t.end,st.kalkis,st.end))); });
     rehberler.sort((a,b)=>(a._cak-b._cak)||(a._yuk-b._yuk)||String(a.ad||'').localeCompare(b.ad||'','tr'));
     h+='<div style="margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--border)">'
