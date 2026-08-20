@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v205 · 20.08.2026';
+const APP_VER='v206 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10556,6 +10556,25 @@ function renderRehberTakvim(){
       const rT=turlar.filter(t=>t.rehberAd===(reh.ad||''));
       satir(esc(reh.ad||'—'),_rtRehYuk(reh.ad||'',turlar,bas,son)+' gün · '+rT.length+' tur · '+rT.reduce((t2,x)=>t2+(+x.pax||0),0)+' pax',rT,t=>rT.some(o=>o!==t&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end))?'#dc2626':'#16a34a',(ri%2?'#eef3f9':'#fff'));
     });
+    // ── OPERATÖR DAĞILIM ÖZETİ: rehber × operatör (grup · pax)
+    {
+      const opList=[...new Set(turlar.map(t=>t.op||'—'))].sort((a,b)=>a.localeCompare(b,'tr'));
+      if(opList.length&&(rehberler.length||acikTur.length)){
+        const hucre=(rT2,op)=>{ const g=rT2.filter(t=>(t.op||'—')===op); if(!g.length) return '<td style="padding:5px 9px;border:1px solid #e5e9f0;text-align:center;color:#cbd5e1">—</td>';
+          return '<td style="padding:5px 9px;border:1px solid #e5e9f0;text-align:center;white-space:nowrap"><b>'+g.length+'</b> grup · <b>'+g.reduce((t2,x)=>t2+(+x.pax||0),0)+'</b> pax</td>'; };
+        const thS='padding:6px 9px;border:1px solid #e5e9f0;background:#1a3c5e;color:#fff;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap';
+        let oz='</div></div></div><div class="card" style="margin-top:12px;overflow-x:auto"><div style="font-weight:800;font-size:.85rem;margin-bottom:8px;color:#1a3c5e">Rehber × Operatör Dağılımı'+(fltAktif?' <span style="font-weight:600;font-size:.72rem;color:var(--muted)">(filtreli)</span>':'')+'</div>'
+         +'<table style="border-collapse:collapse;font-size:.78rem;min-width:400px"><tr><th style="'+thS+';text-align:left">Rehber</th>'+opList.map(o=>'<th style="'+thS+'">'+esc(o)+'</th>').join('')+'<th style="'+thS+'">Toplam</th></tr>';
+        const satirOz=(ad,rT2,vurgu)=>'<tr'+(vurgu?' style="background:#fff7e6"':'')+'><td style="padding:5px 9px;border:1px solid #e5e9f0;font-weight:700;white-space:nowrap">'+ad+'</td>'
+          +opList.map(o=>hucre(rT2,o)).join('')
+          +'<td style="padding:5px 9px;border:1px solid #e5e9f0;text-align:center;font-weight:800;white-space:nowrap;background:#f8fafc">'+rT2.length+' grup · '+rT2.reduce((t2,x)=>t2+(+x.pax||0),0)+' pax</td></tr>';
+        rehberler.forEach(reh=>{ const rT2=turlar.filter(t=>t.rehberAd===(reh.ad||'')); if(rT2.length) oz+=satirOz(esc(reh.ad||'—'),rT2,false); });
+        if(acikTur.length&&(!_rtFlt.reh.size||_rtFlt.reh.has('__acik'))) oz+=satirOz('⚠ Atanmamış',acikTur,true);
+        oz+=satirOz('<span style="color:#1a3c5e">TOPLAM</span>',turlar,false);
+        oz+='</table>';
+        h+=oz; h+='<div style="display:none"><div>'; // kapanış dengesi (aşağıdaki genel </div></div> ile)
+      }
+    }
   } else {
     turlar.forEach(t=>{
       const key=t.pkgId+'|'+t.kalkis;
