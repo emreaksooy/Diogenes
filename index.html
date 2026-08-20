@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v195 · 20.08.2026';
+const APP_VER='v196 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10486,7 +10486,7 @@ function renderRehberTakvim(){
   h+='<div class="card" style="padding:.4rem .6rem"><div id="rtScroll" style="overflow-x:auto"><div style="min-width:'+icW+'px">';
   // ay etiket satırı
   h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0">'
-   +'<div></div>';
+   +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);"></div>';
   { let ayb=_rtAyBasi(bas);
     while(ayb<=son){
       const ays=_rtAySonu(ayb);
@@ -10498,19 +10498,19 @@ function renderRehberTakvim(){
   h+='</div>';
   // gün numarası satırı
   h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;border-bottom:1.5px solid var(--border);padding-bottom:3px;margin-bottom:2px">'
-   +'<div style="font-size:.72rem;font-weight:800;color:var(--muted)">'+(_rtGorunum==='rehber'?'REHBER · dönem yükü':'TUR · OPERATÖR')+'</div>'
+   +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.72rem;font-weight:800;color:var(--muted)">'+(_rtGorunum==='rehber'?'REHBER · dönem yükü':'TUR · OPERATÖR')+'</div>'
    +Array.from({length:toplamGun},(_,i)=>{ const iso=_isoAdd(bas,i); const g=+iso.slice(8,10); const ayB=g===1?'border-left:2px solid var(--border);':''; const bg=iso===bugun?'background:#fff3ec;border-radius:4px;':''; return '<div style="text-align:center;font-size:.6rem;color:var(--muted);'+bg+ayB+'">'+g+'</div>'; }).join('')+'</div>';
   const bar=(t,renk,sec,key)=>{
     const b1=t.kalkis>bas?t.kalkis:bas, e1=t.end<son?t.end:son;
     const c1=gunNo(b1), c2=gunNo(e1)+1;
-    return '<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+' pax'+_rtPaxTip(t)+(t.rehberAd?' · Rehber: '+esc(t.rehberAd):' · AÇIKTA')+'" style="grid-row:1;grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+(sec?'#b5431f':renk)+';color:#fff;border-radius:'+(t.kalkis<bas?'0':'7px')+' '+(t.end>son?'0 0':'7px 7px')+' '+(t.kalkis<bas?'0':'7px')+';font-size:.63rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'+esc(t.kod)+' · '+t.pax+'<div style="font-weight:700;font-size:.6rem;opacity:.93">'+(t.rehberAd?esc(t.rehberAd):(t.op?esc(t.op):'— açıkta —'))+'</div></div>';
+    return '<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+' pax'+_rtPaxTip(t)+(t.rehberAd?' · Rehber: '+esc(t.rehberAd):' · AÇIKTA')+'" style="grid-row:1;grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+(sec?'#b5431f':renk)+';color:#fff;border-radius:'+(t.kalkis<bas?'0':'7px')+' '+(t.end>son?'0 0':'7px 7px')+' '+(t.kalkis<bas?'0':'7px')+';font-size:.63rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;z-index:1;position:relative;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'+esc(t.kod)+' · '+t.pax+'<div style="font-weight:700;font-size:.6rem;opacity:.93">'+(t.rehberAd?esc(t.rehberAd):(t.op?esc(t.op):'— açıkta —'))+'</div></div>';
   };
   if(!turlar.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Bu aralıkta tur yok.</p>';
   if(_rtGorunum==='rehber'){
     const rehberler=(getTanimlar().rehberler||[]).slice().sort((a,b)=>String(a.ad||'').localeCompare(b.ad||'','tr'));
     const satir=(etiket,alt,rT,renkFn)=>{
       h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
-       +'<div style="font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+etiket+(alt?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+alt+'</div>':'')+'</div>';
+       +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;display:flex;flex-direction:column;justify-content:center">'+etiket+(alt?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+alt+'</div>':'')+'</div>';
       rT.forEach(t=>{ const key=t.pkgId+'|'+t.kalkis; h+=bar(t,renkFn(t),S.has(key),key); });
       h+='</div>';
     };
@@ -10526,7 +10526,7 @@ function renderRehberTakvim(){
       const key=t.pkgId+'|'+t.kalkis;
       const cakisan=t.rehberAd&&turlar.some(o=>o!==t&&o.rehberAd===t.rehberAd&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end));
       h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
-       +'<div style="font-size:.74rem;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><b>'+esc(t.kod)+'</b>'+(t.op?' · '+esc(t.op):'')+'<div style="font-size:.66rem;color:var(--muted)">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>'
+       +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.74rem;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;display:flex;flex-direction:column;justify-content:center"><b>'+esc(t.kod)+'</b>'+(t.op?' · '+esc(t.op):'')+'<div style="font-size:.66rem;color:var(--muted)">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>'
        +bar(t,(t.rehberAd?(cakisan?'#dc2626':'#16a34a'):'#f59e0b'),S.has(key),key)
        +'</div>';
     });
