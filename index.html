@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v181 · 19.08.2026';
+const APP_VER='v182 · 19.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10184,7 +10184,7 @@ function _rtTurlar(){ // bu ayla kesişen tüm seferler
       const rec=_opsGet(pkg.id,k);
       const pax=_opsPax(pkg.id,k);
       if(!pax&&!(rec.rehberAd||'').trim()) return;
-      out.push({pkgId:pkg.id,kalkis:k,end,kod:pkg.paketKodu||pkg.paketAdi||'—',pax,rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()});
+      out.push({pkgId:pkg.id,kalkis:k,end,kod:pkg.paketKodu||pkg.paketAdi||'—',op:_resOpAd(pkg)||'',pax,rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()});
     });
   });
   return out;
@@ -10247,9 +10247,9 @@ function renderRehberTakvim(){
   // Atanmamış havuzu
   h+='<div class="card" style="margin-bottom:12px"><div style="font-weight:800;font-size:.82rem;margin-bottom:8px;color:#b45309">ATANMAMIŞ TURLAR ('+atanmamis.length+')</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
   h+=atanmamis.length?atanmamis.map(t=>{ const key=t.pkgId+'|'+t.kalkis; const sec=_rtSecTur===key;
-    return '<div onclick="rtTurSec(\''+key+'\')" style="cursor:pointer;border:2px solid '+(sec?'#b5431f':'#fcd34d')+';background:'+(sec?'#b5431f':'#fef3c7')+';color:'+(sec?'#fff':'#92400e')+';border-radius:9px;padding:6px 11px;font-size:.76rem;font-weight:700">'+esc(t.kod)+'<div style="font-weight:600;font-size:.68rem;opacity:.85">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>';
+    return '<div onclick="rtTurSec(\''+key+'\')" style="cursor:pointer;border:2px solid '+(sec?'#b5431f':'#fcd34d')+';background:'+(sec?'#b5431f':'#fef3c7')+';color:'+(sec?'#fff':'#92400e')+';border-radius:9px;padding:6px 11px;font-size:.76rem;font-weight:700">'+esc(t.kod)+(t.op?' <span style="font-weight:600;opacity:.8">· '+esc(t.op)+'</span>':'')+'<div style="font-weight:600;font-size:.68rem;opacity:.85">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>';
   }).join(''):'<span style="font-size:.8rem;color:#065f46;font-weight:600">Bu ayın tüm turları atanmış ✓</span>';
-  h+='</div>'+(secTur?'<div style="margin-top:8px;font-size:.78rem;color:#b5431f;font-weight:700">Seçili: '+esc(secTur.kod)+' — şimdi aşağıdan bir rehbere tıkla</div>':'')+'</div>';
+  h+='</div>'+(secTur?'<div style="margin-top:8px;font-size:.78rem;color:#b5431f;font-weight:700">Seçili: '+esc(secTur.kod)+(secTur.op?' ('+esc(secTur.op)+')':'')+' — şimdi aşağıdan bir rehbere tıkla</div>':'')+'</div>';
   // Gantt
   h+='<div class="card" style="overflow-x:auto"><div style="min-width:'+(190+ayGun*24)+'px">';
   // gün başlığı
@@ -10267,7 +10267,7 @@ function renderRehberTakvim(){
      +(_rtSecTur&&reh._cak?' <span style="color:#dc2626;font-size:.64rem;font-weight:800">ÇAKIŞIYOR</span>':'')+'</div>';
     rTur.forEach(t=>{ const b=bar(t);
       const cak=rTur.some(o=>o!==t&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end));
-      h+='<div onclick="event.stopPropagation();rtKaldir(\''+t.pkgId+'\',\''+t.kalkis+'\')" title="'+esc(t.kod)+' '+_fmtDateTR(t.kalkis)+'→'+_fmtDateTR(t.end)+' · '+t.pax+' pax — atamayı kaldırmak için tıkla" style="grid-row:1;grid-column:'+(b.c1+1)+'/'+(b.c2+1)+';height:22px;line-height:22px;background:'+(cak?'#dc2626':'#1a3c5e')+';color:#fff;border-radius:'+(b.tasBas?'0':'6px')+' '+(b.tasSon?'0 0':'6px 6px')+' '+(b.tasBas?'0':'6px')+';font-size:.64rem;font-weight:800;padding:0 6px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:1px">'+esc(t.kod)+' · '+t.pax+'</div>';
+      h+='<div onclick="event.stopPropagation();rtKaldir(\''+t.pkgId+'\',\''+t.kalkis+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+_fmtDateTR(t.kalkis)+'→'+_fmtDateTR(t.end)+' · '+t.pax+' pax — atamayı kaldırmak için tıkla" style="grid-row:1;grid-column:'+(b.c1+1)+'/'+(b.c2+1)+';height:22px;line-height:22px;background:'+(cak?'#dc2626':'#1a3c5e')+';color:#fff;border-radius:'+(b.tasBas?'0':'6px')+' '+(b.tasSon?'0 0':'6px 6px')+' '+(b.tasBas?'0':'6px')+';font-size:.64rem;font-weight:800;padding:0 6px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:1px">'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+'</div>';
     });
     h+='</div>';
   });
