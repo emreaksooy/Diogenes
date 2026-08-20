@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v189 · 20.08.2026';
+const APP_VER='v190 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8515,10 +8515,13 @@ function rzSejourImport(evt){
       if(!v||!isim){ bos++; return; }
       // NO NAME = ismi henüz operatörden gelmemiş gerçek koltuk — yer tutucu olarak aktarılır, isim gelince eşitlenir
       const tip=String(r[iTip]||'').trim();
-      const key=String(r[iOp]||'').trim()+'|'+v;
-      const gg=(grup[key]=grup[key]||{opKod:String(r[iOp]||'').trim(),opAd:String(r[iOpAd]||'').trim(),voucher:v,satirlar:[],iptaller:[]});
+      const giris=_sjTarih(r[iGir])||'';
+      const key=String(r[iOp]||'').trim()+'|'+v+'|'+giris;
+      const gg=(grup[key]=grup[key]||{opKod:String(r[iOp]||'').trim(),opAd:String(r[iOpAd]||'').trim(),voucher:v,giris:giris,satirlar:[],iptaller:[]});
       if(tip==='İptal'){ gg.iptaller.push(r); iptal++; } else gg.satirlar.push(r);
     });
+    // aynı voucher kaç tarihte var? (blok voucher tespiti — mevcut kayıt eşleme için)
+    const vGrupSay={}; Object.values(grup).forEach(g=>{ const vk=_norm(g.opKod+'|'+g.voucher); vGrupSay[vk]=(vGrupSay[vk]||0)+1; });
     let rezv=getRezv();
     const sejN=rezv.filter(x=>x.opUcusNot==='Sejour aktarımı').length;
     if(sejN&&!window._sjTemizSoruldu&&window.confirm('Daha önce Sejour\'dan aktarılmış '+sejN+' rezervasyon var.\n\nTEMİZLEYİP baştan yüklemek için Tamam.\nMevcutları koruyup eksikleri eklemek için Vazgeç.')){
@@ -8531,7 +8534,9 @@ function rzSejourImport(evt){
     const otelAdCoz=ad=>{ const t=getTanimlar()||{}; const o=(t.oteller||[]).find(x=>_norm(x.ad||'')===_norm(ad)); return o?o.ad:ad; };
     Object.values(grup).forEach(g=>{
       // VOUCHER SİSTEMDE VARSA: bu dosya açılım (rooming) dosyası → konaklama kartlarını bağla
-      const mevcut=rezv.find(x=>x.voucher&&_norm(x.voucher||'')===_norm(g.voucher));
+      const adaylarV=rezv.filter(x=>x.voucher&&_norm(x.voucher||'')===_norm(g.voucher));
+      let mevcut=adaylarV.find(x=>String(x.kalkis||'')===String(g.giris||''));
+      if(!mevcut&&adaylarV.length===1&&(vGrupSay[_norm(g.opKod+'|'+g.voucher)]||1)===1) mevcut=adaylarV[0]; // normal voucher, tarihi değişmiş → aynı kayda senkron
       if(mevcut){
         // ürün dosyası tekrar mı? (satırların 'oteli' tanımlı otellerde yok = ürün kartı adı)
         const tOteller=(getTanimlar()||{}).oteller||[];
@@ -9260,7 +9265,7 @@ function rzCiftTemizle(){
   const rezv=getRezv();
   const grup={};
   rezv.forEach(r=>{ const v=String(r.voucher||'').trim(); if(!v) return;
-    const k=_norm(r.operator||'')+'|'+_norm(v); (grup[k]=grup[k]||[]).push(r); });
+    const k=_norm(r.operator||'')+'|'+_norm(v)+'|'+String(r.kalkis||''); (grup[k]=grup[k]||[]).push(r); });
   const silinecek=new Set(); let ciftV=0;
   const skor=r=>((r.kartlar||[]).length*1000)+((r.musteriler||[]).length*10)+((r.ukartlar||[]).length)+(r.pkgId?5000:0);
   Object.values(grup).forEach(list=>{
