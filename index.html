@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v187 · 20.08.2026';
+const APP_VER='v188 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8581,7 +8581,9 @@ function rzSejourImport(evt){
           if(iG5>=0){ const gb=_sjTemiz(tumu[0]&&tumu[0].r[iG5]); if(gb) mevcut.grupBolum=gb; }
           if(iStat>=0) mevcut.sorSat=tumu.some(x=>String(x.r[iStat]||'').trim()==='Sor-Sat')||false;
           if(!mevcut.pkgId){ const kod2=((tumu[0]?String(tumu[0].r[iG1]||''):'').trim()||(iKod2>=0&&tumu[0]?String(tumu[0].r[iKod2]||'').trim():'')).toUpperCase();
-            if(kod2){ let pkg2=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(kod2)); let uz2=null;
+            if(kod2){ const opM=getOperators().find(o=>_norm(o.ad||'')===_norm(mevcut.operator||''));
+              const adaylar2=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod2));
+              let pkg2=(opM&&adaylar2.find(p=>p.operatorId===opM.id))||adaylar2[0]||null; let uz2=null;
               if(!pkg2){ uz2=_uzKodBul(kod2); if(uz2) pkg2=uz2.pkg; }
               if(pkg2){ mevcut.pkgId=pkg2.id; mevcut.urunKod=kod2; mevcut.tip='urun'; if(uz2) mevcut.uzatmaHafta=uz2.hafta; } } }
           if(iOda>=0){ const yeniUk=_sjUkartlar(g.satirlar.length?g.satirlar:g.iptaller,iOda,iAd,iGir,iCik,mevcut.musteriler,iSira,iDogum,iKartNo); if(yeniUk.length) mevcut.ukartlar=yeniUk; }
@@ -8623,11 +8625,14 @@ function rzSejourImport(evt){
       const kaynak=g.satirlar.length?g.satirlar:g.iptaller;
       const ilk=kaynak[0];
       const kod=(String(ilk[iG1]||'').trim()||(iKod2>=0?String(ilk[iKod2]||'').trim():'')).toUpperCase();
+      const op=opBul(g.opKod,g.opAd); if(!op) opYok.add(g.opAd||g.opKod);
       let pkg=null, uzHafta=0;
-      if(kod){ pkg=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(kod));
+      if(kod){
+        // aynı kod birden çok operatörde olabilir — önce REZERVASYONUN OPERATÖRÜNE ait ürün tercih edilir
+        const adaylar=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod));
+        pkg=(op&&adaylar.find(p=>p.operatorId===op.id))||adaylar[0]||null;
         if(!pkg){ const uzm=_uzKodBul(kod); if(uzm){ pkg=uzm.pkg; uzHafta=uzm.hafta; } }
         if(!pkg){ kodYok.add(kod); } }
-      const op=opBul(g.opKod,g.opAd); if(!op) opYok.add(g.opAd||g.opKod);
       // kalkış = en erken giriş; satış = en erken ilk kayıt
       let kalkis='', satis='';
       kaynak.forEach(r=>{ const t=_sjTarih(r[iGir]); if(t&&(!kalkis||t<kalkis)) kalkis=t;
@@ -9340,7 +9345,9 @@ function rzKodEsle(){
     const kod=(r.urunKod||'').trim(); if(!kod) return;
     const pkgVar=r.pkgId&&getPackages().some(p=>p.id===r.pkgId);
     if(pkgVar) return;
-    const pkg=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(kod));
+    const opM=getOperators().find(o=>_norm(o.ad||'')===_norm(r.operator||''));
+    const adaylar=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod));
+    const pkg=(opM&&adaylar.find(p=>p.operatorId===opM.id))||adaylar[0]||null;
     if(pkg){ r.pkgId=pkg.id; r.tip='urun'; bagli++; }
     else { const uzm=_uzKodBul(kod);
       if(uzm){ r.pkgId=uzm.pkg.id; r.tip='urun'; r.uzatmaHafta=uzm.hafta; bagli++; }
