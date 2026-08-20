@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v197 · 20.08.2026';
+const APP_VER='v198 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10340,10 +10340,12 @@ function opsMapQuick(n){ _opsMapDate=_isoAdd(_opsToday(),n); _opsMapLbl(); _opsR
 window._rtSecSet=window._rtSecSet||new Set();
 let _rtGorunum=(()=>{try{return localStorage.getItem('dmc_rtGorunum')||'tur';}catch(e){return 'tur';}})();
 function rtGorunumSec(v){ _rtGorunum=v; try{localStorage.setItem('dmc_rtGorunum',v);}catch(e){} renderRehberTakvim(); }
-const _rtFlt={op:new Set(),kod:new Set(),reh:new Set()};
+const _rtFlt=(()=>{ try{ const k=JSON.parse(localStorage.getItem('dmc_rtFlt')||'{}');
+  return {op:new Set(k.op||[]),kod:new Set(k.kod||[]),reh:new Set(k.reh||[])}; }catch(e){ return {op:new Set(),kod:new Set(),reh:new Set()}; } })();
+function _rtFltKaydet(){ try{localStorage.setItem('dmc_rtFlt',JSON.stringify({op:[..._rtFlt.op],kod:[..._rtFlt.kod],reh:[..._rtFlt.reh]}));}catch(e){} }
 function rtFltAc(alan){ window._rtFltAcik=(window._rtFltAcik===alan)?null:alan; renderRehberTakvim(); }
-function rtFltTog(alan,vEnc){ const v=decodeURIComponent(vEnc); const S=_rtFlt[alan]; S.has(v)?S.delete(v):S.add(v); renderRehberTakvim(); }
-function rtFltTemizle(alan){ if(alan){_rtFlt[alan].clear();} else {_rtFlt.op.clear();_rtFlt.kod.clear();_rtFlt.reh.clear();} renderRehberTakvim(); }
+function rtFltTog(alan,vEnc){ const v=decodeURIComponent(vEnc); const S=_rtFlt[alan]; S.has(v)?S.delete(v):S.add(v); _rtFltKaydet(); renderRehberTakvim(); }
+function rtFltTemizle(alan){ if(alan){_rtFlt[alan].clear();} else {_rtFlt.op.clear();_rtFlt.kod.clear();_rtFlt.reh.clear();} _rtFltKaydet(); renderRehberTakvim(); }
 let _rtBas=null,_rtSon=null; const _RT_GW=24; // gün sütun genişliği px
 function _rtAyBasi(iso){ return String(iso).slice(0,7)+'-01'; }
 function _rtAyEkle(iso,n){ const p=String(iso).split('-').map(Number); return new Date(Date.UTC(p[0],p[1]-1+n,1)).toISOString().slice(0,10); }
