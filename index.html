@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v202 · 20.08.2026';
+const APP_VER='v203 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10522,10 +10522,10 @@ function renderRehberTakvim(){
   h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;border-bottom:1.5px solid var(--border);padding-bottom:3px;margin-bottom:2px">'
    +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.72rem;font-weight:800;color:var(--muted)">'+(_rtGorunum==='rehber'?'REHBER · dönem yükü':'TUR · OPERATÖR')+'</div>'
    +Array.from({length:toplamGun},(_,i)=>{ const iso=_isoAdd(bas,i); const g=+iso.slice(8,10); const ayB=g===1?'border-left:2px solid var(--border);':''; const bg=iso===bugun?'background:#fff3ec;border-radius:4px;':''; return '<div style="text-align:center;font-size:.6rem;color:var(--muted);'+bg+ayB+'">'+g+'</div>'; }).join('')+'</div>';
-  const bar=(t,renk,sec,key)=>{
+  const bar=(t,renk,sec,key,serit)=>{
     const b1=t.kalkis>bas?t.kalkis:bas, e1=t.end<son?t.end:son;
     const c1=gunNo(b1), c2=gunNo(e1)+1;
-    return '<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+' pax'+_rtPaxTip(t)+(t.rehberAd?' · Rehber: '+esc(t.rehberAd):' · AÇIKTA')+'" style="grid-row:1;grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+(sec?'#b5431f':renk)+';color:#fff;border-radius:'+(t.kalkis<bas?'0':'7px')+' '+(t.end>son?'0 0':'7px 7px')+' '+(t.kalkis<bas?'0':'7px')+';font-size:.63rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;z-index:1;position:relative;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+'<div style="font-weight:700;font-size:.6rem;opacity:.93">'+(t.rehberAd?esc(t.rehberAd):'— açıkta —')+'</div></div>';
+    return '<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+' pax'+_rtPaxTip(t)+(t.rehberAd?' · Rehber: '+esc(t.rehberAd):' · AÇIKTA')+'" style="grid-row:'+(serit||1)+';grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+(sec?'#b5431f':renk)+';color:#fff;border-radius:'+(t.kalkis<bas?'0':'7px')+' '+(t.end>son?'0 0':'7px 7px')+' '+(t.kalkis<bas?'0':'7px')+';font-size:.63rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;z-index:1;position:relative;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+'<div style="font-weight:700;font-size:.6rem;opacity:.93">'+(t.rehberAd?esc(t.rehberAd):'— açıkta —')+'</div></div>';
   };
   if(!turlar.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Bu aralıkta tur yok.</p>';
   if(_rtGorunum==='rehber'){
@@ -10535,9 +10535,17 @@ function renderRehberTakvim(){
       else rehberler=rehberler.filter(r=>turlar.some(t=>t.rehberAd===(r.ad||'')));
     }
     const satir=(etiket,alt,rT,renkFn)=>{
-      h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
-       +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;display:flex;flex-direction:column;justify-content:center">'+etiket+(alt?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+alt+'</div>':'')+'</div>';
-      rT.forEach(t=>{ const key=t.pkgId+'|'+t.kalkis; h+=bar(t,renkFn(t),S.has(key),key); });
+      // ŞERİT PAKETLEME: çakışmayan turlar aynı şeritte, çakışanlar alt alta (okunabilirlik)
+      const seritSon=[]; const yer={};
+      rT.slice().sort((a,b)=>a.kalkis.localeCompare(b.kalkis)).forEach(t=>{
+        let li=seritSon.findIndex(e=>e<t.kalkis);
+        if(li<0){ li=seritSon.length; seritSon.push(t.end); } else seritSon[li]=t.end;
+        yer[t.pkgId+'|'+t.kalkis]=li+1;
+      });
+      const seritN=Math.max(1,seritSon.length);
+      h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';grid-template-rows:repeat('+seritN+',minmax(38px,auto));gap:0;border-bottom:1px dashed #eee">'
+       +'<div style="grid-row:1 / '+(seritN+1)+';position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;display:flex;flex-direction:column;justify-content:center">'+etiket+(alt?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+alt+'</div>':'')+'</div>';
+      rT.forEach(t=>{ const key=t.pkgId+'|'+t.kalkis; h+=bar(t,renkFn(t),S.has(key),key,yer[key]||1); });
       h+='</div>';
     };
     const acikTur=turlar.filter(t=>!t.rehberAd);
