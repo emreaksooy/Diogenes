@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v200 · 20.08.2026';
+const APP_VER='v201 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10529,7 +10529,11 @@ function renderRehberTakvim(){
   };
   if(!turlar.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Bu aralıkta tur yok.</p>';
   if(_rtGorunum==='rehber'){
-    const rehberler=(getTanimlar().rehberler||[]).slice().sort((a,b)=>String(a.ad||'').localeCompare(b.ad||'','tr'));
+    let rehberler=(getTanimlar().rehberler||[]).slice().sort((a,b)=>String(a.ad||'').localeCompare(b.ad||'','tr'));
+    if(fltAktif){
+      if(_rtFlt.reh.size) rehberler=rehberler.filter(r=>_rtFlt.reh.has(r.ad||''));
+      else rehberler=rehberler.filter(r=>turlar.some(t=>t.rehberAd===(r.ad||'')));
+    }
     const satir=(etiket,alt,rT,renkFn)=>{
       h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
        +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;display:flex;flex-direction:column;justify-content:center">'+etiket+(alt?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+alt+'</div>':'')+'</div>';
@@ -10537,7 +10541,7 @@ function renderRehberTakvim(){
       h+='</div>';
     };
     const acikTur=turlar.filter(t=>!t.rehberAd);
-    if(acikTur.length) satir('<span style="color:#b45309">⚠ ATANMAMIŞ</span>',acikTur.length+' tur',acikTur,()=> '#f59e0b');
+    if(acikTur.length&&(!_rtFlt.reh.size||_rtFlt.reh.has('__acik'))) satir('<span style="color:#b45309">⚠ ATANMAMIŞ</span>',acikTur.length+' tur',acikTur,()=> '#f59e0b');
     if(!rehberler.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Rehber tanımlı değil — Tanımlamalar\'dan ekleyin.</p>';
     rehberler.forEach(reh=>{
       const rT=turlar.filter(t=>t.rehberAd===(reh.ad||''));
