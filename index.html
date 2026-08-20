@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v188 · 20.08.2026';
+const APP_VER='v189 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10121,6 +10121,14 @@ function _opsTarihler(pkg){
   try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkg.id&&r.durum!=='iptal'&&r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) set.add(r.kalkis); }); }catch(e){}
   return [...set].sort();
 }
+function _opsOperatorAd(pkg,kalkis){
+  try{
+    const set=new Set();
+    (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkg.id&&r.kalkis===kalkis&&r.durum!=='iptal'&&(r.operator||'').trim()) set.add(r.operator.trim()); });
+    if(set.size) return [...set].join(' + ');
+  }catch(e){}
+  return _resOpAd(pkg)||'';
+}
 function _opsPaxDetay(pkgId,kalkis){
   const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
   const ucak=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length:0;
@@ -10179,7 +10187,7 @@ function renderOperasyonPage(){
     return `<div class="ops-row" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')">
       <div class="ops-day">Gün ${it.dayNo}/${it.toplam}${sehir?'<div style="font-weight:600;color:var(--muted);font-size:.7rem;margin-top:2px">'+esc(sehir)+'</div>':''}</div>
       <div class="ops-main"><div class="ops-nm">${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</div>
-        <div class="ops-sub">${esc(_resOpAd(it.pkg)||'')} · kalkış ${_fmtDateTR(it.kalkis)}${p?' · '+p+' yolcu':''}${rec.aracPlaka?' · '+esc(rec.aracPlaka):''}</div></div>
+        <div class="ops-sub">${esc(_opsOperatorAd(it.pkg,it.kalkis)||'')} · kalkış ${_fmtDateTR(it.kalkis)}${p?' · '+p+' yolcu':''}${rec.aracPlaka?' · '+esc(rec.aracPlaka):''}</div></div>
       <div class="ops-badge ${okReh?'ok':''}">${okReh?('Rehber: '+esc(okReh)):'rehber yok'}</div>
     </div>`;
   }).join('');
@@ -10267,7 +10275,7 @@ function renderOpsAnasayfa(){
     <div class="opsa-grid">
       <div class="card">${_opsCalHTML()}</div>
       <div class="card"><div class="ops-ct"><svg class="ic"><use href="#i-clock"/></svg> Yaklaşan Turlar</div>
-        ${yak.length?yak.map(it=>{const p=_opsPax(it.pkg.id,it.kalkis);return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">${_fmtDateTR(it.kalkis)}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}</div></span><span style="background:var(--primary-soft,#fff3ec);color:var(--primary);border-radius:14px;padding:1px 9px;font-size:.74rem;font-weight:800;white-space:nowrap">${p} kişi</span><span style="color:var(--muted);font-size:.76rem;width:52px;text-align:right">${gunFar(it.kalkis)}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Yaklaşan kalkış yok.</p>'}
+        ${yak.length?yak.map(it=>{const p=_opsPax(it.pkg.id,it.kalkis);return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">${_fmtDateTR(it.kalkis)}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_opsOperatorAd(it.pkg,it.kalkis)||'')}</div></span><span style="background:var(--primary-soft,#fff3ec);color:var(--primary);border-radius:14px;padding:1px 9px;font-size:.74rem;font-weight:800;white-space:nowrap">${p} kişi</span><span style="color:var(--muted);font-size:.76rem;width:52px;text-align:right">${gunFar(it.kalkis)}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Yaklaşan kalkış yok.</p>'}
       </div>
     </div>
     <div class="card"><div class="ops-ct"><svg class="ic"><use href="#i-list"/></svg> Bugün Aktif Turlar <span style="color:var(--muted);font-weight:600;font-size:.8rem">(${aktif.length})</span></div>
@@ -10317,7 +10325,7 @@ function _rtTurlar(){
       const rec=_opsGet(pkg.id,k);
       const pax=_opsPax(pkg.id,k);
       if(!pax&&!(rec.rehberAd||'').trim()) return;
-      out.push({pkgId:pkg.id,kalkis:k,end,kod:pkg.paketKodu||pkg.paketAdi||'—',op:_resOpAd(pkg)||'',pax,rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()});
+      out.push({pkgId:pkg.id,kalkis:k,end,kod:pkg.paketKodu||pkg.paketAdi||'—',op:_opsOperatorAd(pkg,k),pax,rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()});
     });
   });
   out.sort((a,b)=>a.kalkis.localeCompare(b.kalkis)||a.kod.localeCompare(b.kod,'tr'));
