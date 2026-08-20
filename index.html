@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v193 · 20.08.2026';
+const APP_VER='v194 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10336,23 +10336,24 @@ function _opsMapLbl(){ const el=document.getElementById('opsMapDateLbl'); if(el)
 function opsMapDate(v){ _opsMapDate=v||_opsToday(); _opsMapLbl(); _opsRenderMap(); }
 function opsMapNav(d){ _opsMapDate=_isoAdd(_opsMapDate||_opsToday(),d); _opsMapLbl(); _opsRenderMap(); }
 function opsMapQuick(n){ _opsMapDate=_isoAdd(_opsToday(),n); _opsMapLbl(); _opsRenderMap(); }
-/* ══ REHBER TAKVİMİ (Gantt — tur bazlı) ══ */
-let _rtAy=null; window._rtSecSet=window._rtSecSet||new Set();
+/* ══ REHBER TAKVİMİ (sürekli kayan şerit — aylar otomatik eklenir) ══ */
+window._rtSecSet=window._rtSecSet||new Set();
 let _rtGorunum=(()=>{try{return localStorage.getItem('dmc_rtGorunum')||'tur';}catch(e){return 'tur';}})();
 function rtGorunumSec(v){ _rtGorunum=v; try{localStorage.setItem('dmc_rtGorunum',v);}catch(e){} renderRehberTakvim(); }
 let _rtFltOp='', _rtFltKod='';
 function rtFltSet(alan,v){ if(alan==='op')_rtFltOp=v; else _rtFltKod=v; renderRehberTakvim(); }
-function _rtAyStr(d){ return d.toISOString().slice(0,7); }
-function rtAyNav(n){ const [y,m]=(_rtAy||_rtAyStr(new Date())).split('-').map(Number); const d=new Date(Date.UTC(y,m-1+n,1)); _rtAy=d.toISOString().slice(0,7); window._rtSecSet.clear(); renderRehberTakvim(); }
-function _rtTurlar(){
-  const [y,m]=_rtAy.split('-').map(Number);
-  const ayBas=_rtAy+'-01', ayGun=new Date(Date.UTC(y,m,0)).getUTCDate(), aySon=_rtAy+'-'+String(ayGun).padStart(2,'0');
+let _rtBas=null,_rtSon=null; const _RT_GW=24; // gün sütun genişliği px
+function _rtAyBasi(iso){ return String(iso).slice(0,7)+'-01'; }
+function _rtAyEkle(iso,n){ const p=String(iso).split('-').map(Number); return new Date(Date.UTC(p[0],p[1]-1+n,1)).toISOString().slice(0,10); }
+function _rtAySonu(ayb){ const p=String(ayb).split('-').map(Number); return new Date(Date.UTC(p[0],p[1],0)).toISOString().slice(0,10); }
+function rtKaydir(n){ const sc=document.getElementById('rtScroll'); if(sc) sc.scrollBy({left:n*30*_RT_GW,behavior:'smooth'}); }
+function _rtTurlar(bas,son){
   const out=[];
   getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{
     const gece=parseInt(pkg.gece)||0;
     (_opsTarihler(pkg)||[]).forEach(k=>{
       const end=_isoAdd(k,gece);
-      if(end<ayBas||k>aySon) return;
+      if(end<bas||k>son) return;
       const rec=_opsGet(pkg.id,k);
       const pax=_opsPax(pkg.id,k);
       if(!pax&&!(rec.rehberAd||'').trim()) return;
@@ -10363,21 +10364,18 @@ function _rtTurlar(){
   return out;
 }
 function _rtCakisir(a1,a2,b1,b2){ return a1<=b2&&b1<=a2; }
-function _rtRehYuk(rehAd,turlar){
-  const [y,m]=_rtAy.split('-').map(Number);
-  const ayBas=_rtAy+'-01', ayGun=new Date(Date.UTC(y,m,0)).getUTCDate(), aySon=_rtAy+'-'+String(ayGun).padStart(2,'0');
-  let g=0; turlar.filter(t=>t.rehberAd===rehAd).forEach(t=>{ const b=t.kalkis>ayBas?t.kalkis:ayBas, e=t.end<aySon?t.end:aySon; g+=_isoDiff(b,e)+1; });
+function _rtRehYuk(rehAd,turlar,bas,son){
+  let g=0; turlar.filter(t=>t.rehberAd===rehAd).forEach(t=>{ const b=t.kalkis>bas?t.kalkis:bas, e=t.end<son?t.end:son; g+=_isoDiff(b,e)+1; });
   return g;
 }
 function rtTurSec(key){ const S=window._rtSecSet; S.has(key)?S.delete(key):S.add(key); renderRehberTakvim(); }
 function rtSecTemizle(){ window._rtSecSet.clear(); renderRehberTakvim(); }
 function rtAta(rehId){
   const S=[...window._rtSecSet]; if(!S.length) return;
-  const turlar=_rtTurlar();
+  const turlar=_rtTurlar(_rtBas,_rtSon);
   const secTurlar=S.map(k=>{const [p,d]=k.split('|');return turlar.find(t=>t.pkgId===p&&t.kalkis===d);}).filter(Boolean);
   if(!secTurlar.length) return;
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
-  // çakışma: rehberin SEÇİM DIŞI turlarıyla (seçilenlerin kendi aralarında çakışması = bilinçli birleştirme)
   const cak=[]; secTurlar.forEach(st=>{ turlar.filter(t=>t.rehberAd===(reh.ad||'')&&!S.includes(t.pkgId+'|'+t.kalkis)&&_rtCakisir(t.kalkis,t.end,st.kalkis,st.end)).forEach(c=>{ if(!cak.includes(c.kod+' ('+_fmtDateTR(c.kalkis)+')')) cak.push(c.kod+' ('+_fmtDateTR(c.kalkis)+')'); }); });
   const yap=()=>{
     const all=getOperasyon();
@@ -10400,28 +10398,46 @@ function rtKaldirSecili(){
     setOperasyon(all); window._rtSecSet.clear(); renderRehberTakvim();
   });
 }
+function _rtScrollKur(ilkKonum){
+  const sc=document.getElementById('rtScroll'); if(!sc) return;
+  sc.scrollLeft=(window._rtScrollPos!=null)?window._rtScrollPos:(ilkKonum||0);
+  sc.onscroll=()=>{
+    window._rtScrollPos=sc.scrollLeft;
+    if(window._rtBusy) return;
+    if(sc.scrollLeft+sc.clientWidth>sc.scrollWidth-160){ // sağ uca yaklaştı → sonraki ay eklenir
+      window._rtBusy=1; _rtSon=_rtAySonu(_rtAyEkle(_rtAyBasi(_rtSon),1));
+      renderRehberTakvim(); setTimeout(()=>{window._rtBusy=0;},80);
+    } else if(sc.scrollLeft<80){ // sol uca yaklaştı → önceki ay eklenir
+      window._rtBusy=1; const eskiW=sc.scrollWidth;
+      _rtBas=_rtAyEkle(_rtBas,-1);
+      renderRehberTakvim();
+      const sc2=document.getElementById('rtScroll');
+      if(sc2){ sc2.scrollLeft=sc.scrollLeft+(sc2.scrollWidth-eskiW); window._rtScrollPos=sc2.scrollLeft; }
+      setTimeout(()=>{window._rtBusy=0;},80);
+    }
+  };
+}
 function renderRehberTakvim(){
   const box=document.getElementById('opsPane_rehtak'); if(!box) return;
-  if(!_rtAy) _rtAy=_rtAyStr(new Date());
-  const [y,m]=_rtAy.split('-').map(Number);
-  const ayGun=new Date(Date.UTC(y,m,0)).getUTCDate();
-  const ayBas=_rtAy+'-01', aySon=_rtAy+'-'+String(ayGun).padStart(2,'0');
-  const ayAd=new Date(Date.UTC(y,m-1,1)).toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
   const bugun=new Date().toISOString().slice(0,10);
-  const _tumTurlar=_rtTurlar();
+  if(!_rtBas){ _rtBas=_rtAyBasi(bugun); _rtSon=_rtAySonu(_rtAyEkle(_rtBas,1)); }
+  const bas=_rtBas, son=_rtSon;
+  const toplamGun=_isoDiff(bas,son)+1;
+  const gunNo=iso=>_isoDiff(bas,iso)+1;
+  const _tumTurlar=_rtTurlar(bas,son);
   const _opSecenek=[...new Set(_tumTurlar.map(t=>t.op).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   const _kodSecenek=[...new Set(_tumTurlar.map(t=>t.kod).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   if(_rtFltOp&&!_opSecenek.includes(_rtFltOp)) _rtFltOp='';
   if(_rtFltKod&&!_kodSecenek.includes(_rtFltKod)) _rtFltKod='';
   const turlar=_tumTurlar.filter(t=>(!_rtFltOp||t.op===_rtFltOp)&&(!_rtFltKod||t.kod===_rtFltKod));
   const S=window._rtSecSet;
-  [...S].forEach(k=>{ const [p,d]=k.split('|'); if(!turlar.some(t=>t.pkgId===p&&t.kalkis===d)) S.delete(k); });
-  const secTurlar=[...S].map(k=>{const [p,d]=k.split('|');return turlar.find(t=>t.pkgId===p&&t.kalkis===d);}).filter(Boolean);
+  [...S].forEach(k=>{ const [p,d]=k.split('|'); if(!_tumTurlar.some(t=>t.pkgId===p&&t.kalkis===d)) S.delete(k); });
+  const secTurlar=[...S].map(k=>{const [p,d]=k.split('|');return _tumTurlar.find(t=>t.pkgId===p&&t.kalkis===d);}).filter(Boolean);
   const acikta=turlar.filter(t=>!t.rehberAd).length;
   let h='<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-   +'<button class="btn btn-outline btn-sm" onclick="rtAyNav(-1)">◀</button>'
-   +'<b style="font-size:1rem;min-width:140px;text-align:center;text-transform:capitalize">'+esc(ayAd)+'</b>'
-   +'<button class="btn btn-outline btn-sm" onclick="rtAyNav(1)">▶</button>'
+   +'<button class="btn btn-outline btn-sm" onclick="rtKaydir(-1)" title="Bir ay geri kaydır">◀</button>'
+   +'<button class="btn btn-outline btn-sm" onclick="window._rtScrollPos=null;_rtBas=null;_rtSon=null;renderRehberTakvim()" title="Bugüne dön">Bugün</button>'
+   +'<button class="btn btn-outline btn-sm" onclick="rtKaydir(1)" title="Bir ay ileri kaydır">▶</button>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#f59e0b;border-radius:3px;display:inline-block"></span> Açıkta ('+acikta+')</span>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#16a34a;border-radius:3px;display:inline-block"></span> Rehberli ('+(turlar.length-acikta)+')</span>'
    +'<select onchange="rtFltSet(\'op\',this.value)" style="padding:6px 9px;border:1.5px solid '+(_rtFltOp?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit'+(_rtFltOp?';background:#eff6ff':'')+'"><option value="">Tüm operatörler</option>'+_opSecenek.map(o=>'<option value="'+esc(o)+'"'+(o===_rtFltOp?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>'
@@ -10430,12 +10446,11 @@ function renderRehberTakvim(){
    +'<span style="display:inline-flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden">'
    +'<button onclick="rtGorunumSec(\'tur\')" style="border:none;cursor:pointer;padding:6px 12px;font-size:.76rem;font-weight:700;background:'+(_rtGorunum!=='rehber'?'#1a3c5e':'transparent')+';color:'+(_rtGorunum!=='rehber'?'#fff':'var(--muted)')+'">Turlar</button>'
    +'<button onclick="rtGorunumSec(\'rehber\')" style="border:none;cursor:pointer;padding:6px 12px;font-size:.76rem;font-weight:700;background:'+(_rtGorunum==='rehber'?'#1a3c5e':'transparent')+';color:'+(_rtGorunum==='rehber'?'#fff':'var(--muted)')+'">Rehberler</button></span>'
-   +'<span style="font-size:.74rem;color:var(--muted)">'+(_rtGorunum==='rehber'?'Satır = rehber; çubuklar doluluğu. Çubuğa tıklayıp seçebilir, üstteki çiplerle başka rehbere taşıyabilirsin.':'Tur çubuklarına tıklayıp seç (birleştirme için birden fazla) → üstte çıkan rehber çiplerinden birine tıkla.')+'</span></div>';
-  // Seçim + rehber çipleri
+   +'<span style="font-size:.74rem;color:var(--muted)">Şerit kaydırılabilir — uca gelince sonraki/önceki ay kendiliğinden eklenir.</span></div>';
   if(secTurlar.length){
     const rehberler=(getTanimlar().rehberler||[]).slice();
-    rehberler.forEach(r=>{ r._yuk=_rtRehYuk(r.ad||'',turlar);
-      r._cak=secTurlar.some(st=>turlar.some(t=>t.rehberAd===(r.ad||'')&&!S.has(t.pkgId+'|'+t.kalkis)&&_rtCakisir(t.kalkis,t.end,st.kalkis,st.end))); });
+    rehberler.forEach(r=>{ r._yuk=_rtRehYuk(r.ad||'',_tumTurlar,bas,son);
+      r._cak=secTurlar.some(st=>_tumTurlar.some(t=>t.rehberAd===(r.ad||'')&&!S.has(t.pkgId+'|'+t.kalkis)&&_rtCakisir(t.kalkis,t.end,st.kalkis,st.end))); });
     rehberler.sort((a,b)=>(a._cak-b._cak)||(a._yuk-b._yuk)||String(a.ad||'').localeCompare(b.ad||'','tr'));
     h+='<div style="margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--border)">'
      +'<div style="font-size:.78rem;font-weight:800;color:#b5431f;margin-bottom:7px">Seçili: '+secTurlar.map(t=>esc(t.kod)+' '+_fmtDateTR(t.kalkis)).join(' + ')+(secTurlar.length>1?' — BİRLEŞİK GRUP':'')+'</div>'
@@ -10446,53 +10461,62 @@ function renderRehberTakvim(){
      +'</div></div>';
   }
   h+='</div>';
-  // Gantt — her tur bir satır
-  const gunKol='repeat('+ayGun+',minmax(22px,1fr))';
-  const gunNo=iso=>_isoDiff(ayBas,iso)+1;
-  h+='<div class="card" style="overflow-x:auto"><div style="min-width:'+(230+ayGun*24)+'px">';
-  h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;border-bottom:1.5px solid var(--border);padding-bottom:3px;margin-bottom:2px;position:sticky;top:0;background:var(--card,#fff);z-index:2">'
-   +'<div style="font-size:.72rem;font-weight:800;color:var(--muted)">TUR · OPERATÖR</div>'
-   +Array.from({length:ayGun},(_,i)=>{ const iso=_rtAy+'-'+String(i+1).padStart(2,'0'); const bg=iso===bugun?'background:#fff3ec;border-radius:4px;':''; return '<div style="text-align:center;font-size:.62rem;color:var(--muted);'+bg+'">'+(i+1)+'</div>'; }).join('')+'</div>';
-  if(!turlar.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Bu ayda tur yok.</p>';
+  // ── sürekli şerit
+  const gunKol='repeat('+toplamGun+','+_RT_GW+'px)';
+  const icW=230+toplamGun*_RT_GW;
+  h+='<div class="card" style="padding:.4rem .6rem"><div id="rtScroll" style="overflow-x:auto"><div style="min-width:'+icW+'px">';
+  // ay etiket satırı
+  h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0">'
+   +'<div></div>';
+  { let ayb=_rtAyBasi(bas);
+    while(ayb<=son){
+      const ays=_rtAySonu(ayb);
+      const b=ayb>bas?ayb:bas, e=ays<son?ays:son;
+      const ad=new Date(ayb+'T00:00:00').toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+      h+='<div style="grid-column:'+(gunNo(b)+1)+'/'+(gunNo(e)+2)+';font-size:.72rem;font-weight:800;color:#8c3a1d;border-left:2px solid var(--border);padding:2px 6px;text-transform:capitalize;white-space:nowrap;overflow:hidden">'+esc(ad)+'</div>';
+      ayb=_rtAyEkle(ayb,1);
+    } }
+  h+='</div>';
+  // gün numarası satırı
+  h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;border-bottom:1.5px solid var(--border);padding-bottom:3px;margin-bottom:2px">'
+   +'<div style="font-size:.72rem;font-weight:800;color:var(--muted)">'+(_rtGorunum==='rehber'?'REHBER · dönem yükü':'TUR · OPERATÖR')+'</div>'
+   +Array.from({length:toplamGun},(_,i)=>{ const iso=_isoAdd(bas,i); const g=+iso.slice(8,10); const ayB=g===1?'border-left:2px solid var(--border);':''; const bg=iso===bugun?'background:#fff3ec;border-radius:4px;':''; return '<div style="text-align:center;font-size:.6rem;color:var(--muted);'+bg+ayB+'">'+g+'</div>'; }).join('')+'</div>';
+  const bar=(t,renk,sec,key)=>{
+    const b1=t.kalkis>bas?t.kalkis:bas, e1=t.end<son?t.end:son;
+    const c1=gunNo(b1), c2=gunNo(e1)+1;
+    return '<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+' pax'+_rtPaxTip(t)+(t.rehberAd?' · Rehber: '+esc(t.rehberAd):' · AÇIKTA')+'" style="grid-row:1;grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+(sec?'#b5431f':renk)+';color:#fff;border-radius:'+(t.kalkis<bas?'0':'7px')+' '+(t.end>son?'0 0':'7px 7px')+' '+(t.kalkis<bas?'0':'7px')+';font-size:.63rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'+esc(t.kod)+' · '+t.pax+'<div style="font-weight:700;font-size:.6rem;opacity:.93">'+(t.rehberAd?esc(t.rehberAd):(t.op?esc(t.op):'— açıkta —'))+'</div></div>';
+  };
+  if(!turlar.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Bu aralıkta tur yok.</p>';
   if(_rtGorunum==='rehber'){
     const rehberler=(getTanimlar().rehberler||[]).slice().sort((a,b)=>String(a.ad||'').localeCompare(b.ad||'','tr'));
-    const cizSatir=(etiket,altEtiket,rTurlar,renkFn)=>{
+    const satir=(etiket,alt,rT,renkFn)=>{
       h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
-       +'<div style="font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+etiket+(altEtiket?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+altEtiket+'</div>':'')+'</div>';
-      rTurlar.forEach(t=>{
-        const key=t.pkgId+'|'+t.kalkis, sec=S.has(key);
-        const b1=t.kalkis>ayBas?t.kalkis:ayBas, e1=t.end<aySon?t.end:aySon;
-        const c1=gunNo(b1), c2=gunNo(e1)+1;
-        h+='<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+_fmtDateTR(t.kalkis)+'→'+_fmtDateTR(t.end)+' · '+t.pax+' pax" style="grid-row:1;grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+(sec?'#b5431f':renkFn(t))+';color:#fff;border-radius:'+(t.kalkis<ayBas?'0':'7px')+' '+(t.end>aySon?'0 0':'7px 7px')+' '+(t.kalkis<ayBas?'0':'7px')+';font-size:.63rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'+esc(t.kod)+' · '+t.pax+(t.op?'<div style="font-weight:700;font-size:.6rem;opacity:.9">'+esc(t.op)+'</div>':'')+'</div>';
-      });
+       +'<div style="font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+etiket+(alt?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+alt+'</div>':'')+'</div>';
+      rT.forEach(t=>{ const key=t.pkgId+'|'+t.kalkis; h+=bar(t,renkFn(t),S.has(key),key); });
       h+='</div>';
     };
     const acikTur=turlar.filter(t=>!t.rehberAd);
-    if(acikTur.length) cizSatir('<span style="color:#b45309">⚠ ATANMAMIŞ</span>',acikTur.length+' tur',acikTur,()=> '#f59e0b');
+    if(acikTur.length) satir('<span style="color:#b45309">⚠ ATANMAMIŞ</span>',acikTur.length+' tur',acikTur,()=> '#f59e0b');
     if(!rehberler.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Rehber tanımlı değil — Tanımlamalar\'dan ekleyin.</p>';
     rehberler.forEach(reh=>{
       const rT=turlar.filter(t=>t.rehberAd===(reh.ad||''));
-      const yuk=_rtRehYuk(reh.ad||'',turlar);
-      cizSatir(esc(reh.ad||'—'),yuk+' gün · '+rT.length+' tur',rT,t=>rT.some(o=>o!==t&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end))?'#dc2626':'#16a34a');
+      satir(esc(reh.ad||'—'),_rtRehYuk(reh.ad||'',turlar,bas,son)+' gün · '+rT.length+' tur',rT,t=>rT.some(o=>o!==t&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end))?'#dc2626':'#16a34a');
     });
-    h+='</div></div>';
-    box.innerHTML=h; return;
+  } else {
+    turlar.forEach(t=>{
+      const key=t.pkgId+'|'+t.kalkis;
+      const cakisan=t.rehberAd&&turlar.some(o=>o!==t&&o.rehberAd===t.rehberAd&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end));
+      h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
+       +'<div style="font-size:.74rem;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><b>'+esc(t.kod)+'</b>'+(t.op?' · '+esc(t.op):'')+'<div style="font-size:.66rem;color:var(--muted)">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>'
+       +bar(t,(t.rehberAd?(cakisan?'#dc2626':'#16a34a'):'#f59e0b'),S.has(key),key)
+       +'</div>';
+    });
   }
-  turlar.forEach(t=>{
-    const key=t.pkgId+'|'+t.kalkis, sec=S.has(key);
-    const b1=t.kalkis>ayBas?t.kalkis:ayBas, e1=t.end<aySon?t.end:aySon;
-    const c1=gunNo(b1), c2=gunNo(e1)+1;
-    const cakisan=t.rehberAd&&turlar.some(o=>o!==t&&o.rehberAd===t.rehberAd&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end));
-    const bg=sec?'#b5431f':(t.rehberAd?(cakisan?'#dc2626':'#16a34a'):'#f59e0b');
-    h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
-     +'<div style="font-size:.74rem;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><b>'+esc(t.kod)+'</b>'+(t.op?' · '+esc(t.op):'')+'<div style="font-size:.66rem;color:var(--muted)">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>'
-     +'<div onclick="rtTurSec(\''+key+'\')" title="'+esc(t.kod)+(t.op?' · '+esc(t.op):'')+' · '+t.pax+' pax'+_rtPaxTip(t)+(t.rehberAd?' · Rehber: '+esc(t.rehberAd):' · AÇIKTA')+'" style="grid-row:1;grid-column:'+(c1+1)+'/'+(c2+1)+';background:'+bg+';color:#fff;border-radius:'+(t.kalkis<ayBas?'0':'7px')+' '+(t.end>aySon?'0 0':'7px 7px')+' '+(t.kalkis<ayBas?'0':'7px')+';font-size:.64rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;cursor:pointer;margin:2px 1px;line-height:1.3;'+(sec?'outline:2.5px solid #7a2c12;':'')+'">'
-     +esc(t.kod)+' · '+t.pax
-     +'<div style="font-weight:700;font-size:.62rem;opacity:.95">'+(t.rehberAd?esc(t.rehberAd):'— açıkta —')+'</div></div>'
-     +'</div>';
-  });
-  h+='</div></div>';
+  h+='</div></div></div>';
   box.innerHTML=h;
+  // ilk açılışta bugüne odakla
+  const bugunPx=Math.max(0,(gunNo(bugun)-3)*_RT_GW);
+  _rtScrollKur((bugun>=bas&&bugun<=son)?bugunPx:0);
 }
 function opsTab(t){
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
