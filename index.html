@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v198 · 20.08.2026';
+const APP_VER='v199 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10381,6 +10381,12 @@ function rtAta(rehId){
   if(!secTurlar.length) return;
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
   const cak=[]; secTurlar.forEach(st=>{ turlar.filter(t=>t.rehberAd===(reh.ad||'')&&!S.includes(t.pkgId+'|'+t.kalkis)&&_rtCakisir(t.kalkis,t.end,st.kalkis,st.end)).forEach(c=>{ if(!cak.includes(c.kod+' ('+_fmtDateTR(c.kalkis)+')')) cak.push(c.kod+' ('+_fmtDateTR(c.kalkis)+')'); }); });
+  // seçilen turların KENDİ aralarındaki çakışmalar da onaya girer (birleşik grup dahil — bilinçli ama sorularak)
+  const icCak=[];
+  for(let i=0;i<secTurlar.length;i++) for(let j=i+1;j<secTurlar.length;j++){
+    const a=secTurlar[i], b=secTurlar[j];
+    if(_rtCakisir(a.kalkis,a.end,b.kalkis,b.end)) icCak.push(a.kod+' + '+b.kod+' ('+_fmtDateTR(a.kalkis)+')');
+  }
   const yap=()=>{
     const all=getOperasyon();
     secTurlar.forEach(st=>{
@@ -10391,8 +10397,12 @@ function rtAta(rehId){
     setOperasyon(all); window._rtSecSet.clear(); renderRehberTakvim();
     showToast(secTurlar.map(t=>t.kod).join(' + ')+' → '+reh.ad+(secTurlar.length>1?' (birleşik grup)':'')+' atandı','success');
   };
-  if(cak.length) showConfirm('⚠️','Tarih Çakışması',(reh.ad||'')+' rehberinin bu tarihlerde başka turu var: '+cak.join(', ')+'. Yine de atansın mı?','Yine de Ata',yap);
-  else yap();
+  if(cak.length||icCak.length){
+    const parca=[];
+    if(cak.length) parca.push((reh.ad||'')+' rehberinin bu tarihlerde başka turu var: '+cak.join(', '));
+    if(icCak.length) parca.push('Seçilen turlar birbirinin tarihleriyle çakışıyor (birleşik grup): '+icCak.join(', '));
+    showConfirm('⚠️','Tarih Çakışması',parca.join('\n\n')+'\n\nYine de atansın mı?','Yine de Ata',yap);
+  } else yap();
 }
 function rtKaldirSecili(){
   const S=[...window._rtSecSet]; if(!S.length) return;
