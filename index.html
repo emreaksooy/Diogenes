@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v207 · 20.08.2026';
+const APP_VER='v208 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10360,9 +10360,10 @@ function _rtTurlar(bas,son){
   // sefer başına bölüm pax'ları (rezv.grupBolum; boş='01')
   const bolumMap={};
   try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId&&r.kalkis&&r.durum!=='iptal'){
-    const b=String(r.grupBolum||'01'); const kk=r.pkgId+'|'+r.kalkis;
-    const n=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length;
-    if(n) (bolumMap[kk]=bolumMap[kk]||{})[b]=((bolumMap[kk]||{})[b]||0)+n; } }); }catch(e){}
+    const kk=r.pkgId+'|'+r.kalkis; const rb=String(r.grupBolum||'01');
+    (r.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
+      const b=String(m.grupBolum||rb);
+      (bolumMap[kk]=bolumMap[kk]||{})[b]=((bolumMap[kk]||{})[b]||0)+1; }); } }); }catch(e){}
   const out=[];
   getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{
     const gece=parseInt(pkg.gece)||0;
@@ -10427,15 +10428,24 @@ function rtAta(rehId){
   } else yap();
 }
 function rtBolAc(){ window._rtBolum=window._rtBolum?null:1; renderRehberTakvim(); }
-function rtBolSet(rzId,v){ window._rtBolSecim=window._rtBolSecim||{}; window._rtBolSecim[rzId]=v; }
+function rtBolSet(rzId,b,v){ window._rtBolSecim=window._rtBolSecim||{}; (window._rtBolSecim[rzId]=window._rtBolSecim[rzId]||{})[b]=Math.max(0,parseInt(v)||0); }
 function rtBolKaydet(){
   const sec=window._rtBolSecim||{};
-  const rez=getRezv(); let n=0;
-  Object.keys(sec).forEach(id=>{ const r=rez.find(x=>x.id===id); if(r&&String(r.grupBolum||'01')!==sec[id]){ r.grupBolum=sec[id]; r.grupBolumM=true; n++; } });
-  if(n){ rzSave(); }
+  const rez=getRezv(); let degisti=0;
+  for(const id of Object.keys(sec)){
+    const r=rez.find(x=>x.id===id); if(!r) continue;
+    const kisiler=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim()));
+    const say=sec[id]; const toplam=['01','02','03','04'].reduce((t,b)=>t+(say[b]||0),0);
+    if(toplam!==kisiler.length){ showToast((r.voucher||'—')+': bölüm toplamı '+toplam+', kişi sayısı '+kisiler.length+' — sayılar eşit olmalı','error',5000); return; }
+    // kişileri sırayla bölümlere dağıt
+    let i=0;
+    ['01','02','03','04'].forEach(b=>{ for(let k=0;k<(say[b]||0);k++){ if(kisiler[i]){ kisiler[i].grupBolum=b; i++; } } });
+    r.grupBolumM=true; degisti++;
+  }
+  if(degisti){ rzSave(); }
   window._rtBolum=null; window._rtBolSecim=null; window._rtSecSet.clear();
   renderRehberTakvim();
-  if(n) showToast(n+' voucher yeni bölüme taşındı — bölümlere ayrı rehber atayabilirsin','success',4500);
+  if(degisti) showToast('Grup bölündü — bölümlere ayrı rehber atayabilirsin','success',4500);
 }
 function rtKaldirSecili(){
   const S=[...window._rtSecSet]; if(!S.length) return;
@@ -10542,16 +10552,19 @@ function renderRehberTakvim(){
       const rzler=(getRezv()||[]).filter(r=>r.tip==='urun'&&r.pkgId===st.pkgId&&r.kalkis===st.kalkis&&r.durum!=='iptal');
       window._rtBolSecim=window._rtBolSecim||{};
       h+='<div style="margin-top:10px;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 12px">'
-       +'<div style="font-size:.78rem;font-weight:800;color:#6d28d9;margin-bottom:7px">Grubu Böl — her voucher\'a bölüm seç (G01, G02...). Aynı bölümdekiler tek grup olur.</div>'
-       +rzler.map(r=>{ const mev=window._rtBolSecim[r.id]||String(r.grupBolum||'01');
-          const pax=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length;
+       +'<div style="font-size:.78rem;font-weight:800;color:#6d28d9;margin-bottom:7px">Grubu Böl — bölümlere kişi SAYISI yaz (toplam pax\'a eşit olmalı). Aynı bölümdekiler tek grup olur, her bölüme ayrı rehber atanır.</div>'
+       +rzler.map(r=>{
+          const kisiler=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim()));
+          const rb=String(r.grupBolum||'01');
+          const mevSay={}; kisiler.forEach(m=>{ const b=String(m.grupBolum||rb); mevSay[b]=(mevSay[b]||0)+1; });
+          window._rtBolSecim=window._rtBolSecim||{};
+          if(!window._rtBolSecim[r.id]){ window._rtBolSecim[r.id]={}; ['01','02','03','04'].forEach(b=>window._rtBolSecim[r.id][b]=mevSay[b]||0); }
           const ilkAd=((r.musteriler||[]).find(m=>(m.soyad||'').trim())||{}).soyad||'';
-          return '<div style="display:flex;gap:10px;align-items:center;padding:4px 0;border-bottom:1px dashed #ddd6fe;font-size:.78rem">'
+          return '<div style="display:flex;gap:10px;align-items:center;padding:5px 0;border-bottom:1px dashed #ddd6fe;font-size:.78rem;flex-wrap:wrap">'
            +'<b style="min-width:90px">'+esc(r.voucher||'—')+'</b>'
-           +'<span style="flex:1;min-width:100px;color:var(--muted)">'+esc(ilkAd)+' · '+pax+' pax</span>'
-           +'<select onchange="rtBolSet(\''+r.id+'\',this.value)" style="padding:4px 7px;border:1.5px solid #ddd6fe;border-radius:7px;font-size:.76rem;font-family:inherit">'
-           +['01','02','03','04'].map(b=>'<option value="'+b+'"'+(mev===b?' selected':'')+'>G'+b+'</option>').join('')
-           +'</select></div>'; }).join('')
+           +'<span style="min-width:110px;color:var(--muted)">'+esc(ilkAd)+' · <b>'+kisiler.length+'</b> pax</span>'
+           +['01','02','03','04'].map(b=>'<label style="display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:700;color:#6d28d9">G'+b+' <input type="number" min="0" value="'+(window._rtBolSecim[r.id][b]||0)+'" oninput="rtBolSet(\''+r.id+'\',\''+b+'\',this.value)" style="width:52px;padding:4px 6px;border:1.5px solid #ddd6fe;border-radius:7px;font-size:.76rem;font-family:inherit"></label>').join('')
+           +'</div>'; }).join('')
        +'<div style="display:flex;gap:8px;margin-top:9px">'
        +'<button class="btn btn-primary btn-sm" onclick="rtBolKaydet()">Kaydet</button>'
        +'<button class="btn btn-outline btn-sm" onclick="window._rtBolum=null;window._rtBolSecim=null;renderRehberTakvim()">Vazgeç</button>'
