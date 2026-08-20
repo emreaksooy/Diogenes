@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v186 · 20.08.2026';
+const APP_VER='v187 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8513,7 +8513,7 @@ function rzSejourImport(evt){
     rows.slice(1).forEach(r=>{
       const v=String(r[iV]||'').trim(); const isim=String(r[iAd]||'').trim();
       if(!v||!isim){ bos++; return; }
-      if(/^NO\s*NAME$/i.test(isim)||/^NAME$/i.test(isim)){ kontenjan++; return; } // Sejour kontenjan/allotment bloğu — gerçek rezervasyon değil
+      // NO NAME = ismi henüz operatörden gelmemiş gerçek koltuk — yer tutucu olarak aktarılır, isim gelince eşitlenir
       const tip=String(r[iTip]||'').trim();
       const key=String(r[iOp]||'').trim()+'|'+v;
       const gg=(grup[key]=grup[key]||{opKod:String(r[iOp]||'').trim(),opAd:String(r[iOpAd]||'').trim(),voucher:v,satirlar:[],iptaller:[]});
@@ -8536,12 +8536,56 @@ function rzSejourImport(evt){
         // ürün dosyası tekrar mı? (satırların 'oteli' tanımlı otellerde yok = ürün kartı adı)
         const tOteller=(getTanimlar()||{}).oteller||[];
         const gercekOtel=g.satirlar.some(r=>{ const oa=String(r[iOtel]||'').trim(); return oa&&tOteller.some(o=>_norm(o.ad||'')===_norm(oa)); });
-        if(!gercekOtel&&mevcut.tip==='urun'){
-          if(!(mevcut.ukartlar||[]).length&&iOda>=0){
-            mevcut.ukartlar=_sjUkartlar(g.satirlar.length?g.satirlar:g.iptaller,iOda,iAd,iGir,iCik,mevcut.musteriler||[],iSira,iDogum);
-            if(mevcut.ukartlar.length){ kartVoucher++; kartN+=mevcut.ukartlar.length; }
-            else atla++;
-          } else atla++;
+        if(!gercekOtel){
+          // ÜRÜN DOSYASI YENİDEN YÜKLEME = VOUCHER SENKRONU (dosya tek doğru kaynak)
+          const _noName2=t=>/^NO\s*NAME$/i.test(String(t||'').trim());
+          mevcut.musteriler=mevcut.musteriler||[];
+          const eslesen=new Set();
+          const bosYer=()=>mevcut.musteriler.find(m=>(m.noname||_noName2(m.soyad))&&!eslesen.has(m.id));
+          const doldur=(m,r,ipt)=>{
+            const dg=(iDogum>=0&&r[iDogum])?_sjTarih(r[iDogum]):'';
+            if(dg&&!m.dogum) m.dogum=dg;
+            if(iUnvan>=0&&!m.unvan) m.unvan=_sjTemiz(r[iUnvan]);
+            if(iMilliyet>=0&&!m.milliyet) m.milliyet=_sjTemiz(r[iMilliyet]);
+            if(iPas>=0&&!m.pasaport&&_sjTemiz(r[iPas])) m.pasaport=_sjTemiz(r[iPas]);
+            if(iGelUcNo>=0&&_sjTemiz(r[iGelUcNo])) m.gelisUcus=_sjTemiz(r[iGelUcNo]);
+            if(iDonUcNo>=0&&_sjTemiz(r[iDonUcNo])) m.donusUcus=_sjTemiz(r[iDonUcNo]);
+            if(iGelFrom>=0){ const rt=_sjRotaFT(r[iGelFrom],r[iGelTo],'',''); if(rt) m.gelis=rt; }
+            if(iDonFrom>=0){ const rt=_sjRotaFT(r[iDonFrom],r[iDonTo],'',''); if(rt) m.donus=rt; }
+            m.iptal=!!ipt; if(ipt&&!m.iptalTarihi) m.iptalTarihi='';
+          };
+          const tumu=g.satirlar.map(r=>({r,ipt:false})).concat(g.iptaller.map(r=>({r,ipt:true})));
+          let isimlendi=0;
+          tumu.filter(x=>!_noName2(x.r[iAd])).forEach(x=>{
+            const p=_sjIsim(x.r[iAd]); if(!p) return;
+            const dg=(iDogum>=0&&x.r[iDogum])?_sjTarih(x.r[iDogum]):'';
+            let m=mevcut.musteriler.find(mm=>!eslesen.has(mm.id)&&!(mm.noname||_noName2(mm.soyad))&&_norm((mm.soyad||'')+'|'+(mm.ad||''))===_norm(p.soyad+'|'+p.ad)&&(!dg||!mm.dogum||mm.dogum===dg));
+            if(!m){ m=bosYer(); if(m){ m.ad=p.ad; m.soyad=p.soyad; m.noname=false; isimlendi++; } }
+            if(!m){ m=_rzYeniM(); m.ad=p.ad; m.soyad=p.soyad; mevcut.musteriler.push(m); }
+            eslesen.add(m.id); doldur(m,x.r,x.ipt);
+          });
+          tumu.filter(x=>_noName2(x.r[iAd])).forEach(x=>{
+            let m=bosYer();
+            if(!m){ m=_rzYeniM(); m.soyad='NO NAME'; m.ad=''; m.noname=true; mevcut.musteriler.push(m); }
+            eslesen.add(m.id); doldur(m,x.r,x.ipt);
+          });
+          const silinen=mevcut.musteriler.filter(m=>!eslesen.has(m.id)).map(m=>m.id);
+          if(silinen.length){
+            mevcut.musteriler=mevcut.musteriler.filter(m=>eslesen.has(m.id));
+            ['kartlar','ukartlar'].forEach(kk=>(mevcut[kk]||[]).forEach(k=>{ if(Array.isArray(k.uyeler)) k.uyeler=k.uyeler.filter(id=>!silinen.includes(id)); }));
+          }
+          const aktifVar=tumu.some(x=>!x.ipt);
+          mevcut.durum=aktifVar?'':'iptal';
+          { let kal=''; tumu.forEach(x=>{ const t=_sjTarih(x.r[iGir]); if(t&&(!kal||t<kal)) kal=t; }); if(kal) mevcut.kalkis=kal; }
+          if(iKayit>=0){ let sat=''; tumu.forEach(x=>{ const k2=_sjTarih(x.r[iKayit]); if(k2&&(!sat||k2<sat)) sat=k2; }); if(sat) mevcut.satisTarihi=sat; }
+          if(iG5>=0){ const gb=_sjTemiz(tumu[0]&&tumu[0].r[iG5]); if(gb) mevcut.grupBolum=gb; }
+          if(iStat>=0) mevcut.sorSat=tumu.some(x=>String(x.r[iStat]||'').trim()==='Sor-Sat')||false;
+          if(!mevcut.pkgId){ const kod2=((tumu[0]?String(tumu[0].r[iG1]||''):'').trim()||(iKod2>=0&&tumu[0]?String(tumu[0].r[iKod2]||'').trim():'')).toUpperCase();
+            if(kod2){ let pkg2=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(kod2)); let uz2=null;
+              if(!pkg2){ uz2=_uzKodBul(kod2); if(uz2) pkg2=uz2.pkg; }
+              if(pkg2){ mevcut.pkgId=pkg2.id; mevcut.urunKod=kod2; mevcut.tip='urun'; if(uz2) mevcut.uzatmaHafta=uz2.hafta; } } }
+          if(iOda>=0){ const yeniUk=_sjUkartlar(g.satirlar.length?g.satirlar:g.iptaller,iOda,iAd,iGir,iCik,mevcut.musteriler,iSira,iDogum,iKartNo); if(yeniUk.length) mevcut.ukartlar=yeniUk; }
+          window._sjSenkron=(window._sjSenkron||0)+1; window._sjIsimlendi=(window._sjIsimlendi||0)+isimlendi;
           return;
         }
         // müşteri zenginleştirme: doğum / rota / satış tarihi (boş alanlara)
@@ -8592,7 +8636,14 @@ function rzSejourImport(evt){
       // müşteriler (aynı isim mükerrer olmasın)
       const gorulen=new Set(); const musteriler=[];
       const dogumVar=iDogum>=0;
-      kaynak.forEach(r=>{ const p=_sjIsim(r[iAd]); if(!p) return;
+      const _noName=t=>/^NO\s*NAME$/i.test(String(t||'').trim());
+      kaynak.forEach(r=>{
+        if(_noName(r[iAd])){ const m=_rzYeniM(); m.soyad='NO NAME'; m.ad=''; m.noname=true;
+          if(iUnvan>=0) m.unvan=_sjTemiz(r[iUnvan]);
+          m.gelis=(iGelFrom>=0)?_sjRotaFT(r[iGelFrom],r[iGelTo],(iGelis>=0?r[iGelis]:''),gw):(gw||'');
+          m.donus=(iDonFrom>=0)?_sjRotaFT(r[iDonFrom],r[iDonTo],(iDonus>=0?r[iDonus]:''),gw):(gw||'');
+          musteriler.push(m); return; }
+        const p=_sjIsim(r[iAd]); if(!p) return;
         // ürün dosyasında (doğum kolonu yok) her satır bir kişidir — tekilleştirme YOK;
         // açılım dosyasında kişi = isim+doğum (aynı isimli iki kişi ayrışır)
         if(dogumVar){ const nk=_norm(p.soyad+'|'+p.ad+'|'+String(r[iDogum]||'')+'|'+String(iSira>=0?(r[iSira]||''):'')); if(gorulen.has(nk)) return; gorulen.add(nk); }
@@ -8608,7 +8659,9 @@ function rzSejourImport(evt){
         musteriler.push(m); });
       // Detay-2: kişi bazlı İPTAL satırları müşteri olarak eklenir (m.iptal) — fiyat/iptal hesabı için
       if(!tumIptal&&g.iptaller.length&&(iDogum>=0||iUnvan>=0)){
-        g.iptaller.forEach(r=>{ const p=_sjIsim(r[iAd]); if(!p) return;
+        g.iptaller.forEach(r=>{
+          if(_noName(r[iAd])){ const m=_rzYeniM(); m.soyad='NO NAME'; m.ad=''; m.noname=true; m.iptal=true; musteriler.push(m); return; }
+          const p=_sjIsim(r[iAd]); if(!p) return;
           const nk=_norm(p.soyad+'|'+p.ad+'|'+String(iDogum>=0?(r[iDogum]||''):'')+'|'+String(iSira>=0?(r[iSira]||''):''));
           if(gorulen.has(nk)) return; gorulen.add(nk);
           const m=_rzYeniM(); m.ad=p.ad; m.soyad=p.soyad;
@@ -8650,7 +8703,7 @@ function rzSejourImport(evt){
     if(kartN) msg+=' · '+kartVoucher+' voucher\'a '+kartN+' kart (konaklama/oda) bağlandı';
     if(uyeYok) msg+=' · '+uyeYok+' isim rezervasyonda bulunamadı (kart tüm üyelere açıldı)';
     if(atla) msg+=' · '+atla+' zaten vardı/boş (atlandı)';
-    if(kontenjan) msg+=' · '+kontenjan+' isimsiz kontenjan satırı (NO NAME) atlandı';
+    if(window._sjSenkron){ msg+=' · '+window._sjSenkron+' voucher dosyayla eşitlendi'; if(window._sjIsimlendi) msg+=' ('+window._sjIsimlendi+' NO NAME koltuğa isim geldi)'; window._sjSenkron=0; window._sjIsimlendi=0; }
     if(iptalRez) msg+=' · '+iptalRez+' İPTAL rezervasyon (fatura/iptal şartı için) işaretlendi';
     else if(iptal) msg+=' · '+iptal+' iptal satırı not edildi';
     showToast(msg,'success');
