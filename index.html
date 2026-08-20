@@ -1860,7 +1860,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v199 · 20.08.2026';
+const APP_VER='v200 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10435,17 +10435,27 @@ function renderRehberTakvim(){
   const box=document.getElementById('opsPane_rehtak'); if(!box) return;
   const bugun=new Date().toISOString().slice(0,10);
   if(!_rtBas){ _rtBas=_rtAyBasi(bugun); _rtSon=_rtAySonu(_rtAyEkle(_rtBas,1)); }
-  const bas=_rtBas, son=_rtSon;
+  let bas=_rtBas, son=_rtSon;
+  // filtre seçenekleri TÜM sezondan; filtre aktifse şerit eşleşen tüm turları kapsayacak şekilde genişler
+  const _global=_rtTurlar('1900-01-01','2999-12-31');
+  const fltAktif=_rtFlt.op.size||_rtFlt.kod.size||_rtFlt.reh.size;
+  const _uy=t=>(!_rtFlt.op.size||_rtFlt.op.has(t.op))&&(!_rtFlt.kod.size||_rtFlt.kod.has(t.kod))&&(!_rtFlt.reh.size||(t.rehberAd?_rtFlt.reh.has(t.rehberAd):_rtFlt.reh.has('__acik')));
+  if(fltAktif){
+    const es=_global.filter(_uy);
+    if(es.length){
+      const minK=es.reduce((m,t)=>t.kalkis<m?t.kalkis:m,es[0].kalkis);
+      const maxE=es.reduce((m,t)=>t.end>m?t.end:m,es[0].end);
+      if(minK<bas) bas=_rtAyBasi(minK);
+      if(maxE>son) son=_rtAySonu(_rtAyBasi(maxE));
+    }
+  }
   const toplamGun=_isoDiff(bas,son)+1;
   const gunNo=iso=>_isoDiff(bas,iso)+1;
   const _tumTurlar=_rtTurlar(bas,son);
-  const _opSecenek=[...new Set(_tumTurlar.map(t=>t.op).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
-  const _kodSecenek=[...new Set(_tumTurlar.map(t=>t.kod).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const _opSecenek=[...new Set(_global.map(t=>t.op).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const _kodSecenek=[...new Set(_global.map(t=>t.kod).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   const _rehSecenek=[{v:'__acik',ad:'⚠ Atanmamış'}].concat((getTanimlar().rehberler||[]).map(r=>({v:r.ad||'',ad:r.ad||'—'})).filter(x=>x.v).sort((a,b)=>a.ad.localeCompare(b.ad,'tr')));
-  const turlar=_tumTurlar.filter(t=>
-    (!_rtFlt.op.size||_rtFlt.op.has(t.op))
-    &&(!_rtFlt.kod.size||_rtFlt.kod.has(t.kod))
-    &&(!_rtFlt.reh.size||(t.rehberAd?_rtFlt.reh.has(t.rehberAd):_rtFlt.reh.has('__acik'))));
+  const turlar=_tumTurlar.filter(_uy);
   const _fltBtn=(alan,ad,secenekler)=>{
     const S=_rtFlt[alan]; const acik=window._rtFltAcik===alan;
     let hh='<span style="position:relative;display:inline-block">'
