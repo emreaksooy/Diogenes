@@ -921,6 +921,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa</div>
         <div class="pkg-section-item ops-navitem" data-ot="gunluk" onclick="opsTab('gunluk')"><svg class="ic"><use href="#i-list"/></svg> Günlük Liste</div>
         <div class="pkg-section-item ops-navitem" data-ot="rehtak" onclick="opsTab('rehtak')"><svg class="ic"><use href="#i-calendar"/></svg> Rehber Takvimi</div>
+        <div class="pkg-section-item ops-navitem" data-ot="magaza" onclick="opsTab('magaza')"><svg class="ic"><use href="#i-box"/></svg> Mağaza Operasyonu</div>
         <div class="pkg-section-item ops-navitem" data-ot="grup" onclick="opsTab('grup')"><svg class="ic"><use href="#i-users"/></svg> Gruplar</div>
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> Transfer</div>
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> Tanımlamalar</div>
@@ -1630,6 +1631,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
           <div id="opsGunluk"></div>
         </div>
         <div id="opsPane_rehtak" style="display:none"></div>
+        <div id="opsPane_magaza" style="display:none"></div>
         <div id="opsPane_grup" style="display:none"></div>
         <div id="opsPane_transfer" style="display:none"></div>
         <div id="opsPane_tanim" style="display:none"></div>
@@ -1861,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v212 · 20.08.2026';
+const APP_VER='v213 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10710,12 +10712,128 @@ function renderRehberTakvim(){
   const bugunPx=Math.max(0,(gunNo(bugun)-3)*_RT_GW);
   _rtScrollKur((bugun>=bas&&bugun<=son)?bugunPx:0);
 }
+/* ══ MAĞAZA OPERASYONU ══ */
+let _moFltSehir='', _moFltTur='', _moSadeceAcik=false, _moFirmaAcik=false;
+function _moFirmalar(){ const t=getTanimlar(); return Array.isArray(t.magazaFirmalari)?t.magazaFirmalari:[]; }
+function moFirmaEkle(){
+  const ad=(document.getElementById('moFAd')||{}).value||'', sehir=(document.getElementById('moFSehir')||{}).value||'', tur=(document.getElementById('moFTur')||{}).value||'';
+  if(!ad.trim()){ showToast('Firma adı girin','error'); return; }
+  const t=getTanimlar(); t.magazaFirmalari=t.magazaFirmalari||[];
+  t.magazaFirmalari.push({id:genId(),ad:ad.trim(),sehir:sehir.trim(),tur:tur.trim()});
+  setTanimlar(t); renderMagazaOps(); showToast('Mağaza firması eklendi: '+ad,'success');
+}
+function moFirmaSil(id){ const t=getTanimlar(); t.magazaFirmalari=(t.magazaFirmalari||[]).filter(f=>f.id!==id); setTanimlar(t); renderMagazaOps(); }
+function moAta(pkgId,kalkis,key,firmaId){
+  const all=getOperasyon();
+  let r=all.find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+  if(!r){ r={pkgId,kalkis,magazalar:[],oteller:[]}; all.push(r); }
+  r.magazaAtama=r.magazaAtama||{};
+  if(firmaId) r.magazaAtama[key]=firmaId; else delete r.magazaAtama[key];
+  setOperasyon(all); renderMagazaOps();
+}
+function _moSatirlar(){
+  const bugun=new Date().toISOString().slice(0,10);
+  const turlar=_rtTurlar(bugun,'2999-12-31').filter(t=>t.pax>0);
+  const out=[];
+  turlar.forEach(t=>{
+    const pkg=getPackages().find(p=>p.id===t.pkgId); if(!pkg) return;
+    (pkg.gunler||[]).forEach((g,gi)=>{
+      if(!g.magazaVar||!(g.magazalar||[]).length) return;
+      const tarih=_isoAdd(t.kalkis,gi);
+      if(tarih<bugun) return;
+      (g.magazalar||[]).forEach((m,mi)=>{
+        const key='b'+(t.bolum||'01')+'_g'+gi+'_'+mi;
+        const rec=_opsGet(t.pkgId,t.kalkis);
+        out.push({tarih,kod:t.kod,op:t.op,pkgId:t.pkgId,kalkis:t.kalkis,bolum:t.bolum||'01',key,
+          sehir:m.sehir||'',tur:m.tip||'',pax:t.pax,rehber:t.rehberAd||'',
+          firmaId:(rec.magazaAtama||{})[key]||''});
+      });
+    });
+  });
+  out.sort((a,b)=>a.tarih.localeCompare(b.tarih)||a.kod.localeCompare(b.kod,'tr'));
+  return out;
+}
+function moExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  const firmalar=_moFirmalar();
+  const rows=_moSatirlar().filter(r=>(!_moFltSehir||r.sehir===_moFltSehir)&&(!_moFltTur||r.tur===_moFltTur)&&(!_moSadeceAcik||!r.firmaId));
+  const aoa=[['Tarih','Tur','Operatör','Şehir','Mağaza Türü','Pax','Rehber','Atanan Mağaza']];
+  rows.forEach(r=>{ const f=firmalar.find(x=>x.id===r.firmaId); aoa.push([_fmtDateTR(r.tarih),r.kod,r.op,r.sehir,r.tur,r.pax,r.rehber||'',f?f.ad:'']); });
+  const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=aoa[0].map(h=>({wch:Math.max(12,String(h).length+4)}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Mağaza Operasyonu');
+  XLSX.writeFile(wb,'magaza-operasyonu_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+function renderMagazaOps(){
+  const box=document.getElementById('opsPane_magaza'); if(!box) return;
+  const firmalar=_moFirmalar();
+  const tum=_moSatirlar();
+  const sehirler=[...new Set(tum.map(r=>r.sehir).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const turler=[...new Set(tum.map(r=>r.tur).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  if(_moFltSehir&&!sehirler.includes(_moFltSehir)) _moFltSehir='';
+  if(_moFltTur&&!turler.includes(_moFltTur)) _moFltTur='';
+  const rows=tum.filter(r=>(!_moFltSehir||r.sehir===_moFltSehir)&&(!_moFltTur||r.tur===_moFltTur)&&(!_moSadeceAcik||!r.firmaId));
+  const acikN=tum.filter(r=>!r.firmaId).length;
+  let h='<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+   +'<b style="font-size:.95rem;color:#1a3c5e">🏬 Mağaza Operasyonu</b>'
+   +'<span style="font-size:.76rem;color:var(--muted)">'+tum.length+' ziyaret · <b style="color:'+(acikN?'#b45309':'#065f46')+'">'+acikN+' atanmamış</b></span>'
+   +'<select onchange="_moFltSehir=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltSehir?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm şehirler</option>'+sehirler.map(x=>'<option'+(x===_moFltSehir?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
+   +'<select onchange="_moFltTur=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltTur?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm türler</option>'+turler.map(x=>'<option'+(x===_moFltTur?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
+   +'<label style="display:inline-flex;align-items:center;gap:5px;font-size:.78rem;cursor:pointer"><input type="checkbox" '+(_moSadeceAcik?'checked':'')+' onchange="_moSadeceAcik=this.checked;renderMagazaOps()"> Sadece atanmamış</label>'
+   +'<button class="btn btn-outline btn-sm" onclick="moExcel()">⬇ Excel İndir</button>'
+   +'<button class="btn btn-outline btn-sm" onclick="_moFirmaAcik=!_moFirmaAcik;renderMagazaOps()">'+(_moFirmaAcik?'▲':'▼')+' Mağaza Firmaları ('+firmalar.length+')</button>'
+   +'</div>';
+  if(_moFirmaAcik){
+    h+='<div style="margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--border)">'
+     +firmalar.map(f=>'<div style="display:inline-flex;align-items:center;gap:7px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;padding:5px 10px;margin:0 6px 6px 0;font-size:.78rem"><b>'+esc(f.ad)+'</b><span style="color:var(--muted)">'+esc(f.sehir||'')+(f.tur?' · '+esc(f.tur):'')+'</span><button onclick="moFirmaSil(\''+f.id+'\')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;cursor:pointer;font-size:.7rem;padding:1px 6px">×</button></div>').join('')
+     +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:6px">'
+     +'<input id="moFAd" placeholder="Firma adı" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit;width:170px">'
+     +'<input id="moFSehir" placeholder="Şehir" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit;width:120px">'
+     +'<select id="moFTur" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"><option value="">— Tür —</option>'+['Kuyum','Deri','Halı','Seramik / Çini','Tekstil','Lokum / Baharat','Ozon / Kozmetik'].map(x=>'<option>'+x+'</option>').join('')+'</select>'
+     +'<button class="btn btn-primary btn-sm" onclick="moFirmaEkle()">+ Ekle</button></div></div>';
+  }
+  h+='</div>';
+  const thS='padding:7px 10px;border:1px solid #e5e9f0;background:#1a3c5e;color:#fff;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;text-align:left;white-space:nowrap';
+  const tdS='padding:6px 10px;border:1px solid #e5e9f0;font-size:.79rem;white-space:nowrap';
+  h+='<div class="card" style="overflow-x:auto"><table style="border-collapse:collapse;min-width:800px;width:100%">'
+   +'<tr><th style="'+thS+'">Tarih</th><th style="'+thS+'">Tur</th><th style="'+thS+'">Operatör</th><th style="'+thS+'">Şehir</th><th style="'+thS+'">Tür</th><th style="'+thS+'">Pax</th><th style="'+thS+'">Rehber</th><th style="'+thS+'">Mağaza</th></tr>';
+  if(!rows.length) h+='<tr><td colspan="8" style="'+tdS+';text-align:center;color:var(--muted);padding:16px">Kayıt yok — ürünlerin gün planlarına mağaza işaretleyin.</td></tr>';
+  rows.forEach(r=>{
+    const uygun=firmalar.slice().sort((a,b)=>{
+      const pa=((a.sehir&&r.sehir&&_norm(a.sehir)===_norm(r.sehir))?2:0)+((a.tur&&r.tur&&_norm(a.tur)===_norm(r.tur))?1:0);
+      const pb=((b.sehir&&r.sehir&&_norm(b.sehir)===_norm(r.sehir))?2:0)+((b.tur&&r.tur&&_norm(b.tur)===_norm(r.tur))?1:0);
+      return pb-pa||String(a.ad).localeCompare(b.ad,'tr'); });
+    h+='<tr'+(r.firmaId?'':' style="background:#fffbeb"')+'>'
+     +'<td style="'+tdS+';font-weight:700">'+_fmtDateTR(r.tarih)+'</td>'
+     +'<td style="'+tdS+'"><b>'+esc(r.kod)+'</b></td>'
+     +'<td style="'+tdS+'">'+esc(r.op||'—')+'</td>'
+     +'<td style="'+tdS+'">'+esc(r.sehir||'—')+'</td>'
+     +'<td style="'+tdS+'">'+esc(r.tur||'—')+'</td>'
+     +'<td style="'+tdS+';font-weight:800">'+r.pax+'</td>'
+     +'<td style="'+tdS+'">'+(r.rehber?esc(r.rehber):'<span style="color:#b45309;font-weight:700">açıkta</span>')+'</td>'
+     +'<td style="'+tdS+'"><select onchange="moAta(\''+r.pkgId+'\',\''+r.kalkis+'\',\''+r.key+'\',this.value)" style="padding:5px 8px;border:1.5px solid '+(r.firmaId?'#86efac':'#fcd34d')+';border-radius:7px;font-size:.78rem;font-family:inherit;min-width:150px'+(r.firmaId?';background:#f0fdf4':'')+'">'
+     +'<option value="">— Mağaza seç —</option>'
+     +uygun.map(f=>'<option value="'+f.id+'"'+(f.id===r.firmaId?' selected':'')+'>'+esc(f.ad)+(f.sehir?' ('+esc(f.sehir)+')':'')+'</option>').join('')
+     +'</select></td></tr>';
+  });
+  h+='</table></div>';
+  // firma bazlı özet
+  const atanmis=tum.filter(r=>r.firmaId);
+  if(atanmis.length){
+    const fMap={};
+    atanmis.forEach(r=>{ const f=firmalar.find(x=>x.id===r.firmaId); const ad=f?f.ad:'?'; (fMap[ad]=fMap[ad]||{g:0,p:0}); fMap[ad].g++; fMap[ad].p+=r.pax; });
+    h+='<div class="card" style="margin-top:12px"><div style="font-weight:800;font-size:.85rem;color:#1a3c5e;margin-bottom:7px">Firma Bazlı Özet</div><div style="display:flex;gap:8px;flex-wrap:wrap">'
+     +Object.keys(fMap).sort((a,b)=>a.localeCompare(b,'tr')).map(ad=>'<span style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:9px;padding:6px 11px;font-size:.78rem"><b>'+esc(ad)+'</b> · '+fMap[ad].g+' grup · '+fMap[ad].p+' pax</span>').join('')
+     +'</div></div>';
+  }
+  box.innerHTML=h;
+}
 function opsTab(t){
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
-  ['anasayfa','gunluk','rehtak','grup','transfer','tanim'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
+  ['anasayfa','gunluk','rehtak','magaza','grup','transfer','tanim'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
   if(t==='anasayfa') renderOpsAnasayfa();
   else if(t==='rehtak') renderRehberTakvim();
+  else if(t==='magaza') renderMagazaOps();
   else if(t==='gunluk') renderOperasyonPage();
   else if(t==='grup') renderOpsGrup();
   else if(t==='transfer') renderOpsTransfer();
