@@ -1163,6 +1163,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <div class="card-title"><svg class="ic"><use href="#i-map"/></svg> Tur Programı (Günlük)</div>
       <p class="section-tip">Her gün için aktivite ve programı girin.</p>
       <div id="gunler"></div>
+      <datalist id="magazaTipL"><option value="Halı"><option value="Deri"><option value="Kuyum / Mücevher"><option value="Seramik / Çini"><option value="Tekstil"><option value="Lokum / Baharat"><option value="Ozon / Kozmetik"></datalist>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="add-btn" onclick="addGun()">+ Gün Ekle</button>
         <button class="btn btn-outline btn-sm" onclick="calcMesafeler()" id="calcMesafeBtn" style="font-size:.8rem">
@@ -1860,7 +1861,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v210 · 20.08.2026';
+const APP_VER='v211 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -4483,9 +4484,27 @@ function renderGunler(){
             </select>
           </div>
         </div>
+        <div class="field" style="grid-column:span 3">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" ${g.magazaVar?'checked':''} onchange="gunMagazaTog(${i},this.checked)" style="width:15px;height:15px;accent-color:#b45309"> 🏬 Bu günde mağaza var
+          </label>
+          ${g.magazaVar?`<div style="margin-top:6px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:9px;padding:8px 10px">
+            ${(g.magazalar||[]).map((m,mi)=>`<div style="display:flex;gap:7px;align-items:center;margin-bottom:5px">
+              <input style="flex:1;min-width:100px" value="${esc(m.sehir||'')}" oninput="gunler[${i}].magazalar[${mi}].sehir=this.value;markDirty()" placeholder="Şehir">
+              <input style="flex:1.4;min-width:120px" value="${esc(m.tip||'')}" oninput="gunler[${i}].magazalar[${mi}].tip=this.value;markDirty()" placeholder="Ne mağazası? (halı, deri, kuyum...)" list="magazaTipL">
+              <button onclick="removeGunMagaza(${i},${mi})" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:30px;height:34px;cursor:pointer;font-size:13px;flex-shrink:0">×</button>
+            </div>`).join('')}
+            <button onclick="addGunMagaza(${i})" style="padding:4px 10px;background:none;border:1.5px dashed #f59e0b;border-radius:7px;cursor:pointer;color:#b45309;font-size:.8rem;font-family:inherit">+ Mağaza Ekle</button>
+          </div>`:''}
+        </div>
       </div>
     </div></div>`).join('');
 }
+function gunMagazaTog(i,on){ const g=gunler[i]; if(!g)return; g.magazaVar=!!on;
+  if(on&&!(g.magazalar||[]).length){ g.magazalar=[{sehir:(g.konaklamaSehir||g.konaklamaAd||((g.noktalar||[]).slice(-1)[0]||'')),tip:''}]; }
+  renderGunler(); markDirty(); }
+function addGunMagaza(i){ const g=gunler[i]; if(!g)return; (g.magazalar=g.magazalar||[]).push({sehir:(g.konaklamaSehir||g.konaklamaAd||''),tip:''}); renderGunler(); markDirty(); }
+function removeGunMagaza(i,mi){ const g=gunler[i]; if(!g||!g.magazalar)return; g.magazalar.splice(mi,1); if(!g.magazalar.length) g.magazaVar=false; renderGunler(); markDirty(); }
 
 function _bagHav(b){ return String(b&&b.havalimanlari||'').split(/[,;\s]+/).map(x=>x.trim().toUpperCase()).filter(Boolean); }
 function _bagMatch(b,kod){ const l=_bagHav(b); kod=String(kod||'').trim().toUpperCase(); return !l.length||!kod||l.includes(kod); }
