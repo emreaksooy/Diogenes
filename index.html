@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v213 · 20.08.2026';
+const APP_VER='v214 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10750,8 +10750,38 @@ function _moSatirlar(){
       });
     });
   });
-  out.sort((a,b)=>a.tarih.localeCompare(b.tarih)||a.kod.localeCompare(b.kod,'tr'));
-  return out;
+  // BİRLEŞİK GRUP: aynı tarih + aynı rehber + aynı şehir/tür = mağazaya birlikte girerler → tek ziyaret
+  const birlesik={};
+  out.forEach(r=>{
+    const bk=r.rehber?(r.tarih+'|'+_norm(r.rehber)+'|'+_norm(r.sehir)+'|'+_norm(r.tur)):('tek|'+r.pkgId+'|'+r.kalkis+'|'+r.key);
+    (birlesik[bk]=birlesik[bk]||[]).push(r);
+  });
+  const sonuc=[];
+  Object.values(birlesik).forEach(grup=>{
+    if(grup.length===1){ const r=grup[0]; r.parts=[{pkgId:r.pkgId,kalkis:r.kalkis,key:r.key}]; sonuc.push(r); return; }
+    const ilk=grup[0];
+    const firmalar2=[...new Set(grup.map(x=>x.firmaId||''))];
+    sonuc.push({tarih:ilk.tarih,kod:[...new Set(grup.map(x=>x.kod))].join(' + '),
+      op:[...new Set(grup.map(x=>x.op).filter(Boolean))].join(' + '),
+      sehir:ilk.sehir,tur:ilk.tur,
+      pax:grup.reduce((t2,x)=>t2+(+x.pax||0),0),
+      rehber:ilk.rehber,birlesik:true,
+      firmaId:(firmalar2.length===1?firmalar2[0]:''),firmaKarisik:firmalar2.length>1,
+      parts:grup.map(x=>({pkgId:x.pkgId,kalkis:x.kalkis,key:x.key}))});
+  });
+  sonuc.sort((a,b)=>a.tarih.localeCompare(b.tarih)||a.kod.localeCompare(b.kod,'tr'));
+  return sonuc;
+}
+function moAtaCoklu(idx,firmaId){
+  const r=(window._moRows||[])[idx]; if(!r) return;
+  const all=getOperasyon();
+  (r.parts||[]).forEach(p=>{
+    let rec=all.find(x=>x.pkgId===p.pkgId&&x.kalkis===p.kalkis);
+    if(!rec){ rec={pkgId:p.pkgId,kalkis:p.kalkis,magazalar:[],oteller:[]}; all.push(rec); }
+    rec.magazaAtama=rec.magazaAtama||{};
+    if(firmaId) rec.magazaAtama[p.key]=firmaId; else delete rec.magazaAtama[p.key];
+  });
+  setOperasyon(all); renderMagazaOps();
 }
 function moExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
@@ -10797,20 +10827,21 @@ function renderMagazaOps(){
   h+='<div class="card" style="overflow-x:auto"><table style="border-collapse:collapse;min-width:800px;width:100%">'
    +'<tr><th style="'+thS+'">Tarih</th><th style="'+thS+'">Tur</th><th style="'+thS+'">Operatör</th><th style="'+thS+'">Şehir</th><th style="'+thS+'">Tür</th><th style="'+thS+'">Pax</th><th style="'+thS+'">Rehber</th><th style="'+thS+'">Mağaza</th></tr>';
   if(!rows.length) h+='<tr><td colspan="8" style="'+tdS+';text-align:center;color:var(--muted);padding:16px">Kayıt yok — ürünlerin gün planlarına mağaza işaretleyin.</td></tr>';
-  rows.forEach(r=>{
+  window._moRows=rows;
+  rows.forEach((r,ri)=>{
     const uygun=firmalar.slice().sort((a,b)=>{
       const pa=((a.sehir&&r.sehir&&_norm(a.sehir)===_norm(r.sehir))?2:0)+((a.tur&&r.tur&&_norm(a.tur)===_norm(r.tur))?1:0);
       const pb=((b.sehir&&r.sehir&&_norm(b.sehir)===_norm(r.sehir))?2:0)+((b.tur&&r.tur&&_norm(b.tur)===_norm(r.tur))?1:0);
       return pb-pa||String(a.ad).localeCompare(b.ad,'tr'); });
     h+='<tr'+(r.firmaId?'':' style="background:#fffbeb"')+'>'
      +'<td style="'+tdS+';font-weight:700">'+_fmtDateTR(r.tarih)+'</td>'
-     +'<td style="'+tdS+'"><b>'+esc(r.kod)+'</b></td>'
+     +'<td style="'+tdS+'"><b>'+esc(r.kod)+'</b>'+(r.birlesik?' <span style="background:#ede9fe;color:#6d28d9;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">BİRLEŞİK</span>':'')+'</td>'
      +'<td style="'+tdS+'">'+esc(r.op||'—')+'</td>'
      +'<td style="'+tdS+'">'+esc(r.sehir||'—')+'</td>'
      +'<td style="'+tdS+'">'+esc(r.tur||'—')+'</td>'
      +'<td style="'+tdS+';font-weight:800">'+r.pax+'</td>'
      +'<td style="'+tdS+'">'+(r.rehber?esc(r.rehber):'<span style="color:#b45309;font-weight:700">açıkta</span>')+'</td>'
-     +'<td style="'+tdS+'"><select onchange="moAta(\''+r.pkgId+'\',\''+r.kalkis+'\',\''+r.key+'\',this.value)" style="padding:5px 8px;border:1.5px solid '+(r.firmaId?'#86efac':'#fcd34d')+';border-radius:7px;font-size:.78rem;font-family:inherit;min-width:150px'+(r.firmaId?';background:#f0fdf4':'')+'">'
+     +'<td style="'+tdS+'">'+(r.firmaKarisik?'<div style="font-size:.66rem;color:#dc2626;font-weight:700">karışık atama — yeniden seç</div>':'')+'<select onchange="moAtaCoklu('+ri+',this.value)" style="padding:5px 8px;border:1.5px solid '+(r.firmaId?'#86efac':(r.firmaKarisik?'#fca5a5':'#fcd34d'))+';border-radius:7px;font-size:.78rem;font-family:inherit;min-width:150px'+(r.firmaId?';background:#f0fdf4':'')+'">'
      +'<option value="">— Mağaza seç —</option>'
      +uygun.map(f=>'<option value="'+f.id+'"'+(f.id===r.firmaId?' selected':'')+'>'+esc(f.ad)+(f.sehir?' ('+esc(f.sehir)+')':'')+'</option>').join('')
      +'</select></td></tr>';
