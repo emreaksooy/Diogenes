@@ -1861,7 +1861,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v211 · 20.08.2026';
+const APP_VER='v212 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -4491,7 +4491,13 @@ function renderGunler(){
           ${g.magazaVar?`<div style="margin-top:6px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:9px;padding:8px 10px">
             ${(g.magazalar||[]).map((m,mi)=>`<div style="display:flex;gap:7px;align-items:center;margin-bottom:5px">
               <input style="flex:1;min-width:100px" value="${esc(m.sehir||'')}" oninput="gunler[${i}].magazalar[${mi}].sehir=this.value;markDirty()" placeholder="Şehir">
-              <input style="flex:1.4;min-width:120px" value="${esc(m.tip||'')}" oninput="gunler[${i}].magazalar[${mi}].tip=this.value;markDirty()" placeholder="Ne mağazası? (halı, deri, kuyum...)" list="magazaTipL">
+              ${(()=>{const STD=['Kuyum','Deri','Halı','Seramik / Çini','Tekstil','Lokum / Baharat','Ozon / Kozmetik'];
+                const diger=(m.tip&&!STD.includes(m.tip))||m._digerAcik;
+                return `<select style="flex:1.2;min-width:110px;padding:7px 6px;border:1.5px solid var(--border);border-radius:7px;font-size:.82rem;font-family:inherit" onchange="gunMagazaTip(${i},${mi},this.value)">
+                  <option value="">— Tür seç —</option>
+                  ${STD.map(t=>`<option value="${t}" ${(!diger&&m.tip===t)?'selected':''}>${t}</option>`).join('')}
+                  <option value="__diger" ${diger?'selected':''}>Diğer…</option>
+                </select>${diger?`<input style="flex:1;min-width:90px" value="${esc(m.tip||'')}" oninput="gunler[${i}].magazalar[${mi}].tip=this.value;markDirty()" placeholder="Mağaza türü yaz">`:''}`;})()}
               <button onclick="removeGunMagaza(${i},${mi})" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:30px;height:34px;cursor:pointer;font-size:13px;flex-shrink:0">×</button>
             </div>`).join('')}
             <button onclick="addGunMagaza(${i})" style="padding:4px 10px;background:none;border:1.5px dashed #f59e0b;border-radius:7px;cursor:pointer;color:#b45309;font-size:.8rem;font-family:inherit">+ Mağaza Ekle</button>
@@ -4502,6 +4508,9 @@ function renderGunler(){
 }
 function gunMagazaTog(i,on){ const g=gunler[i]; if(!g)return; g.magazaVar=!!on;
   if(on&&!(g.magazalar||[]).length){ g.magazalar=[{sehir:(g.konaklamaSehir||g.konaklamaAd||((g.noktalar||[]).slice(-1)[0]||'')),tip:''}]; }
+  renderGunler(); markDirty(); }
+function gunMagazaTip(i,mi,v){ const m=(gunler[i]&&gunler[i].magazalar||[])[mi]; if(!m)return;
+  if(v==='__diger'){ m._digerAcik=true; m.tip=''; } else { m._digerAcik=false; m.tip=v; }
   renderGunler(); markDirty(); }
 function addGunMagaza(i){ const g=gunler[i]; if(!g)return; (g.magazalar=g.magazalar||[]).push({sehir:(g.konaklamaSehir||g.konaklamaAd||''),tip:''}); renderGunler(); markDirty(); }
 function removeGunMagaza(i,mi){ const g=gunler[i]; if(!g||!g.magazalar)return; g.magazalar.splice(mi,1); if(!g.magazalar.length) g.magazaVar=false; renderGunler(); markDirty(); }
