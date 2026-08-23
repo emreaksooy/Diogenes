@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v214 · 20.08.2026';
+const APP_VER='v215 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10723,54 +10723,74 @@ function moFirmaEkle(){
   setTanimlar(t); renderMagazaOps(); showToast('Mağaza firması eklendi: '+ad,'success');
 }
 function moFirmaSil(id){ const t=getTanimlar(); t.magazaFirmalari=(t.magazaFirmalari||[]).filter(f=>f.id!==id); setTanimlar(t); renderMagazaOps(); }
-function moAta(pkgId,kalkis,key,firmaId){
+// ── birleşik kümeler: aynı rehberde tarihleri çakışan turlar (mağazaya birlikte girerler)
+function _moKumeler(turlar){
+  const rehGrup={};
+  turlar.filter(t=>t.rehberAd).forEach(t=>{ (rehGrup[_norm(t.rehberAd)]=rehGrup[_norm(t.rehberAd)]||[]).push(t); });
+  const kumeler=[]; const tek=turlar.filter(t=>!t.rehberAd).slice();
+  Object.values(rehGrup).forEach(list=>{
+    list.sort((a,b)=>a.kalkis.localeCompare(b.kalkis));
+    let cur=null;
+    list.forEach(t=>{
+      if(cur&&cur.son>=t.kalkis){ cur.uyeler.push(t); if(t.end>cur.son)cur.son=t.end; }
+      else { cur={uyeler:[t],son:t.end}; kumeler.push(cur); }
+    });
+  });
+  const cikan=[];
+  kumeler.forEach(km=>{ if(km.uyeler.length>1) cikan.push(km.uyeler); else tek.push(km.uyeler[0]); });
+  return {kumeler:cikan,tekler:tek};
+}
+function _moSeferKey(t){ return t.pkgId+'|'+t.kalkis+'|'+(t.bolum||'01'); }
+function moProgramSec(ki,val){
+  const km=(window._moKumeListe||[])[ki]; if(!km) return;
   const all=getOperasyon();
-  let r=all.find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
-  if(!r){ r={pkgId,kalkis,magazalar:[],oteller:[]}; all.push(r); }
-  r.magazaAtama=r.magazaAtama||{};
-  if(firmaId) r.magazaAtama[key]=firmaId; else delete r.magazaAtama[key];
+  km.forEach(t=>{
+    let r=all.find(x=>x.pkgId===t.pkgId&&x.kalkis===t.kalkis);
+    if(!r){ r={pkgId:t.pkgId,kalkis:t.kalkis,magazalar:[],oteller:[]}; all.push(r); }
+    r.magazaProgram=val; // 'pkgId|kalkis' — kümenin mağaza programı bu turdan
+  });
   setOperasyon(all); renderMagazaOps();
+}
+function _moZiyaretUret(programTur,pax,rehber,kodEtiket,opEtiket,parts,birlesik){
+  const out=[]; const bugun=new Date().toISOString().slice(0,10);
+  const pkg=getPackages().find(p=>p.id===programTur.pkgId); if(!pkg) return out;
+  (pkg.gunler||[]).forEach((g,gi)=>{
+    if(!g.magazaVar||!(g.magazalar||[]).length) return;
+    const tarih=_isoAdd(programTur.kalkis,gi);
+    if(tarih<bugun) return;
+    (g.magazalar||[]).forEach((m,mi)=>{
+      const key='b'+(programTur.bolum||'01')+'_g'+gi+'_'+mi;
+      const rec=_opsGet(programTur.pkgId,programTur.kalkis);
+      out.push({tarih,kod:kodEtiket,op:opEtiket,sehir:m.sehir||'',tur:m.tip||'',pax,rehber,birlesik:!!birlesik,
+        firmaId:(rec.magazaAtama||{})[key]||'',
+        parts:[{pkgId:programTur.pkgId,kalkis:programTur.kalkis,key}],
+        progKey:_moSeferKey(programTur)});
+    });
+  });
+  return out;
 }
 function _moSatirlar(){
   const bugun=new Date().toISOString().slice(0,10);
   const turlar=_rtTurlar(bugun,'2999-12-31').filter(t=>t.pax>0);
-  const out=[];
-  turlar.forEach(t=>{
-    const pkg=getPackages().find(p=>p.id===t.pkgId); if(!pkg) return;
-    (pkg.gunler||[]).forEach((g,gi)=>{
-      if(!g.magazaVar||!(g.magazalar||[]).length) return;
-      const tarih=_isoAdd(t.kalkis,gi);
-      if(tarih<bugun) return;
-      (g.magazalar||[]).forEach((m,mi)=>{
-        const key='b'+(t.bolum||'01')+'_g'+gi+'_'+mi;
-        const rec=_opsGet(t.pkgId,t.kalkis);
-        out.push({tarih,kod:t.kod,op:t.op,pkgId:t.pkgId,kalkis:t.kalkis,bolum:t.bolum||'01',key,
-          sehir:m.sehir||'',tur:m.tip||'',pax:t.pax,rehber:t.rehberAd||'',
-          firmaId:(rec.magazaAtama||{})[key]||''});
-      });
-    });
+  const {kumeler,tekler}=_moKumeler(turlar);
+  window._moKumeListe=kumeler;
+  let out=[];
+  tekler.forEach(t=>{ out=out.concat(_moZiyaretUret(t,t.pax,t.rehberAd||'',t.kod,t.op,null,false)); });
+  kumeler.forEach((km,ki)=>{
+    const toplam=km.reduce((s,x)=>s+(+x.pax||0),0);
+    const kodlar=[...new Set(km.map(x=>x.kod))].join(' + ');
+    const oplar=[...new Set(km.map(x=>x.op).filter(Boolean))].join(' + ');
+    // program: rec.magazaProgram (üyelerden ilkinde), yoksa en yüksek pax'lı üye
+    let progVal='';
+    km.forEach(t=>{ const r=_opsGet(t.pkgId,t.kalkis); if(!progVal&&r.magazaProgram) progVal=r.magazaProgram; });
+    let prog=null;
+    if(progVal){ const [pp,kk]=progVal.split('|'); prog=km.find(t=>t.pkgId===pp&&t.kalkis===kk); }
+    if(!prog) prog=km.slice().sort((a,b)=>(+b.pax||0)-(+a.pax||0))[0];
+    km._prog=prog; km._toplam=toplam; km._kodlar=kodlar; km._ki=ki;
+    out=out.concat(_moZiyaretUret(prog,toplam,prog.rehberAd||'',kodlar,oplar,null,true));
   });
-  // BİRLEŞİK GRUP: aynı tarih + aynı rehber + aynı şehir/tür = mağazaya birlikte girerler → tek ziyaret
-  const birlesik={};
-  out.forEach(r=>{
-    const bk=r.rehber?(r.tarih+'|'+_norm(r.rehber)+'|'+_norm(r.sehir)+'|'+_norm(r.tur)):('tek|'+r.pkgId+'|'+r.kalkis+'|'+r.key);
-    (birlesik[bk]=birlesik[bk]||[]).push(r);
-  });
-  const sonuc=[];
-  Object.values(birlesik).forEach(grup=>{
-    if(grup.length===1){ const r=grup[0]; r.parts=[{pkgId:r.pkgId,kalkis:r.kalkis,key:r.key}]; sonuc.push(r); return; }
-    const ilk=grup[0];
-    const firmalar2=[...new Set(grup.map(x=>x.firmaId||''))];
-    sonuc.push({tarih:ilk.tarih,kod:[...new Set(grup.map(x=>x.kod))].join(' + '),
-      op:[...new Set(grup.map(x=>x.op).filter(Boolean))].join(' + '),
-      sehir:ilk.sehir,tur:ilk.tur,
-      pax:grup.reduce((t2,x)=>t2+(+x.pax||0),0),
-      rehber:ilk.rehber,birlesik:true,
-      firmaId:(firmalar2.length===1?firmalar2[0]:''),firmaKarisik:firmalar2.length>1,
-      parts:grup.map(x=>({pkgId:x.pkgId,kalkis:x.kalkis,key:x.key}))});
-  });
-  sonuc.sort((a,b)=>a.tarih.localeCompare(b.tarih)||a.kod.localeCompare(b.kod,'tr'));
-  return sonuc;
+  out.sort((a,b)=>a.tarih.localeCompare(b.tarih)||a.kod.localeCompare(b.kod,'tr'));
+  return out;
 }
 function moAtaCoklu(idx,firmaId){
   const r=(window._moRows||[])[idx]; if(!r) return;
@@ -10786,7 +10806,7 @@ function moAtaCoklu(idx,firmaId){
 function moExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const firmalar=_moFirmalar();
-  const rows=_moSatirlar().filter(r=>(!_moFltSehir||r.sehir===_moFltSehir)&&(!_moFltTur||r.tur===_moFltTur)&&(!_moSadeceAcik||!r.firmaId));
+  const rows=(window._moRows||[]);
   const aoa=[['Tarih','Tur','Operatör','Şehir','Mağaza Türü','Pax','Rehber','Atanan Mağaza']];
   rows.forEach(r=>{ const f=firmalar.find(x=>x.id===r.firmaId); aoa.push([_fmtDateTR(r.tarih),r.kod,r.op,r.sehir,r.tur,r.pax,r.rehber||'',f?f.ad:'']); });
   const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=aoa[0].map(h=>({wch:Math.max(12,String(h).length+4)}));
@@ -10797,6 +10817,7 @@ function renderMagazaOps(){
   const box=document.getElementById('opsPane_magaza'); if(!box) return;
   const firmalar=_moFirmalar();
   const tum=_moSatirlar();
+  const kumeler=window._moKumeListe||[];
   const sehirler=[...new Set(tum.map(r=>r.sehir).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   const turler=[...new Set(tum.map(r=>r.tur).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   if(_moFltSehir&&!sehirler.includes(_moFltSehir)) _moFltSehir='';
@@ -10822,6 +10843,22 @@ function renderMagazaOps(){
      +'<button class="btn btn-primary btn-sm" onclick="moFirmaEkle()">+ Ekle</button></div></div>';
   }
   h+='</div>';
+  // ── BİRLEŞİK GRUPLAR: program seçimi
+  if(kumeler.length){
+    h+='<div class="card" style="margin-bottom:12px;background:#f5f3ff;border:1.5px solid #ddd6fe">'
+     +'<div style="font-weight:800;font-size:.82rem;color:#6d28d9;margin-bottom:8px">BİRLEŞİK GRUPLAR — mağaza ziyaretleri hangi turun programına göre yapılacak?</div>'
+     +kumeler.map((km,ki)=>{
+        const prog=km._prog;
+        return '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #ddd6fe;font-size:.8rem">'
+         +'<b>'+esc(km._kodlar)+'</b>'
+         +'<span style="color:var(--muted)">'+esc(prog.rehberAd||'')+' · toplam <b>'+km._toplam+'</b> pax</span>'
+         +'<span style="font-weight:700;color:#6d28d9">Program:</span>'
+         +'<select onchange="moProgramSec('+ki+',this.value)" style="padding:5px 8px;border:1.5px solid #ddd6fe;border-radius:7px;font-size:.78rem;font-family:inherit">'
+         +km.map(t=>'<option value="'+_moSeferKey(t).split('|').slice(0,2).join('|')+'"'+(t===prog?' selected':'')+'>'+esc(t.kod)+' programı ('+_fmtDateTR(t.kalkis)+')</option>').join('')
+         +'</select></div>';
+      }).join('')
+     +'</div>';
+  }
   const thS='padding:7px 10px;border:1px solid #e5e9f0;background:#1a3c5e;color:#fff;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;text-align:left;white-space:nowrap';
   const tdS='padding:6px 10px;border:1px solid #e5e9f0;font-size:.79rem;white-space:nowrap';
   h+='<div class="card" style="overflow-x:auto"><table style="border-collapse:collapse;min-width:800px;width:100%">'
@@ -10841,13 +10878,12 @@ function renderMagazaOps(){
      +'<td style="'+tdS+'">'+esc(r.tur||'—')+'</td>'
      +'<td style="'+tdS+';font-weight:800">'+r.pax+'</td>'
      +'<td style="'+tdS+'">'+(r.rehber?esc(r.rehber):'<span style="color:#b45309;font-weight:700">açıkta</span>')+'</td>'
-     +'<td style="'+tdS+'">'+(r.firmaKarisik?'<div style="font-size:.66rem;color:#dc2626;font-weight:700">karışık atama — yeniden seç</div>':'')+'<select onchange="moAtaCoklu('+ri+',this.value)" style="padding:5px 8px;border:1.5px solid '+(r.firmaId?'#86efac':(r.firmaKarisik?'#fca5a5':'#fcd34d'))+';border-radius:7px;font-size:.78rem;font-family:inherit;min-width:150px'+(r.firmaId?';background:#f0fdf4':'')+'">'
+     +'<td style="'+tdS+'"><select onchange="moAtaCoklu('+ri+',this.value)" style="padding:5px 8px;border:1.5px solid '+(r.firmaId?'#86efac':'#fcd34d')+';border-radius:7px;font-size:.78rem;font-family:inherit;min-width:150px'+(r.firmaId?';background:#f0fdf4':'')+'">'
      +'<option value="">— Mağaza seç —</option>'
      +uygun.map(f=>'<option value="'+f.id+'"'+(f.id===r.firmaId?' selected':'')+'>'+esc(f.ad)+(f.sehir?' ('+esc(f.sehir)+')':'')+'</option>').join('')
      +'</select></td></tr>';
   });
   h+='</table></div>';
-  // firma bazlı özet
   const atanmis=tum.filter(r=>r.firmaId);
   if(atanmis.length){
     const fMap={};
