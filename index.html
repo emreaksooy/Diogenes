@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v217 · 20.08.2026';
+const APP_VER='v218 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10382,6 +10382,10 @@ function rtFltAc(alan){ window._rtFltAcik=(window._rtFltAcik===alan)?null:alan; 
 function rtFltTog(alan,vEnc){ const v=decodeURIComponent(vEnc); const S=_rtFlt[alan]; S.has(v)?S.delete(v):S.add(v); _rtFltKaydet(); renderRehberTakvim(); }
 function rtFltTemizle(alan){ if(alan){_rtFlt[alan].clear();} else {_rtFlt.op.clear();_rtFlt.kod.clear();_rtFlt.reh.clear();} _rtFltKaydet(); renderRehberTakvim(); }
 let _rtBas=null,_rtSon=null; const _RT_GW=24; // gün sütun genişliği px
+let _rtAySecim=(()=>{try{return localStorage.getItem('dmc_rtAySecim')||'';}catch(e){return '';}})();
+function rtAySec(ay){ _rtAySecim=ay; try{localStorage.setItem('dmc_rtAySecim',ay);}catch(e){}
+  _rtBas=ay+'-01'; _rtSon=_rtAySonu(_rtAyEkle(_rtBas,1)); // seçilen ay + sonraki ay
+  window._rtScrollPos=0; renderRehberTakvim(); }
 function _rtAyBasi(iso){ return String(iso).slice(0,7)+'-01'; }
 function _rtAyEkle(iso,n){ const p=String(iso).split('-').map(Number); return new Date(Date.UTC(p[0],p[1]-1+n,1)).toISOString().slice(0,10); }
 function _rtAySonu(ayb){ const p=String(ayb).split('-').map(Number); return new Date(Date.UTC(p[0],p[1],0)).toISOString().slice(0,10); }
@@ -10519,34 +10523,16 @@ function rtKaldirSecili(){
 function _rtScrollKur(ilkKonum){
   const sc=document.getElementById('rtScroll'); if(!sc) return;
   sc.scrollLeft=(window._rtScrollPos!=null)?window._rtScrollPos:(ilkKonum||0);
-  // ay ekleme KAYDIRMA DURUNCA yapılır — kaydırma çubuğu eldeyken yeniden çizim olmaz (kayma/yakalayamama fix)
-  const uzat=()=>{
-    if(window._rtBusy||window._rtPtrDown) return;
-    const sc1=document.getElementById('rtScroll'); if(!sc1) return;
-    if(sc1.scrollLeft+sc1.clientWidth>sc1.scrollWidth-120){
-      window._rtBusy=1; _rtSon=_rtAySonu(_rtAyEkle(_rtAyBasi(_rtSon),1));
-      renderRehberTakvim(); setTimeout(()=>{window._rtBusy=0;},120);
-    } else if(sc1.scrollLeft<50){
-      window._rtBusy=1; const eskiW=sc1.scrollWidth, eskiL=sc1.scrollLeft;
-      _rtBas=_rtAyEkle(_rtBas,-1);
-      renderRehberTakvim();
-      const sc2=document.getElementById('rtScroll');
-      if(sc2){ sc2.scrollLeft=eskiL+(sc2.scrollWidth-eskiW); window._rtScrollPos=sc2.scrollLeft; }
-      setTimeout(()=>{window._rtBusy=0;},120);
-    }
-  };
-  sc.onscroll=()=>{
-    window._rtScrollPos=sc.scrollLeft;
-    clearTimeout(window._rtScrollT);
-    window._rtScrollT=setTimeout(uzat,280); // kaydırma bitince
-  };
-  sc.onpointerdown=()=>{ window._rtPtrDown=true; };
-  sc.onpointerup=sc.onpointercancel=()=>{ window._rtPtrDown=false; clearTimeout(window._rtScrollT); window._rtScrollT=setTimeout(uzat,150); };
+  // ay değişimi YALNIZ üstteki ay sekmeleriyle — kaydırma sırasında asla yeniden çizim yok
+  sc.onscroll=()=>{ window._rtScrollPos=sc.scrollLeft; };
 }
 function renderRehberTakvim(){
   const box=document.getElementById('opsPane_rehtak'); if(!box) return;
   const bugun=new Date().toISOString().slice(0,10);
-  if(!_rtBas){ _rtBas=_rtAyBasi(bugun); _rtSon=_rtAySonu(_rtAyEkle(_rtBas,1)); }
+  if(!_rtBas){
+    const ay=_rtAySecim||bugun.slice(0,7);
+    _rtBas=ay+'-01'; _rtSon=_rtAySonu(_rtAyEkle(_rtBas,1));
+  }
   let bas=_rtBas, son=_rtSon;
   // filtre seçenekleri TÜM sezondan; filtre aktifse şerit eşleşen tüm turları kapsayacak şekilde genişler
   const _global=_rtTurlar('1900-01-01','2999-12-31');
@@ -10586,10 +10572,19 @@ function renderRehberTakvim(){
   [...S].forEach(k=>{ const [p,d,bl]=k.split('|'); if(!_tumTurlar.some(t=>t.pkgId===p&&t.kalkis===d&&(t.bolum||'01')===(bl||'01'))) S.delete(k); });
   const secTurlar=[...S].map(k=>{const [p,d,bl]=k.split('|');return _tumTurlar.find(t=>t.pkgId===p&&t.kalkis===d&&(t.bolum||'01')===(bl||'01'));}).filter(Boolean);
   const acikta=turlar.filter(t=>!t.rehberAd).length;
-  let h='<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-   +'<button class="btn btn-outline btn-sm" onclick="rtKaydir(-1)" title="Bir ay geri kaydır">◀</button>'
-   +'<button class="btn btn-outline btn-sm" onclick="window._rtScrollPos=null;_rtBas=null;_rtSon=null;renderRehberTakvim()" title="Bugüne dön">Bugün</button>'
-   +'<button class="btn btn-outline btn-sm" onclick="rtKaydir(1)" title="Bir ay ileri kaydır">▶</button>'
+  const seciliAy=_rtBas.slice(0,7);
+  const ayAdlari=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  let aySekme='';
+  { let a=_rtAyEkle(bugun.slice(0,7)+'-01',-1).slice(0,7);
+    for(let i=0;i<12;i++){
+      const [yy,mm]=a.split('-').map(Number);
+      const aktif=a===seciliAy;
+      aySekme+='<button onclick="rtAySec(\''+a+'\')" style="border:none;cursor:pointer;padding:6px 11px;font-size:.76rem;font-weight:700;border-radius:8px;background:'+(aktif?'#1a3c5e':'#f1f5f9')+';color:'+(aktif?'#fff':'var(--muted)')+'">'+ayAdlari[mm-1]+' '+String(yy).slice(2)+'</button>';
+      a=_rtAyEkle(a+'-01',1).slice(0,7);
+    } }
+  let h='<div class="card" style="margin-bottom:12px">'
+   +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:9px">'+aySekme+'</div>'
+   +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#f59e0b;border-radius:3px;display:inline-block"></span> Açıkta ('+acikta+')</span>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#16a34a;border-radius:3px;display:inline-block"></span> Rehberli ('+(turlar.length-acikta)+')</span>'
    +_fltBtn('op','Operatör',_opSecenek)
@@ -10599,7 +10594,7 @@ function renderRehberTakvim(){
    +'<span style="display:inline-flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden">'
    +'<button onclick="rtGorunumSec(\'tur\')" style="border:none;cursor:pointer;padding:6px 12px;font-size:.76rem;font-weight:700;background:'+(_rtGorunum!=='rehber'?'#1a3c5e':'transparent')+';color:'+(_rtGorunum!=='rehber'?'#fff':'var(--muted)')+'">Turlar</button>'
    +'<button onclick="rtGorunumSec(\'rehber\')" style="border:none;cursor:pointer;padding:6px 12px;font-size:.76rem;font-weight:700;background:'+(_rtGorunum==='rehber'?'#1a3c5e':'transparent')+';color:'+(_rtGorunum==='rehber'?'#fff':'var(--muted)')+'">Rehberler</button></span>'
-   +'<span style="font-size:.74rem;color:var(--muted)">Şerit kaydırılabilir — uca gelince sonraki/önceki ay kendiliğinden eklenir.</span></div>';
+   +'<span style="font-size:.74rem;color:var(--muted)">Ay seçince o ay + sonraki ay gösterilir; şerit içinde serbestçe kaydır.</span></div>';
   if(secTurlar.length){
     const rehberler=(getTanimlar().rehberler||[]).slice();
     rehberler.forEach(r=>{ r._yuk=_rtRehYuk(r.ad||'',turlar,bas,son);
