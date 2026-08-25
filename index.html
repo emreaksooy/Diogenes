@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v216 · 20.08.2026';
+const APP_VER='v217 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10519,21 +10519,29 @@ function rtKaldirSecili(){
 function _rtScrollKur(ilkKonum){
   const sc=document.getElementById('rtScroll'); if(!sc) return;
   sc.scrollLeft=(window._rtScrollPos!=null)?window._rtScrollPos:(ilkKonum||0);
-  sc.onscroll=()=>{
-    window._rtScrollPos=sc.scrollLeft;
-    if(window._rtBusy) return;
-    if(sc.scrollLeft+sc.clientWidth>sc.scrollWidth-160){ // sağ uca yaklaştı → sonraki ay eklenir
+  // ay ekleme KAYDIRMA DURUNCA yapılır — kaydırma çubuğu eldeyken yeniden çizim olmaz (kayma/yakalayamama fix)
+  const uzat=()=>{
+    if(window._rtBusy||window._rtPtrDown) return;
+    const sc1=document.getElementById('rtScroll'); if(!sc1) return;
+    if(sc1.scrollLeft+sc1.clientWidth>sc1.scrollWidth-120){
       window._rtBusy=1; _rtSon=_rtAySonu(_rtAyEkle(_rtAyBasi(_rtSon),1));
-      renderRehberTakvim(); setTimeout(()=>{window._rtBusy=0;},80);
-    } else if(sc.scrollLeft<80){ // sol uca yaklaştı → önceki ay eklenir
-      window._rtBusy=1; const eskiW=sc.scrollWidth;
+      renderRehberTakvim(); setTimeout(()=>{window._rtBusy=0;},120);
+    } else if(sc1.scrollLeft<50){
+      window._rtBusy=1; const eskiW=sc1.scrollWidth, eskiL=sc1.scrollLeft;
       _rtBas=_rtAyEkle(_rtBas,-1);
       renderRehberTakvim();
       const sc2=document.getElementById('rtScroll');
-      if(sc2){ sc2.scrollLeft=sc.scrollLeft+(sc2.scrollWidth-eskiW); window._rtScrollPos=sc2.scrollLeft; }
-      setTimeout(()=>{window._rtBusy=0;},80);
+      if(sc2){ sc2.scrollLeft=eskiL+(sc2.scrollWidth-eskiW); window._rtScrollPos=sc2.scrollLeft; }
+      setTimeout(()=>{window._rtBusy=0;},120);
     }
   };
+  sc.onscroll=()=>{
+    window._rtScrollPos=sc.scrollLeft;
+    clearTimeout(window._rtScrollT);
+    window._rtScrollT=setTimeout(uzat,280); // kaydırma bitince
+  };
+  sc.onpointerdown=()=>{ window._rtPtrDown=true; };
+  sc.onpointerup=sc.onpointercancel=()=>{ window._rtPtrDown=false; clearTimeout(window._rtScrollT); window._rtScrollT=setTimeout(uzat,150); };
 }
 function renderRehberTakvim(){
   const box=document.getElementById('opsPane_rehtak'); if(!box) return;
