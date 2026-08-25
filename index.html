@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v215 · 20.08.2026';
+const APP_VER='v216 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10423,6 +10423,23 @@ function _rtRehYuk(rehAd,turlar,bas,son){
   let g=0; turlar.filter(t=>t.rehberAd===rehAd).forEach(t=>{ const b=t.kalkis>bas?t.kalkis:bas, e=t.end<son?t.end:son; g+=_isoDiff(b,e)+1; });
   return g;
 }
+function _rehIzinler(reh){ return Array.isArray(reh&&reh.izinler)?reh.izinler:[]; }
+function _rehIzinCakisir(reh,bas,son){ return _rehIzinler(reh).some(z=>z.bas&&z.son&&z.bas<=son&&bas<=z.son); }
+function rtIzinAc(rehId){ window._rtIzinReh=(window._rtIzinReh===rehId)?null:rehId; renderRehberTakvim(); }
+function rtIzinEkle(){
+  const rehId=window._rtIzinReh; if(!rehId) return;
+  const bas=(document.getElementById('rtIzBas')||{}).value, son=(document.getElementById('rtIzSon')||{}).value, not=(document.getElementById('rtIzNot')||{}).value||'';
+  if(!bas||!son||son<bas){ showToast('Geçerli bir tarih aralığı seçin','error'); return; }
+  const t=getTanimlar(); const reh=(t.rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
+  (reh.izinler=reh.izinler||[]).push({id:genId(),bas,son,not:not.trim()});
+  setTanimlar(t); renderRehberTakvim();
+  showToast(reh.ad+' '+_fmtDateTR(bas)+'–'+_fmtDateTR(son)+' müsait değil olarak işaretlendi','success');
+}
+function rtIzinSil(rehId,izinId){
+  const t=getTanimlar(); const reh=(t.rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
+  reh.izinler=(reh.izinler||[]).filter(z=>z.id!==izinId);
+  setTanimlar(t); renderRehberTakvim();
+}
 function rtTurSec(key){ const S=window._rtSecSet; S.has(key)?S.delete(key):S.add(key); renderRehberTakvim(); }
 function rtSecTemizle(){ window._rtSecSet.clear(); renderRehberTakvim(); }
 function rtAta(rehId){
@@ -10431,6 +10448,9 @@ function rtAta(rehId){
   const secTurlar=S.map(k=>{const [p,d,bl]=k.split('|');return turlar.find(t=>t.pkgId===p&&t.kalkis===d&&(t.bolum||'01')===(bl||'01'));}).filter(Boolean);
   if(!secTurlar.length) return;
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
+  // müsait değil aralığıyla çakışan atama ENGELLENİR
+  const izinC=secTurlar.filter(st=>_rehIzinCakisir(reh,st.kalkis,st.end));
+  if(izinC.length){ showToast((reh.ad||'')+' bu tarihlerde MÜSAİT DEĞİL ('+izinC.map(x=>x.kod).join(', ')+') — atama yapılamaz. İzin kaydını Rehberler görünümünden kaldırabilirsin.','error',6000); return; }
   const cak=[]; secTurlar.forEach(st=>{ turlar.filter(t=>t.rehberAd===(reh.ad||'')&&!S.includes(t.pkgId+'|'+t.kalkis)&&_rtCakisir(t.kalkis,t.end,st.kalkis,st.end)).forEach(c=>{ if(!cak.includes(c.kod+' ('+_fmtDateTR(c.kalkis)+')')) cak.push(c.kod+' ('+_fmtDateTR(c.kalkis)+')'); }); });
   // seçilen turların KENDİ aralarındaki çakışmalar da onaya girer (birleşik grup dahil — bilinçli ama sorularak)
   const icCak=[];
@@ -10575,12 +10595,15 @@ function renderRehberTakvim(){
   if(secTurlar.length){
     const rehberler=(getTanimlar().rehberler||[]).slice();
     rehberler.forEach(r=>{ r._yuk=_rtRehYuk(r.ad||'',turlar,bas,son);
-      r._cak=secTurlar.some(st=>_tumTurlar.some(t=>t.rehberAd===(r.ad||'')&&!S.has(t.pkgId+'|'+t.kalkis)&&_rtCakisir(t.kalkis,t.end,st.kalkis,st.end))); });
-    rehberler.sort((a,b)=>(a._cak-b._cak)||(a._yuk-b._yuk)||String(a.ad||'').localeCompare(b.ad||'','tr'));
+      r._cak=secTurlar.some(st=>_tumTurlar.some(t=>t.rehberAd===(r.ad||'')&&!S.has(t.pkgId+'|'+t.kalkis)&&_rtCakisir(t.kalkis,t.end,st.kalkis,st.end)));
+      r._izinli=secTurlar.some(st=>_rehIzinCakisir(r,st.kalkis,st.end)); });
+    rehberler.sort((a,b)=>(a._izinli-b._izinli)||(a._cak-b._cak)||(a._yuk-b._yuk)||String(a.ad||'').localeCompare(b.ad||'','tr'));
     h+='<div style="margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--border)">'
      +'<div style="font-size:.78rem;font-weight:800;color:#b5431f;margin-bottom:7px">Seçili: '+secTurlar.map(t=>esc(t.kod)+' '+_fmtDateTR(t.kalkis)).join(' + ')+(secTurlar.length>1?' — BİRLEŞİK GRUP':'')+'</div>'
      +'<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">'
-     +(rehberler.length?rehberler.map(r=>'<button onclick="rtAta(\''+r.id+'\')" style="cursor:pointer;border:1.5px solid '+(r._cak?'#fca5a5':'#86efac')+';background:'+(r._cak?'#fef2f2':'#f0fdf4')+';color:'+(r._cak?'#b91c1c':'#166534')+';border-radius:9px;padding:6px 11px;font-size:.76rem;font-weight:700">'+esc(r.ad||'—')+' <span style="font-weight:600;font-size:.66rem;opacity:.8">'+r._yuk+' gün'+(r._cak?' · ÇAKIŞIYOR':'')+'</span></button>').join(''):'<span style="font-size:.78rem;color:var(--muted)">Rehber tanımlı değil — Tanımlamalar\'dan ekleyin.</span>')
+     +(rehberler.length?rehberler.map(r=>r._izinli
+        ?'<span style="border:1.5px solid #d1d5db;background:#f3f4f6;color:#9ca3af;border-radius:9px;padding:6px 11px;font-size:.76rem;font-weight:700;cursor:not-allowed" title="Bu tarihlerde müsait değil">'+esc(r.ad||'—')+' <span style="font-weight:600;font-size:.66rem">⛔ İZİNLİ</span></span>'
+        :'<button onclick="rtAta(\''+r.id+'\')" style="cursor:pointer;border:1.5px solid '+(r._cak?'#fca5a5':'#86efac')+';background:'+(r._cak?'#fef2f2':'#f0fdf4')+';color:'+(r._cak?'#b91c1c':'#166534')+';border-radius:9px;padding:6px 11px;font-size:.76rem;font-weight:700">'+esc(r.ad||'—')+' <span style="font-weight:600;font-size:.66rem;opacity:.8">'+r._yuk+' gün'+(r._cak?' · ÇAKIŞIYOR':'')+'</span></button>').join(''):'<span style="font-size:.78rem;color:var(--muted)">Rehber tanımlı değil — Tanımlamalar\'dan ekleyin.</span>')
      +(secTurlar.length===1?'<button class="btn btn-outline btn-sm" style="color:#7c3aed;border-color:#c4b5fd" onclick="rtBolAc()">⑃ Grubu Böl</button>':'')
      +'<button class="btn btn-outline btn-sm" onclick="rtSecTemizle()">Vazgeç</button>'
      +(secTurlar.every(t=>t.rehberAd)?'<button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="rtKaldirSecili()">Atamayı Kaldır</button>':'')
@@ -10644,19 +10667,25 @@ function renderRehberTakvim(){
       if(_rtFlt.reh.size) rehberler=rehberler.filter(r=>_rtFlt.reh.has(r.ad||''));
       else rehberler=rehberler.filter(r=>turlar.some(t=>t.rehberAd===(r.ad||'')));
     }
-    const satir=(etiket,alt,rT,renkFn,arka)=>{
-      arka=arka||'#fff';
+    const satir=(etiket,alt,rT,renkFn,arka,izinler)=>{
+      arka=arka||'#fff'; izinler=izinler||[];
       // ŞERİT PAKETLEME: çakışmayan turlar aynı şeritte, çakışanlar alt alta (okunabilirlik)
-      const seritSon=[]; const yer={};
-      rT.slice().sort((a,b)=>a.kalkis.localeCompare(b.kalkis)).forEach(t=>{
-        let li=seritSon.findIndex(e=>e<t.kalkis);
-        if(li<0){ li=seritSon.length; seritSon.push(t.end); } else seritSon[li]=t.end;
-        yer[t.pkgId+'|'+t.kalkis+'|'+(t.bolum||'01')]=li+1;
+      const seritSon=[]; const yer={}; const izinYer=[];
+      const hepsi=rT.map(t=>({k:t.kalkis,e:t.end,tur:t})).concat(izinler.map(z=>({k:z.bas,e:z.son,izin:z})));
+      hepsi.sort((a,b)=>a.k.localeCompare(b.k)).forEach(x=>{
+        let li=seritSon.findIndex(e=>e<x.k);
+        if(li<0){ li=seritSon.length; seritSon.push(x.e); } else seritSon[li]=x.e;
+        if(x.tur) yer[x.tur.pkgId+'|'+x.tur.kalkis+'|'+(x.tur.bolum||'01')]=li+1;
+        else izinYer.push({z:x.izin,lane:li+1});
       });
       const seritN=Math.max(1,seritSon.length);
       h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';grid-template-rows:repeat('+seritN+',minmax(38px,auto));gap:0;border-bottom:1px solid #e5e9f0;background:'+arka+'">'
        +'<div style="grid-row:1 / '+(seritN+1)+';position:sticky;left:0;z-index:5;background:'+arka+';box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;display:flex;flex-direction:column;justify-content:center">'+etiket+(alt?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+alt+'</div>':'')+'</div>';
       rT.forEach(t=>{ const key=t.pkgId+'|'+t.kalkis+'|'+(t.bolum||'01'); h+=bar(t,renkFn(t),S.has(key),key,yer[key]||1); });
+      izinYer.forEach(({z,lane})=>{
+        const b1=z.bas>bas?z.bas:bas, e1=z.son<son?z.son:son;
+        h+='<div title="Müsait değil: '+_fmtDateTR(z.bas)+' – '+_fmtDateTR(z.son)+(z.not?' · '+esc(z.not):'')+'" style="grid-row:'+lane+';grid-column:'+(gunNo(b1)+1)+'/'+(gunNo(e1)+2)+';background:repeating-linear-gradient(45deg,#d1d5db,#d1d5db 6px,#e5e7eb 6px,#e5e7eb 12px);color:#4b5563;border-radius:7px;font-size:.63rem;font-weight:800;padding:3px 7px;white-space:nowrap;overflow:hidden;margin:2px 1px;line-height:1.3;z-index:1;position:relative">⛔ '+(z.not?esc(z.not):'Müsait değil')+'</div>';
+      });
       h+='</div>';
     };
     const acikTur=turlar.filter(t=>!t.rehberAd);
@@ -10664,7 +10693,21 @@ function renderRehberTakvim(){
     if(!rehberler.length) h+='<p style="color:var(--muted);font-size:.85rem;padding:10px">Rehber tanımlı değil — Tanımlamalar\'dan ekleyin.</p>';
     rehberler.forEach((reh,ri)=>{
       const rT=turlar.filter(t=>t.rehberAd===(reh.ad||''));
-      satir(esc(reh.ad||'—'),_rtRehYuk(reh.ad||'',turlar,bas,son)+' gün · '+rT.length+' tur · '+rT.reduce((t2,x)=>t2+(+x.pax||0),0)+' pax',rT,t=>rT.some(o=>o!==t&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end))?'#dc2626':'#16a34a',(ri%2?'#eef3f9':'#fff'));
+      const izinler=_rehIzinler(reh).filter(z=>z.bas&&z.son&&z.bas<=son&&bas<=z.son);
+      const etiket=esc(reh.ad||'—')+' <button onclick="rtIzinAc(\''+reh.id+'\')" title="Müsait olmadığı tarihleri işaretle" style="border:none;background:'+(window._rtIzinReh===reh.id?'#6d28d9':'#e5e7eb')+';color:'+(window._rtIzinReh===reh.id?'#fff':'#6b7280')+';border-radius:5px;cursor:pointer;font-size:.66rem;padding:1px 6px;margin-left:4px">⛔</button>';
+      satir(etiket,_rtRehYuk(reh.ad||'',turlar,bas,son)+' gün · '+rT.length+' tur · '+rT.reduce((t2,x)=>t2+(+x.pax||0),0)+' pax',rT,t=>rT.some(o=>o!==t&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end))?'#dc2626':'#16a34a',(ri%2?'#eef3f9':'#fff'),izinler);
+      if(window._rtIzinReh===reh.id){
+        h+='<div style="background:#f5f3ff;border-bottom:1.5px solid #ddd6fe;padding:9px 12px">'
+         +'<b style="font-size:.78rem;color:#6d28d9">'+esc(reh.ad||'')+' — müsait olmadığı tarihler</b>'
+         +(_rehIzinler(reh).length?'<div style="margin-top:6px">'+_rehIzinler(reh).map(z=>'<span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px solid #ddd6fe;border-radius:7px;padding:4px 9px;margin:0 6px 5px 0;font-size:.76rem">'+_fmtDateTR(z.bas)+' – '+_fmtDateTR(z.son)+(z.not?' · '+esc(z.not):'')+'<button onclick="rtIzinSil(\''+reh.id+'\',\''+z.id+'\')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;cursor:pointer;font-size:.68rem;padding:0 5px">×</button></span>').join('')+'</div>':'')
+         +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;align-items:center">'
+         +'<input type="date" id="rtIzBas" style="padding:5px 8px;border:1.5px solid #ddd6fe;border-radius:7px;font-size:.78rem;font-family:inherit">'
+         +'<span style="font-size:.78rem;color:var(--muted)">→</span>'
+         +'<input type="date" id="rtIzSon" style="padding:5px 8px;border:1.5px solid #ddd6fe;border-radius:7px;font-size:.78rem;font-family:inherit">'
+         +'<input id="rtIzNot" placeholder="Not (izin, başka iş...)" style="padding:5px 9px;border:1.5px solid #ddd6fe;border-radius:7px;font-size:.78rem;font-family:inherit;width:160px">'
+         +'<button class="btn btn-primary btn-sm" onclick="rtIzinEkle()">+ Ekle</button>'
+         +'<button class="btn btn-outline btn-sm" onclick="rtIzinAc(null)">Kapat</button></div></div>';
+      }
     });
     // ── OPERATÖR DAĞILIM ÖZETİ: rehber × operatör (grup · pax)
     {
