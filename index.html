@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v219 · 20.08.2026';
+const APP_VER='v220 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7159,8 +7159,9 @@ async function doLogin(){
   const err=document.getElementById('loginErr'); const btn=document.getElementById('loginBtn');
   if(!em||!pw){ if(err)err.textContent='E-posta ve şifre girin.'; return; }
   if(btn){btn.disabled=true;btn.textContent='Giriş yapılıyor…';}
+  const _zam=(p,sn,mesaj)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(mesaj)),sn*1000))]);
   try{
-    const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
+    const {data,error}=await _zam(sb.auth.signInWithPassword({email:em,password:pw}),20,'Sunucu 20 saniyedir yanıt vermiyor. Supabase projesi uyumuş olabilir — supabase.com üzerinden projeyi açıp "Restore project" düğmesine basın, 1-2 dk sonra tekrar deneyin.');
     if(error){ if(err)err.textContent='Giriş başarısız: '+(error.message==='Invalid login credentials'?'e-posta veya şifre hatalı':error.message); }
     else{ if(err)err.textContent=''; _showLogin(false); await _cloudStart(data.session); }
   }catch(e){ if(err)err.textContent='Bağlantı hatası: '+(e.message||''); }
@@ -7185,7 +7186,7 @@ async function _cloudStart(session){
     _applyRoleNav();
     try{ showPage(((document.querySelector('.page.active')||{id:'page-paketlerim'}).id||'page-paketlerim').replace('page-','')); }catch(e){}
     _setCloud('ok','Bulut: bağlanıyor…');
-    await _cloudPull();
+    await Promise.race([_cloudPull(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Bulut çekimi 60 sn içinde tamamlanamadı — bağlantıyı kontrol edip sayfayı yenileyin')),60000))]);
     _cloudSubscribe();
     renderPano&&renderPano();
     _setCloud('ok','Bulut: eşitlendi');
