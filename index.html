@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v218 · 20.08.2026';
+const APP_VER='v219 · 20.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10374,6 +10374,26 @@ function opsMapQuick(n){ _opsMapDate=_isoAdd(_opsToday(),n); _opsMapLbl(); _opsR
 /* ══ REHBER TAKVİMİ (sürekli kayan şerit — aylar otomatik eklenir) ══ */
 window._rtSecSet=window._rtSecSet||new Set();
 let _rtGorunum=(()=>{try{return localStorage.getItem('dmc_rtGorunum')||'tur';}catch(e){return 'tur';}})();
+function rtAtamaExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const bugun=new Date().toISOString().slice(0,10);
+  let turlar=_rtTurlar(bugun,'2999-12-31');
+  turlar=turlar.filter(t=>
+    (!_rtFlt.op.size||_rtFlt.op.has(t.op))
+    &&(!_rtFlt.kod.size||_rtFlt.kod.has(t.kod))
+    &&(!_rtFlt.reh.size||(t.rehberAd?_rtFlt.reh.has(t.rehberAd):_rtFlt.reh.has('__acik'))));
+  if(!turlar.length){ showToast('Aktarılacak tur yok','error'); return; }
+  const rehTel=ad=>{ const r=(getTanimlar().rehberler||[]).find(x=>_norm(x.ad||'')===_norm(ad||'')); return r?(r.tel||''):''; };
+  const aoa=[['Kalkış','Dönüş','Tur','Operatör','Bölüm','Pax','Rehber','Rehber Tel']];
+  turlar.forEach(t=>{
+    aoa.push([_fmtDateTR(t.kalkis),_fmtDateTR(t.end),t.kod,t.op||'',(t.bolum&&t.bolum!=='01')?('G'+t.bolum):'',t.pax,t.rehberAd||'ATANMAMIŞ',t.rehberAd?rehTel(t.rehberAd):'']);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=aoa[0].map(h=>({wch:Math.max(12,String(h).length+4)}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Rehber Atamaları');
+  XLSX.writeFile(wb,'rehber-atamalari_'+bugun+'.xlsx');
+}
 function rtGorunumSec(v){ _rtGorunum=v; try{localStorage.setItem('dmc_rtGorunum',v);}catch(e){} renderRehberTakvim(); }
 const _rtFlt=(()=>{ try{ const k=JSON.parse(localStorage.getItem('dmc_rtFlt')||'{}');
   return {op:new Set(k.op||[]),kod:new Set(k.kod||[]),reh:new Set(k.reh||[])}; }catch(e){ return {op:new Set(),kod:new Set(),reh:new Set()}; } })();
@@ -10587,6 +10607,7 @@ function renderRehberTakvim(){
    +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#f59e0b;border-radius:3px;display:inline-block"></span> Açıkta ('+acikta+')</span>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#16a34a;border-radius:3px;display:inline-block"></span> Rehberli ('+(turlar.length-acikta)+')</span>'
+   +'<button class="btn btn-outline btn-sm" onclick="rtAtamaExcel()" title="Bugünden ileri tüm turların rehber atamaları (rezervasyona göndermelik)">⬇ Atama Listesi</button>'
    +_fltBtn('op','Operatör',_opSecenek)
    +_fltBtn('kod','Tur',_kodSecenek)
    +_fltBtn('reh','Rehber',_rehSecenek)
