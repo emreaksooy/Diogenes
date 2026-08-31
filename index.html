@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v230 · 27.08.2026';
+const APP_VER='v231 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6724,7 +6724,7 @@ function ucakExcelImport(evt){
     const soyadOnce=ai&&ai.isimSira==='soyadAd';
     if(iAdSoy<0&&iSoy<0){ showToast('İsim kolonu bulunamadı. Başlıkta görülenler: '+hdr.filter(Boolean).slice(0,8).join(', '),'error',8000); return; }
     const g=_resGrid(true);
-    let n=0, atla=0;
+    let n=0, atla=0; const degisimler=[];
     rows.slice(hIdx+1).forEach(r=>{
       if(!Array.isArray(r)) return;
       let soyad='', ad='';
@@ -6732,8 +6732,20 @@ function ucakExcelImport(evt){
       else { const p=_sjIsim(r[iAdSoy]); if(p){ if(soyadOnce&&!String(r[iAdSoy]).includes(',')){ soyad=p.ad; ad=p.soyad; } else { soyad=p.soyad; ad=p.ad; } } }
       if(!soyad&&!ad) return;
       const resno=iRes>=0?String(r[iRes]||'').trim():'';
-      // aynı resno+isim zaten varsa atla (tekrar import güvenli)
-      if((g.rows||[]).some(x=>_norm((x.soyad||'')+'|'+(x.ad||''))===_norm(soyad+'|'+ad)&&String(x.resno||'').trim()===resno)){ atla++; return; }
+      // aynı resno+isim varsa: SİLME/EKLEME yok — uçuş alanları değiştiyse GÜNCELLE ve farkı raporla
+      const mevcutY=(g.rows||[]).find(x=>_norm((x.soyad||'')+'|'+(x.ad||''))===_norm(soyad+'|'+ad)&&String(x.resno||'').trim()===resno);
+      if(mevcutY){
+        const alanlar=[['g_u1',iUc,v2=>String(v2||'').trim()],['g_pnr',iPnr,v2=>String(v2||'').trim()],['g_hy',iHy,v2=>String(v2||'').trim()],['g_ks1',iSaat,v2=>String(v2||'').trim()],['g_tarih',iTar,v2=>{const t2=_sjTarih(v2);return t2?_fmtDateTR(t2):String(v2||'').trim();}]];
+        alanlar.forEach(([f,ci,cv])=>{
+          if(ci<0||r[ci]==null||r[ci]==='') return;
+          const yeni=cv(r[ci]); const eski=String(mevcutY[f]||'').trim();
+          if(yeni&&eski&&yeni!==eski){
+            degisimler.push({alan:f,eski,yeni,kisi:soyad+' '+ad});
+            mevcutY[f]=yeni;
+          } else if(yeni&&!eski){ mevcutY[f]=yeni; }
+        });
+        atla++; return;
+      }
       const y={resno,soyad,ad};
       if(iDog>=0&&r[iDog]!=null&&r[iDog]!==''){ const t=_sjTarih(r[iDog]); if(t) y.dogum=t; }
       if(iOda>=0) y.oda=String(r[iOda]||'').trim();
@@ -6748,7 +6760,17 @@ function ucakExcelImport(evt){
     });
     setReservations(getReservations());
     try{renderRezervasyon();}catch(_e){}
-    showToast(n+' yolcu aktarıldı'+(ai?' (yapay zeka eşlemesiyle)':'')+(atla?' · '+atla+' satır zaten vardı (atlandı)':''),'success',5000);
+    // uçuş değişikliklerini raporla + uyarı merkezine yaz
+    if(degisimler.length){
+      const AD2={g_u1:'uçuş no',g_pnr:'PNR',g_hy:'havayolu',g_ks1:'saat',g_tarih:'tarih'};
+      const grupla={}; degisimler.forEach(d=>{ const k=AD2[d.alan]+': '+d.eski+' → '+d.yeni; (grupla[k]=grupla[k]||0); grupla[k]++; });
+      const ozet=Object.keys(grupla).map(k=>k+' ('+grupla[k]+' yolcu)').join(' · ');
+      window._ucusDegisim=window._ucusDegisim||[];
+      window._ucusDegisim.push({ts:Date.now(),kalkis:_resKalkis,mesaj:(getPackages().find(p=>p.id===_resPkgId)||{}).paketKodu+' '+_fmtDateTR(_resKalkis)+' — '+ozet});
+      try{_hataKaydet&&_hataKaydet('UÇUŞ-DEĞİŞİM',ozet);}catch(_e){}
+      showConfirm('🛎','Uçuş Değişikliği Tespit Edildi',ozet+'\n\nSatırlar güncellendi. Bu seferin transfer atamalarını (depar saati) gözden geçir!','Tamam',()=>{});
+    }
+    showToast(n+' yolcu aktarıldı'+(ai?' (yapay zeka eşlemesiyle)':'')+(atla?' · '+atla+' satır güncellendi/atlandı':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6000);
   }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); } };
   rd.readAsArrayBuffer(f);
 }
@@ -10431,6 +10453,13 @@ function _opsUyarilar(gun){
   // mağaza atanmamış ziyaretler
   try{ (_moSatirlar()||[]).filter(r=>!r.firmaId&&r.tarih>=bugun&&r.tarih<=son).forEach(r=>{
     out.push({tarih:r.tarih,ikon:'🏬',onem:0,mesaj:'Mağaza atanmamış — '+r.kod+' · '+(r.sehir||'')+' '+(r.tur||'')+' · '+r.pax+' pax',git:"opsTab('magaza')"}); }); }catch(e){}
+  // uçak listesi ↔ rezervasyon ÇARPIŞMALARI (Rezervasyon Monitörü)
+  try{ _mutIssues().filter(x=>x.kalkis>=bugun&&x.kalkis<=son).forEach(x=>{
+    const AD={ucakYok:'Rezervasyon var, UÇAK LİSTESİNDE YOK',rezvYok:'Uçak listesinde var, REZERVASYONDA YOK',ucFark:'Uçuş bilgisi UYUŞMUYOR'};
+    out.push({tarih:x.kalkis,ikon:'⚡',onem:3,mesaj:(AD[x.tip]||x.tip)+' — '+(x.kod||'')+' · '+(x.voucher||'')+(x.detay?' · '+x.detay:''),git:"showPage('ucak');setTimeout(()=>{try{ucakOpen('"+x.pkgId+"','"+x.kalkis+"')}catch(e){}},80)"}); }); }catch(e){}
+  // UÇUŞ DEĞİŞİKLİKLERİ (import diff — son 3 günde tespit edilenler)
+  try{ (window._ucusDegisim||[]).filter(d=>d.ts>Date.now()-3*86400000).forEach(d=>{
+    out.push({tarih:d.kalkis,ikon:'🛎',onem:3,mesaj:'UÇUŞ DEĞİŞTİ — '+d.mesaj,git:"opsTab('transfer');opsTrSet('"+d.kalkis+"')"}); }); }catch(e){}
   out.sort((a,b)=>a.tarih.localeCompare(b.tarih)||(b.onem-a.onem));
   return out;
 }
