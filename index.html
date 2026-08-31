@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v228 · 27.08.2026';
+const APP_VER='v229 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10414,6 +10414,39 @@ function _opsCalHTML(){
     <div class="opsc-grid">${cells}</div>
     <div style="font-size:.7rem;color:var(--muted);margin-top:6px">Turuncu günler: kalkış var. Tıkla → o günün listesi.</div>`;
 }
+function _opsUyarilar(gun){
+  const bugun=_opsToday(); const son=_isoAdd(bugun,gun||7);
+  const out=[];
+  // atanmamış GELİŞ / DÖNÜŞ transferleri (gün bazında toplanır)
+  try{
+    const rows=_trGenRows().filter(r=>(r.tip==='G'||r.tip==='D')&&r.tarih>=bugun&&r.tarih<=son&&!r.grup);
+    const grupla={};
+    rows.forEach(r=>{ const k=r.tarih+'|'+r.tip; (grupla[k]=grupla[k]||{n:0,pax:0}); grupla[k].n++; grupla[k].pax+=(+r.pax||0); });
+    Object.keys(grupla).sort().forEach(k=>{ const p=k.split('|'); const g=grupla[k];
+      out.push({tarih:p[0],ikon:p[1]==='G'?'🛬':'🛫',onem:2,mesaj:(p[1]==='G'?'GELİŞ':'DÖNÜŞ')+' transferi atanmamış — '+g.n+' transfer · '+g.pax+' pax',git:"opsTab('transfer');opsTrSet('"+p[0]+"')"}); });
+  }catch(e){}
+  // rehbersiz turlar
+  try{ _rtTurlar(bugun,son).filter(t=>!t.rehberAd&&t.pax>0).forEach(t=>{
+    out.push({tarih:t.kalkis,ikon:'🧭',onem:1,mesaj:'Rehber atanmamış — '+t.kod+(t.op?' · '+t.op:'')+' · '+t.pax+' pax',git:"opsTab('rehtak')"}); }); }catch(e){}
+  // mağaza atanmamış ziyaretler
+  try{ (_moSatirlar()||[]).filter(r=>!r.firmaId&&r.tarih>=bugun&&r.tarih<=son).forEach(r=>{
+    out.push({tarih:r.tarih,ikon:'🏬',onem:0,mesaj:'Mağaza atanmamış — '+r.kod+' · '+(r.sehir||'')+' '+(r.tur||'')+' · '+r.pax+' pax',git:"opsTab('magaza')"}); }); }catch(e){}
+  out.sort((a,b)=>a.tarih.localeCompare(b.tarih)||(b.onem-a.onem));
+  return out;
+}
+function _opsUyariPanelHTML(){
+  const uy=_opsUyarilar(7);
+  const gunFar2=iso=>{const n=_isoDiff(_opsToday(),iso); return n===0?'BUGÜN':(n===1?'yarın':n+' gün sonra');};
+  if(!uy.length) return '<div class="card" style="margin-bottom:12px;border:1.5px solid #86efac;background:#f0fdf4"><b style="font-size:.85rem;color:#166534">✓ Önümüzdeki 7 gün temiz — atanmamış transfer, rehber ve mağaza yok.</b></div>';
+  return '<div class="card" style="margin-bottom:12px;border:1.5px solid #fca5a5;background:#fff8f6">'
+   +'<div style="font-weight:800;font-size:.9rem;color:#b91c1c;margin-bottom:8px">⚠ Operasyon Uyarıları — önümüzdeki 7 gün ('+uy.length+')</div>'
+   +uy.slice(0,25).map(u=>'<div onclick="'+u.git+'" style="display:flex;gap:9px;align-items:center;padding:5px 6px;border-bottom:1px dashed #fecaca;cursor:pointer;font-size:.8rem" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=\'\'">'
+     +'<b style="min-width:86px;color:'+(_isoDiff(_opsToday(),u.tarih)<=1?'#b91c1c':'#b45309')+'">'+_fmtDateTR(u.tarih)+'</b>'
+     +'<span style="min-width:70px;font-size:.7rem;font-weight:700;color:var(--muted)">'+gunFar2(u.tarih)+'</span>'
+     +'<span>'+u.ikon+' '+esc(u.mesaj)+'</span><span style="margin-left:auto;color:var(--muted)">›</span></div>').join('')
+   +(uy.length>25?'<div style="font-size:.74rem;color:var(--muted);padding:5px">+'+(uy.length-25)+' uyarı daha…</div>':'')
+   +'</div>';
+}
 function renderOpsAnasayfa(){
   const box=document.getElementById('opsPane_anasayfa'); if(!box) return;
   const today=_opsToday();
@@ -10421,7 +10454,7 @@ function renderOpsAnasayfa(){
   if(!_opsMapDate) _opsMapDate=_opsToday();
   const aktif=_opsActiveOn(today); const yak=_opsUpcoming(8);
   const gunFar=iso=>{const n=_isoDiff(today,iso); return n===0?'bugün':(n===1?'yarın':n+' gün');};
-  box.innerHTML=`
+  box.innerHTML=_opsUyariPanelHTML()+`
     <div class="card"><div class="ops-ct" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
         <span><svg class="ic"><use href="#i-map"/></svg> Harita — <span id="opsMapDateLbl">${(_opsMapDate&&_opsMapDate!==_opsToday())?_fmtDateTR(_opsMapDate):'bugün'}</span></span>
         <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
