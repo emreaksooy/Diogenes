@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v238 · 31.08.2026';
+const APP_VER='v239 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7506,6 +7506,7 @@ function _mutIssues(){
   const gridMap={}; grids.forEach(g=>{ gridMap[g.pkgId+'|'+g.kalkis]=g; });
   const rezvler=(getRezv()||[]).filter(r=>r.tip==='urun'&&r.pkgId&&r.kalkis&&String(r.voucher||'').trim());
   rezvler.forEach(r=>{
+    if(r.durum==='iptal') return; // iptal rezervasyon uyarı üretmez (eşleşme setinde kalır — uçaktaki satırı 'rezvde yok' uyarısına da düşürmez)
     const v=String(r.voucher).trim();
     const g=gridMap[r.pkgId+'|'+r.kalkis];
     const rows=g?(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,v)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher)))):[];
