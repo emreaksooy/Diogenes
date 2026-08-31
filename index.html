@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v243 · 31.08.2026';
+const APP_VER='v244 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7697,9 +7697,22 @@ function _mutIssues(){
   // uçakçı üründe olmayan tarihe liste açmış → tarih ürüne eklenince uyarı kendiliğinden kalkar
   grids.forEach(g=>{
     if(!g||!g.pkgId||!g.kalkis) return;
+    if(!(g.rows||[]).some(_isim)) return; // boş liste uyarı üretmez
     const pk=pkgs.find(p=>p.id===g.pkgId); if(!pk||pk.ozelGrup) return;
     if(pkgDurum(pk)==='arsiv') return;
-    if(_resDepartureDates(pk).indexOf(g.kalkis)>=0) return;
+    // tarih karşılaştırması FORMAT-BAĞIMSIZ (ürüne 10.09.2026 yazılmış olsa da eşleşir)
+    const hedef=_pdate(g.kalkis);
+    const tarihVar=_resDepartureDates(pk).some(t=>_pdate(t)===hedef);
+    if(tarihVar) return;
+    // rezervasyonlardan doğan kalkışlar da geçerli sayılır (v173 _opsTarihler mantığı)
+    try{ if((getRezv()||[]).some(r=>r.tip==='urun'&&r.pkgId===pk.id&&r.durum!=='iptal'&&_pdate(r.kalkis)===hedef)) return; }catch(e){}
+    // aynı kodlu KARDEŞ üründe (başka operatör) tarih varsa: farklı, daha isabetli uyarı
+    const kardes=pkgs.find(p=>p.id!==pk.id&&_norm(p.paketKodu||'')===_norm(pk.paketKodu||'')&&_resDepartureDates(p).some(t=>_pdate(t)===hedef));
+    if(kardes){
+      const op2=getOperators().find(o=>o.id===kardes.operatorId);
+      out.push({tip:'seferUrunYok',pkgId:g.pkgId,kalkis:g.kalkis,voucher:'—',kod:pk.paketKodu||'',detay:'bu tarih AYNI KODLU başka üründe tanımlı ('+((op2&&op2.ad)||kardes.paketAdi||'')+') — liste yanlış operatörün ürününe açılmış olabilir'});
+      return;
+    }
     out.push({tip:'seferUrunYok',pkgId:g.pkgId,kalkis:g.kalkis,voucher:'—',kod:pk.paketKodu||pk.paketAdi||'',detay:'uçak bu tarihe liste açtı, üründe bu kalkış tarihi yok — tarihi ürüne ekleyin'});
   });
   return out;
