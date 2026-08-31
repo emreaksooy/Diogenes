@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v234 · 31.08.2026';
+const APP_VER='v235 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8830,7 +8830,7 @@ function rzSejourImport(evt){
     const vGrupSay={}; Object.values(grup).forEach(g=>{ const vk=_norm(g.opKod+'|'+g.voucher); vGrupSay[vk]=(vGrupSay[vk]||0)+1; });
     let rezv=getRezv();
     const sejN=rezv.filter(x=>x.opUcusNot==='Sejour aktarımı').length;
-    if(sejN&&!window._sjTemizSoruldu&&window.confirm('Daha önce Sejour\'dan aktarılmış '+sejN+' rezervasyon var.\n\nTEMİZLEYİP baştan yüklemek için Tamam.\nMevcutları koruyup eksikleri eklemek için Vazgeç.')){
+    if(sejN&&!window._sjTemizSoruldu&&window.confirm('Daha önce Sejour\'dan aktarılmış '+sejN+' rezervasyon var.\n\n⚠️ TAMAM = TEMİZLE VE BAŞTAN KUR: hepsi silinir, dosyadan yeniden yüklenir (elle eklenen notlar, grup bölmeleri, düzeltmeler KAYBOLUR).\n\n✓ VAZGEÇ = GÜNCELLE (önerilen): mevcutlar korunur, her voucher dosyayla eşitlenir — yeni isimler, iptaller, asıl voucherlar işlenir.')){
       rezv=rezv.filter(x=>x.opUcusNot!=='Sejour aktarımı');
       setRezv(rezv);
       showToast(sejN+' eski Sejour kaydı temizlendi','success');
