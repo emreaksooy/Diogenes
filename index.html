@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v225 · 27.08.2026';
+const APP_VER='v226 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6661,33 +6661,63 @@ function _migrateResData(){
   (getPnrLedger()||[]).forEach(g=>{ if(!g.rows||!g.rows.length||!Array.isArray(g.rows[0])) return; g.rows=g.rows.map(r=>({pnr:_sTrim(r[0]),maliyet:parseFloat(r[1])||0,para:_sTrim(r[2])||'TL',hy:_sTrim(r[3]),hesap:_sTrim(r[4]),alim:_pdate(r[5])})); ch=true; });
   if(ch){ setReservations(getReservations()); setPnrLedger(getPnrLedger()); }
 }
+async function _aiSor(prompt,maxTok){
+  const key=(_txSettings&&_txSettings.keys||{}).claude;
+  if(!key) throw new Error('Claude API anahtarı yok — Çeviri Ayarları\'ndan girin');
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:maxTok||1500,messages:[{role:'user',content:prompt}]})});
+  const j=await res.json();
+  if(j.error) throw new Error(j.error.message||'API hatası');
+  return (j.content&&j.content[0]&&j.content[0].text)||'';
+}
+function _aiJson(t){ const m=String(t||'').match(/\{[\s\S]*\}/); if(!m) throw new Error('AI yanıtında JSON yok'); return JSON.parse(m[0]); }
 function ucakExcelImport(evt){
   const f=evt.target.files[0]; evt.target.value=''; if(!f) return;
   if(!_resPkgId||!_resKalkis){ showToast('Önce ürün ve kalkış seçin','error'); return; }
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const rd=new FileReader();
-  rd.onload=e=>{ try{
+  rd.onload=async e=>{ try{
     const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
     if(!rows.length){ showToast('Dosya boş','error'); return; }
-    // başlık satırını bul: isim/name içeren satır (ilk 15)
+    // ── YAPAY ZEKA EŞLEMESİ: anahtar varsa dosyanın örnek satırlarını Claude okur, kolonları tanımlar
+    let ai=null;
+    const aiKey=(_txSettings&&_txSettings.keys||{}).claude;
+    if(aiKey){
+      showToast('Yapay zeka dosyayı okuyor…','success',2500);
+      try{
+        const ornek=rows.slice(0,18).map((r,i)=>i+': '+JSON.stringify((r||[]).slice(0,20)));
+        ai=_aiJson(await _aiSor(
+          'Bir tur operatörünün uçak yolcu listesi Excel dosyasının ilk satırları aşağıda (satırNo: [kolon değerleri]).\n'
+          +ornek.join('\n')
+          +'\n\nGörev: kolonları tanımla. SADECE şu JSON\'u döndür, başka hiçbir şey yazma:\n'
+          +'{"headerRow":N, "isimSira":"adSoyad"|"soyadAd", "cols":{"resno":i,"isimBirlesik":i,"soyad":i,"ad":i,"oda":i,"bagaj":i,"havayolu":i,"pnr":i,"tarih":i,"ucusNo":i,"rota":i,"saat":i}}\n'
+          +'Kurallar: kolon yoksa -1 yaz. isimBirlesik = ad+soyad tek kolondaysa o kolon (o zaman soyad/ad -1). isimSira: birleşik isimde önce ad mı soyad mı geliyor (satırlardaki değerlere bakarak karar ver). rota = VIE-AYT gibi havalimanı çifti kolonu. headerRow = başlık satırının numarası.'
+        ,600));
+      }catch(e){ showToast('AI eşlemesi yapılamadı ('+(e.message||e)+') — otomatik tanımayla devam','error',4000); ai=null; }
+    }
     const nrm=t=>String(t||'').toLocaleLowerCase('tr').replace(/ı/g,'i').trim();
-    let hIdx=rows.findIndex((r,i)=>i<15&&Array.isArray(r)&&r.some(x=>/name|isim|soyad|surname/.test(nrm(x))));
+    let hIdx=ai?(+ai.headerRow||0):rows.findIndex((r,i)=>i<15&&Array.isArray(r)&&r.some(x=>/name|isim|soyad|surname/.test(nrm(x))));
     if(hIdx<0) hIdx=0;
     const hdr=(rows[hIdx]||[]).map(nrm);
     const bul=re=>hdr.findIndex(h=>re.test(h));
-    const iRes=bul(/res.*no|reservation|voucher|rez.*no/);
-    const iAdSoy=bul(/name.*surname|surname.*name|ad.*soyad|isim/);
-    const iSoy=bul(/^soyad|^surname|last.*name|nachname/);
-    const iAd2=bul(/^ad$|^adi$|first.*name|vorname/);
-    const iOda=bul(/room|oda/);
-    const iBag=bul(/bag|valiz/);
-    const iHy=bul(/airline|havayolu/);
-    const iPnr=bul(/pnr/);
-    const iTar=bul(/arrival.*date|gelis.*tarih|^tarih|^date|flug.*datum/);
-    const iUc=bul(/flight.*no|ucus.*no|f.*no$/);
-    const iHav=bul(/airport|havaliman|route|rota|parkur/);
-    const iSaat=bul(/flight.*time|saat|time/);
+    const A=ai&&ai.cols?ai.cols:null;
+    const ac=(k,fb)=>{ if(A&&A[k]!=null&&A[k]>=0) return +A[k]; return fb; };
+    const iRes=ac('resno',bul(/res.*no|reservation|voucher|rez.*no/));
+    const iAdSoy=ac('isimBirlesik',bul(/name.*surname|surname.*name|ad.*soyad|isim/));
+    const iSoy=ac('soyad',bul(/^soyad|^surname|last.*name|nachname/));
+    const iAd2=ac('ad',bul(/^ad$|^adi$|first.*name|vorname/));
+    const iOda=ac('oda',bul(/room|oda/));
+    const iBag=ac('bagaj',bul(/bag|valiz/));
+    const iHy=ac('havayolu',bul(/airline|havayolu/));
+    const iPnr=ac('pnr',bul(/pnr/));
+    const iTar=ac('tarih',bul(/arrival.*date|gelis.*tarih|^tarih|^date|flug.*datum/));
+    const iUc=ac('ucusNo',bul(/flight.*no|ucus.*no|f.*no$/));
+    const iHav=ac('rota',bul(/airport|havaliman|route|rota|parkur/));
+    const iSaat=ac('saat',bul(/flight.*time|saat|time/));
+    const soyadOnce=ai&&ai.isimSira==='soyadAd';
     if(iAdSoy<0&&iSoy<0){ showToast('İsim kolonu bulunamadı. Başlıkta görülenler: '+hdr.filter(Boolean).slice(0,8).join(', '),'error',8000); return; }
     const g=_resGrid(true);
     let n=0, atla=0;
@@ -6695,7 +6725,7 @@ function ucakExcelImport(evt){
       if(!Array.isArray(r)) return;
       let soyad='', ad='';
       if(iSoy>=0){ soyad=String(r[iSoy]||'').trim(); ad=iAd2>=0?String(r[iAd2]||'').trim():''; }
-      else { const p=_sjIsim(r[iAdSoy]); if(p){ soyad=p.soyad; ad=p.ad; } }
+      else { const p=_sjIsim(r[iAdSoy]); if(p){ if(soyadOnce&&!String(r[iAdSoy]).includes(',')){ soyad=p.ad; ad=p.soyad; } else { soyad=p.soyad; ad=p.ad; } } }
       if(!soyad&&!ad) return;
       const resno=iRes>=0?String(r[iRes]||'').trim():'';
       // aynı resno+isim zaten varsa atla (tekrar import güvenli)
@@ -6713,7 +6743,7 @@ function ucakExcelImport(evt){
     });
     setReservations(getReservations());
     try{renderRezervasyon();}catch(_e){}
-    showToast(n+' yolcu aktarıldı'+(atla?' · '+atla+' satır zaten vardı (atlandı)':''),'success',5000);
+    showToast(n+' yolcu aktarıldı'+(ai?' (yapay zeka eşlemesiyle)':'')+(atla?' · '+atla+' satır zaten vardı (atlandı)':''),'success',5000);
   }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); } };
   rd.readAsArrayBuffer(f);
 }
