@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v246 · 31.08.2026';
+const APP_VER='v247 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6474,12 +6474,12 @@ function renderUcakGenel(){
     });
   });
   // Uçakçının açtığı ürün-dışı listeler + özel gruplar da klasörlerde görünsün
-  const _prodSet=new Set(items.map(x=>x.id+'|'+_pdate(x.kalkis)));
-  // rezervasyonlardan doğan kalkışlar da 'üründe var' sayılır (monitörle tutarlı)
-  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId&&r.kalkis&&r.durum!=='iptal') _prodSet.add(r.pkgId+'|'+_pdate(r.kalkis)); }); }catch(e){}
+  const _itemSet=new Set(items.map(x=>x.id+'|'+_pdate(x.kalkis)));          // kart zaten listede mi
+  const _rozetSet=new Set(_itemSet);                                        // 'üründe yok' ROZET kararı için
+  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId&&r.kalkis&&r.durum!=='iptal') _rozetSet.add(r.pkgId+'|'+_pdate(r.kalkis)); }); }catch(e){}
   resAll.forEach(gr=>{
     if(!gr||!gr.pkgId||!gr.kalkis) return;
-    if(_prodSet.has(gr.pkgId+'|'+_pdate(gr.kalkis))) return;
+    if(_itemSet.has(gr.pkgId+'|'+_pdate(gr.kalkis))) return;
     const pkg=pkgs.find(p=>p.id===gr.pkgId); if(!pkg) return;
     const rows=gr.rows||[];
     const real=rows.filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim()));
@@ -6487,7 +6487,7 @@ function renderUcakGenel(){
     const pend=real.filter(r=>!((r.g_pnr||'').toString().trim())).length;
     let status; if(!real.length){status='giris';} else if(pend>0){status='bekliyor';} else {status='biletlendi';}
     const aps=new Set(); real.forEach(r=>{ [r.g_k1,r.g_v1,r.g_v2,r.d_k1,r.d_v1,r.d_v2].forEach(a=>{ const t=(a||'').toString().trim().toUpperCase(); if(t.length===3) aps.add(t); }); });
-    items.push({id:pkg.id,kalkis:gr.kalkis,yil:(gr.kalkis||'').slice(0,4)||'—',ay:(gr.kalkis||'').slice(5,7)||'--',pkg,opAd:_resOpAd(pkg)||'',pax,real:real.length,pend,status,aps:[...aps],ekstra:!pkg.ozelGrup,ozel:!!pkg.ozelGrup,iptal:!!gr.iptal});
+    items.push({id:pkg.id,kalkis:gr.kalkis,yil:(gr.kalkis||'').slice(0,4)||'—',ay:(gr.kalkis||'').slice(5,7)||'--',pkg,opAd:_resOpAd(pkg)||'',pax,real:real.length,pend,status,aps:[...aps],ekstra:!pkg.ozelGrup&&!_rozetSet.has(gr.pkgId+'|'+_pdate(gr.kalkis)),ozel:!!pkg.ozelGrup,iptal:!!gr.iptal});
   });
   if(_ucakGizle.bos) items=items.filter(x=>x.real);
   if(_ucakGizle.iptal) items=items.filter(x=>!x.iptal);
