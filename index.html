@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v233 · 31.08.2026';
+const APP_VER='v234 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6694,6 +6694,7 @@ function _ucakSablonAktar(rows,wb){
   const dTar=col(/departure\s*date|abflug|dönüş.*tarih|donus.*tarih/);
   const dHy=hyA[1]!=null?hyA[1]:-1, dPnr=pnrA[1]!=null?pnrA[1]:-1, dUc=ucA[1]!=null?ucA[1]:-1, dHav=havA[1]!=null?havA[1]:-1, dSaat=saatA[1]!=null?saatA[1]:-1;
   const iNot2=col(/^note/);
+  const iDom=col(/domestic/);
   let iSaat=saatA[0]!=null?saatA[0]:-1;
   if(iSaat<0){ for(let c=0;c<20;c++){ if(rows.slice(hIdx+1,hIdx+12).some(r=>r&&/^\s*\d{1,2}:\d{2}-\d{1,2}:\d{2}/.test(String(r[c]||'')))){ iSaat=c; break; } } }
   const rotaBol=(v,y,p2)=>{ const a=String(v||'').trim().toUpperCase().split(/[-\/]/).map(x=>x.trim()).filter(Boolean);
@@ -6702,7 +6703,7 @@ function _ucakSablonAktar(rows,wb){
     else if(a[0]) y[p2+'_k1']=a[0]; };
   const saatBol=(v,y,p2)=>{ const m3=String(v||'').trim().match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})(?:\s*\/\s*(\d{1,2}:\d{2})-(\d{1,2}:\d{2}))?/);
     if(m3){ y[p2+'_ks1']=m3[1]; y[p2+'_vs1']=m3[2]; if(m3[3]){ y[p2+'_ks2']=m3[3]; y[p2+'_vs2']=m3[4]; } } };
-  const ucusBol=(v,y,p2)=>{ const u=String(v||'').trim().split(/[-\/]/).map(x=>x.trim()).filter(Boolean); if(u[0])y[p2+'_u1']=u[0]; if(u[1])y[p2+'_u2']=u[1]; };
+  const ucusBol=(v,y,p2)=>{ const u=String(v||'').trim().split(/[-\/]/).map(x=>x.replace(/\s+/g,'')).filter(Boolean); if(u[0])y[p2+'_u1']=u[0]; if(u[1])y[p2+'_u2']=u[1]; };
   const adTok=(a,b)=>{ const t=String((a||'')+' '+(b||'')).toLocaleLowerCase('tr')
     .replace(/\(?\b\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}\b\)?/g,' ').replace(/\b(herr|frau|ing|dr|mag|prof|dipl|med|mr|mrs|ms)\b\.?/g,' ')
     .replace(/[^a-zçğıöşüâ\s-]/g,' ').split(/\s+/).filter(Boolean).sort();
@@ -6733,7 +6734,21 @@ function _ucakSablonAktar(rows,wb){
     if(dUc>=0) ucusBol(r[dUc],y,'d');
     if(dHav>=0) rotaBol(r[dHav],y,'d');
     if(dSaat>=0) saatBol(r[dSaat],y,'d');
+    // ── ARA UÇUŞ (Domestic Flight): "17.10.2026 SAW-ASR", "SAW-ASR VF2020 08:30" vb. serbest yazım
+    if(iDom>=0){ const dt=String(r[iDom]||'').trim(); if(dt){
+      const dm=dt.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
+      if(dm) y.a_tarih=String(dm[1]).padStart(2,'0')+'-'+String(dm[2]).padStart(2,'0')+'-'+dm[3];
+      const rm=dt.toUpperCase().match(/\b([A-Z]{3})\s*-\s*([A-Z]{3})\b/);
+      if(rm){ y.a_k1=rm[1]; y.a_v1=rm[2]; }
+      const um=dt.toUpperCase().match(/\b([A-Z]{2}\s?\d{2,4})\b/);
+      if(um) y.a_u1=um[1].replace(/\s+/g,'');
+      const sm=dt.match(/(\d{1,2}:\d{2})(?:\s*-\s*(\d{1,2}:\d{2}))?/);
+      if(sm){ y.a_ks1=sm[1]; if(sm[2]) y.a_vs1=sm[2]; }
+    } }
     if(iNot2>=0&&String(r[iNot2]||'').trim()) y.not=((y.not?y.not+' · ':'')+String(r[iNot2]).trim());
+    // note kolonundan SONRA taşan hücreler (Old Departure tarihçesi vb.) nota eklenir
+    if(iNot2>=0){ const tasan=(r.slice(iNot2+1)||[]).map(x=>String(x==null?'':x).trim()).filter(Boolean).join(' ');
+      if(tasan) y.not=((y.not?y.not+' · ':'')+tasan); }
     // mevcut satır → DİFF + güncelle; eşleşme temizlenmiş TOKEN setiyle (sıra/rakam/unvan bağımsız — eski ham kayıtlar da yakalanır)
     const hedefTok=adTok(p.soyad,p.ad);
     const mevcutY=(g.rows||[]).find(x=>adTok(x.soyad,x.ad)===hedefTok&&(!resno||!String(x.resno||'').trim()||String(x.resno||'').trim()===resno));
@@ -6741,7 +6756,7 @@ function _ucakSablonAktar(rows,wb){
       mevcutY.soyad=p.soyad; mevcutY.ad=p.ad; if(p.dogum) mevcutY.dogum=p.dogum; if(resno) mevcutY.resno=resno;
       if(y.not&&!(mevcutY.not||'').includes(y.not)) mevcutY.not=((mevcutY.not?mevcutY.not+' · ':'')+y.not);
       if(y.oda&&!mevcutY.oda) mevcutY.oda=y.oda; if(y.bagaj&&!mevcutY.bagaj) mevcutY.bagaj=y.bagaj;
-      ['g_u1','g_u2','g_pnr','g_hy','g_ks1','g_vs1','g_ks2','g_vs2','g_tarih','g_k1','g_v1','g_k2','g_v2','d_u1','d_u2','d_pnr','d_hy','d_ks1','d_vs1','d_ks2','d_vs2','d_tarih','d_k1','d_v1','d_k2','d_v2'].forEach(f=>{
+      ['g_u1','g_u2','g_pnr','g_hy','g_ks1','g_vs1','g_ks2','g_vs2','g_tarih','g_k1','g_v1','g_k2','g_v2','d_u1','d_u2','d_pnr','d_hy','d_ks1','d_vs1','d_ks2','d_vs2','d_tarih','d_k1','d_v1','d_k2','d_v2','a_u1','a_k1','a_v1','a_ks1','a_vs1','a_tarih'].forEach(f=>{
         const yeni=String(y[f]||'').trim(); const eski=String(mevcutY[f]||'').trim();
         if(yeni&&eski&&yeni!==eski){ degisimler.push({alan:f,eski,yeni}); mevcutY[f]=yeni; }
         else if(yeni&&!eski) mevcutY[f]=yeni;
@@ -7452,6 +7467,17 @@ const RZ_MCOLS=[['unvan','Mr/s',64],['ad','Ad',118],['soyad','Soyad',118],['dogu
 const _rzUnvan=v=>{ const t=String(v||'').trim().toLowerCase().replace(/\.$/,''); const map={mr:'Mr.',herr:'Mr.',mrs:'Mrs.',ms:'Mrs.',frau:'Mrs.',chd:'Chd.',child:'Chd.',inf:'Inf.',infant:'Inf.',grp:'Grp.',group:'Grp.'}; return map[t]||v; };
 const rzRotaUc=v=>{ const p=String(v||'').toUpperCase().split('-').map(x=>x.trim()).filter(Boolean); return {bas:p[0]||'',son:p[p.length-1]||''}; };
 // ═══ MUTABAKAT: rezervasyon modülü ↔ uçak listeleri ═══
+// Voucher eşitliği: birebir VEYA rakamsal son-ek eşleşmesi (Sejour kısa voucher = asıl voucherın son 8 hanesi)
+function _vEsit(a,b){
+  const ra=String(a==null?'':a).trim(), rb=String(b==null?'':b).trim();
+  if(!ra||!rb) return false;
+  if(_norm(ra)===_norm(rb)) return true;
+  const da=ra.replace(/\D/g,''), db=rb.replace(/\D/g,'');
+  if(!da||!db) return false;
+  if(da===db) return true;
+  const kisa=da.length<db.length?da:db, uzun=da.length<db.length?db:da;
+  return kisa.length>=6&&uzun.endsWith(kisa);
+}
 function _mutIssues(){
   const out=[]; const pkgs=getPackages(); const grids=getReservations();
   const gridMap={}; grids.forEach(g=>{ gridMap[g.pkgId+'|'+g.kalkis]=g; });
@@ -7459,7 +7485,7 @@ function _mutIssues(){
   rezvler.forEach(r=>{
     const v=String(r.voucher).trim();
     const g=gridMap[r.pkgId+'|'+r.kalkis];
-    const rows=g?(g.rows||[]).filter(x=>_isim(x)&&String(x.resno||'').trim()===v):[];
+    const rows=g?(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,v)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher)))):[];
     const pk=pkgs.find(p=>p.id===r.pkgId)||{}; const kod=pk.paketKodu||'';
     if(!rows.length){
       out.push({tip:'ucakYok',pkgId:r.pkgId,kalkis:r.kalkis,voucher:v,kod,detay:((r.musteriler||[]).length||'?')+' pax rezervasyonda kayıtlı, uçak listesinde yok — transferi eksik kalır'});
@@ -7482,13 +7508,14 @@ function _mutIssues(){
     if(farklar.length) out.push({tip:'ucFark',pkgId:r.pkgId,kalkis:r.kalkis,voucher:v,kod,detay:farklar.join(' · ')});
   });
   // uçakta var, rezervasyonda yok (yalnız o kalkış için rezv modülü kullanılıyorsa — gürültü olmasın)
-  const rezvSet=new Set(rezvler.map(r=>r.pkgId+'|'+r.kalkis+'|'+String(r.voucher).trim()));
   const rezvKalkis=new Set(rezvler.map(r=>r.pkgId+'|'+r.kalkis));
   grids.forEach(g=>{
     if(!rezvKalkis.has(g.pkgId+'|'+g.kalkis)) return;
     const pk=pkgs.find(p=>p.id===g.pkgId)||{}; const kod=pk.paketKodu||'';
+    const seferRezv=rezvler.filter(r=>r.pkgId===g.pkgId&&r.kalkis===g.kalkis);
     [...new Set((g.rows||[]).filter(_isim).map(x=>String(x.resno||'').trim()).filter(Boolean))].forEach(rn=>{
-      if(!rezvSet.has(g.pkgId+'|'+g.kalkis+'|'+rn))
+      const var2=seferRezv.some(r=>_vEsit(rn,r.voucher)||(r.asilVoucher&&_vEsit(rn,r.asilVoucher)));
+      if(!var2)
         out.push({tip:'rezvYok',pkgId:g.pkgId,kalkis:g.kalkis,voucher:rn,kod,detay:'uçak listesinde var, rezervasyon modülünde kaydı yok'});
     });
   });
@@ -8766,6 +8793,7 @@ function rzSejourImport(evt){
           iSira=H('Müşt.Sıra'), iGelis=H('Geliş Yeri'), iDonus=H('Dönüş Yeri'), iDogum=H('Doğum Tarihi'), iKartNo=hdr.findIndex(h=>String(h).trim()==='#'), iKayit=H('İlk Kayıt Tarihi'),
           iKod2=(H('Otel')>=0&&H('Otel Adı')>=0)?H('Otel'):-1, iUnvan=H('Ünvanı'), iMilliyet=H('Milliyet'), iPas=H('Pasaport No'),
           iStat=H('Rez.Statüs'), iG5=H('Grup5'),
+          iAsil=H('Asıl Voucher'),
           iGelUcNo=H('Geliş Ucuş No'), iGelFrom=H('Geliş From'), iGelTo=H('Geliş To'),
           iDonUcNo=H('Dönüş Uçuş No'), iDonFrom=H('Dönüş From'), iDonTo=H('Dönüş To');
     const _sjTemiz=v=>{ v=String(v==null?'':v).trim(); return (v==='?'||v==='??')?'':v; };
@@ -8867,6 +8895,7 @@ function rzSejourImport(evt){
           if(iKayit>=0){ let sat=''; tumu.forEach(x=>{ const k2=_sjTarih(x.r[iKayit]); if(k2&&(!sat||k2<sat)) sat=k2; }); if(sat) mevcut.satisTarihi=sat; }
           if(iG5>=0&&!mevcut.grupBolumM){ const gb=_sjTemiz(tumu[0]&&tumu[0].r[iG5]); if(gb) mevcut.grupBolum=gb; }
           if(iStat>=0) mevcut.sorSat=tumu.some(x=>String(x.r[iStat]||'').trim()==='Sor-Sat')||false;
+          if(iAsil>=0&&!mevcut.asilVoucher){ const av=tumu.map(x=>_sjTemiz(x.r[iAsil])).find(Boolean); if(av) mevcut.asilVoucher=av; }
           if(!mevcut.pkgId){ const kod2=((tumu[0]?String(tumu[0].r[iG1]||''):'').trim()||(iKod2>=0&&tumu[0]?String(tumu[0].r[iKod2]||'').trim():'')).toUpperCase();
             if(kod2){ const opM=getOperators().find(o=>_norm(o.ad||'')===_norm(mevcut.operator||''));
               const adaylar2=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod2));
@@ -8973,6 +9002,7 @@ function rzSejourImport(evt){
         not:(pkg?'':(String(ilk[iOtel]||'').trim()+' '+_sjTarih(ilk[iGir])+'–'+_sjTarih(ilk[iCik])).trim())+((ilk[iOda]||ilk[iOdaT])?(' · '+String(ilk[iOda]||'').trim()+'/'+String(ilk[iOdaT]||'').trim()):''),
         odaKomp:'',ukartlar:(iOda>=0?_sjUkartlar(kaynak,iOda,iAd,iGir,iCik,musteriler,iSira,iDogum,iKartNo):[]),opUcusNot:'Sejour aktarımı',musteriler:musteriler,kartlar:[],transferler:[]};
       if(iG5>=0){ const gb=_sjTemiz(ilk[iG5]); if(gb) rec.grupBolum=gb; }
+      if(iAsil>=0){ const av=kaynak.map(r=>_sjTemiz(r[iAsil])).find(Boolean); if(av) rec.asilVoucher=av; }
       if(iStat>=0&&kaynak.some(r=>String(r[iStat]||'').trim()==='Sor-Sat')) rec.sorSat=true;
       { const tOteller2=(getTanimlar()||{}).oteller||[];
         const gercek2=kaynak.some(r2=>{ const oa=String(r2[iOtel]||'').trim(); return oa&&tOteller2.some(o=>_norm(o.ad||'')===_norm(oa)); });
