@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v241 · 31.08.2026';
+const APP_VER='v242 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6950,6 +6950,18 @@ function _ucakDosyaCoz(yol){
   }
   return null;
 }
+function _ucakOpSecim(adaylar,ipuclari){
+  // aynı kod birden çok operatörde: klasör adı + dosyadaki Operatör kolonu ipuçlarıyla doğru ürünü seç
+  if(adaylar.length<=1) return adaylar[0]||null;
+  const ops=getOperators();
+  const duz=t=>_norm(String(t||'')).replace(/ /g,'');
+  for(const aday of adaylar){
+    const op=ops.find(o=>o.id===aday.operatorId); if(!op) continue;
+    const on=duz(op.ad); if(!on) continue;
+    if(ipuclari.some(h=>{ const hn=duz(h); return hn&&hn.length>=3&&(on===hn||on.includes(hn)||hn.includes(on)); })) return aday;
+  }
+  return null; // ipucu eşleşmedi — rastgele operatöre YAZMA
+}
 async function ucakTopluImport(evt){
   const files=[...(evt.target.files||[])].filter(f=>/\.xlsx?$/i.test(f.name)&&!f.name.startsWith('~'));
   evt.target.value='';
@@ -6963,8 +6975,8 @@ async function ucakTopluImport(evt){
     if(/[-—]+\s*cxx/i.test(yol)){ iptalAtla++; continue; }
     const coz=_ucakDosyaCoz(yol);
     if(!coz){ cozulemedi.push(f.name); continue; }
-    const pkg=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(coz.kod));
-    if(!pkg){ kodYok.push(coz.kod); continue; }
+    const adaylar=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(coz.kod));
+    if(!adaylar.length){ kodYok.push(coz.kod); continue; }
     const yil=coz.yil||String(new Date().getFullYear());
     const kalkis=yil+'-'+coz.ay+'-'+coz.gun;
     try{
@@ -6972,6 +6984,13 @@ async function ucakTopluImport(evt){
       const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
       const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
       if(!_ucakSablonDetect(rows)){ sablonDegil.push(f.name); continue; }
+      // operatör ipuçları: klasör/dosya adı kelimeleri + dosyanın Operatör kolonu
+      const ipuclari=String(yol).split(/[\/\s._-]+/).filter(Boolean);
+      { const hIdx2=rows.findIndex((r2,i2)=>i2<10&&Array.isArray(r2)&&r2.some(c=>/reservation\s*no/i.test(String(c||''))));
+        if(hIdx2>=0){ const oi=(rows[hIdx2]||[]).findIndex(h=>/operat/i.test(String(h||'')));
+          if(oi>=0){ const ov=(rows.slice(hIdx2+1).find(r2=>r2&&String(r2[oi]||'').trim())||[])[oi]; if(ov) ipuclari.push(String(ov)); } } }
+      const pkg=_ucakOpSecim(adaylar,ipuclari);
+      if(!pkg){ kodYok.push(coz.kod+' (operatör belirsiz: '+ipuclari.slice(-3).join(' ')+')'); continue; }
       _resPkgId=pkg.id; _resKalkis=kalkis;
       const oz=_ucakSablonAktar(rows,wb,true);
       ok++; toplamYolcu+=(oz.n+oz.atla); toplamDegisim+=oz.degisim;
