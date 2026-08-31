@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v227 · 27.08.2026';
+const APP_VER='v228 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6662,6 +6662,7 @@ function _migrateResData(){
   if(ch){ setReservations(getReservations()); setPnrLedger(getPnrLedger()); }
 }
 async function _aiSor(prompt,maxTok){
+  try{ await _txEnsureCache(); }catch(e){} // anahtar diskten yüklenmemiş olabilir
   const key=(_txSettings&&_txSettings.keys||{}).claude;
   if(!key) throw new Error('Claude API anahtarı yok — Çeviri Ayarları\'ndan girin');
   const res=await fetch('https://api.anthropic.com/v1/messages',{
@@ -6684,7 +6685,9 @@ function ucakExcelImport(evt){
     if(!rows.length){ showToast('Dosya boş','error'); return; }
     // ── YAPAY ZEKA EŞLEMESİ: anahtar varsa dosyanın örnek satırlarını Claude okur, kolonları tanımlar
     let ai=null;
+    try{ await _txEnsureCache(); }catch(_e){}
     const aiKey=(_txSettings&&_txSettings.keys||{}).claude;
+    if(!aiKey) showToast('Claude API anahtarı bulunamadı — otomatik tanımayla aktarılıyor (anahtar: Sunum > Çeviri Ayarları)','error',6000);
     if(aiKey){
       showToast('Yapay zeka dosyayı okuyor…','success',2500);
       try{
