@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v226 · 27.08.2026';
+const APP_VER='v227 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6638,7 +6638,7 @@ function onResPkgChange(keep){
 function onResKalkisChange(){ _resKalkis=document.getElementById('resKalkisSel').value; renderRezervasyon(); }
 // ═══ Uçak v3 modeli (adlı alanlar) ═══
 const R_GID=()=>'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-const PCOLS=[['durum','Durum',108],['op','Operatör',84],['kod','Ürün',62],['resno','Res No',62],['soyad','Soyad',110],['ad','Ad',120],['oda','Oda',40],['tip','Tip',46],['bagaj','Bagaj',58]];
+const PCOLS=[['durum','Durum',108],['op','Operatör',84],['kod','Ürün',62],['resno','Res No',62],['soyad','Soyad',110],['ad','Ad',120],['dogum','Doğum',88],['yas','Yaş',40],['oda','Oda',40],['tip','Tip',46],['bagaj','Bagaj',58]];
 const FBASE=p=>[[p+'_hy','Havayolu',90],[p+'_pnr','PNR',64],[p+'_tarih','Tarih',96],[p+'_u1','Uçuş 1',68],[p+'_k1','Kalkış',54],[p+'_v1','Varış',54],[p+'_ks1','K.Saat',56],[p+'_vs1','V.Saat',56]];
 const FAKT=p=>[[p+'_u2','Uçuş 2',68],[p+'_k2','Kalkış 2',54],[p+'_v2','Varış 2',54],[p+'_ks2','K.Saat 2',56],[p+'_vs2','V.Saat 2',56]];
 const ARAF=['a_hy','a_pnr','a_tarih','a_u1','a_k1','a_ks1','a_v1','a_vs1'];
@@ -6693,7 +6693,7 @@ function ucakExcelImport(evt){
           'Bir tur operatörünün uçak yolcu listesi Excel dosyasının ilk satırları aşağıda (satırNo: [kolon değerleri]).\n'
           +ornek.join('\n')
           +'\n\nGörev: kolonları tanımla. SADECE şu JSON\'u döndür, başka hiçbir şey yazma:\n'
-          +'{"headerRow":N, "isimSira":"adSoyad"|"soyadAd", "cols":{"resno":i,"isimBirlesik":i,"soyad":i,"ad":i,"oda":i,"bagaj":i,"havayolu":i,"pnr":i,"tarih":i,"ucusNo":i,"rota":i,"saat":i}}\n'
+          +'{"headerRow":N, "isimSira":"adSoyad"|"soyadAd", "cols":{"resno":i,"isimBirlesik":i,"soyad":i,"ad":i,"dogum":i,"oda":i,"bagaj":i,"havayolu":i,"pnr":i,"tarih":i,"ucusNo":i,"rota":i,"saat":i}}\n'
           +'Kurallar: kolon yoksa -1 yaz. isimBirlesik = ad+soyad tek kolondaysa o kolon (o zaman soyad/ad -1). isimSira: birleşik isimde önce ad mı soyad mı geliyor (satırlardaki değerlere bakarak karar ver). rota = VIE-AYT gibi havalimanı çifti kolonu. headerRow = başlık satırının numarası.'
         ,600));
       }catch(e){ showToast('AI eşlemesi yapılamadı ('+(e.message||e)+') — otomatik tanımayla devam','error',4000); ai=null; }
@@ -6717,6 +6717,7 @@ function ucakExcelImport(evt){
     const iUc=ac('ucusNo',bul(/flight.*no|ucus.*no|f.*no$/));
     const iHav=ac('rota',bul(/airport|havaliman|route|rota|parkur/));
     const iSaat=ac('saat',bul(/flight.*time|saat|time/));
+    const iDog=ac('dogum',bul(/dogum|birth|geburt|d\.o\.b/));
     const soyadOnce=ai&&ai.isimSira==='soyadAd';
     if(iAdSoy<0&&iSoy<0){ showToast('İsim kolonu bulunamadı. Başlıkta görülenler: '+hdr.filter(Boolean).slice(0,8).join(', '),'error',8000); return; }
     const g=_resGrid(true);
@@ -6731,6 +6732,7 @@ function ucakExcelImport(evt){
       // aynı resno+isim zaten varsa atla (tekrar import güvenli)
       if((g.rows||[]).some(x=>_norm((x.soyad||'')+'|'+(x.ad||''))===_norm(soyad+'|'+ad)&&String(x.resno||'').trim()===resno)){ atla++; return; }
       const y={resno,soyad,ad};
+      if(iDog>=0&&r[iDog]!=null&&r[iDog]!==''){ const t=_sjTarih(r[iDog]); if(t) y.dogum=t; }
       if(iOda>=0) y.oda=String(r[iOda]||'').trim();
       if(iBag>=0) y.bagaj=String(r[iBag]||'').trim();
       if(iHy>=0) y.g_hy=String(r[iHy]||'').trim();
@@ -6823,6 +6825,7 @@ function renderRezervasyon(){
       if(c===null){ gh+='<td class="sep"></td>'; return; }
       const f=c[0]; const v=y[f]==null?'':y[f];
       if(f==='durum'){ gh+=`<td class="res-durum" data-r="${r}" data-f="durum">${_resDurumCell(r,y)}</td>`; return; }
+      if(f==='yas'){ const ya=(typeof _rzYas==='function')?_rzYas(y.dogum,_resKalkis):''; gh+=`<td data-r="${r}" data-f="yas" style="text-align:center;color:var(--muted);font-weight:600">${(ya===''||ya==null)?'':ya}</td>`; return; }
       let tdCls=f.startsWith('g_')?'fg':f.startsWith('d_')?'fd':f.startsWith('a_')?'fa':'';
       let badge='';
       if(/_vs[12]$/.test(f)){ const p=f[0], leg=f.slice(-1); const ks=_dk(y[p+'_ks'+leg]), vs=_dk(v); if(ks!==null&&vs!==null&&vs<ks) badge='<span class="plus1">+1</span>'; }
@@ -6944,8 +6947,8 @@ function _resGridInit(){
   const isProxy=el=>!!(el&&el.id==='_resClip');
   const kontrol=()=>{ if(S.key!==key()){ S.sel=null; S.extra.clear(); S.edit=null; S.key=key(); } };
   const durumNorm=v=>{ const t=_norm(String(v||'')); if(!t)return''; const hit=DURUM_OPTS.find(o=>o[0]&&(_norm(o[0])===t||_norm(o[1])===t||_norm(o[0]).startsWith(t))); return hit?hit[0]:''; };
-  const setValRes=(y,f,v)=>{ v=String(v==null?'':v).trim(); if(/_tarih$/.test(f))v=_pdate(v); if(f==='durum')v=durumNorm(v); y[f]=v; };
-  const dispVal=(y,f)=>{ let v=y[f]==null?'':y[f]; if(f==='durum')v=_durumEff(y); v=String(v); if(/_tarih$/.test(f)&&/^\d{4}-\d{2}-\d{2}$/.test(v))v=v.split('-').reverse().join('.'); return v; };
+  const setValRes=(y,f,v)=>{ v=String(v==null?'':v).trim(); if(/_tarih$/.test(f)||f==='dogum')v=_pdate(v); if(f==='durum')v=durumNorm(v); y[f]=v; };
+  const dispVal=(y,f)=>{ let v=y[f]==null?'':y[f]; if(f==='durum')v=_durumEff(y); v=String(v); if((/_tarih$/.test(f)||f==='dogum')&&/^\d{4}-\d{2}-\d{2}$/.test(v))v=v.split('-').reverse().join('.'); return v; };
   window._resXLSelCell=(r,f)=>{ kontrol(); const c=ord().indexOf(f); if(c<0)return; S.sel={r0:r,c0:c,r1:r,c1:c}; S.extra.clear(); _resXLPaint(); proxyFocus(); };
   const rowList=()=>{ const set=new Set(S.extra); if(S.sel){ const s=nrm(); if(s.c0===0&&s.c1===NCol()-1)for(let r=s.r0;r<=s.r1;r++)set.add(r); } const g=_resGrid(); const n=g?g.rows.length:0; return [...set].filter(r=>r<n).sort((a,b)=>a-b); };
   window._resXLPaint=()=>{ kontrol();
@@ -6980,7 +6983,7 @@ function _resGridInit(){
     snap();
     if(FLIGHTF.has(f)){ _resSetFlight(r,f,yeniV); } else { setValRes(y,f,val); setReservations(getReservations()); renderRezervasyon(); } };
   const editCancel=()=>{ if(!S.edit)return; S.edit=null; renderRezervasyon(); };
-  const editStart=(r,f,ilk)=>{ if(ro())return; if(f==='durum'||f==='bagaj')return; // bunlar kendi select'iyle düzenlenir
+  const editStart=(r,f,ilk)=>{ if(ro())return; if(f==='durum'||f==='bagaj'||f==='yas')return; // durum/bagaj kendi select'i, yaş hesaplanır
     editCommit(); const td=tdOf(r,f); if(!td||!td.classList.contains('cvtd'))return;
     const g=_resGrid(); const y=g&&g.rows[r]; if(!y)return;
     S.edit={r,f}; let v=y[f]==null?'':String(y[f]); if(/_tarih$/.test(f)&&/^\d{4}-\d{2}-\d{2}$/.test(v))v=v.split('-').reverse().join('.');
