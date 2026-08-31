@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v237 · 31.08.2026';
+const APP_VER='v238 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6737,16 +6737,34 @@ function _ucakSablonAktar(rows,wb){
     if(dUc>=0) ucusBol(r[dUc],y,'d');
     if(dHav>=0) rotaBol(r[dHav],y,'d');
     if(dSaat>=0) saatBol(r[dSaat],y,'d');
-    // ── ARA UÇUŞ (Domestic Flight): "17.10.2026 SAW-ASR", "SAW-ASR VF2020 08:30" vb. serbest yazım
-    if(iDom>=0){ const dt=String(r[iDom]||'').trim(); if(dt){
-      const dm=dt.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
-      if(dm) y.a_tarih=String(dm[1]).padStart(2,'0')+'-'+String(dm[2]).padStart(2,'0')+'-'+dm[3];
+    // ── ARA UÇUŞ (Domestic Flight): serbest yazım — token bazlı ayrıştırma
+    // Örnekler: "PEGASUS 1Z1AXN 19.02 PC2736 SAW-ASR 14:15-15:35" · "AJET PNR:3UAU68 22.04.2026 VF3268 SAW-NAV 07:45-09:00" · "PNR: 4330FQ 16.05.2026 ..." · "26.02.2026 SAW-ASR"
+    if(iDom>=0){ let dt=String(r[iDom]||'').trim(); if(dt){
+      // saat aralığı
+      const sm=dt.match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
+      if(sm){ y.a_ks1=sm[1]; y.a_vs1=sm[2]; dt=dt.replace(sm[0],' '); }
+      // rota
       const rm=dt.toUpperCase().match(/\b([A-Z]{3})\s*-\s*([A-Z]{3})\b/);
-      if(rm){ y.a_k1=rm[1]; y.a_v1=rm[2]; }
-      const um=dt.toUpperCase().match(/\b([A-Z]{2}\s?\d{2,4})\b/);
-      if(um) y.a_u1=um[1].replace(/\s+/g,'');
-      const sm=dt.match(/(\d{1,2}:\d{2})(?:\s*-\s*(\d{1,2}:\d{2}))?/);
-      if(sm){ y.a_ks1=sm[1]; if(sm[2]) y.a_vs1=sm[2]; }
+      if(rm){ y.a_k1=rm[1]; y.a_v1=rm[2]; dt=dt.replace(new RegExp(rm[1]+'\\s*-\\s*'+rm[2],'i'),' '); }
+      // tarih (yıl opsiyonel — yoksa seferin yılı)
+      const dm=dt.match(/\b(\d{1,2})[.\/](\d{1,2})(?:[.\/](\d{4}))?\b/);
+      if(dm){ const yil=dm[3]||String(_resKalkis||'').slice(0,4)||String(new Date().getFullYear());
+        y.a_tarih=String(dm[1]).padStart(2,'0')+'-'+String(dm[2]).padStart(2,'0')+'-'+yil; dt=dt.replace(dm[0],' '); }
+      // PNR: öneki
+      const pm=dt.match(/PNR\s*:?\s*([A-Z0-9]{5,8})/i);
+      if(pm){ y.a_pnr=pm[1].toUpperCase(); dt=dt.replace(pm[0],' '); }
+      // kalan tokenlar
+      const hyKelime=[]; const notlar=[];
+      dt.split(/\s+/).map(t2=>t2.trim()).filter(Boolean).forEach(t2=>{
+        const T=t2.toUpperCase();
+        if(/^[A-Z]{2}\d{2,4}$/.test(T)){ if(!y.a_u1) y.a_u1=T; return; }              // uçuş no (VF3268, PC2736, TK778)
+        if(!y.a_pnr&&/^[A-Z0-9]{5,8}$/.test(T)&&/\d/.test(T)&&/[A-Z]/.test(T)){ y.a_pnr=T; return; }  // PNR (1Z1AXN, UDJZ3G)
+        if(!y.a_pnr&&/^\d{6,9}$/.test(T)){ y.a_pnr=T; return; }                        // rakamsal PNR
+        if(/^[A-ZÇĞİÖŞÜ]{3,}$/.test(T)){ if(T==='UÇAKSIZ'||T==='UCAKSIZ'){ notlar.push('ara: uçaksız'); } else hyKelime.push(t2); return; } // havayolu kelimeleri
+        if(t2.length>1) notlar.push(t2);
+      });
+      if(hyKelime.length) y.a_hy=hyKelime.join(' ');
+      if(notlar.length) y.not=((y.not?y.not+' · ':'')+notlar.join(' '));
     } }
     if(iNot2>=0&&String(r[iNot2]||'').trim()) y.not=((y.not?y.not+' · ':'')+String(r[iNot2]).trim());
     // note kolonundan SONRA taşan hücreler (Old Departure tarihçesi vb.) nota eklenir
@@ -6759,7 +6777,7 @@ function _ucakSablonAktar(rows,wb){
       mevcutY.soyad=p.soyad; mevcutY.ad=p.ad; if(p.dogum) mevcutY.dogum=p.dogum; if(resno) mevcutY.resno=resno;
       if(y.not&&!(mevcutY.not||'').includes(y.not)) mevcutY.not=((mevcutY.not?mevcutY.not+' · ':'')+y.not);
       if(y.oda&&!mevcutY.oda) mevcutY.oda=y.oda; if(y.bagaj&&!mevcutY.bagaj) mevcutY.bagaj=y.bagaj;
-      ['g_u1','g_u2','g_pnr','g_hy','g_ks1','g_vs1','g_ks2','g_vs2','g_tarih','g_k1','g_v1','g_k2','g_v2','d_u1','d_u2','d_pnr','d_hy','d_ks1','d_vs1','d_ks2','d_vs2','d_tarih','d_k1','d_v1','d_k2','d_v2','a_u1','a_k1','a_v1','a_ks1','a_vs1','a_tarih'].forEach(f=>{
+      ['g_u1','g_u2','g_pnr','g_hy','g_ks1','g_vs1','g_ks2','g_vs2','g_tarih','g_k1','g_v1','g_k2','g_v2','d_u1','d_u2','d_pnr','d_hy','d_ks1','d_vs1','d_ks2','d_vs2','d_tarih','d_k1','d_v1','d_k2','d_v2','a_u1','a_k1','a_v1','a_ks1','a_vs1','a_tarih','a_hy','a_pnr'].forEach(f=>{
         const yeni=String(y[f]||'').trim(); const eski=String(mevcutY[f]||'').trim();
         if(yeni&&eski&&yeni!==eski){ degisimler.push({alan:f,eski,yeni}); mevcutY[f]=yeni; }
         else if(yeni&&!eski) mevcutY[f]=yeni;
