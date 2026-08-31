@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v235 · 31.08.2026';
+const APP_VER='v236 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6785,6 +6785,7 @@ function _ucakSablonAktar(rows,wb){
     }
   }catch(_e){}
   setReservations(getReservations());
+  _resTglKey=''; // kolon otomatik aç/kapa yeniden hesaplansın (ara uçuş/aktarma görünür olsun)
   try{renderRezervasyon();}catch(_e){}
   if(degisimler.length){
     const grupla={}; degisimler.forEach(d=>{ const k=d.alan+': '+d.eski+' → '+d.yeni; grupla[k]=(grupla[k]||0)+1; });
@@ -6896,6 +6897,7 @@ function ucakExcelImport(evt){
       g.rows.push(y); n++;
     });
     setReservations(getReservations());
+    _resTglKey='';
     try{renderRezervasyon();}catch(_e){}
     // uçuş değişikliklerini raporla + uyarı merkezine yaz
     if(degisimler.length){
