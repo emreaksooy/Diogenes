@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v220 · 27.08.2026';
+const APP_VER='v221 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10404,6 +10404,13 @@ function rtFltTog(alan,vEnc){ const v=decodeURIComponent(vEnc); const S=_rtFlt[a
 function rtFltTemizle(alan){ if(alan){_rtFlt[alan].clear();} else {_rtFlt.op.clear();_rtFlt.kod.clear();_rtFlt.reh.clear();} _rtFltKaydet(); renderRehberTakvim(); }
 let _rtBas=null,_rtSon=null; const _RT_GW=24; // gün sütun genişliği px
 let _rtAySecim=(()=>{try{return localStorage.getItem('dmc_rtAySecim')||'';}catch(e){return '';}})();
+function rtTamEkran(){
+  window._rtFull=!window._rtFull;
+  const box=document.getElementById('opsPane_rehtak');
+  if(box){ if(window._rtFull){ box.style.cssText='position:fixed;inset:0;z-index:999;background:#f4f5f7;overflow:auto;padding:14px;display:block;'; }
+    else { box.style.cssText=''; } }
+  renderRehberTakvim();
+}
 function rtAySec(ay){ _rtAySecim=ay; try{localStorage.setItem('dmc_rtAySecim',ay);}catch(e){}
   _rtBas=ay+'-01'; _rtSon=_rtAySonu(_rtAyEkle(_rtBas,1)); // seçilen ay + sonraki ay
   window._rtScrollPos=0; renderRehberTakvim(); }
@@ -10608,6 +10615,7 @@ function renderRehberTakvim(){
    +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#f59e0b;border-radius:3px;display:inline-block"></span> Açıkta ('+acikta+')</span>'
    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:.74rem"><span style="width:12px;height:12px;background:#16a34a;border-radius:3px;display:inline-block"></span> Rehberli ('+(turlar.length-acikta)+')</span>'
+   +'<button class="btn btn-outline btn-sm" onclick="rtTamEkran()" title="Takvimi tam ekran genişlet/daralt">'+(window._rtFull?'✕ Daralt':'⛶ Genişlet')+'</button>'
    +'<button class="btn btn-outline btn-sm" onclick="rtAtamaExcel()" title="Bugünden ileri tüm turların rehber atamaları (rezervasyona göndermelik)">⬇ Atama Listesi</button>'
    +_fltBtn('op','Operatör',_opSecenek)
    +_fltBtn('kod','Tur',_kodSecenek)
@@ -10680,6 +10688,17 @@ function renderRehberTakvim(){
   h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;border-bottom:1.5px solid var(--border);padding-bottom:3px;margin-bottom:2px">'
    +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.72rem;font-weight:800;color:var(--muted)">'+(_rtGorunum==='rehber'?'REHBER · dönem yükü':'TUR · OPERATÖR')+'</div>'
    +Array.from({length:toplamGun},(_,i)=>{ const iso=_isoAdd(bas,i); const g=+iso.slice(8,10); const ayB=g===1?'border-left:2px solid var(--border);':''; const bg=iso===bugun?'background:#fff3ec;border-radius:4px;':''; return '<div style="text-align:center;font-size:.6rem;color:var(--muted);'+bg+ayB+'">'+g+'</div>'; }).join('')+'</div>';
+  // CETVEL: her satırın arkasında gün çizgileri + bugün bandı
+  const _cetvel=(arka)=>{
+    const gunCizgi='repeating-linear-gradient(to right,transparent 0,transparent '+(_RT_GW-1)+'px,rgba(148,163,184,.28) '+(_RT_GW-1)+'px,rgba(148,163,184,.28) '+_RT_GW+'px)';
+    let katman=gunCizgi, tekrar='repeat', konum='220px 0';
+    if(bugun>=bas&&bugun<=son){
+      const tx=220+(gunNo(bugun)-1)*_RT_GW;
+      katman='linear-gradient(to right,transparent '+tx+'px,rgba(245,158,11,.20) '+tx+'px,rgba(245,158,11,.20) '+(tx+_RT_GW)+'px,transparent '+(tx+_RT_GW)+'px),'+gunCizgi;
+      tekrar='no-repeat,repeat'; konum='0 0,220px 0';
+    }
+    return 'background-color:'+arka+';background-image:'+katman+';background-repeat:'+tekrar+';background-position:'+konum+';';
+  };
   const bar=(t,renk,sec,key,serit)=>{
     const b1=t.kalkis>bas?t.kalkis:bas, e1=t.end<son?t.end:son;
     const c1=gunNo(b1), c2=gunNo(e1)+1;
@@ -10704,7 +10723,7 @@ function renderRehberTakvim(){
         else izinYer.push({z:x.izin,lane:li+1});
       });
       const seritN=Math.max(1,seritSon.length);
-      h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';grid-template-rows:repeat('+seritN+',minmax(38px,auto));gap:0;border-bottom:1px solid #e5e9f0;background:'+arka+'">'
+      h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';grid-template-rows:repeat('+seritN+',minmax(38px,auto));gap:0;border-bottom:1px solid #e5e9f0;'+_cetvel(arka)+'">'
        +'<div style="grid-row:1 / '+(seritN+1)+';position:sticky;left:0;z-index:5;background:'+arka+';box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.76rem;font-weight:700;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;display:flex;flex-direction:column;justify-content:center">'+etiket+(alt?'<div style="font-size:.66rem;font-weight:600;color:var(--muted)">'+alt+'</div>':'')+'</div>';
       rT.forEach(t=>{ const key=t.pkgId+'|'+t.kalkis+'|'+(t.bolum||'01'); h+=bar(t,renkFn(t),S.has(key),key,yer[key]||1); });
       izinYer.forEach(({z,lane})=>{
@@ -10768,7 +10787,7 @@ function renderRehberTakvim(){
     turlar.forEach(t=>{
       const key=t.pkgId+'|'+t.kalkis+'|'+(t.bolum||'01');
       const cakisan=t.rehberAd&&turlar.some(o=>o!==t&&o.rehberAd===t.rehberAd&&_rtCakisir(o.kalkis,o.end,t.kalkis,t.end));
-      h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px">'
+      h+='<div style="display:grid;grid-template-columns:220px '+gunKol+';gap:0;align-items:center;border-bottom:1px dashed #eee;min-height:40px;'+_cetvel('#fff')+'">'
        +'<div style="position:sticky;left:0;z-index:5;background:var(--card,#fff);box-shadow:2px 0 5px rgba(0,0,0,.07);font-size:.74rem;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:stretch;display:flex;flex-direction:column;justify-content:center"><b>'+esc(t.kod)+'</b>'+(t.op?' · '+esc(t.op):'')+'<div style="font-size:.66rem;color:var(--muted)">'+_fmtDateTR(t.kalkis)+' → '+_fmtDateTR(t.end)+' · '+t.pax+' pax</div></div>'
        +bar(t,(t.rehberAd?(cakisan?'#dc2626':'#16a34a'):'#f59e0b'),S.has(key),key)
        +'</div>';
