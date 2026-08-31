@@ -1864,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v236 · 31.08.2026';
+const APP_VER='v237 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2161,14 +2161,17 @@ function showPage(id, tabEl) {
       }catch(e){}
     }
     if(id==='operasyon') _opsTab='anasayfa';
-    if(id==='ucak'){ try{ _ucakFilter={op:'',pkg:'',tarih:'',voucher:''}; _ucakView(false); }catch(e){} }
+    if(id==='ucak'){ try{ _ucakFilter={op:'',pkg:'',tarih:'',voucher:''}; localStorage.removeItem('dmc_lastUcak'); _ucakView(false); }catch(e){} }
   }
   if(id==='maliyet') updateCalc();
   if(id==='paketlerim') renderDashboard();
   if(id==='yonetim') renderYonetim();
   if(id==='paket') refreshSidebarPkgSwitch();
   if(id==='harita') renderHarita();
-  if(id==='ucak') renderRezervasyonPage();
+  if(id==='ucak'){ renderRezervasyonPage();
+    // yenilemede (sidebar tıkı değilse) son açık sefer geri yüklenir
+    if(!tabEl){ try{ const lu=localStorage.getItem('dmc_lastUcak');
+      if(lu){ const p=lu.split('|'); if(p[0]&&p[1]&&getPackages().some(x=>x.id===p[0])) setTimeout(()=>{ try{ucakOpen(p[0],p[1]);}catch(e){} },60); } }catch(e){} } }
   if(id==='urun') renderUrunPage();
   if(id==='operasyon') opsTab(_opsTab||'anasayfa');
   if(id==='cikti') renderBackupList();
