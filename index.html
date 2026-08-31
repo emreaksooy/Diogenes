@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v223 · 27.08.2026';
+const APP_VER='v224 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9544,7 +9544,7 @@ function rzMailParse(){
 const _docSig={res:new Map(),pnr:new Map(),ops:new Map(),transfer:new Map(),opsgrup:new Map(),rezv:new Map()};
 const _KIND2COL={reservations:'res',pnrLedger:'pnr',operasyon:'ops',transfer:'transfer',opsgrup:'opsgrup',rezervasyonlar:'rezv'};
 function _docSplit(col){
-  if(col==='res') return (_resCache||[]).filter(r=>r&&r.id).map(r=>({id:r.id,parent:String(r.g_tarih||''),data:r}));
+  if(col==='res') return (_resCache||[]).filter(g=>g&&g.pkgId&&g.kalkis).map(g=>({id:g.pkgId+'|'+g.kalkis,parent:String(g.kalkis||''),data:g}));
   if(col==='rezv') return (_rezvCache||[]).filter(r=>r&&r.id).map(r=>({id:r.id,parent:String((r.urunKod||'')+'|'+(r.kalkis||'')),data:r}));
   if(col==='pnr'){ (_pnrCache||[]).forEach(e=>{ if(e&&!e.id) e.id=genId(); }); return (_pnrCache||[]).filter(e=>e&&e.id).map(e=>({id:e.id,parent:String(e.pnr||''),data:e})); }
   if(col==='ops') return (_opsCache||[]).filter(r=>r&&r.pkgId&&r.kalkis).map(r=>({id:r.pkgId+'|'+r.kalkis,parent:String(r.kalkis||''),data:r}));
@@ -9579,7 +9579,7 @@ function _docJoin(col,rows){
 }
 function _docApplyOne(col,id,data){
   const arrUp=(arr,find)=>{ const i=arr.findIndex(find); if(data){ if(i>=0)arr[i]=data; else arr.push(data); } else if(i>=0)arr.splice(i,1); };
-  if(col==='res'){ arrUp(_resCache,x=>x&&x.id===id); idbSet('reservations',_resCache); }
+  if(col==='res'){ arrUp(_resCache,x=>x&&(x.pkgId+'|'+x.kalkis)===id); idbSet('reservations',_resCache); }
   else if(col==='rezv'){ if(!data){ try{_hataKaydet&&_hataKaydet('REZV-SİL(remote)','id='+id);}catch(e){} } arrUp(_rezvCache,x=>x&&x.id===id); idbSet('rezervasyonlar',_rezvCache); }
   else if(col==='pnr'){ arrUp(_pnrCache,x=>x&&x.id===id); idbSet('pnrLedger',_pnrCache); }
   else if(col==='ops'){ arrUp(_opsCache,x=>x&&(x.pkgId+'|'+x.kalkis)===id); idbSet('operasyon',_opsCache); }
@@ -9741,10 +9741,16 @@ async function _cloudPullFull(){
           else if(col==='opsgrup'){ _ogCache=val; idbSet('opsgrup',val); }
           _cloudQueue(kind); // eski toplu kaydı satır-bazlıya BİR KEZ taşı
         } else if(col==='res'||col==='pnr'){
-          // uçak verisi bulutta hiç yoksa (temizlenmiş) yerel eski kopya da boşaltılır; bulut tek doğru kaynak
-          if(col==='res'&&_resCache.length){ _resCache=[]; idbSet('reservations',_resCache); }
-          if(col==='pnr'&&_pnrCache.length){ _pnrCache=[]; idbSet('pnrLedger',_pnrCache); }
-          _docSig[col]&&_docSig[col].clear();
+          // bulut boş: DAHA ÖNCE senkronlanmış yerel kopya temizlenir; hiç senkronlanmamış yerel veri KORUNUR ve buluta gönderilir
+          const dahaOnceSenkron=_docSig[col]&&_docSig[col].size>0;
+          if(dahaOnceSenkron){
+            if(col==='res'&&_resCache.length){ _resCache=[]; idbSet('reservations',_resCache); }
+            if(col==='pnr'&&_pnrCache.length){ _pnrCache=[]; idbSet('pnrLedger',_pnrCache); }
+            _docSig[col].clear();
+          } else {
+            if(col==='res'&&_resCache.length){ console.warn('res: '+_resCache.length+' yerel uçak listesi buluta hiç gitmemiş — gönderiliyor'); _cloudQueue('reservations'); }
+            if(col==='pnr'&&_pnrCache.length){ _cloudQueue('pnrLedger'); }
+          }
         }
       }
     });
