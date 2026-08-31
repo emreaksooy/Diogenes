@@ -1424,6 +1424,10 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   <!-- PAGE: REZERVASYON / UÇAK -->
   <div id="page-ucak" class="page">
     <div id="ucakListe">
+      <div class="card" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label class="btn btn-primary btn-sm" style="cursor:pointer;white-space:nowrap">📁 Klasörden Toplu Aktar<input type="file" webkitdirectory multiple style="display:none" onchange="ucakTopluImport(event)"></label>
+        <span style="font-size:.76rem;color:var(--muted)">OneDrive'daki ay klasörünü (veya tüm Uçak Listeleri klasörünü) seç — her dosya adından ürün + kalkış otomatik çözülür, --CXX iptaller atlanır.</span>
+      </div>
       <div id="ucakGenel"></div>
     </div>
     <div id="ucakDetay" style="display:none">
@@ -1864,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v240 · 31.08.2026';
+const APP_VER='v241 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6686,7 +6690,7 @@ function _ucakSablonIsim(raw){
   if(!soyad&&!ad) return null;
   return {soyad,ad,dogum,unvan};
 }
-function _ucakSablonAktar(rows,wb){
+function _ucakSablonAktar(rows,wb,sessiz){
   const nrm=t=>String(t||'').toLocaleLowerCase('tr').replace(/ı/g,'i').trim();
   const hIdx=rows.findIndex((r,i)=>i<10&&Array.isArray(r)&&r.some(c=>/reservation\s*no/i.test(String(c||''))));
   const hdr=(rows[hIdx]||[]).map(nrm);
@@ -6808,15 +6812,17 @@ function _ucakSablonAktar(rows,wb){
   setReservations(getReservations());
   _resTglKey=''; // kolon otomatik aç/kapa yeniden hesaplansın (ara uçuş/aktarma görünür olsun)
   try{renderRezervasyon();}catch(_e){}
+  let degisimOzet='';
   if(degisimler.length){
     const grupla={}; degisimler.forEach(d=>{ const k=d.alan+': '+d.eski+' → '+d.yeni; grupla[k]=(grupla[k]||0)+1; });
-    const ozet=Object.keys(grupla).map(k=>k+' ('+grupla[k]+')').join(' · ');
+    degisimOzet=Object.keys(grupla).map(k=>k+' ('+grupla[k]+')').join(' · ');
     window._ucusDegisim=window._ucusDegisim||[];
-    window._ucusDegisim.push({ts:Date.now(),kalkis:_resKalkis,mesaj:(getPackages().find(p2=>p2.id===_resPkgId)||{}).paketKodu+' '+_fmtDateTR(_resKalkis)+' — '+ozet});
-    try{_hataKaydet&&_hataKaydet('UÇUŞ-DEĞİŞİM',ozet);}catch(_e){}
-    showConfirm('🛎','Uçuş Değişikliği Tespit Edildi',ozet+'\n\nSatırlar güncellendi. Transfer atamalarını gözden geçir!','Tamam',()=>{});
+    window._ucusDegisim.push({ts:Date.now(),kalkis:_resKalkis,mesaj:(getPackages().find(p2=>p2.id===_resPkgId)||{}).paketKodu+' '+_fmtDateTR(_resKalkis)+' — '+degisimOzet});
+    try{_hataKaydet&&_hataKaydet('UÇUŞ-DEĞİŞİM',degisimOzet);}catch(_e){}
+    if(!sessiz) showConfirm('🛎','Uçuş Değişikliği Tespit Edildi',degisimOzet+'\n\nSatırlar güncellendi. Transfer atamalarını gözden geçir!','Tamam',()=>{});
   }
-  showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
+  if(!sessiz) showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
+  return {n,atla,degisim:degisimler.length,pnrN,degisimOzet};
 }
 async function _aiSor(prompt,maxTok){
   try{ await _txEnsureCache(); }catch(e){} // anahtar diskten yüklenmemiş olabilir
@@ -6933,6 +6939,56 @@ function ucakExcelImport(evt){
     showToast(n+' yolcu aktarıldı'+(ai?' (yapay zeka eşlemesiyle)':'')+(atla?' · '+atla+' satır güncellendi/atlandı':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6000);
   }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); } };
   rd.readAsArrayBuffer(f);
+}
+function _ucakDosyaCoz(yol){
+  // "26.01 MARK7 FAS THV.xlsx" / klasör yolu → {gun,ay,kod}; yıl yol içindeki 4 haneli sayıdan
+  const parca=String(yol||'').split('/');
+  const aday=[parca[parca.length-1]||''].concat(parca.slice(0,-1).reverse());
+  for(const ad of aday){
+    const m=ad.match(/^(\d{1,2})[.\-](\d{1,2})\s+([A-Za-z0-9+]+)/);
+    if(m) return {gun:m[1].padStart(2,'0'),ay:m[2].padStart(2,'0'),kod:m[3].toUpperCase(),yil:(String(yol).match(/\b(20\d{2})\b/)||[])[1]||''};
+  }
+  return null;
+}
+async function ucakTopluImport(evt){
+  const files=[...(evt.target.files||[])].filter(f=>/\.xlsx?$/i.test(f.name)&&!f.name.startsWith('~'));
+  evt.target.value='';
+  if(!files.length){ showToast('Klasörde Excel dosyası bulunamadı','error'); return; }
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  const eskiP=_resPkgId, eskiK=_resKalkis;
+  let ok=0, iptalAtla=0, cozulemedi=[], kodYok=[], sablonDegil=[], toplamYolcu=0, toplamDegisim=0;
+  showToast(files.length+' dosya işleniyor…','success',3000);
+  for(const f of files){
+    const yol=f.webkitRelativePath||f.name;
+    if(/[-—]+\s*cxx/i.test(yol)){ iptalAtla++; continue; }
+    const coz=_ucakDosyaCoz(yol);
+    if(!coz){ cozulemedi.push(f.name); continue; }
+    const pkg=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(coz.kod));
+    if(!pkg){ kodYok.push(coz.kod); continue; }
+    const yil=coz.yil||String(new Date().getFullYear());
+    const kalkis=yil+'-'+coz.ay+'-'+coz.gun;
+    try{
+      const buf=await f.arrayBuffer();
+      const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
+      if(!_ucakSablonDetect(rows)){ sablonDegil.push(f.name); continue; }
+      _resPkgId=pkg.id; _resKalkis=kalkis;
+      const oz=_ucakSablonAktar(rows,wb,true);
+      ok++; toplamYolcu+=(oz.n+oz.atla); toplamDegisim+=oz.degisim;
+    }catch(e){ cozulemedi.push(f.name+' ('+(e.message||'okunamadı')+')'); }
+  }
+  _resPkgId=eskiP; _resKalkis=eskiK;
+  _resTglKey='';
+  try{ renderUcakGenel(); if(_resPkgId&&_resKalkis) renderRezervasyon(); }catch(_e){}
+  let msg=ok+' dosya aktarıldı · '+toplamYolcu+' yolcu';
+  if(toplamDegisim) msg+=' · ⚠ '+toplamDegisim+' uçuş değişikliği (uyarı merkezine bakın)';
+  if(iptalAtla) msg+=' · '+iptalAtla+' CXX/iptal dosyası atlandı';
+  showToast(msg,'success',7000);
+  const sorun=[];
+  if(kodYok.length) sorun.push('Üründe tanımsız kodlar (dosyalar atlandı): '+[...new Set(kodYok)].join(', '));
+  if(cozulemedi.length) sorun.push('Ad çözülemedi/okunamadı: '+cozulemedi.slice(0,6).join(', ')+(cozulemedi.length>6?' +'+(cozulemedi.length-6):''));
+  if(sablonDegil.length) sorun.push('Şirket şablonu değil: '+sablonDegil.slice(0,5).join(', '));
+  if(sorun.length) showConfirm('⚠️','Toplu Aktarım Raporu',sorun.join('\n\n'),'Tamam',()=>{});
 }
 function _resGrid(create){ const all=getReservations(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setReservations(all); } return g; }
 function _pnrGrid(create){ const all=getPnrLedger(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setPnrLedger(all); } return g; }
