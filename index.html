@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v247 · 31.08.2026';
+const APP_VER='v248 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6671,6 +6671,28 @@ function _migrateResData(){
   if(ch){ setReservations(getReservations()); setPnrLedger(getPnrLedger()); }
 }
 // ── ŞİRKET UÇAK LİSTESİ ŞABLONU ──
+function _ucakDosyaMeta(rows){
+  const nrm=t=>String(t||'').toLocaleLowerCase('tr').replace(/ı/g,'i').trim();
+  const hIdx=rows.findIndex((r,i)=>i<10&&Array.isArray(r)&&r.some(c=>/reservation\s*no/i.test(String(c||''))));
+  if(hIdx<0) return null;
+  const hdr=(rows[hIdx]||[]).map(nrm);
+  const iOp=hdr.findIndex(h=>/operat/.test(h)), iPr=hdr.findIndex(h=>/^product/.test(h));
+  let op='', prod='';
+  for(const r of rows.slice(hIdx+1)){ if(!Array.isArray(r)) continue;
+    if(!op&&iOp>=0&&String(r[iOp]||'').trim()) op=String(r[iOp]).trim();
+    if(!prod&&iPr>=0&&String(r[iPr]||'').trim()) prod=String(r[iPr]).trim();
+    if(op&&prod) break; }
+  return {op,prod};
+}
+function _ucakUrunAday(prod){
+  const duz=t=>_norm(String(t||'')).replace(/ /g,'');
+  const d=duz(prod); if(!d||d.length<3) return [];
+  return getPackages().filter(p=>{
+    if(pkgDurum(p)==='arsiv') return false;
+    const k=duz(p.paketKodu), a=duz(p.paketAdi);
+    return (k&&k===d)||(a&&(a===d||a.includes(d)||d.includes(a)));
+  });
+}
 function _ucakSablonDetect(rows){
   return rows.findIndex((r,i)=>i<10&&Array.isArray(r)
     &&r.some(c=>/reservation\s*no/i.test(String(c||'')))
@@ -6849,7 +6871,35 @@ function ucakExcelImport(evt){
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
     if(!rows.length){ showToast('Dosya boş','error'); return; }
     // ── ŞİRKET ŞABLONU (uçak departmanının kendi formatı): deterministik ayrıştırma, AI'a gerek yok
-    if(_ucakSablonDetect(rows)){ _ucakSablonAktar(rows,wb); return; }
+    if(_ucakSablonDetect(rows)){
+      // dosyadaki Operatör + Product açık seferle uyuşuyor mu?
+      try{
+        const meta=_ucakDosyaMeta(rows)||{};
+        const acik=getPackages().find(p=>p.id===_resPkgId);
+        const duz2=t=>_norm(String(t||'')).replace(/ /g,'');
+        const opUyum=(sistemAd,dosyaOp)=>{ const a=duz2(sistemAd), b=duz2(dosyaOp); return a&&b&&(a===b||a.includes(b)||b.includes(a)); };
+        if(acik&&meta.op){
+          const opA=getOperators().find(o=>o.id===acik.operatorId);
+          if(!(opA&&opUyum(opA.ad,meta.op))){
+            // operatör uyuşmuyor → hedef ara: (a) Product kod/ad eşleşmesi (b) aynı kodlu kardeş ürünler
+            let adaylar=_ucakUrunAday(meta.prod);
+            const kardes=getPackages().filter(p=>p.id!==acik.id&&pkgDurum(p)!=='arsiv'&&_norm(p.paketKodu||'')===_norm(acik.paketKodu||''));
+            kardes.forEach(k=>{ if(!adaylar.some(a=>a.id===k.id)) adaylar.push(k); });
+            const hedef=_ucakOpSecim(adaylar,[meta.op]);
+            if(hedef&&hedef.id!==acik.id){
+              const opH=getOperators().find(o=>o.id===hedef.operatorId);
+              const dogruya=window.confirm('DİKKAT: Dosyanın operatörü açık seferle uyuşmuyor!\n\nDosyada: '+(meta.op||'?')+(meta.prod?' · '+meta.prod:'')+'\nAçık sefer: '+(acik.paketKodu||'')+' · '+((opA&&opA.ad)||'?')+'\n\nTAMAM = doğru ürüne aktar → '+(hedef.paketKodu||'')+' · '+((opH&&opH.ad)||'')+' (aynı tarih)\nVAZGEÇ = yine de açık sefere aktar');
+              if(dogruya){ _resPkgId=hedef.id; }
+            } else {
+              const devam=window.confirm('DİKKAT: Dosyanın operatörü ('+meta.op+') açık seferin operatörüyle ('+((opA&&opA.ad)||'?')+') uyuşmuyor ve sistemde uygun başka ürün bulunamadı.\n\nTAMAM = yine de bu sefere aktar\nVAZGEÇ = aktarma (doğru seferi açıp tekrar dene)');
+              if(!devam){ showToast('Aktarım iptal edildi — doğru seferi açıp tekrar deneyin','error',5000); return; }
+            }
+          }
+        }
+      }catch(_e){}
+      _ucakSablonAktar(rows,wb);
+      return;
+    }
     // ── YAPAY ZEKA EŞLEMESİ: anahtar varsa dosyanın örnek satırlarını Claude okur, kolonları tanımlar
     let ai=null;
     try{ await _txEnsureCache(); }catch(_e){}
@@ -6985,6 +7035,17 @@ async function ucakTopluImport(evt){
       if(ogrPkg) adaylar=[ogrPkg];
       else { const uzm=_uzKodBul(coz.kod); if(uzm) adaylar=[uzm.pkg]; }
     }
+    // 3) hâlâ yoksa: dosyanın Product (ürün adı) kolonundan dene — dosyayı erken oku
+    let erkenRows=null, erkenWb=null;
+    if(!adaylar.length){
+      try{
+        const bufE=await f.arrayBuffer();
+        erkenWb=XLSX.read(new Uint8Array(bufE),{type:'array'});
+        erkenRows=XLSX.utils.sheet_to_json(erkenWb.Sheets[erkenWb.SheetNames[0]],{header:1,raw:true});
+        const meta=_ucakDosyaMeta(erkenRows)||{};
+        if(meta.prod) adaylar=_ucakUrunAday(meta.prod);
+      }catch(e){}
+    }
     const yil=coz.yil||String(new Date().getFullYear());
     const kalkis=yil+'-'+coz.ay+'-'+coz.gun;
     if(!adaylar.length){
@@ -7001,9 +7062,12 @@ async function ucakTopluImport(evt){
       continue;
     }
     try{
-      const buf=await f.arrayBuffer();
-      const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
-      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
+      let wb=erkenWb, rows=erkenRows;
+      if(!rows){
+        const buf=await f.arrayBuffer();
+        wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+        rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
+      }
       if(!_ucakSablonDetect(rows)){ sablonDegil.push(f.name); continue; }
       // operatör ipuçları: klasör/dosya adı kelimeleri + dosyanın Operatör kolonu
       const ipuclari=String(yol).split(/[\/\s._-]+/).filter(Boolean);
