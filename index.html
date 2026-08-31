@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v245 · 31.08.2026';
+const APP_VER='v246 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2165,7 +2165,7 @@ function showPage(id, tabEl) {
       }catch(e){}
     }
     if(id==='operasyon') _opsTab='anasayfa';
-    if(id==='ucak'){ try{ _ucakFilter={op:'',pkg:'',tarih:'',voucher:''}; localStorage.removeItem('dmc_lastUcak'); _ucakView(false); }catch(e){} }
+    if(id==='ucak'){ try{ _ucakFilter={op:'',pkg:'',tarih:'',voucher:''}; localStorage.removeItem('dmc_lastUcak'); localStorage.removeItem('dmc_ucakNav'); _ucakNav={yil:null,ay:null}; _ucakView(false); }catch(e){} }
   }
   if(id==='maliyet') updateCalc();
   if(id==='paketlerim') renderDashboard();
@@ -6363,13 +6363,13 @@ function _resOpAd(pkg){ const op=getOperators().find(o=>o.id===(pkg&&pkg.operato
 function _fmtDateTR(iso){ if(!iso) return ''; const p=String(iso).slice(0,10).split('-'); return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):iso; }
 function _fmtDateFile(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
 
-let _ucakNav={yil:null,ay:null};
+let _ucakNav=(()=>{try{return JSON.parse(localStorage.getItem('dmc_ucakNav')||'{"yil":null,"ay":null}');}catch(e){return {yil:null,ay:null};}})();
 let _ucakFilter={op:'',pkg:'',tarih:'',voucher:''};
 let _ucakGor=(()=>{try{return localStorage.getItem('dmcUcakGor')||'grid';}catch(e){return 'grid';}})();
 let _ucakGizle=(()=>{try{return JSON.parse(localStorage.getItem('dmcUcakGizle')||'{}')||{};}catch(e){return {};}})();
 function _ucakGorSet(m){ _ucakGor=m; try{localStorage.setItem('dmcUcakGor',m);}catch(e){} renderUcakGenel(); }
 function _ucakGizleTog(k,el){ _ucakGizle[k]=!!el.checked; try{localStorage.setItem('dmcUcakGizle',JSON.stringify(_ucakGizle));}catch(e){} renderUcakGenel(); }
-function _ucakGo(yil,ay){ _ucakNav={yil:yil||null,ay:(yil?(ay||null):null)}; renderUcakGenel(); const b=document.getElementById('ucakGenel'); if(b) b.scrollIntoView({block:'nearest'}); }
+function _ucakGo(yil,ay){ _ucakNav={yil:yil||null,ay:(yil?(ay||null):null)}; try{localStorage.setItem('dmc_ucakNav',JSON.stringify(_ucakNav));}catch(e){} renderUcakGenel(); try{const b=document.getElementById('ucakGenel'); if(b&&b.scrollIntoView) b.scrollIntoView({block:'nearest'});}catch(e){} }
 function _ucakBack(){ if(_ucakNav.ay) _ucakGo(_ucakNav.yil,null); else if(_ucakNav.yil) _ucakGo(null,null); }
 function _ucakFilterPkgs(){ return getPackages().filter(p=>pkgDurum(p)!=='arsiv'); }
 function _ucakFltLive(f,el){
