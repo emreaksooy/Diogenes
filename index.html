@@ -1431,7 +1431,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
           <button class="btn btn-outline btn-sm" onclick="ucakBack()" style="white-space:nowrap">← Kalkış listesi</button>
           <div id="ucakDetayBaslik" style="font-weight:700;font-size:.92rem"></div>
-          <button class="btn btn-success btn-sm" onclick="exportReservationExcel()" style="white-space:nowrap;margin-left:auto"><svg class="ic"><use href="#i-download"/></svg> Excel İndir</button>
+          <label class="btn btn-outline btn-sm" style="white-space:nowrap;margin-left:auto;cursor:pointer"><svg class="ic"><use href="#i-upload"/></svg> Excel'den Aktar<input type="file" accept=".xls,.xlsx,.csv" style="display:none" onchange="ucakExcelImport(event)"></label>
+          <button class="btn btn-success btn-sm" onclick="exportReservationExcel()" style="white-space:nowrap"><svg class="ic"><use href="#i-download"/></svg> Excel İndir</button>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
           <div class="field" style="min-width:240px;margin-bottom:0"><label><svg class="ic"><use href="#i-box"/></svg> Paket</label><select id="resPkgSel" onchange="onResPkgChange()" style="width:100%"></select></div>
@@ -1863,7 +1864,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v224 · 27.08.2026';
+const APP_VER='v225 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6659,6 +6660,62 @@ function _migrateResData(){
     g.rows=g.rows.map(r=>{ const y=_bosRow(); y.op=_sTrim(r[0]); y.kod=_sTrim(r[1]); y.resno=_sTrim(r[2]); y.ad=_sTrim(r[3]); y.soyad=_sTrim(r[4]); y.tip=_sTrim(r[5]); y.bagaj=_sTrim(r[8]); y.not=_sTrim(r[23]); _parseLegs(y,'g',_sTrim(r[10]),_sTrim(r[11]),_pdate(r[12]),_sTrim(r[13]),_sTrim(r[14]),_sTrim(r[15])); _parseLegs(y,'d',_sTrim(r[17]),_sTrim(r[18]),_pdate(r[19]),_sTrim(r[20]),_sTrim(r[21]),_sTrim(r[22])); return y; }); ch=true; });
   (getPnrLedger()||[]).forEach(g=>{ if(!g.rows||!g.rows.length||!Array.isArray(g.rows[0])) return; g.rows=g.rows.map(r=>({pnr:_sTrim(r[0]),maliyet:parseFloat(r[1])||0,para:_sTrim(r[2])||'TL',hy:_sTrim(r[3]),hesap:_sTrim(r[4]),alim:_pdate(r[5])})); ch=true; });
   if(ch){ setReservations(getReservations()); setPnrLedger(getPnrLedger()); }
+}
+function ucakExcelImport(evt){
+  const f=evt.target.files[0]; evt.target.value=''; if(!f) return;
+  if(!_resPkgId||!_resKalkis){ showToast('Önce ürün ve kalkış seçin','error'); return; }
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const rd=new FileReader();
+  rd.onload=e=>{ try{
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
+    if(!rows.length){ showToast('Dosya boş','error'); return; }
+    // başlık satırını bul: isim/name içeren satır (ilk 15)
+    const nrm=t=>String(t||'').toLocaleLowerCase('tr').replace(/ı/g,'i').trim();
+    let hIdx=rows.findIndex((r,i)=>i<15&&Array.isArray(r)&&r.some(x=>/name|isim|soyad|surname/.test(nrm(x))));
+    if(hIdx<0) hIdx=0;
+    const hdr=(rows[hIdx]||[]).map(nrm);
+    const bul=re=>hdr.findIndex(h=>re.test(h));
+    const iRes=bul(/res.*no|reservation|voucher|rez.*no/);
+    const iAdSoy=bul(/name.*surname|surname.*name|ad.*soyad|isim/);
+    const iSoy=bul(/^soyad|^surname|last.*name|nachname/);
+    const iAd2=bul(/^ad$|^adi$|first.*name|vorname/);
+    const iOda=bul(/room|oda/);
+    const iBag=bul(/bag|valiz/);
+    const iHy=bul(/airline|havayolu/);
+    const iPnr=bul(/pnr/);
+    const iTar=bul(/arrival.*date|gelis.*tarih|^tarih|^date|flug.*datum/);
+    const iUc=bul(/flight.*no|ucus.*no|f.*no$/);
+    const iHav=bul(/airport|havaliman|route|rota|parkur/);
+    const iSaat=bul(/flight.*time|saat|time/);
+    if(iAdSoy<0&&iSoy<0){ showToast('İsim kolonu bulunamadı. Başlıkta görülenler: '+hdr.filter(Boolean).slice(0,8).join(', '),'error',8000); return; }
+    const g=_resGrid(true);
+    let n=0, atla=0;
+    rows.slice(hIdx+1).forEach(r=>{
+      if(!Array.isArray(r)) return;
+      let soyad='', ad='';
+      if(iSoy>=0){ soyad=String(r[iSoy]||'').trim(); ad=iAd2>=0?String(r[iAd2]||'').trim():''; }
+      else { const p=_sjIsim(r[iAdSoy]); if(p){ soyad=p.soyad; ad=p.ad; } }
+      if(!soyad&&!ad) return;
+      const resno=iRes>=0?String(r[iRes]||'').trim():'';
+      // aynı resno+isim zaten varsa atla (tekrar import güvenli)
+      if((g.rows||[]).some(x=>_norm((x.soyad||'')+'|'+(x.ad||''))===_norm(soyad+'|'+ad)&&String(x.resno||'').trim()===resno)){ atla++; return; }
+      const y={resno,soyad,ad};
+      if(iOda>=0) y.oda=String(r[iOda]||'').trim();
+      if(iBag>=0) y.bagaj=String(r[iBag]||'').trim();
+      if(iHy>=0) y.g_hy=String(r[iHy]||'').trim();
+      if(iPnr>=0) y.g_pnr=String(r[iPnr]||'').trim();
+      if(iTar>=0&&r[iTar]!=null&&r[iTar]!==''){ const t=_sjTarih(r[iTar]); y.g_tarih=t?_fmtDateTR(t):String(r[iTar]).trim(); }
+      if(iUc>=0) y.g_u1=String(r[iUc]||'').trim();
+      if(iHav>=0){ const rt=String(r[iHav]||'').trim().toUpperCase().replace(/\s+/g,''); const m=rt.match(/^([A-Z]{3})[-\/]?([A-Z]{3})$/); if(m){ y.g_k1=m[1]; y.g_v1=m[2]; } else if(rt) y.g_k1=rt; }
+      if(iSaat>=0) y.g_ks1=String(r[iSaat]||'').trim();
+      g.rows.push(y); n++;
+    });
+    setReservations(getReservations());
+    try{renderRezervasyon();}catch(_e){}
+    showToast(n+' yolcu aktarıldı'+(atla?' · '+atla+' satır zaten vardı (atlandı)':''),'success',5000);
+  }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); } };
+  rd.readAsArrayBuffer(f);
 }
 function _resGrid(create){ const all=getReservations(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setReservations(all); } return g; }
 function _pnrGrid(create){ const all=getPnrLedger(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setPnrLedger(all); } return g; }
