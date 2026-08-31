@@ -1863,7 +1863,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v222 · 27.08.2026';
+const APP_VER='v223 · 27.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10176,9 +10176,11 @@ function _opsSet(f,v){ const r=_opsRec(true); r[f]=v; setOperasyon(getOperasyon(
 // Operasyon tarihleri: ürünün kalkış takvimi + REZERVASYONLARDAN gelen kalkışlar (takvimde olmayan tarihli rezervasyonlar da tur oluşturur)
 function _opsTarihler(pkg){
   const set=new Set(_resDepartureDates(pkg)||[]);
-  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkg.id&&r.durum!=='iptal'&&r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) set.add(r.kalkis); }); }catch(e){}
+  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkg.id&&r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) set.add(r.kalkis); }); }catch(e){}
   return [...set].sort();
 }
+// operasyon sayılarına yalnız AÇILIMI YAPILMIŞ (konaklama kartları oluşturulmuş) rezervasyonlar girer
+function _opsRezvSayilir(r){ return r&&r.tip==='urun'&&r.durum!=='iptal'&&((r.kartlar||[]).length>0); }
 function _opsRehGet(pkgId,kalkis,bolum){
   const rec=_opsGet(pkgId,kalkis);
   if(bolum&&bolum!=='01'){ const b=(rec.bolumReh||{})[bolum]||{}; return {rehberId:b.rehberId||'',rehberAd:(b.rehberAd||'').trim()}; }
@@ -10196,7 +10198,7 @@ function _opsPaxDetay(pkgId,kalkis){
   const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
   const ucak=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length:0;
   let rezvP=0, rezvSay=0;
-  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis&&r.durum!=='iptal'){ const n=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length; if(n){rezvP+=n; rezvSay++;} } }); }catch(e){}
+  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkgId&&r.kalkis===kalkis){ const n=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length; if(n){rezvP+=n; rezvSay++;} } }); }catch(e){}
   return {ucak,rezvP,rezvSay};
 }
 function _rtPaxTip(t){ const d=_opsPaxDetay(t.pkgId,t.kalkis); return ' (uçak listesi: '+d.ucak+' · rezervasyon: '+d.rezvP+' yolcu / '+d.rezvSay+' kayıt)'; }
@@ -10204,7 +10206,7 @@ function _opsPax(pkgId,kalkis){
   const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
   const ucak=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length:0;
   let rezvP=0;
-  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis&&r.durum!=='iptal'){ rezvP+=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length; } }); }catch(e){}
+  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkgId&&r.kalkis===kalkis){ rezvP+=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length; } }); }catch(e){}
   return Math.max(ucak,rezvP);
 }
 function _opsCity(pkg,dayNo){ const g=(pkg.gunler||[])[dayNo-1]; if(!g)return ''; const n=(g.noktalar||[]).filter(x=>x&&x.trim()); return (n.length?n[n.length-1]:'')||g.konaklamaSehir||''; }
@@ -10421,7 +10423,7 @@ function rtKaydir(n){ const sc=document.getElementById('rtScroll'); if(sc) sc.sc
 function _rtTurlar(bas,son){
   // sefer başına bölüm pax'ları (rezv.grupBolum; boş='01')
   const bolumMap={};
-  try{ (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId&&r.kalkis&&r.durum!=='iptal'){
+  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId&&r.kalkis){
     const kk=r.pkgId+'|'+r.kalkis; const rb=String(r.grupBolum||'01');
     (r.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
       const b=String(m.grupBolum||rb);
