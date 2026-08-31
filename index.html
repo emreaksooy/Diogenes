@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v242 · 31.08.2026';
+const APP_VER='v243 · 31.08.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6975,10 +6975,29 @@ async function ucakTopluImport(evt){
     if(/[-—]+\s*cxx/i.test(yol)){ iptalAtla++; continue; }
     const coz=_ucakDosyaCoz(yol);
     if(!coz){ cozulemedi.push(f.name); continue; }
-    const adaylar=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(coz.kod));
-    if(!adaylar.length){ kodYok.push(coz.kod); continue; }
+    let adaylar=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(coz.kod));
+    if(!adaylar.length){
+      // 1) öğrenilmiş eşleme  2) uzatma kodu (CAP77→CAP7)
+      const ogr=(getTanimlar().ucakKodEsleme||{})[coz.kod];
+      const ogrPkg=ogr?getPackages().find(p=>p.id===ogr):null;
+      if(ogrPkg) adaylar=[ogrPkg];
+      else { const uzm=_uzKodBul(coz.kod); if(uzm) adaylar=[uzm.pkg]; }
+    }
     const yil=coz.yil||String(new Date().getFullYear());
     const kalkis=yil+'-'+coz.ay+'-'+coz.gun;
+    if(!adaylar.length){
+      // eşleştirme paneli için beklet (dosyayı şimdi oku ki tekrar seçtirmeyelim)
+      try{
+        const buf0=await f.arrayBuffer();
+        const wb0=XLSX.read(new Uint8Array(buf0),{type:'array'});
+        const rows0=XLSX.utils.sheet_to_json(wb0.Sheets[wb0.SheetNames[0]],{header:1,raw:true});
+        if(_ucakSablonDetect(rows0)){
+          (window._ucakBekleyen=window._ucakBekleyen||[]).push({kod:coz.kod,kalkis,rows:rows0,wb:wb0,ad:f.name});
+        } else sablonDegil.push(f.name);
+      }catch(e){ cozulemedi.push(f.name); }
+      kodYok.push(coz.kod);
+      continue;
+    }
     try{
       const buf=await f.arrayBuffer();
       const wb=XLSX.read(new Uint8Array(buf),{type:'array'});
@@ -7004,10 +7023,58 @@ async function ucakTopluImport(evt){
   if(iptalAtla) msg+=' · '+iptalAtla+' CXX/iptal dosyası atlandı';
   showToast(msg,'success',7000);
   const sorun=[];
-  if(kodYok.length) sorun.push('Üründe tanımsız kodlar (dosyalar atlandı): '+[...new Set(kodYok)].join(', '));
   if(cozulemedi.length) sorun.push('Ad çözülemedi/okunamadı: '+cozulemedi.slice(0,6).join(', ')+(cozulemedi.length>6?' +'+(cozulemedi.length-6):''));
   if(sablonDegil.length) sorun.push('Şirket şablonu değil: '+sablonDegil.slice(0,5).join(', '));
   if(sorun.length) showConfirm('⚠️','Toplu Aktarım Raporu',sorun.join('\n\n'),'Tamam',()=>{});
+  if((window._ucakBekleyen||[]).length) ucakKodEsleAc();
+}
+// ── TANIMSIZ KOD EŞLEŞTİRME PANELİ ──
+function ucakKodEsleAc(){
+  const bek=window._ucakBekleyen||[]; if(!bek.length) return;
+  const kodlar=[...new Set(bek.map(b=>b.kod))];
+  const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv');
+  const opAd=p=>{ const o=getOperators().find(x=>x.id===p.operatorId); return o?(' · '+o.ad):''; };
+  let eski=document.getElementById('ucakKodModal'); if(eski) eski.remove();
+  const div=document.createElement('div');
+  div.id='ucakKodModal';
+  div.style.cssText='position:fixed;inset:0;z-index:1000;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:20px';
+  div.innerHTML='<div style="background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:80vh;overflow:auto;padding:20px">'
+   +'<h3 style="margin:0 0 6px;font-size:1rem">Tanımsız kodları eşleştir</h3>'
+   +'<p style="font-size:.78rem;color:var(--muted);margin:0 0 12px">Bu kodlar üründe tanımlı değil. Sistemdeki karşılığını seç — eşleme HATIRLANIR, bir daha sorulmaz. Boş bırakırsan o dosyalar atlanır.</p>'
+   +kodlar.map(k=>'<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">'
+     +'<b style="min-width:90px;font-size:.85rem">'+esc(k)+'</b>'
+     +'<span style="font-size:.7rem;color:var(--muted);min-width:60px">'+bek.filter(b=>b.kod===k).length+' dosya</span>'
+     +'<select data-kod="'+esc(k)+'" style="flex:1;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit">'
+     +'<option value="">— Ürün seç (atla) —</option>'
+     +pkgs.map(p=>'<option value="'+p.id+'">'+esc((p.paketKodu||'')+' · '+(p.paketAdi||''))+esc(opAd(p))+'</option>').join('')
+     +'</select></div>').join('')
+   +'<div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">'
+   +'<button class="btn btn-outline btn-sm" onclick="window._ucakBekleyen=[];document.getElementById(\'ucakKodModal\').remove()">Vazgeç</button>'
+   +'<button class="btn btn-primary btn-sm" onclick="ucakKodEsleKaydet()">Eşle ve Aktar</button></div></div>';
+  document.body.appendChild(div);
+}
+function ucakKodEsleKaydet(){
+  const div=document.getElementById('ucakKodModal'); if(!div) return;
+  const secim={};
+  div.querySelectorAll('select[data-kod]').forEach(sel=>{ if(sel.value) secim[sel.getAttribute('data-kod')]=sel.value; });
+  div.remove();
+  const bek=window._ucakBekleyen||[]; window._ucakBekleyen=[];
+  if(!Object.keys(secim).length){ showToast('Eşleme seçilmedi — dosyalar atlandı','error'); return; }
+  // eşlemeyi kalıcı öğren
+  const t=getTanimlar(); t.ucakKodEsleme=Object.assign({},t.ucakKodEsleme||{},secim); setTanimlar(t);
+  const eskiP=_resPkgId, eskiK=_resKalkis;
+  let ok=0, yolcu=0, degisim=0, atla=0;
+  bek.forEach(b=>{
+    const pid=secim[b.kod]; if(!pid){ atla++; return; }
+    try{
+      _resPkgId=pid; _resKalkis=b.kalkis;
+      const oz=_ucakSablonAktar(b.rows,b.wb,true);
+      ok++; yolcu+=(oz.n+oz.atla); degisim+=oz.degisim;
+    }catch(e){ atla++; }
+  });
+  _resPkgId=eskiP; _resKalkis=eskiK; _resTglKey='';
+  try{ renderUcakGenel(); }catch(_e){}
+  showToast(ok+' bekleyen dosya aktarıldı · '+yolcu+' yolcu'+(degisim?' · ⚠ '+degisim+' uçuş değişikliği':'')+(atla?' · '+atla+' atlandı':'')+' — eşlemeler kaydedildi, bir daha sorulmaz','success',7000);
 }
 function _resGrid(create){ const all=getReservations(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setReservations(all); } return g; }
 function _pnrGrid(create){ const all=getPnrLedger(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setPnrLedger(all); } return g; }
