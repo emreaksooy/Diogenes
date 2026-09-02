@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v284 · 02.09.2026';
+const APP_VER='v285 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13347,22 +13347,38 @@ function _mutUcretSet(kod,f,v){ const T=getTransfer(); if(!T.gruplar||!T.gruplar
 // firma kontrat tarifesinden fiyat: dönem (tarih) × güzergâh (yönsüz) × araç tipi
 function _afTarife(firmaAd,tarihIso,ucA,ucB,arTip){
   try{
-    const f=(getTanimlar().aracFirmalari||[]).find(x=>(x.ad||'')===firmaAd); if(!f||!Array.isArray(f.kRota)||!f.kRota.length) return null;
+    const f=(getTanimlar().aracFirmalari||[]).find(x=>(x.ad||'')===firmaAd);
+    if(!f) return null;
+    const rotaVar=Array.isArray(f.kRota)&&f.kRota.length, hizmetVar=Array.isArray(f.kHizmet)&&f.kHizmet.length;
+    if(!rotaVar&&!hizmetVar) return null;
     const N=t=>String(t||'').replace(/İ/g,'I').replace(/ı/g,'i').toUpperCase().trim();
     const temiz=t=>N(String(t||'').split('·')[0].split('(')[0]).replace(/\bHAVALIMANI\b|\bHAVA\b/g,'').trim();
     const a=temiz(ucA), b=temiz(ucB), tip=N(arTip);
     const es=(rotaAd,hedef)=>{ const x=temiz(rotaAd); if(!x||!hedef) return false; if(x===hedef) return true; return x.includes(hedef)||hedef.includes(x); };
-    // önce tam eşleşme, sonra gevşek (uzun bölge adları: 'AYT-Antalya Havalimanı', 'Kemer · Antalya')
-    let rota=f.kRota.find(r=>{ const x=temiz(r.nereden), y=temiz(r.nereye); return (x===a&&y===b)||(x===b&&y===a); });
-    if(!rota) rota=f.kRota.find(r=>(es(r.nereden,a)&&es(r.nereye,b))||(es(r.nereden,b)&&es(r.nereye,a)));
-    if(!rota) return null;
     let don=(f.kDonem||[]).find(d=>{ const db=_pdate(d.bas||''), de=_pdate(d.bit||''); return db&&de&&db<=tarihIso&&tarihIso<=de; });
     if(!don&&(f.kDonem||[]).length===1) don=f.kDonem[0];
     if(!don) return null;
-    const key=rota.id+'|'+tip+'|'+don.id;
-    const v=(f.kTrf||{})[key];
-    if(v==null||String(v).trim()==='') return null;
-    return {fiyat:_tdN(v),para:f.kPara||'EUR'};
+    // 1) güzergâh tarifesi — önce tam, sonra gevşek eşleşme (uzun bölge adları: 'AYT-Antalya Havalimanı', 'Kemer · Antalya')
+    let rota=(f.kRota||[]).find(r=>{ const x=temiz(r.nereden), y=temiz(r.nereye); return (x===a&&y===b)||(x===b&&y===a); });
+    if(!rota) rota=(f.kRota||[]).find(r=>(es(r.nereden,a)&&es(r.nereye,b))||(es(r.nereden,b)&&es(r.nereye,a)));
+    if(rota){
+      const v=(f.kTrf||{})[rota.id+'|'+tip+'|'+don.id];
+      if(v!=null&&String(v).trim()!=='') return {fiyat:_tdN(v),para:f.kPara||'EUR'};
+    }
+    // 2) hizmet tarifesi — İstanbul modeli: 'TRANSFER İGA' / 'TRANSFER SAW' şehir içi nereye giderse gitsin sabit fiyat
+    const ALIAS={IST:['IST','IGA'],SAW:['SAW'],AYT:['AYT'],ADB:['ADB'],ESB:['ESB'],ASR:['ASR'],NAV:['NAV'],DLM:['DLM'],BJV:['BJV']};
+    const uclar=[a,b].filter(Boolean);
+    const hz=(f.kHizmet||[]).find(h=>{
+      const ad2=N(h.ad||'');
+      if(!ad2.includes('TRANSFER')) return false;
+      if(String(h.bolge||'').trim()){ const hb=temiz(h.bolge); if(uclar.some(u=>hb===u||hb.includes(u)||u.includes(hb))) return true; }
+      return uclar.some(u=>{ const al=ALIAS[u]||[u]; return al.some(x=>N(x)&&ad2.includes(N(x))); });
+    });
+    if(hz){
+      const v2=(f.kHiz||{})[hz.id+'|'+tip+'|'+don.id];
+      if(v2!=null&&String(v2).trim()!=='') return {fiyat:_tdN(v2),para:f.kPara||'EUR'};
+    }
+    return null;
   }catch(e){ return null; }
 }
 function _mutAracSatirlar(){
