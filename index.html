@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v249 · 02.09.2026';
+const APP_VER='v250 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10319,6 +10319,41 @@ async function _cloudPullIncre(last){
   (dr.data||[]).forEach(r=>{ if(!_docSig[r.col])return; const sig=JSON.stringify(r.data); if(_docSig[r.col].get(r.id)===sig)return; _docSig[r.col].set(r.id,sig); _docApplyOne(r.col,r.id,r.data); degisti++; });
   { const uzak={}; (drIds.data||[]).forEach(r=>{ (uzak[r.col]=uzak[r.col]||new Set()).add(r.id); });
     Object.keys(_docSig).forEach(col=>{ const set=uzak[col]||new Set(); [..._docSig[col].keys()].forEach(id=>{ if(!set.has(id)){ _docSig[col].delete(id); _docApplyOne(col,id,null); degisti++; } }); }); }
+  // ── BACKFILL: bulutta olup YERELDE OLMAYAN kayıtları tamamla ──
+  // Neden: Safari IndexedDB'yi boşaltabilir; dmcSyncTs kalırsa artımlı çekim eski satırları
+  // hiç getirmez ve delik kalıcılaşır (yanlış 'uçak listesinde yok' uyarılarının kök nedeni).
+  try{
+    const yerelDoc={}; Object.keys(_docSig).forEach(c=>{ yerelDoc[c]=new Set(_docSplit(c).map(r=>r.id)); });
+    const eksikCol={}; let eksikSay=0;
+    (drIds.data||[]).forEach(r=>{ if(_docSig[r.col]&&!_docSig[r.col].has(r.id)&&!yerelDoc[r.col].has(r.id)){ (eksikCol[r.col]=eksikCol[r.col]||[]).push(r.id); eksikSay++; } });
+    const pkVar=new Set(_pkgCache.map(p=>p&&p.id)), opVar=new Set(_opCache.map(o=>o&&o.id));
+    const pkEksik=(pkIds.data||[]).map(r=>r.id).filter(id=>!pkVar.has(id));
+    const opEksik=(opIds.data||[]).map(r=>r.id).filter(id=>!opVar.has(id));
+    if(eksikSay+pkEksik.length+opEksik.length>1500){
+      console.warn('Backfill çok büyük ('+(eksikSay+pkEksik.length+opEksik.length)+') — tam çekime geçiliyor');
+      await _cloudPullFull(); return;
+    }
+    for(let i=0;i<pkEksik.length;i+=100){
+      const r2=await sb.from('packages').select('id,data').in('id',pkEksik.slice(i,i+100));
+      if(!r2.error)(r2.data||[]).forEach(r=>{ if(r.data){ _pkgCache.push(r.data); _sigPkg.set(r.id,JSON.stringify(r.data)); degisti++; } });
+    }
+    if(pkEksik.length) idbSet('packages',_pkgCache);
+    for(let i=0;i<opEksik.length;i+=100){
+      const r2=await sb.from('operators').select('id,data').in('id',opEksik.slice(i,i+100));
+      if(!r2.error)(r2.data||[]).forEach(r=>{ if(r.data){ _opCache.push(r.data); _sigOp.set(r.id,JSON.stringify(r.data)); degisti++; } });
+    }
+    if(opEksik.length) idbSet('operators',_opCache);
+    for(const col of Object.keys(eksikCol)){
+      const ids=eksikCol[col];
+      for(let i=0;i<ids.length;i+=100){
+        const r2=await sb.from('doc_rows').select('col,id,data').eq('col',col).in('id',ids.slice(i,i+100));
+        if(r2.error){ console.warn('backfill',col,r2.error.message||r2.error); continue; }
+        (r2.data||[]).forEach(r=>{ _docSig[col].set(r.id,JSON.stringify(r.data)); _docApplyOne(col,r.id,r.data); degisti++; });
+      }
+      _docRerender(col);
+    }
+    if(eksikSay||pkEksik.length||opEksik.length) console.warn('Bulut backfill: '+eksikSay+' doc + '+pkEksik.length+' paket + '+opEksik.length+' operatör eksikti — tamamlandı');
+  }catch(e){ console.warn('backfill hata',e); }
   if(degisti){ renderOpList(); renderOperatorSelect(); renderDashboard(); if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); } }
   _pullDususKontrol('artımlı çekim',_rezvOnce);
 }
