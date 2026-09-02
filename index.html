@@ -1882,7 +1882,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v266 · 02.09.2026';
+const APP_VER='v267 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13175,6 +13175,26 @@ let _opsTrDate2=''; // bitiş tarihi — doluysa ARALIK modu (Sejour Transfer Li
 function opsTrSet2(v){ _opsTrDate2=(v&&v>=_opsTrDate)?v:''; renderOpsTransfer(); }
 function opsTrAralik(gun){ if(!_opsTrDate) _opsTrDate=_opsToday(); _opsTrDate2=gun?_isoAdd(_opsTrDate,gun-1):''; renderOpsTransfer(); }
 let _trSaatB='', _trSaatS='';
+// ÜST FİLTRE PANELİ (Sejour tarzı): operatör / ürün / bölge / araç firması / rehber / durum
+let _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:''};
+function _trUstSet(k,v){ _trUst[k]=v; renderOpsTransfer(); }
+function _trUstTemizle(){ _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:''}; _trSaatB=''; _trSaatS=''; _trFilt={}; renderOpsTransfer(); }
+function _trGorunur(){
+  let tam=_opsTrDate2?_trListRows():_trDayRows();
+  if(_trSaatB||_trSaatS){ const b=_dk(_trSaatB), sn=_dk(_trSaatS);
+    tam=tam.filter(x=>{ const u=_dk(x.r.saat); if(u===null) return false; if(b!==null&&u<b) return false; if(sn!==null&&u>sn) return false; return true; }); }
+  const G=getTransfer().gruplar||{};
+  const grOf=r=>r.grup?(G[r.grup]||{}):null;
+  if(_trUst.op) tam=tam.filter(x=>x.r.op===_trUst.op);
+  if(_trUst.urun) tam=tam.filter(x=>x.r.urun===_trUst.urun);
+  if(_trUst.bolge) tam=tam.filter(x=>(x.r.bolge||'')===_trUst.bolge);
+  if(_trUst.firma) tam=tam.filter(x=>{ const g=grOf(x.r); return g&&(g.firma||'')===_trUst.firma; });
+  if(_trUst.reh) tam=tam.filter(x=>{ const g=grOf(x.r); return g&&(g.rehber||'')===_trUst.reh; });
+  if(_trUst.durum==='atanmamis') tam=tam.filter(x=>!x.r.grup);
+  else if(_trUst.durum==='atandi') tam=tam.filter(x=>x.r.grup&&!x.r.onay);
+  else if(_trUst.durum==='onayli') tam=tam.filter(x=>x.r.grup&&x.r.onay);
+  return tam;
+}
 function _trSaatFiltre(b,sn){ _trSaatB=(b||'').trim(); _trSaatS=(sn||'').trim(); renderOpsTransfer(); }
 function _trCols(){ return _opsTrDate2?[['tarih','Tarih',x=>x.r.tarih,'txt']].concat(_TRCOLS):_TRCOLS; }
 function _trListRows(){
@@ -13260,10 +13280,7 @@ function renderOpsTransfer(){
   if(!_opsTrDate) _opsTrDate=_opsDate||_opsToday();
   const _mutTum=_mutIssues();
   const _mutGun=_opsTrDate2?_mutTum.filter(x=>x.kalkis>=_opsTrDate&&x.kalkis<=_opsTrDate2):_mutTum.filter(x=>x.kalkis===_opsTrDate);
-  let tam=_opsTrDate2?_trListRows():_trDayRows();
-  // uçuş saati aralığı filtresi (Sejour: Uçuş Saati __:__ ~ __:__)
-  if(_trSaatB||_trSaatS){ const b=_dk(_trSaatB), sn=_dk(_trSaatS);
-    tam=tam.filter(x=>{ const u=_dk(x.r.saat); if(u===null) return false; if(b!==null&&u<b) return false; if(sn!==null&&u>sn) return false; return true; }); }
+  const tam=_trGorunur();
   let list=tam.filter(_trUygun);
   if(_trSort.col){ const c=_trCols().find(x=>x[0]===_trSort.col); if(c) list.sort((p,q)=>{ let a=c[2](p),b=c[2](q); if(c[0]==='saat'||c[0]==='depar'){a=_dk(a)??9999;b=_dk(b)??9999;} if(typeof a==='number'&&typeof b==='number') return (a-b)*_trSort.dir; return String(a).localeCompare(String(b),'tr')*_trSort.dir; }); }
   const atasiz=tam.filter(x=>!x.r.grup).length; const pax=tam.reduce((t,x)=>t+(+x.r.pax||0),0); const gruplar=new Set(tam.filter(x=>x.r.grup).map(x=>x.r.grup));
@@ -13279,16 +13296,38 @@ function renderOpsTransfer(){
       <button class="btn btn-outline btn-sm ${_opsTrDate2&&_isoDiff(_opsTrDate,_opsTrDate2)===6?'active-ops':''}" onclick="opsTrAralik(7)">7g</button>
       <button class="btn btn-outline btn-sm ${_opsTrDate2&&_isoDiff(_opsTrDate,_opsTrDate2)===13?'active-ops':''}" onclick="opsTrAralik(14)">14g</button>
       ${_opsTrDate2?'<button class="btn btn-outline btn-sm" onclick="opsTrAralik(0)">Tek gün</button>':''}
-      <span style="display:inline-flex;gap:3px;align-items:center;font-size:.7rem;color:var(--muted);margin-left:6px">Uçuş saati
-        <input type="time" value="${esc(_trSaatB)}" onchange="_trSaatFiltre(this.value,_trSaatS)" style="padding:3px 5px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.72rem">~
-        <input type="time" value="${esc(_trSaatS)}" onchange="_trSaatFiltre(_trSaatB,this.value)" style="padding:3px 5px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.72rem">
-        ${(_trSaatB||_trSaatS)?'<button class="btn btn-outline btn-sm" style="padding:1px 6px" onclick="_trSaatFiltre(\'\',\'\')">✕</button>':''}
-      </span>
       <span style="font-weight:700;margin-left:6px">${_opsTrDate2?esc(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):esc(_trGunAd(_opsTrDate))}</span>
       <span style="color:var(--muted);font-size:.76rem">· ${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</span>
-      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trExcelDay()">📥 Excel</button>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trExcelDay()">📥 Excel${_trUst.firma?' ('+esc(_trUst.firma)+')':''}</button>
+      <button class="btn btn-outline btn-sm" onclick="_trExcelFirma()" title="Her araç firması ayrı sayfada — firmalara tek tek göndermek için">📥 Firma bazlı</button>
       <button class="btn btn-outline btn-sm" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
     </div>`;
+  // ── ÜST FİLTRE PANELİ ──
+  {
+    const ham=_opsTrDate2?_trListRows():_trDayRows();
+    const G2=getTransfer().gruplar||{};
+    const uniq=f=>[...new Set(ham.map(f).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'tr'));
+    const opL=uniq(x=>x.r.op), urunL=uniq(x=>x.r.urun), bolgeL=uniq(x=>x.r.bolge);
+    const firmaL=[...new Set([...(getTanimlar().aracFirmalari||[]).map(f=>f.ad||''),...Object.values(G2).map(g=>g.firma||'')].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+    const rehL=[...new Set([...(getTanimlar().rehberler||[]).map(r=>r.ad||''),...Object.values(G2).map(g=>g.rehber||'')].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+    const sel=(k,lbl,L)=>`<label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">${lbl}
+      <select onchange="_trUstSet('${k}',this.value)" style="padding:5px 7px;border:1.5px solid ${_trUst[k]?'var(--primary)':'var(--border)'};border-radius:8px;font-size:.76rem;font-family:inherit;min-width:120px">
+      <option value="">Hepsi</option>${L.map(v=>`<option value="${esc(v)}" ${_trUst[k]===v?'selected':''}>${esc(v)}</option>`).join('')}</select></label>`;
+    const aktifSay=Object.values(_trUst).filter(Boolean).length+((_trSaatB||_trSaatS)?1:0);
+    h+=`<div class="card" style="padding:.55rem .8rem;margin-bottom:8px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      ${sel('op','OPERATÖR',opL)}${sel('urun','ÜRÜN',urunL)}${sel('bolge','BÖLGE',bolgeL)}${sel('firma','ARAÇ FİRMASI',firmaL)}${sel('reh','REHBER',rehL)}
+      <label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">DURUM
+        <select onchange="_trUstSet('durum',this.value)" style="padding:5px 7px;border:1.5px solid ${_trUst.durum?'var(--primary)':'var(--border)'};border-radius:8px;font-size:.76rem;font-family:inherit;min-width:110px">
+          <option value="">Hepsi</option><option value="atanmamis" ${_trUst.durum==='atanmamis'?'selected':''}>Atanmamış</option><option value="atandi" ${_trUst.durum==='atandi'?'selected':''}>Atandı (onaysız)</option><option value="onayli" ${_trUst.durum==='onayli'?'selected':''}>Onaylı</option>
+        </select></label>
+      <label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">UÇUŞ SAATİ
+        <span style="display:inline-flex;gap:3px;align-items:center">
+          <input type="time" value="${esc(_trSaatB)}" onchange="_trSaatFiltre(this.value,_trSaatS)" style="padding:4px 5px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.74rem">~
+          <input type="time" value="${esc(_trSaatS)}" onchange="_trSaatFiltre(_trSaatB,this.value)" style="padding:4px 5px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.74rem">
+        </span></label>
+      ${aktifSay?`<button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="_trUstTemizle()">✕ Filtreleri temizle (${aktifSay})</button>`:''}
+    </div>`;
+  }
   if(_mutGun.length||_mutTum.length) h+=_mutPanel(_mutGun,'— '+(_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_fmtDateTR(_opsTrDate)),_mutTum.length-_mutGun.length);
   h+=`
     <div class="tr-filtre">${cb('G','Uçuş Geliş','#fff')}${cb('D','Uçuş Dönüş','#fff')}${cb('ARAD','Ara depar','#cfe8dc')}${cb('ARAG','Ara varış','#e8f6ee')}${cb('TUR','Tur yürüyüşü','#e4ecf7')}<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;font-weight:600;color:var(--muted);font-size:.75rem;margin-left:8px"><input type="checkbox" ${_trTipF.atanmamis?'checked':''} onchange="_trChk('atanmamis')"> Sadece atanmamış</label><label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;font-weight:600;color:var(--muted);font-size:.75rem"><input type="checkbox" ${_trTipF.gece?'checked':''} onchange="_trChk('gece')"> Ertesi gece alışlarını dahil et</label></div>
@@ -13392,12 +13431,7 @@ function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!
     <div class="imza"><span>Şoför: ____________</span><span>Rehber: ____________</span><span>Operasyon: ____________</span></div></div>`; }
 function _trPrint(html){ let p=document.getElementById('trfPrint'); if(!p){ p=document.createElement('div'); p.id='trfPrint'; document.body.appendChild(p); } p.innerHTML=html; document.body.classList.add('trf-printing'); window.print(); setTimeout(()=>document.body.classList.remove('trf-printing'),400); }
 function _trPrintGrup(kod){ const h=_trGorevHtml(kod); if(!h){ showToast('Görev bulunamadı','error'); return; } _trPrint(h); }
-function _trExcelDay(){
-  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
-  let list=_opsTrDate2?_trListRows():_trDayRows();
-  if(_trSaatB||_trSaatS){ const b=_dk(_trSaatB), sn=_dk(_trSaatS);
-    list=list.filter(x=>{ const u=_dk(x.r.saat); if(u===null) return false; if(b!==null&&u<b) return false; if(sn!==null&&u>sn) return false; return true; }); }
-  if(!list.length){ showToast('Bu tarihte transfer yok','error'); return; }
+function _trExcelAoa(list){
   const T=getTransfer();
   const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR'};
   const aoa=[['Tarih','Görev','Depar','Tip','Nereden','Nereye','Uçuş','Uçuş Saati','Operatör','Ürün','PNR/Grup','Pax','Rehber','Firma','Araç','Şoför','Not','Durum']];
@@ -13410,11 +13444,35 @@ function _trExcelDay(){
   });
   aoa.push([]);
   aoa.push(['TOPLAM','','','','','','','','','','',list.reduce((t,x)=>t+(+x.r.pax||0),0),'','','','','','']);
-  const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[11,8,7,10,26,26,9,11,14,9,10,5,14,16,18,16,18,11].map(w=>({wch:w}));
+  return aoa;
+}
+function _trWsCols(){ return [11,8,7,10,26,26,9,11,14,9,10,5,14,16,18,16,18,11].map(w=>({wch:w})); }
+function _trExcelFirma(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const list=_trGorunur();
+  if(!list.length){ showToast('Listelenecek transfer yok','error'); return; }
+  const G=getTransfer().gruplar||{};
+  const grupla={};
+  list.forEach(x=>{ const g=x.r.grup?(G[x.r.grup]||{}):null; const f=(g&&(g.firma||'').trim())||(x.r.grup?'Firmasız görevler':'ATANMAMIŞ'); (grupla[f]=grupla[f]||[]).push(x); });
+  const wb=XLSX.utils.book_new();
+  Object.keys(grupla).sort((a,b)=>a.localeCompare(b,'tr')).forEach(f=>{
+    const ws=XLSX.utils.aoa_to_sheet(_trExcelAoa(grupla[f]));
+    ws['!cols']=_trWsCols();
+    XLSX.utils.book_append_sheet(wb,ws,String(f).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Sayfa');
+  });
+  const adx='transfer_firmalar_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  XLSX.writeFile(wb,adx);
+  showToast('Excel indirildi: '+adx+' — '+Object.keys(grupla).length+' sayfa (firma başına)','success',6000);
+}
+function _trExcelDay(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  let list=_trGorunur();
+  if(!list.length){ showToast('Listelenecek transfer yok','error'); return; }
+  const ws=XLSX.utils.aoa_to_sheet(_trExcelAoa(list));
+  ws['!cols']=_trWsCols();
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Transferler');
-  const adx='transfer_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  const adx='transfer_'+(_trUst.firma?String(_trUst.firma).replace(/\s+/g,'')+'_':'')+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
   XLSX.writeFile(wb,adx);
   showToast('Excel indirildi: '+adx,'success');
 }
