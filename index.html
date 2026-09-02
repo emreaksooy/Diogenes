@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v251 · 02.09.2026';
+const APP_VER='v252 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10928,19 +10928,67 @@ function _opsUyarilar(gun){
   }catch(e){}
   // rehbersiz turlar
   try{ _rtTurlar(bugun,son).filter(t=>!t.rehberAd&&t.pax>0).forEach(t=>{
-    out.push({tarih:t.kalkis,ikon:'🧭',onem:1,mesaj:'Rehber atanmamış — '+t.kod+(t.op?' · '+t.op:'')+' · '+t.pax+' pax',git:"opsTab('rehtak')"}); }); }catch(e){}
+    const d=_opsPaxDetay(t.pkgId,t.kalkis);
+    out.push({tarih:t.kalkis,ikon:'🧭',onem:1,pkgId:t.pkgId,kalkis:t.kalkis,mesaj:'Rehber atanmamış — '+t.kod+(t.op?' · '+t.op:'')+' · '+t.pax+' pax (uçak listesi: '+d.ucak+' · rezervasyon: '+d.rezvP+' yolcu / '+d.rezvSay+' kayıt)',git:"opsTab('rehtak')"}); }); }catch(e){}
   // mağaza atanmamış ziyaretler
   try{ (_moSatirlar()||[]).filter(r=>!r.firmaId&&r.tarih>=bugun&&r.tarih<=son).forEach(r=>{
     out.push({tarih:r.tarih,ikon:'🏬',onem:0,mesaj:'Mağaza atanmamış — '+r.kod+' · '+(r.sehir||'')+' '+(r.tur||'')+' · '+r.pax+' pax',git:"opsTab('magaza')"}); }); }catch(e){}
   // uçak listesi ↔ rezervasyon ÇARPIŞMALARI (Rezervasyon Monitörü)
   try{ _mutIssues().filter(x=>x.kalkis>=bugun&&x.kalkis<=son).forEach(x=>{
     const AD={ucakYok:'Rezervasyon var, UÇAK LİSTESİNDE YOK',rezvYok:'Uçak listesinde var, REZERVASYONDA YOK',ucFark:'Uçuş bilgisi UYUŞMUYOR',iptalBilet:'İPTAL rezervasyon — BİLET İPTALİ gerekli'};
-    out.push({tarih:x.kalkis,ikon:'⚡',onem:3,mesaj:(AD[x.tip]||x.tip)+' — '+(x.kod||'')+' · '+(x.voucher||'')+(x.detay?' · '+x.detay:''),git:"showPage('ucak');setTimeout(()=>{try{ucakOpen('"+x.pkgId+"','"+x.kalkis+"')}catch(e){}},80)"}); }); }catch(e){}
+    out.push({tarih:x.kalkis,ikon:'⚡',onem:3,pkgId:x.pkgId,kalkis:x.kalkis,mesaj:(AD[x.tip]||x.tip)+' — '+(x.kod||'')+' · '+(x.voucher||'')+(x.detay?' · '+x.detay:''),git:"showPage('ucak');setTimeout(()=>{try{ucakOpen('"+x.pkgId+"','"+x.kalkis+"')}catch(e){}},80)"}); }); }catch(e){}
   // UÇUŞ DEĞİŞİKLİKLERİ (import diff — son 3 günde tespit edilenler)
   try{ (window._ucusDegisim||[]).filter(d=>d.ts>Date.now()-3*86400000).forEach(d=>{
     out.push({tarih:d.kalkis,ikon:'🛎',onem:3,mesaj:'UÇUŞ DEĞİŞTİ — '+d.mesaj,git:"opsTab('transfer');opsTrSet('"+d.kalkis+"')"}); }); }catch(e){}
   out.sort((a,b)=>a.tarih.localeCompare(b.tarih)||(b.onem-a.onem));
   return out;
+}
+function _opsVeriDok(pkgId,kalkis){
+  let box=document.getElementById('opsVdModal');
+  if(!box){ box=document.createElement('div'); box.id='opsVdModal';
+    box.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    box.onclick=e=>{ if(e.target===box) box.remove(); };
+    document.body.appendChild(box); }
+  const pk=getPackages().find(p=>p.id===pkgId)||{};
+  const urunTarih=(_resDepartureDates(pk)||[]).some(t=>_pdate(t)===_pdate(kalkis));
+  const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+  const gRows=g?(g.rows||[]).filter(_isim):[];
+  const rezvler=(getRezv()||[]).filter(r=>r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis);
+  const st='border:1px solid var(--border);padding:3px 8px;font-size:.72rem;text-align:left';
+  let h='<div style="background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:84vh;overflow:auto;padding:18px" onclick="event.stopPropagation()">'
+   +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:.95rem">🔎 Sefer Veri Dökümü — '+esc(pk.paketKodu||pk.paketAdi||pkgId)+' · '+_fmtDateTR(kalkis)+'</b><button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="document.getElementById(\'opsVdModal\').remove()">Kapat</button></div>'
+   +'<div style="font-size:.76rem;margin-bottom:10px">Ürün tarih listesinde bu kalkış: <b style="color:'+(urunTarih?'#166534':'#b91c1c')+'">'+(urunTarih?'VAR':'YOK — bu sefer yalnız aşağıdaki kayıtlardan türedi')+'</b></div>'
+   +'<div style="font-weight:800;font-size:.8rem;margin:8px 0 4px">✈ Uçak Listesi ('+gRows.length+' isimli satır)</div>'
+   +(gRows.length?('<div style="font-size:.74rem;margin-bottom:5px">Voucherlar: '+esc([...new Set(gRows.map(r=>String(r.resno||'').trim()).filter(Boolean))].join(', ')||'—')+'</div>'
+     +'<button class="btn btn-outline btn-sm" style="border-color:#fca5a5;color:#b91c1c" onclick="_opsVdGridSil(\''+pkgId+'\',\''+kalkis+'\')">Bu uçak listesini SİL (buluttan da)</button>')
+     :'<div style="font-size:.74rem;color:var(--muted)">Bu sefer için uçak listesi kaydı yok.</div>')
+   +'<div style="font-weight:800;font-size:.8rem;margin:12px 0 4px">📋 Rezervasyon Kayıtları ('+rezvler.length+')</div>'
+   +(rezvler.length?('<table style="width:100%;border-collapse:collapse"><tr><th style="'+st+'">Voucher</th><th style="'+st+'">Operatör</th><th style="'+st+'">Durum</th><th style="'+st+'">İsimli pax</th><th style="'+st+'">Açılım</th><th style="'+st+'"></th></tr>'
+     +rezvler.map(r=>'<tr><td style="'+st+'"><b>'+esc(r.voucher||'—')+'</b></td><td style="'+st+'">'+esc(r.operator||'')+'</td><td style="'+st+'">'+esc(r.durum||'aktif')+'</td>'
+       +'<td style="'+st+'">'+(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'')+(m.soyad||'')).trim()).length+'</td>'
+       +'<td style="'+st+'">'+((r.kartlar||[]).length?'var':'—')+'</td>'
+       +'<td style="'+st+'"><button class="btn btn-outline btn-sm" style="border-color:#fca5a5;color:#b91c1c;padding:1px 8px" onclick="_opsVdRezvSil(\''+r.id+'\',\''+pkgId+'\',\''+kalkis+'\')">Sil</button></td></tr>').join('')+'</table>'
+     +'<div style="font-size:.68rem;color:var(--muted);margin-top:5px">Silme buluta da işlenir — kayıt bir daha geri gelmez. Bu sefer gerçek değilse tüm kayıtları silin; uyarılar kendiliğinden kalkar.</div>')
+     :'<div style="font-size:.74rem;color:var(--muted)">Bu sefer için rezervasyon kaydı yok.</div>')
+   +'</div>';
+  box.innerHTML=h;
+}
+function _opsVdRezvSil(id,pkgId,kalkis){
+  const r=(getRezv()||[]).find(x=>x.id===id); if(!r) return;
+  showConfirm('🗑️','Rezervasyonu Sil',(r.operator||'')+' / '+(r.voucher||'—')+' kalıcı silinecek (buluttan da).','Evet, Sil',()=>{
+    setRezv(getRezv().filter(x=>x.id!==id));
+    showToast('Rezervasyon silindi — buluta işleniyor','success');
+    _opsVeriDok(pkgId,kalkis);
+    try{ renderOpsAnasayfa(); }catch(e){}
+  });
+}
+function _opsVdGridSil(pkgId,kalkis){
+  showConfirm('🗑️','Uçak Listesini Sil','Bu seferin uçak listesi kalıcı silinecek (buluttan da).','Evet, Sil',()=>{
+    setReservations(getReservations().filter(x=>!(x.pkgId===pkgId&&x.kalkis===kalkis)));
+    showToast('Uçak listesi silindi — buluta işleniyor','success');
+    _opsVeriDok(pkgId,kalkis);
+    try{ renderOpsAnasayfa(); }catch(e){}
+  });
 }
 function _opsUyariPanelHTML(){
   const uy=_opsUyarilar(7);
@@ -10951,7 +10999,8 @@ function _opsUyariPanelHTML(){
    +uy.slice(0,25).map(u=>'<div onclick="'+u.git+'" style="display:flex;gap:9px;align-items:center;padding:5px 6px;border-bottom:1px dashed #fecaca;cursor:pointer;font-size:.8rem" onmouseover="this.style.background=\'#fef2f2\'" onmouseout="this.style.background=\'\'">'
      +'<b style="min-width:86px;color:'+(_isoDiff(_opsToday(),u.tarih)<=1?'#b91c1c':'#b45309')+'">'+_fmtDateTR(u.tarih)+'</b>'
      +'<span style="min-width:70px;font-size:.7rem;font-weight:700;color:var(--muted)">'+gunFar2(u.tarih)+'</span>'
-     +'<span>'+u.ikon+' '+esc(u.mesaj)+'</span><span style="margin-left:auto;color:var(--muted)">›</span></div>').join('')
+     +'<span>'+u.ikon+' '+esc(u.mesaj)+'</span>'
+     +((u.pkgId&&u.kalkis)?'<button onclick="event.stopPropagation();_opsVeriDok(\''+u.pkgId+'\',\''+u.kalkis+'\')" title="Bu seferin ham verisini göster/temizle" style="margin-left:auto;background:none;border:1px solid #fca5a5;border-radius:8px;padding:1px 7px;cursor:pointer;font-size:.72rem">🔎</button><span style="color:var(--muted)">›</span>':'<span style="margin-left:auto;color:var(--muted)">›</span>')+'</div>').join('')
    +(uy.length>25?'<div style="font-size:.74rem;color:var(--muted);padding:5px">+'+(uy.length-25)+' uyarı daha…</div>':'')
    +'</div>';
 }
