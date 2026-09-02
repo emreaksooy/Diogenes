@@ -1885,7 +1885,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v271 · 02.09.2026';
+const APP_VER='v272 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13214,7 +13214,34 @@ function _trListRows(){
   return out;
 }
 const _trGrupOf=r=>r.grup?((getTransfer().gruplar||{})[r.grup]||{}):{};
-const _TRCOLS=[['tip','Tip',x=>x.r.tip,'sel'],['op','Operatör',x=>x.r.op,'sel'],['urun','Ürün',x=>x.r.urun,'txt'],['nereden','Nereden',x=>x.r.nereden,'txt'],['nereye','Nereye',x=>x.r.nereye,'txt'],['ucus','Uçuş',x=>x.r.ucus||'','txt'],['saat','Uçuş Saati',x=>x.r.saat||'','txt'],['depar','Depar',x=>x.dh.saat||'','txt'],['pax','Pax',x=>+x.r.pax||0,'txt'],['bolge','Bölge',x=>x.r.bolge||'','sel'],['gorev','Görev',x=>x.r.grup||'','sel'],['rehber','Rehber',x=>_trGrupOf(x.r).rehber||'','sel'],['arac','Araç',x=>[_trGrupOf(x.r).arac,_trGrupOf(x.r).arac2].filter(Boolean).join(' + '),'sel'],['firma','Firma',x=>_trGrupOf(x.r).firma||'','sel'],['not','Not',x=>x.r.not||'','txt'],['durum','Durum',x=>x.r.grup?(x.r.onay?'onaylı':'atandı'):'atanmadı','sel']];
+// ═══ DİNAMİK GÖREV KODU: FirmaKodu + Tip harfi (A/D/M/T) + gün içi sıra — silinince otomatik kayar ═══
+function _trKodMap(){
+  const rowsAll=_trGenRows();
+  const G=getTransfer().gruplar||{};
+  const gorev={};
+  rowsAll.forEach(r=>{ if(!r.grup) return;
+    const g=gorev[r.grup]=gorev[r.grup]||{tarih:'9999-99-99',saat:9999,tipler:{}};
+    if(r.tarih&&r.tarih<g.tarih) g.tarih=r.tarih;
+    const dk=_dk(_trDeparHesap(r).saat); if(dk!==null&&dk<g.saat) g.saat=dk;
+    g.tipler[r.tip]=(g.tipler[r.tip]||0)+1;
+  });
+  const harf=t=>({G:'A',D:'D',ARAD:'M',ARAG:'M',TUR:'T'})[t]||'A';
+  const fKod=f=>{ const fm=(getTanimlar().aracFirmalari||[]).find(x=>(x.ad||'')===f);
+    const k=(fm&&String(fm.kod||'').trim())||String(f||'').replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g,'').slice(0,2)||'XX';
+    return k.replace(/İ/g,'I').toUpperCase().slice(0,3); };
+  const items=Object.keys(gorev).map(id=>{
+    const g=gorev[id]; const gr=G[id]||{};
+    const tip=Object.entries(g.tipler).sort((a,b)=>b[1]-a[1])[0][0];
+    return {id,tarih:g.tarih,saat:g.saat,h:harf(tip),f:fKod(gr.firma)};
+  });
+  const kume={};
+  items.forEach(x=>{ const k=x.f+'|'+x.h+'|'+x.tarih; (kume[k]=kume[k]||[]).push(x); });
+  const map={};
+  Object.values(kume).forEach(L=>{ L.sort((a,b)=>a.saat-b.saat||a.id.localeCompare(b.id)); L.forEach((x,i)=>{ map[x.id]=x.f+x.h+String(i+1).padStart(2,'0'); }); });
+  return map;
+}
+function _trKodOf(icId){ if(!icId) return ''; if(!window._trKod) window._trKod=_trKodMap(); return window._trKod[icId]||icId; }
+const _TRCOLS=[['tip','Tip',x=>x.r.tip,'sel'],['op','Operatör',x=>x.r.op,'sel'],['urun','Ürün',x=>x.r.urun,'txt'],['nereden','Nereden',x=>x.r.nereden,'txt'],['nereye','Nereye',x=>x.r.nereye,'txt'],['ucus','Uçuş',x=>x.r.ucus||'','txt'],['saat','Uçuş Saati',x=>x.r.saat||'','txt'],['depar','Depar',x=>x.dh.saat||'','txt'],['pax','Pax',x=>+x.r.pax||0,'txt'],['bolge','Bölge',x=>x.r.bolge||'','sel'],['gorev','Görev',x=>x.r.grup?_trKodOf(x.r.grup):'','sel'],['rehber','Rehber',x=>_trGrupOf(x.r).rehber||'','sel'],['arac','Araç',x=>[_trGrupOf(x.r).arac,_trGrupOf(x.r).arac2].filter(Boolean).join(' + '),'sel'],['firma','Firma',x=>_trGrupOf(x.r).firma||'','sel'],['not','Not',x=>x.r.not||'','txt'],['durum','Durum',x=>x.r.grup?(x.r.onay?'onaylı':'atandı'):'atanmadı','sel']];
 function _trDayRows(){
   const all=_trGenRows(); const out=[];
   all.forEach(r=>{ if(!_trTipF[r.tip]) return; const dh=_trDeparHesap(r); const efTarih=dh.onceki?_trGunEkle(r.tarih,-1):r.tarih; let gece=false;
@@ -13297,7 +13324,7 @@ function _mutAracSatirlar(){
     const tarih=L.map(r=>r.tarih).sort()[0];
     if(!icinde(tarih)) return;
     const gr=G[kod];
-    out.push({kaynak:'TRANSFER',kod,tarih:_pdate(tarih),firma:gr.firma||'',arac:[gr.arac,gr.arac2].filter(Boolean).join(' + '),
+    out.push({kaynak:'TRANSFER',kod:_trKodOf(kod),tarih:_pdate(tarih),firma:gr.firma||'',arac:[gr.arac,gr.arac2].filter(Boolean).join(' + '),
       detay:[...new Set(L.map(r=>r.urun))].join('/')+' · '+L.length+' iş · '+L.reduce((t2,r)=>t2+(+r.pax||0),0)+' pax'+(gr.rehber?' · '+gr.rehber:''),
       isSay:L.length,gun:1,tahsis:!!gr.tahsis,ucret:gr.ucret||'',ucretPara:gr.ucretPara||'EUR',ts:gr.ts||0,edit:kod});
   });
@@ -13394,6 +13421,7 @@ function _mutAracExcel(){
 }
 function renderOpsTransfer(){
   const box=document.getElementById('opsPane_transfer'); if(!box) return;
+  window._trKod=_trKodMap();
   if(!_opsTrDate) _opsTrDate=_opsDate||_opsToday();
   const _mutTum=_mutIssues();
   const _mutGun=_opsTrDate2?_mutTum.filter(x=>x.kalkis>=_opsTrDate&&x.kalkis<=_opsTrDate2):_mutTum.filter(x=>x.kalkis===_opsTrDate);
@@ -13418,6 +13446,8 @@ function renderOpsTransfer(){
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trExcelDay()">📥 Excel${_trUst.firma?' ('+esc(_trUst.firma)+')':''}</button>
       <button class="btn btn-outline btn-sm" onclick="_trExcelFirma()" title="Her araç firması ayrı sayfada — firmalara tek tek göndermek için">📥 Firma bazlı</button>
       <button class="btn btn-outline btn-sm" onclick="_trUetdsExcel()" title="Görev başına sayfa: sefer bilgisi + YOLCU İSİMLERİ (uyruk/doğum/voucher) — UETDS bildirimi için">🧾 UETDS</button>
+      <button class="btn btn-outline btn-sm" onclick="_trTasimaciExcel()" title="Seçili firmaya özel, yolcu isimli GELİŞ/DÖNÜŞ transfer listesi (Sejour düzeni) — üst filtreden firma seç">🚌 Taşımacı Excel</button>
+      <button class="btn btn-outline btn-sm" onclick="_trTasimaciPdf()" title="Aynı listenin yazdırılabilir hali">🚌 Taşımacı PDF</button>
       <button class="btn btn-outline btn-sm" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
     </div>`;
   // ── ÜST FİLTRE PANELİ ──
@@ -13472,7 +13502,7 @@ function renderOpsTransfer(){
     h+=`<td><input class="saatin${r.deparMan?' man':''}" value="${esc(dh.saat)}" onchange="_trDeparElle('${r.id}',this.value)" title="${r.deparMan?'Elle girildi':'Bölgeden otomatik'}"></td>`;
     h+=`<td><b>${r.pax}</b></td>`;
     h+=`<td>${esc(r.bolge||'—')}</td>`;
-    h+=`<td>${r.grup?`<span class="grupb">${r.grup}</span>`:'<span style="color:#b91c1c;font-weight:700">—</span>'}</td>`;
+    h+=`<td>${r.grup?`<span class="grupb">${_trKodOf(r.grup)}</span>`:'<span style="color:#b91c1c;font-weight:700">—</span>'}</td>`;
     h+=`<td>${gr&&gr.rehber?esc(gr.rehber):'<span style="color:var(--muted)">—</span>'}</td>`;
     h+=`<td>${gr&&(gr.arac||gr.arac2)?esc([gr.arac,gr.arac2].filter(Boolean).join(' + ')):'<span style="color:var(--muted)">—</span>'}</td>`;
     h+=`<td>${gr&&gr.firma?esc(gr.firma):'<span style="color:var(--muted)">—</span>'}</td>`;
@@ -13554,14 +13584,14 @@ function _trAtama(){ if(!_trSel.size) return; const firmaSec=(document.getElemen
     firma:firmaSec||a.firma||'',sofor:[a.sofor,a2&&a2.sofor].filter(Boolean).join(' / '),stel:[a.stel,a2&&a2.stel].filter(Boolean).join(' / '),
     guzergah:(document.getElementById('trGuzergah')||{}).value,ts:Date.now(),tahsis:!!a.tahsis}; Tr.sat=Tr.sat||{};
   rows.forEach(r=>{ Tr.sat[r.id]=Object.assign({},Tr.sat[r.id]||{},{grup:kod,onay:false}); if(dep){ Tr.sat[r.id].depar=dep; Tr.sat[r.id].deparMan=true; } });
-  setTransfer(Tr); _trSel.clear(); renderOpsTransfer(); showToast(kod+' oluşturuldu — '+rows.length+' transfer, '+pax+' pax','success'); }
-function _trAtamaKaldir(id){ _trSatKaydet(id,{grup:null,onay:false}); renderOpsTransfer(); }
+  setTransfer(Tr); _trSel.clear(); window._trKod=null; renderOpsTransfer(); showToast(_trKodOf(kod)+' oluşturuldu — '+rows.length+' transfer, '+pax+' pax','success'); }
+function _trAtamaKaldir(id){ _trSatKaydet(id,{grup:null,onay:false}); window._trKod=null; renderOpsTransfer(); }
 function _trOnay(id){ const T=getTransfer(); const cur=(T.sat&&T.sat[id])||{}; _trSatKaydet(id,{onay:!cur.onay}); renderOpsTransfer(); }
 function _trDeparElle(id,v){ v=(v||'').trim(); _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
 function _trNotElle(id,v){ _trSatKaydet(id,{not:(v||'').trim()}); }
 // ── PDF ──
 function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!gr)return''; const rowsAll=_trGenRows(); const rows=rowsAll.filter(r=>r.grup===kod).sort((a,b)=>(_dk(_trDeparHesap(a).saat)??9999)-(_dk(_trDeparHesap(b).saat)??9999)); if(!rows.length)return''; const tarih=_trGunAd(rows[0].tarih); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0);
-  return `<div class="gorev"><h1>Araç Görev Listesi — ${esc(kod)}</h1><h2>${esc(tarih)} · Rehber: ${esc(gr.rehber||'—')} · Firma: ${esc(gr.firma||'—')} · Araç: ${esc(gr.arac||'—')}${gr.arac2?' + '+esc(gr.arac2):''}${gr.sofor?' · Şoför: '+esc(gr.sofor)+(gr.stel?' ('+esc(gr.stel)+')':''):''} · Toplam ${pax} pax${gr.guzergah?' · '+esc(gr.guzergah):''}</h2>
+  return `<div class="gorev"><h1>Araç Görev Listesi — ${esc(_trKodOf(kod))}</h1><h2>${esc(tarih)} · Rehber: ${esc(gr.rehber||'—')} · Firma: ${esc(gr.firma||'—')} · Araç: ${esc(gr.arac||'—')}${gr.arac2?' + '+esc(gr.arac2):''}${gr.sofor?' · Şoför: '+esc(gr.sofor)+(gr.stel?' ('+esc(gr.stel)+')':''):''} · Toplam ${pax} pax${gr.guzergah?' · '+esc(gr.guzergah):''}</h2>
     <table><tr><th>Depar</th><th>Tip</th><th>Nereden</th><th>Nereye</th><th>Uçuş</th><th>Uçuş Saati</th><th>Operatör</th><th>Ürün</th><th>Pax</th><th>Not</th></tr>
     ${rows.map(r=>{const dh=_trDeparHesap(r);return `<tr><td><b>${esc(dh.saat)}</b></td><td>${esc(r.tip)}</td><td>${esc(r.nereden)}</td><td>${esc(r.nereye)}</td><td>${esc(r.ucus||'')}</td><td>${esc(r.saat||'')}</td><td>${esc(r.op)}</td><td>${esc(r.urun)}</td><td>${r.pax}</td><td>${esc(r.not||'')}</td></tr>`;}).join('')}</table>
     <div class="imza"><span>Şoför: ____________</span><span>Rehber: ____________</span><span>Operasyon: ____________</span></div></div>`; }
@@ -13613,7 +13643,7 @@ function _trExcelAoa(list){
   const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||String(a.r.grup||'ZZ').localeCompare(String(b.r.grup||'ZZ'))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
   sirali.forEach(({r,dh})=>{
     const gr=r.grup?(T.gruplar||{})[r.grup]||{}:{};
-    aoa.push([_fmtDateTR(r.tarih),r.grup||'—',dh.saat||'',tipAd[r.tip]||r.tip,r.nereden||'',r.nereye||'',r.ucus||'',r.saat||'',r.op||'',r.urun||'',r.grupKod||'',+r.pax||0,
+    aoa.push([_fmtDateTR(r.tarih),r.grup?_trKodOf(r.grup):'—',dh.saat||'',tipAd[r.tip]||r.tip,r.nereden||'',r.nereye||'',r.ucus||'',r.saat||'',r.op||'',r.urun||'',r.grupKod||'',+r.pax||0,
       gr.rehber||'',gr.firma||'',[gr.arac,gr.arac2].filter(Boolean).join(' + '),gr.sofor?(gr.sofor+(gr.stel?' '+gr.stel:'')):'',r.not||'',
       r.grup?(r.onay?'ONAYLI':'ATANDI'):'ATANMAMIŞ']);
   });
@@ -13642,6 +13672,100 @@ function _trYolcular(r){
     return {ad:y.ad||'',soyad:y.soyad||'',dogum:y.dogum||'',uyruk,voucher:String(y.resno||'').trim()};
   });
 }
+function _trYolcularDetay(r){
+  const temel=_trYolcular(r);
+  const rezvler=(getRezv()||[]).filter(x=>x.tip==='urun'&&x.pkgId===r.pkgId&&x.kalkis===r.kalkis);
+  const g=getReservations().find(x=>x.pkgId===r.pkgId&&x.kalkis===r.kalkis);
+  const tok=t=>String(t||'').replace(/İ/g,'i').replace(/I/g,'i').toLowerCase().replace(/[^a-zçğıöşü\s]/g,' ').split(/\s+/).filter(Boolean).sort().join('|');
+  const yasHesap=d=>{ const p=_pdate(d); if(!p) return ''; const ref=new Date((r.tarih||_opsToday())+'T00:00:00'); const dd=new Date(p+'T00:00:00'); if(isNaN(dd)) return ''; let y=ref.getFullYear()-dd.getFullYear(); const m=ref.getMonth()-dd.getMonth(); if(m<0||(m===0&&ref.getDate()<dd.getDate())) y--; return y>0?y:''; };
+  return temel.map(y=>{
+    const rz=rezvler.find(x=>_vEsit(y.voucher,String(x.voucher||'').trim())||(x.asilVoucher&&_vEsit(y.voucher,String(x.asilVoucher).trim())));
+    let unvan='',pans='',konak='',oda='';
+    if(rz){
+      const m=(rz.musteriler||[]).find(m2=>tok(m2.soyad+' '+m2.ad)===tok(y.soyad+' '+y.ad));
+      if(m) unvan=m.unvan||'';
+      const ks=(rz.kartlar||[]).filter(k=>k.tip!=='ulasim'&&k.baslangic).sort((a,b)=>String(_pdate(a.baslangic)).localeCompare(String(_pdate(b.baslangic))));
+      if(ks.length){ const ilk=ks[0], son=ks[ks.length-1];
+        konak=_fmtDateTR(_pdate(ilk.baslangic))+' ~ '+_fmtDateTR(_isoAdd(_pdate(son.baslangic),parseInt(son.gece)||0));
+        pans=ilk.pansiyon||''; }
+    }
+    if(g){ const gy=(g.rows||[]).find(x=>String(x.resno||'').trim()===y.voucher&&tok(x.soyad+' '+x.ad)===tok(y.soyad+' '+y.ad)); if(gy) oda=gy.oda||''; }
+    return Object.assign({},y,{unvan,pans,konak,oda,yas:yasHesap(y.dogum)});
+  });
+}
+function _trTasimaciBloklar(){
+  const firma=_trUst.firma;
+  if(!firma){ showToast('Önce üst filtreden ARAÇ FİRMASI seç — liste o firmaya özel hazırlanır','error',5000); return null; }
+  const list=_trGorunur().filter(x=>x.r.grup&&(_trGrupOf(x.r).firma||'')===firma&&x.r.tip!=='TUR');
+  if(!list.length){ showToast('Bu firmaya atanmış transfer yok','error'); return null; }
+  window._trKod=_trKodMap();
+  const bolum=x=>x.r.tip==='G'?'GELİŞ':(x.r.tip==='D'?'DÖNÜŞ':'ARA UÇUŞ');
+  const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+  const bolumler={'GELİŞ':[],'DÖNÜŞ':[],'ARA UÇUŞ':[]};
+  sirali.forEach(x=>{
+    bolumler[bolum(x)].push({kod:_trKodOf(x.r.grup),r:x.r,dh:x.dh,gr:_trGrupOf(x.r),yolcular:_trYolcularDetay(x.r)});
+  });
+  return {firma,bolumler,donem:_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate)};
+}
+function _trTasimaciExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  const V=_trTasimaciBloklar(); if(!V) return;
+  const aoa=[['DIOGENES TRAVEL — TRANSFER LİSTESİ · '+V.firma],[V.donem],[]];
+  const bantlar=[], bolumBant=[], yolcuHdr=[];
+  Object.keys(V.bolumler).forEach(B=>{
+    const L=V.bolumler[B]; if(!L.length) return;
+    bolumBant.push(aoa.length);
+    aoa.push([B+' TRANSFER LİSTESİ']);
+    L.forEach(b=>{
+      bantlar.push(aoa.length);
+      const reh=(b.gr.rehber||'')+(b.gr.sofor?' · Şoför: '+b.gr.sofor:'')+(b.gr.stel?' ('+b.gr.stel+')':'');
+      aoa.push([b.kod,_fmtDateTR(b.r.tarih),b.r.saat||'',b.r.nereden+'  →  '+b.r.nereye,(b.r.ucus||''),'Depar: '+(b.dh.saat||'—'),b.r.pax+' pax',reh]);
+      yolcuHdr.push(aoa.length);
+      aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Konaklama','Oda','Pansiyon']);
+      b.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.konak,y.oda,y.pans]));
+      aoa.push([]);
+    });
+    const topP=L.reduce((t,b)=>t+(+b.r.pax||0),0);
+    aoa.push(['TOPLAM — '+B,'','','','','','',L.length+' iş · '+topP+' pax']);
+    aoa.push([]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[8,11,8,46,7,16,10,30].map(w2=>({wch:w2}));
+  try{
+    const nC=8;
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
+    ws['!rows']=[{hpt:30},{hpt:15}];
+    _xsSet(ws,0,0,{font:{bold:true,sz:15,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'left',vertical:'center',indent:1}});
+    for(let c=1;c<nC;c++) _xsSet(ws,0,c,{fill:{fgColor:{rgb:_XSC.navy}}});
+    _xsSet(ws,1,0,{font:{sz:9,italic:true,color:{rgb:_XSC.gri}},alignment:{horizontal:'left',indent:1}});
+    bolumBant.forEach(r2=>{ ws['!merges'].push({s:{r:r2,c:0},e:{r:r2,c:nC-1}}); _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:12,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},alignment:{vertical:'center'}}); ws['!rows'][r2]={hpt:20}; });
+    bantlar.forEach(r2=>{ _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10,color:{rgb:_XSC.navy}},fill:{fgColor:{rgb:'FFE8EEF7'}},border:_xsB()}); });
+    yolcuHdr.forEach(r2=>{ _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:8,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},border:_xsB(_XSC.beyaz)});
+      for(let r3=r2+1;r3<aoa.length&&aoa[r3].length&&aoa[r3][0]!=='';r3++){ if(typeof aoa[r3][0]!=='number') break; _xsSatirStil(ws,r3,nC,{font:{sz:9},border:_xsB(),fill:(r3-r2)%2===0?{fgColor:{rgb:_XSC.zebra}}:undefined}); } });
+    aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
+  }catch(e){}
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Transfer Listesi');
+  const adx='tasimaci_'+String(V.firma).replace(/\s+/g,'')+'_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  XLSX.writeFile(wb,adx);
+  showToast('Taşımacı listesi indirildi: '+adx,'success',6000);
+}
+function _trTasimaciPdf(){
+  const V=_trTasimaciBloklar(); if(!V) return;
+  let h='';
+  Object.keys(V.bolumler).forEach(B=>{
+    const L=V.bolumler[B]; if(!L.length) return;
+    h+=`<div class="gorev"><h1>${esc(B)} TRANSFER LİSTESİ — ${esc(V.firma)}</h1><h2>${esc(V.donem)} · Diogenes Travel</h2>`;
+    L.forEach(b=>{
+      h+=`<div style="background:#e8eef7;border:1px solid #99a;padding:3px 8px;margin-top:6px;font-size:10pt"><b>${esc(b.kod)}</b> · ${_fmtDateTR(b.r.tarih)} · ${esc(b.r.saat||'')} · <b>${esc(b.r.nereden)} → ${esc(b.r.nereye)}</b> · ${esc(b.r.ucus||'')} · Depar: <b>${esc(b.dh.saat||'—')}</b> · ${b.r.pax} pax${b.gr.rehber?' · Rehber: '+esc(b.gr.rehber):''}</div>
+      <table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Voucher</th><th>Unvan</th><th>Soyadı, Adı</th><th>Yaş</th><th>Konaklama</th><th>Oda</th><th>Pans</th></tr>
+      ${b.yolcular.map((y,i)=>`<tr><td>${i+1}</td><td>${esc(y.voucher)}</td><td>${esc(y.unvan)}</td><td><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td><td>${esc(String(y.yas))}</td><td>${esc(y.konak)}</td><td>${esc(y.oda)}</td><td>${esc(y.pans)}</td></tr>`).join('')}</table>`;
+    });
+    const topP=L.reduce((t,b)=>t+(+b.r.pax||0),0);
+    h+=`<div style="margin-top:5px;font-weight:700;font-size:10pt">TOPLAM: ${L.length} iş · ${topP} pax</div></div>`;
+  });
+  _trPrint(h);
+}
 function _trUetdsExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const list=_trGorunur().filter(x=>x.r.grup);
@@ -13658,7 +13782,7 @@ function _trUetdsExcel(){
     const ilk=L[0];
     const aoa=[
       ['UETDS SEFER / YOLCU BİLDİRİMİ'],
-      ['Tarih',_fmtDateTR(ilk.r.tarih),'','Görev No',kod],
+      ['Tarih',_fmtDateTR(ilk.r.tarih),'','Görev No',_trKodOf(kod)],
       ['Firma',gr.firma||'','','Araç',[gr.arac,gr.arac2].filter(Boolean).join(' + ')||''],
       ['Şoför',gr.sofor||'','','Tel',gr.stel||''],
       ['Rehber',gr.rehber||'','','Plaka',''],
@@ -13684,7 +13808,7 @@ function _trUetdsExcel(){
       ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:12}});
       for(let r2=1;r2<=5;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}}}); _xsSet(ws,r2,3,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}}}); _xsSet(ws,r2,1,{font:{sz:10,bold:true}}); _xsSet(ws,r2,4,{font:{sz:10,bold:true}}); }
     }catch(e){}
-    XLSX.utils.book_append_sheet(wb,ws,String(kod).slice(0,31));
+    XLSX.utils.book_append_sheet(wb,ws,String(_trKodOf(kod)).slice(0,31));
   });
   const adx='uetds_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
   XLSX.writeFile(wb,adx);
