@@ -1895,7 +1895,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v293 · 02.09.2026';
+const APP_VER='v294 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13541,8 +13541,30 @@ function _mutAracExcel(){
   XLSX.writeFile(wb,adx);
   showToast('Excel indirildi: '+adx+' — '+firmalar.length+' firma sayfası','success',6000);
 }
+// ESKİ (PNR bazlı) atama kayıtlarını yeni uçuş-bazlı kimliklere taşı — idempotent, tek seferlik
+function _trSatMigrate(){
+  try{
+    const T=getTransfer(); const sat=T.sat||{}; let deg=0;
+    const eskiler=Object.keys(sat).filter(id=>{ const p=id.split('|'); return p.length===4&&p[3]&&!/^[gda]:/.test(p[3]); });
+    if(!eskiler.length) return;
+    const H={};
+    getReservations().forEach(g=>{ (g.rows||[]).filter(_isim).forEach(y=>{
+      [['G','g'],['D','d'],['ARAD','a'],['ARAG','a']].forEach(([TIP,p])=>{
+        const pn=String(y[p+'_pnr']||'').trim(); if(!pn) return;
+        H[g.pkgId+'|'+g.kalkis+'|'+TIP+'|'+pn]=g.pkgId+'|'+g.kalkis+'|'+TIP+'|'+_trGrupKey(y,p);
+      });
+    }); });
+    eskiler.forEach(id=>{ const yeni=H[id]; if(!yeni) return;
+      if(!sat[yeni]) sat[yeni]=sat[id];
+      else{ const e=sat[id], n=sat[yeni]; if(!n.grup&&e.grup){ n.grup=e.grup; n.onay=e.onay; } if(!n.depar&&e.depar){ n.depar=e.depar; n.deparMan=e.deparMan; } if(!n.not&&e.not) n.not=e.not; }
+      delete sat[id]; deg++;
+    });
+    if(deg){ setTransfer(T); window._trKod=null; console.log('Transfer atamaları uçuş-bazlı kimliğe taşındı:',deg); showToast(deg+' eski atama kaydı yeni satırlara taşındı','success',4000); }
+  }catch(e){}
+}
 function renderOpsTransfer(){
   const box=document.getElementById('opsPane_transfer'); if(!box) return;
+  try{ _trSatMigrate(); }catch(e){}
   window._trKod=_trKodMap();
   if(!_opsTrDate) _opsTrDate=_opsDate||_opsToday();
   const _mutTum=_mutIssues();
