@@ -1882,7 +1882,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v268 · 02.09.2026';
+const APP_VER='v269 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13301,6 +13301,7 @@ function renderOpsTransfer(){
       <span style="color:var(--muted);font-size:.76rem">· ${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</span>
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trExcelDay()">📥 Excel${_trUst.firma?' ('+esc(_trUst.firma)+')':''}</button>
       <button class="btn btn-outline btn-sm" onclick="_trExcelFirma()" title="Her araç firması ayrı sayfada — firmalara tek tek göndermek için">📥 Firma bazlı</button>
+      <button class="btn btn-outline btn-sm" onclick="_trUetdsExcel()" title="Görev başına sayfa: sefer bilgisi + YOLCU İSİMLERİ (uyruk/doğum/voucher) — UETDS bildirimi için">🧾 UETDS</button>
       <button class="btn btn-outline btn-sm" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
     </div>`;
   // ── ÜST FİLTRE PANELİ ──
@@ -13451,6 +13452,71 @@ function _trExcelAoa(list){
   return aoa;
 }
 function _trWsCols(){ return [11,8,7,10,26,26,9,11,14,9,10,5,14,16,18,16,18,11].map(w=>({wch:w})); }
+// transfer satırındaki YOLCULAR (uçak listesinden; uyruk rezervasyondan tamamlanır)
+function _trYolcular(r){
+  const g=getReservations().find(x=>x.pkgId===r.pkgId&&x.kalkis===r.kalkis); if(!g) return [];
+  const rows=(g.rows||[]).filter(_isim);
+  let secilen;
+  if(r.tip==='TUR') secilen=rows;
+  else{
+    const p=r.tip==='G'?'g':(r.tip==='D'?'d':'a');
+    secilen=rows.filter(y=>{ const k=String(y[p+'_pnr']||'').trim()||'—'; return k===String(r.grupKod||'—'); });
+  }
+  // uyruk: rezervasyon müşterisinden (voucher + isim token eşleşmesi)
+  const rezvler=(getRezv()||[]).filter(x=>x.tip==='urun'&&x.pkgId===r.pkgId&&x.kalkis===r.kalkis);
+  const tok=t=>String(t||'').replace(/İ/g,'i').replace(/I/g,'i').toLowerCase().replace(/[^a-zçğıöşü\s]/g,' ').split(/\s+/).filter(Boolean).sort().join('|');
+  return secilen.map(y=>{
+    let uyruk='';
+    const rz=rezvler.find(x=>_vEsit(String(y.resno||'').trim(),String(x.voucher||'').trim())||(x.asilVoucher&&_vEsit(String(y.resno||'').trim(),String(x.asilVoucher).trim())));
+    if(rz){ const m=(rz.musteriler||[]).find(m2=>tok(m2.soyad+' '+m2.ad)===tok(y.soyad+' '+y.ad)); if(m) uyruk=m.uyruk||''; }
+    return {ad:y.ad||'',soyad:y.soyad||'',dogum:y.dogum||'',uyruk,voucher:String(y.resno||'').trim()};
+  });
+}
+function _trUetdsExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const list=_trGorunur().filter(x=>x.r.grup);
+  if(!list.length){ showToast('UETDS için atanmış görev yok — önce araç ata','error'); return; }
+  const G=getTransfer().gruplar||{};
+  const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR'};
+  const gorevler={};
+  list.forEach(x=>{ (gorevler[x.r.grup]=gorevler[x.r.grup]||[]).push(x); });
+  const wb=XLSX.utils.book_new();
+  let toplamYolcu=0, isimsizGorev=[];
+  Object.keys(gorevler).sort().forEach(kod=>{
+    const gr=G[kod]||{};
+    const L=gorevler[kod].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+    const ilk=L[0];
+    const aoa=[
+      ['UETDS SEFER / YOLCU BİLDİRİMİ'],
+      ['Tarih',_fmtDateTR(ilk.r.tarih),'','Görev No',kod],
+      ['Firma',gr.firma||'','','Araç',[gr.arac,gr.arac2].filter(Boolean).join(' + ')||''],
+      ['Şoför',gr.sofor||'','','Tel',gr.stel||''],
+      ['Rehber',gr.rehber||'','','Plaka',''],
+      ['Güzergâh',L.map(x=>x.r.nereden+' → '+x.r.nereye).join('  ·  ')],
+      [],
+      ['Sıra','Uyruk','TC/Pasaport No','Soyadı','Adı','Doğum','Voucher','Tip','Biniş','İniş','Uçuş','Saat','Depar']
+    ];
+    let n=0;
+    L.forEach(x=>{
+      const yolcular=_trYolcular(x.r);
+      if(!yolcular.length){ isimsizGorev.push(kod+' ('+(x.r.ucus||x.r.tip)+')'); }
+      yolcular.forEach(y=>{
+        aoa.push([++n,y.uyruk,'',y.soyad,y.ad,y.dogum,y.voucher,tipAd[x.r.tip]||x.r.tip,x.r.nereden,x.r.nereye,x.r.ucus||'',x.r.saat||'',x.dh.saat||'']);
+      });
+    });
+    toplamYolcu+=n;
+    aoa.push([]);
+    aoa.push(['TOPLAM YOLCU',n]);
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[5,7,16,18,16,11,13,10,24,24,9,8,7].map(w2=>({wch:w2}));
+    XLSX.utils.book_append_sheet(wb,ws,String(kod).slice(0,31));
+  });
+  const adx='uetds_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  XLSX.writeFile(wb,adx);
+  let msg='UETDS indirildi: '+adx+' — '+Object.keys(gorevler).length+' görev, '+toplamYolcu+' yolcu';
+  if(isimsizGorev.length) msg+=' · ⚠ isim bulunamayan: '+[...new Set(isimsizGorev)].slice(0,3).join(', ');
+  showToast(msg,'success',8000);
+}
 function _trExcelFirma(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const list=_trGorunur();
