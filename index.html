@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v250 · 02.09.2026';
+const APP_VER='v251 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7725,17 +7725,20 @@ function _mutIssues(){
     }
     const gl=[...new Set((r.musteriler||[]).map(m=>String(m.gelis||'').trim().toUpperCase()).filter(Boolean))];
     const dl=[...new Set((r.musteriler||[]).map(m=>String(m.donus||'').trim().toUpperCase()).filter(Boolean))];
-    const uG=rows.find(x=>String(x.g_k1||'').trim()), uD=rows.find(x=>String(x.d_k1||'').trim());
-    const cmp=(beklenen,k1,son,yon)=>{
+    // bilet uçları: voucher'ın TÜM satırlarından küme (çok gateway'li gruplar tek satırla kıyaslanınca yanlış alarm veriyordu)
+    const gecerliUc=t=>/^[A-Z]{3}$/.test(t); // '?' , boş, uzun metin → kıyasa girmez
+    const kume=f=>new Set(rows.map(x=>String(f(x)||'').toUpperCase().trim()).filter(gecerliUc));
+    const basG=kume(x=>x.g_k1), sonG=kume(x=>x.g_v2||x.g_v1), basD=kume(x=>x.d_k1), sonD=kume(x=>x.d_v2||x.d_v1);
+    const cmp=(beklenen,basSet,sonSet,yon)=>{
       const u=rzRotaUc(beklenen); const f=[];
-      const b1=String(k1||'').toUpperCase().trim(), b2=String(son||'').toUpperCase().trim();
-      if(u.bas&&b1&&u.bas!==b1) f.push(yon+': müşteri '+u.bas+' ↔ bilet '+b1);
-      if(u.son&&b2&&u.son!==b2) f.push(yon+' varış: müşteri '+u.son+' ↔ bilet '+b2);
+      const ub=String(u.bas||'').toUpperCase().trim(), us=String(u.son||'').toUpperCase().trim();
+      if(gecerliUc(ub)&&basSet.size&&!basSet.has(ub)) f.push(yon+': müşteri '+ub+' ↔ bilet '+[...basSet].join('/'));
+      if(gecerliUc(us)&&sonSet.size&&!sonSet.has(us)) f.push(yon+' varış: müşteri '+us+' ↔ bilet '+[...sonSet].join('/'));
       return f;
     };
     let farklar=[];
-    if(gl.length&&uG) gl.forEach(x=>{ farklar=farklar.concat(cmp(x,uG.g_k1,(uG.g_v2||uG.g_v1),'geliş')); });
-    if(dl.length&&uD) dl.forEach(x=>{ farklar=farklar.concat(cmp(x,uD.d_k1,(uD.d_v2||uD.d_v1),'dönüş')); });
+    gl.forEach(x=>{ farklar=farklar.concat(cmp(x,basG,sonG,'geliş')); });
+    dl.forEach(x=>{ farklar=farklar.concat(cmp(x,basD,sonD,'dönüş')); });
     farklar=[...new Set(farklar)];
     if(farklar.length) out.push({tip:'ucFark',pkgId:r.pkgId,kalkis:r.kalkis,voucher:v,kod,detay:farklar.join(' · ')});
   });
@@ -7781,7 +7784,10 @@ function _mutIssues(){
     }
     out.push({tip:'seferUrunYok',pkgId:g.pkgId,kalkis:g.kalkis,voucher:'—',kod:pk.paketKodu||pk.paketAdi||'',detay:'uçak bu tarihe liste açtı, üründe bu kalkış tarihi yok — tarihi ürüne ekleyin'});
   });
-  return out;
+  // aynı uyarının tekrarını ele (yinelenen rezv kayıtları vb.)
+  const tekil=[], gz=new Set();
+  out.forEach(x=>{ const k=x.tip+'|'+x.pkgId+'|'+x.kalkis+'|'+x.voucher+'|'+x.detay; if(gz.has(k)) return; gz.add(k); tekil.push(x); });
+  return tekil;
 }
 function _mutRezvChip(r){
   try{
@@ -10187,6 +10193,36 @@ async function _dailyBackup(){
   }catch(e){ console.warn('günlük yedek',e); }
 }
 
+// Yinelenen rezervasyonlar: aynı ürün+kalkış+voucher birden fazla kayıtla gelirse (bulut backfill
+// silinmemiş bayat kopyaları geri getirebilir) en dolu kayıt tutulur, diğerleri silinip buluta bildirilir.
+function _rezvDedupe(){
+  try{
+    const grup={};
+    (_rezvCache||[]).forEach(r=>{
+      if(!r||r.tip!=='urun') return; const v=String(r.voucher||'').trim(); if(!v) return;
+      const k=(r.pkgId||'')+'|'+(r.kalkis||'')+'|'+v; (grup[k]=grup[k]||[]).push(r);
+    });
+    const sil=new Set();
+    Object.values(grup).forEach(L=>{
+      if(L.length<2) return;
+      const skor=r=>{
+        let t=0; const m=String(r.id||'').match(/_(\d{13})_/); if(m) t=+m[1]/1e16;
+        return ((r.kartlar||[]).length+(r.ukartlar||[]).length)*100
+          +(r.musteriler||[]).filter(x=>((x.ad||'')+(x.soyad||'')).trim()).length*10+t;
+      };
+      L.sort((a,b)=>skor(b)-skor(a));
+      L.slice(1).forEach(r=>sil.add(r.id));
+    });
+    if(sil.size){
+      _rezvCache=_rezvCache.filter(r=>!(r&&sil.has(r.id)));
+      idbSet('rezervasyonlar',_rezvCache);
+      console.warn('Yinelenen rezervasyon birleştirildi:',sil.size);
+      try{_hataKaydet&&_hataKaydet('REZV-DEDUPE',sil.size+' yinelenen kayıt (aynı ürün+kalkış+voucher) birleştirildi');}catch(e){}
+      _cloudQueue('rezervasyonlar');
+    }
+    return sil.size;
+  }catch(e){ return 0; }
+}
 // Supabase tek sorguda en fazla 1000 satır döndürür — TÜM satırları sayfa sayfa çek.
 // Bu eksikti: doc_rows 1000'i aşınca fazlası "silinmiş" sanılıp yerelden de siliniyordu (rezervasyon kayıplarının kök nedeni).
 async function _sbAll(mk){
@@ -10277,6 +10313,7 @@ async function _cloudPullFull(){
     });
     _pkgCache.forEach(p=>_sigPkg.set(p.id,JSON.stringify(p)));
     _opCache.forEach(o=>_sigOp.set(o.id,JSON.stringify(o)));
+    _rezvDedupe();
     renderOpList(); renderOperatorSelect(); renderDashboard();
     if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); }
     _pullDususKontrol('tam çekim',_rezvOnce);
@@ -10354,6 +10391,7 @@ async function _cloudPullIncre(last){
     }
     if(eksikSay||pkEksik.length||opEksik.length) console.warn('Bulut backfill: '+eksikSay+' doc + '+pkEksik.length+' paket + '+opEksik.length+' operatör eksikti — tamamlandı');
   }catch(e){ console.warn('backfill hata',e); }
+  _rezvDedupe();
   if(degisti){ renderOpList(); renderOperatorSelect(); renderDashboard(); if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); } }
   _pullDususKontrol('artımlı çekim',_rezvOnce);
 }
