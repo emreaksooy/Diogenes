@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v254 · 02.09.2026';
+const APP_VER='v255 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12868,8 +12868,7 @@ function _tdDocUcus(g,E){
     h+=`<h2 style="${h2s}">${YON[yon]}</h2>`;
     kl.forEach(grp=>{
       const f=grp[0];
-      const pnrs=[...new Set(grp.map(x=>x.pnr).filter(Boolean))];
-      const bas=[f.tarih,f.hy,f.ucus,f.rota,f.saat].filter(Boolean).join(' · ')+(pnrs.length===1?' · PNR '+pnrs[0]:'');
+      const bas=[f.tarih,f.hy,f.ucus,f.rota,f.saat].filter(Boolean).join(' · ');
       const tekil=[]; const seen=new Set();
       grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad; if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
       // VOUCHER GRUPLAMA: aynı voucher'ın yolcuları birleşik blok — voucher bir kez yazılır (Sejour listesi düzeni)
@@ -12879,8 +12878,8 @@ function _tdDocUcus(g,E){
       vSira.sort((a,b)=>(vg[a][0].soyad+vg[a][0].ad).localeCompare(vg[b][0].soyad+vg[b][0].ad,'tr'));
       let kn=0;
       const satirlar=vSira.map(v=>{
-        const G=vg[v]; const vPnr=[...new Set(G.map(x=>x.pnr).filter(Boolean))].join(' ');
-        return G.map((x,i)=>`<tr><td style="${_tdTd};width:26px;text-align:right">${++kn}</td>${i===0?`<td style="${_tdTd};width:110px;vertical-align:top" rowspan="${G.length}"><b>${esc(v)}</b>${G.length>1?`<br><span style="font-size:8pt;color:#555">${G.length} kişi</span>`:''}</td>`:''}<td style="${_tdTd}"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td>${pnrs.length>1&&i===0?`<td style="${_tdTd};width:80px;vertical-align:top" rowspan="${G.length}">${esc(vPnr)}</td>`:''}</tr>`).join('');
+        const G=vg[v];
+        return G.map((x,i)=>`<tr><td style="${_tdTd};width:26px;text-align:right">${++kn}</td>${i===0?`<td style="${_tdTd};width:110px;vertical-align:top" rowspan="${G.length}"><b>${esc(v)}</b>${G.length>1?`<br><span style="font-size:8pt;color:#555">${G.length} kişi</span>`:''}</td>`:''}<td style="${_tdTd}"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td></tr>`).join('');
       }).join('');
       h+=`<div style="margin:0 0 3mm">
         <div style="background:#e8e8e8;border:1px solid #999;border-bottom:none;padding:2px 7px;font-size:10pt"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi · ${vSira.length} voucher</div>
