@@ -1882,7 +1882,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v260 · 02.09.2026';
+const APP_VER='v261 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12471,8 +12471,9 @@ function renderOpsGrup(){
   const rehberler=(getTanimlar().rehberler||[]);
   const rehAd=id=>{ const r=rehberler.find(x=>x.id===id); return r?(r.ad||''):''; };
   const list=_ogResolve().filter(g=>g.tarih===_ogDate&&_ogIsimVar(g)).sort((a,b)=>(a.urunler[0]||'').localeCompare(b.urunler[0]||''));
-  let h=`<div style="margin-bottom:8px"><button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')">← Ana Sayfa</button></div>
-    <div class="ops-datebar">
+  let h=`<div style="margin-bottom:8px"><button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')">← Ana Sayfa</button></div>`;
+  try{ h+=_trMonitorHTML(); }catch(e){}
+  h+=`<div class="ops-datebar">
       <button class="btn btn-outline btn-sm" onclick="opsGrupNav(-1)">◀</button>
       <input type="date" value="${_ogDate}" onchange="opsGrupSet(this.value)" class="ops-date">
       <button class="btn btn-outline btn-sm" onclick="opsGrupNav(1)">▶</button>
@@ -13163,6 +13164,54 @@ function _trFiltSet(col,v,anlik){ clearTimeout(_trFtT); const ap=()=>{ if(String
 function _trFiltClear(){ _trFilt={}; _trSort={col:null,dir:1}; renderOpsTransfer(); }
 function _trUygun(x){ return _TRCOLS.every(c=>{ const fv=_trFilt[c[0]]; if(fv==null)return true; const val=String(c[2](x)); return c[3]==='sel'?val===fv:_trLow(val).includes(_trLow(fv)); }); }
 function _trChk(id){ _trTipF[id]=!_trTipF[id]; renderOpsTransfer(); }
+function _trMonitorHTML(){
+  let acik=true; try{ acik=localStorage.getItem('dmc_trMonAcik')!=='0'; }catch(e){}
+  const bugun=_opsToday();
+  const all=_trGenRows();
+  const gunler=[];
+  let topAtasiz=0;
+  for(let i=0;i<14;i++){
+    const d=_isoAdd(bugun,i);
+    const rows=all.filter(r=>r.tarih===d);
+    if(!rows.length) continue;
+    const say=t=>rows.filter(r=>r.tip===t);
+    const paxOf=L=>L.reduce((t,r)=>t+(+r.pax||0),0);
+    const G=say('G'),D=say('D'),ARA=rows.filter(r=>r.tip==='ARAD'||r.tip==='ARAG'),TUR=say('TUR');
+    const ucusRows=rows.filter(r=>r.tip!=='TUR');
+    const atasiz=ucusRows.filter(r=>!r.grup).length;
+    const atandi=ucusRows.filter(r=>r.grup);
+    const onayli=atandi.filter(r=>r.onay).length;
+    topAtasiz+=atasiz;
+    gunler.push({d,G,D,ARA,TUR,atasiz,gorev:new Set(atandi.map(r=>r.grup)).size,onayli,atSay:atandi.length,paxOf});
+  }
+  const bas=`<div class="card" style="padding:.55rem .8rem;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="_trMonTgl()">
+      <b style="font-size:.82rem">📡 Transfer Monitörü — 14 gün</b>
+      ${topAtasiz?`<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.68rem;padding:2px 9px;border-radius:9px">${topAtasiz} atanmamış</span>`:`<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.68rem;padding:2px 9px;border-radius:9px">✓ tümü atanmış</span>`}
+      <span style="margin-left:auto;color:var(--muted);font-size:.72rem">${acik?'▲ gizle':'▼ göster'}</span>
+    </div>`;
+  if(!acik) return bas+'</div>';
+  if(!gunler.length) return bas+'<div style="font-size:.76rem;color:var(--muted);padding:8px 2px">Önümüzdeki 14 günde transfer yok.</div></div>';
+  const hc='padding:4px 8px;font-size:.62rem;text-align:left;background:var(--navy);color:#fff;white-space:nowrap';
+  const tc='padding:4px 8px;font-size:.74rem;border-bottom:1px solid var(--border);white-space:nowrap';
+  const cell=(L,pax)=>L.length?`<b>${L.length}</b> <span style="color:var(--muted);font-size:.66rem">· ${pax(L)} pax</span>`:'<span style="color:var(--muted)">—</span>';
+  return bas+`<div style="overflow:auto;margin-top:6px"><table style="width:100%;border-collapse:collapse">
+    <tr><th style="${hc}">Tarih</th><th style="${hc}">🛬 Geliş</th><th style="${hc}">🛫 Dönüş</th><th style="${hc}">Ara</th><th style="${hc}">Tur</th><th style="${hc}">Atanmamış</th><th style="${hc}">Araç görevi</th><th style="${hc}">Onay</th></tr>
+    ${gunler.map(g=>{
+      const aktif=g.d===_opsTrDate;
+      return `<tr onclick="opsTrSet('${g.d}')" style="cursor:pointer${aktif?';background:var(--primary-soft)':''}" onmouseover="this.style.background='var(--primary-soft)'" onmouseout="this.style.background='${aktif?'var(--primary-soft)':''}'">
+      <td style="${tc}"><b>${_fmtDateTR(g.d)}</b> <span style="color:var(--muted);font-size:.66rem">${_trGunAd(g.d).split(' ').pop()}</span></td>
+      <td style="${tc}">${cell(g.G,g.paxOf)}</td>
+      <td style="${tc}">${cell(g.D,g.paxOf)}</td>
+      <td style="${tc}">${cell(g.ARA,g.paxOf)}</td>
+      <td style="${tc}">${g.TUR.length?g.TUR.length:'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="${tc}">${g.atasiz?`<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.66rem;padding:1px 8px;border-radius:8px">${g.atasiz}</span>`:'<span style="color:#166534;font-weight:700">✓</span>'}</td>
+      <td style="${tc}">${g.gorev||'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="${tc}">${g.atSay?g.onayli+'/'+g.atSay:'<span style="color:var(--muted)">—</span>'}</td></tr>`;
+    }).join('')}
+  </table></div></div>`;
+}
+function _trMonTgl(){ try{ localStorage.setItem('dmc_trMonAcik',localStorage.getItem('dmc_trMonAcik')==='0'?'1':'0'); }catch(e){} renderOpsTransfer(); }
 function renderOpsTransfer(){
   const box=document.getElementById('opsPane_transfer'); if(!box) return;
   if(!_opsTrDate) _opsTrDate=_opsDate||_opsToday();
