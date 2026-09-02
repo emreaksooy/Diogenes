@@ -1882,7 +1882,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v258 · 02.09.2026';
+const APP_VER='v259 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7764,6 +7764,8 @@ function _mutIssues(){
     const rows=g?(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,v)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher)))):[];
     const pk=pkgs.find(p=>p.id===r.pkgId)||{}; const kod=pk.paketKodu||'';
     if(!rows.length){
+      // uzak tarihli seferler için gürültü yapma — uçak listeleri kalkışa ~2 hafta kala hazırlanır
+      try{ const gf=_isoDiff(_opsToday(),r.kalkis); if(gf>14||gf<-1) return; }catch(e){}
       out.push({tip:'ucakYok',pkgId:r.pkgId,kalkis:r.kalkis,voucher:v,kod,detay:((r.musteriler||[]).length||'?')+' pax rezervasyonda kayıtlı, uçak listesinde yok — transferi eksik kalır'});
       return;
     }
@@ -7833,6 +7835,26 @@ function _mutIssues(){
   out.forEach(x=>{ const k=x.tip+'|'+x.pkgId+'|'+x.kalkis+'|'+x.voucher+'|'+x.detay; if(gz.has(k)) return; gz.add(k); tekil.push(x); });
   return tekil;
 }
+function _mutBiletiEsasAl(pkgId,kalkis,voucher){
+  const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+  const rezvler=(getRezv()||[]).filter(r=>r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis&&(_vEsit(String(r.voucher||'').trim(),voucher)||( r.asilVoucher&&_vEsit(String(r.asilVoucher).trim(),voucher))));
+  if(!g||!rezvler.length){ showToast('Kayıt bulunamadı','error'); return; }
+  let n=0;
+  rezvler.forEach(r=>{
+    const rows=(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,r.voucher)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher))));
+    const uG=rows.find(x=>String(x.g_k1||'').trim()), uD=rows.find(x=>String(x.d_k1||'').trim());
+    const gel=uG?[String(uG.g_k1).toUpperCase(),String(uG.g_v2||uG.g_v1||'').toUpperCase()].filter(Boolean).join('-'):'';
+    const don=uD?[String(uD.d_k1).toUpperCase(),String(uD.d_v2||uD.d_v1||'').toUpperCase()].filter(Boolean).join('-'):'';
+    if(!gel&&!don) return;
+    (r.musteriler||[]).forEach(m=>{ if(gel)m.gelis=gel; if(don)m.donus=don; n++; });
+  });
+  if(!n){ showToast('Bilette rota bilgisi yok — güncellenemedi','error'); return; }
+  setRezv(getRezv());
+  showToast(voucher+': '+n+' yolcunun uçuş bilgisi biletten güncellendi — uyarı kalkacak','success',5000);
+  try{ renderOpsAnasayfa(); }catch(e){}
+  try{ if(typeof _opsTab!=='undefined'&&_opsTab==='transfer') renderOpsTransfer(); }catch(e){}
+  try{ const ap=document.querySelector('.page.active'); if(ap&&ap.id==='page-ucak'&&typeof renderUcakGenel==='function') renderUcakGenel(); }catch(e){}
+}
 function _mutRezvChip(r){
   try{
     if(!r||r.tip!=='urun'||!String(r.voucher||'').trim()) return '';
@@ -7847,7 +7869,7 @@ function _mutPanel(list,baslik,digerN){
   const R={ucakYok:['#b45309','#fef3c7','UÇAK LİSTESİNDE YOK'],rezvYok:['#0369a1','#e0f2fe','REZV. KAYDI YOK'],ucFark:['#b91c1c','#fee2e2','UÇUŞ UÇLARI FARKLI'],seferUrunYok:['#7e22ce','#f3e8ff','ÜRÜNDE TARİH YOK'],iptalBilet:['#b91c1c','#fee2e2','İPTAL — BİLETİ İPTAL ET']};
   let ic2=list.slice(0,20).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:.74rem;padding:3px 0;flex-wrap:wrap">
       <span style="background:${R[x.tip][1]};color:${R[x.tip][0]};font-weight:800;font-size:.58rem;padding:2px 7px;border-radius:9px;white-space:nowrap">${R[x.tip][2]}</span>
-      <b>${esc(x.voucher)}</b><span style="color:#6b7280">${esc(x.kod)} · ${_fmtDateTR(x.kalkis)}</span><span>${esc(x.detay)}</span></div>`).join('');
+      <b>${esc(x.voucher)}</b><span style="color:#6b7280">${esc(x.kod)} · ${_fmtDateTR(x.kalkis)}</span><span>${esc(x.detay)}</span>${x.tip==='ucFark'?`<button class="btn btn-outline btn-sm" style="padding:1px 8px;font-size:.66rem;border-color:#86efac;color:#166534" title="Bilet listesindeki rota doğru kabul edilir; müşteri kayıtlarındaki geliş/dönüş alanları biletten güncellenir" onclick="_mutBiletiEsasAl('${x.pkgId}','${x.kalkis}','${esc(x.voucher)}')">✓ Bileti esas al</button>`:''}</div>`).join('');
   if(list.length>20) ic2+=`<div style="font-size:.68rem;color:#6b7280">+${list.length-20} uyarı daha</div>`;
   if(!list.length) ic2=`<div style="font-size:.72rem;color:#6b7280">Bu tarihte uyarı yok.</div>`;
   return `<div class="card" style="border:1.5px solid #fcd34d;background:#fffbeb;padding:.6rem .9rem;margin-bottom:10px;color:#3f3f46">
@@ -11051,7 +11073,7 @@ function _opsUyarilar(gun){
   // uçak listesi ↔ rezervasyon ÇARPIŞMALARI (Rezervasyon Monitörü)
   try{ _mutIssues().filter(x=>x.kalkis>=bugun&&x.kalkis<=son).forEach(x=>{
     const AD={ucakYok:'Rezervasyon var, UÇAK LİSTESİNDE YOK',rezvYok:'Uçak listesinde var, REZERVASYONDA YOK',ucFark:'Uçuş bilgisi UYUŞMUYOR',iptalBilet:'İPTAL rezervasyon — BİLET İPTALİ gerekli'};
-    out.push({tarih:x.kalkis,ikon:'⚡',onem:3,pkgId:x.pkgId,kalkis:x.kalkis,mesaj:(AD[x.tip]||x.tip)+' — '+(x.kod||'')+' · '+(x.voucher||'')+(x.detay?' · '+x.detay:''),git:"showPage('ucak');setTimeout(()=>{try{ucakOpen('"+x.pkgId+"','"+x.kalkis+"')}catch(e){}},80)"}); }); }catch(e){}
+    out.push({tarih:x.kalkis,ikon:'⚡',onem:3,pkgId:x.pkgId,kalkis:x.kalkis,mutTip:x.tip,voucher:x.voucher,mesaj:(AD[x.tip]||x.tip)+' — '+(x.kod||'')+' · '+(x.voucher||'')+(x.detay?' · '+x.detay:''),git:"showPage('ucak');setTimeout(()=>{try{ucakOpen('"+x.pkgId+"','"+x.kalkis+"')}catch(e){}},80)"}); }); }catch(e){}
   // UÇUŞ DEĞİŞİKLİKLERİ (import diff — son 3 günde tespit edilenler)
   try{ (window._ucusDegisim||[]).filter(d=>d.ts>Date.now()-3*86400000).forEach(d=>{
     out.push({tarih:d.kalkis,ikon:'🛎',onem:3,mesaj:'UÇUŞ DEĞİŞTİ — '+d.mesaj,git:"opsTab('transfer');opsTrSet('"+d.kalkis+"')"}); }); }catch(e){}
@@ -11115,7 +11137,8 @@ function _opsUyariPanelHTML(){
      +'<b style="min-width:86px;color:'+(_isoDiff(_opsToday(),u.tarih)<=1?'#b91c1c':'#b45309')+'">'+_fmtDateTR(u.tarih)+'</b>'
      +'<span style="min-width:70px;font-size:.7rem;font-weight:700;color:var(--muted)">'+gunFar2(u.tarih)+'</span>'
      +'<span>'+u.ikon+' '+esc(u.mesaj)+'</span>'
-     +((u.pkgId&&u.kalkis)?'<button onclick="event.stopPropagation();_opsVeriDok(\''+u.pkgId+'\',\''+u.kalkis+'\')" title="Bu seferin ham verisini göster/temizle" style="margin-left:auto;background:none;border:1px solid #fca5a5;border-radius:8px;padding:1px 7px;cursor:pointer;font-size:.72rem">🔎</button><span style="color:var(--muted)">›</span>':'<span style="margin-left:auto;color:var(--muted)">›</span>')+'</div>').join('')
+     +(u.mutTip==='ucFark'?'<button onclick="event.stopPropagation();_mutBiletiEsasAl(\''+u.pkgId+'\',\''+u.kalkis+'\',\''+esc(u.voucher||'')+'\')" title="Bilet doğru kabul edilir; müşteri geliş/dönüş alanları biletten güncellenir" style="margin-left:auto;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:8px;padding:1px 8px;cursor:pointer;font-size:.68rem;font-weight:700">✓ Bileti esas al</button>':'')
+     +((u.pkgId&&u.kalkis)?'<button onclick="event.stopPropagation();_opsVeriDok(\''+u.pkgId+'\',\''+u.kalkis+'\')" title="Bu seferin ham verisini göster/temizle" style="'+(u.mutTip==='ucFark'?'':'margin-left:auto;')+'background:none;border:1px solid #fca5a5;border-radius:8px;padding:1px 7px;cursor:pointer;font-size:.72rem">🔎</button><span style="color:var(--muted)">›</span>':'<span style="margin-left:auto;color:var(--muted)">›</span>')+'</div>').join('')
    +(uy.length>25?'<div style="font-size:.74rem;color:var(--muted);padding:5px">+'+(uy.length-25)+' uyarı daha…</div>':'')
    +'</div>';
 }
