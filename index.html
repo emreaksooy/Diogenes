@@ -1882,7 +1882,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v263 · 02.09.2026';
+const APP_VER='v264 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13296,11 +13296,18 @@ function _trSecToggle(id,on){ on?_trSel.add(id):_trSel.delete(id); _trRenderAtab
 function _trSecTemizle(){ _trSel.clear(); renderOpsTransfer(); }
 // filo: araçlar firma tanımlarının içinde — atama listesi oradan beslenir
 function _trFiloList(firmaAd){
-  const T=getTanimlar(); const out=[];
+  // ARAÇ TİPİ bazlı atama (Emre: plaka değil tip atanır) — firmanın aracTipleri esas; filo varsa ek olarak listelenir
+  const T=getTanimlar(); const out=[]; const seen=new Set();
   (T.aracFirmalari||[]).forEach(f=>{
     if(firmaAd&&(f.ad||'')!==firmaAd) return;
+    (f.aracTipleri||[]).forEach(a=>{
+      const kod=String(a.kod||'').trim(); if(!kod) return;
+      const id='tip:'+(f.id||f.ad||'')+':'+kod.toUpperCase();
+      if(seen.has(id)) return; seen.add(id);
+      out.push({id,firma:f.ad||'',ad:kod,kap:+a.koltuk||0,sofor:'',stel:''});
+    });
     (f.filo||[]).forEach(a=>{
-      const ad=[String(a.plaka||'').trim(),String(a.tip||'').trim()].filter(Boolean).join(' · ')||'Araç';
+      const ad=[String(a.plaka||'').trim(),String(a.tip||'').trim()].filter(Boolean).join(' · '); if(!ad) return;
       out.push({id:String(a.id||ad),firma:f.ad||'',ad,kap:+a.koltuk||0,sofor:String(a.sofor||'').trim(),stel:String(a.stel||'').trim()});
     });
   });
