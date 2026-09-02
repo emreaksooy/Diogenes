@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v286 · 02.09.2026';
+const APP_VER='v287 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13378,15 +13378,16 @@ function _afTarife(firmaAd,tarihIso,ucA,ucB,arTip){
       const v=(f.kTrf||{})[rota.id+'|'+tip+'|'+don.id];
       if(v!=null&&String(v).trim()!=='') return {fiyat:_tdN(v),para:f.kPara||'EUR'};
     }
-    // 2) hizmet tarifesi — İstanbul modeli: 'TRANSFER İGA' / 'TRANSFER SAW' şehir içi nereye giderse gitsin sabit fiyat
+    // 2) hizmet tarifesi — İstanbul modeli: 'TRANSFER İGA/IST' / 'TRANSFER SAW' şehir içi nereye giderse gitsin sabit fiyat
+    // KURAL: satır seçimi HAVALİMANI KODUYLA yapılır (a) — SAW işi IST satırına asla düşmez; belirsizse fiyat basılmaz.
     const ALIAS={IST:['IST','IGA'],SAW:['SAW'],AYT:['AYT'],ADB:['ADB'],ESB:['ESB'],ASR:['ASR'],NAV:['NAV'],DLM:['DLM'],BJV:['BJV']};
-    const uclar=[a,b].filter(Boolean);
-    const hz=(f.kHizmet||[]).find(h=>{
-      const ad2=N(h.ad||'');
-      if(!ad2.includes('TRANSFER')) return false;
-      if(String(h.bolge||'').trim()){ const hb=temiz(h.bolge); if(uclar.some(u=>hb===u||hb.includes(u)||u.includes(hb))) return true; }
-      return uclar.some(u=>{ const al=ALIAS[u]||[u]; return al.some(x=>N(x)&&ad2.includes(N(x))); });
-    });
+    const trSatir=(f.kHizmet||[]).filter(h=>N(h.ad||'').includes('TRANSFER'));
+    let hz=trSatir.find(h=>{ const ad2=N(h.ad||''); const al=ALIAS[a]||[a]; return al.some(x=>N(x)&&ad2.includes(N(x))); });
+    if(!hz&&trSatir.length===1){
+      // tek transfer satırı: havalimanı kodu geçmiyorsa bölge eşleşmesiyle kabul (tek havalimanlı şehirler)
+      const h=trSatir[0]; const hb=temiz(h.bolge||'');
+      if(hb&&b&&(hb===b||hb.includes(b)||b.includes(hb))) hz=h;
+    }
     if(hz){
       const v2=(f.kHiz||{})[hz.id+'|'+tip+'|'+don.id];
       if(v2!=null&&String(v2).trim()!=='') return {fiyat:_tdN(v2),para:f.kPara||'EUR'};
