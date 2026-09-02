@@ -1882,7 +1882,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v267 · 02.09.2026';
+const APP_VER='v268 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13209,7 +13209,8 @@ function _trListRows(){
   out.sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
   return out;
 }
-const _TRCOLS=[['tip','Tip',x=>x.r.tip,'sel'],['op','Operatör',x=>x.r.op,'sel'],['urun','Ürün',x=>x.r.urun,'txt'],['nereden','Nereden',x=>x.r.nereden,'txt'],['nereye','Nereye',x=>x.r.nereye,'txt'],['ucus','Uçuş',x=>x.r.ucus||'','txt'],['saat','Uçuş Saati',x=>x.r.saat||'','txt'],['depar','Depar',x=>x.dh.saat||'','txt'],['pax','Pax',x=>+x.r.pax||0,'txt'],['bolge','Bölge',x=>x.r.bolge||'','sel'],['not','Not',x=>x.r.not||'','txt'],['atama','Atama',x=>x.r.grup||'','sel'],['durum','Durum',x=>x.r.grup?(x.r.onay?'onaylı':'atandı'):'atanmadı','sel']];
+const _trGrupOf=r=>r.grup?((getTransfer().gruplar||{})[r.grup]||{}):{};
+const _TRCOLS=[['tip','Tip',x=>x.r.tip,'sel'],['op','Operatör',x=>x.r.op,'sel'],['urun','Ürün',x=>x.r.urun,'txt'],['nereden','Nereden',x=>x.r.nereden,'txt'],['nereye','Nereye',x=>x.r.nereye,'txt'],['ucus','Uçuş',x=>x.r.ucus||'','txt'],['saat','Uçuş Saati',x=>x.r.saat||'','txt'],['depar','Depar',x=>x.dh.saat||'','txt'],['pax','Pax',x=>+x.r.pax||0,'txt'],['bolge','Bölge',x=>x.r.bolge||'','sel'],['gorev','Görev',x=>x.r.grup||'','sel'],['rehber','Rehber',x=>_trGrupOf(x.r).rehber||'','sel'],['arac','Araç',x=>[_trGrupOf(x.r).arac,_trGrupOf(x.r).arac2].filter(Boolean).join(' + '),'sel'],['firma','Firma',x=>_trGrupOf(x.r).firma||'','sel'],['not','Not',x=>x.r.not||'','txt'],['durum','Durum',x=>x.r.grup?(x.r.onay?'onaylı':'atandı'):'atanmadı','sel']];
 function _trDayRows(){
   const all=_trGenRows(); const out=[];
   all.forEach(r=>{ if(!_trTipF[r.tip]) return; const dh=_trDeparHesap(r); const efTarih=dh.onceki?_trGunEkle(r.tarih,-1):r.tarih; let gece=false;
@@ -13354,8 +13355,11 @@ function renderOpsTransfer(){
     h+=`<td><input class="saatin${r.deparMan?' man':''}" value="${esc(dh.saat)}" onchange="_trDeparElle('${r.id}',this.value)" title="${r.deparMan?'Elle girildi':'Bölgeden otomatik'}"></td>`;
     h+=`<td><b>${r.pax}</b></td>`;
     h+=`<td>${esc(r.bolge||'—')}</td>`;
+    h+=`<td>${r.grup?`<span class="grupb">${r.grup}</span>`:'<span style="color:#b91c1c;font-weight:700">—</span>'}</td>`;
+    h+=`<td>${gr&&gr.rehber?esc(gr.rehber):'<span style="color:var(--muted)">—</span>'}</td>`;
+    h+=`<td>${gr&&(gr.arac||gr.arac2)?esc([gr.arac,gr.arac2].filter(Boolean).join(' + ')):'<span style="color:var(--muted)">—</span>'}</td>`;
+    h+=`<td>${gr&&gr.firma?esc(gr.firma):'<span style="color:var(--muted)">—</span>'}</td>`;
     h+=`<td><input class="notin" value="${esc(r.not||'')}" onchange="_trNotElle('${r.id}',this.value)" placeholder="—"></td>`;
-    h+=`<td>${r.grup?`<span class="grupb">${r.grup}</span> ${gr?esc((gr.rehber||'')+' · '+(gr.arac||'')+(gr.arac2?' +'+gr.arac2:'')):''}`:'<span style="color:#b91c1c;font-weight:700">—</span>'}</td>`;
     h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):'<span class="trchip c-yok">atanmadı</span>'}</td>`;
     h+=`<td>${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button>`:''}</td></tr>`;
   });
