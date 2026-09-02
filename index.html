@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v280 · 02.09.2026';
+const APP_VER='v281 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6385,7 +6385,7 @@ function _resDepartureDates(pkg){
   return [...set].sort();
 }
 function _resOpAd(pkg){ const op=getOperators().find(o=>o.id===(pkg&&pkg.operatorId)); return op?op.ad:''; }
-function _fmtDateTR(iso){ if(!iso) return ''; const p=String(iso).slice(0,10).split('-'); return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):iso; }
+function _fmtDateTR(iso){ if(!iso) return ''; const p=_pdate(iso); if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p)){ const a=p.split('-'); return a[2]+'.'+a[1]+'.'+a[0]; } return String(iso); }
 function _fmtDateFile(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
 
 let _ucakNav=(()=>{try{return JSON.parse(localStorage.getItem('dmc_ucakNav')||'{"yil":null,"ay":null}');}catch(e){return {yil:null,ay:null};}})();
@@ -6690,6 +6690,14 @@ function _pdate(v){ if(!v)return''; if(v instanceof Date)return v.toISOString().
 function _parseLegs(y,p,hy,pnr,tarih,uno,rota,saat){ y[p+'_hy']=hy; y[p+'_pnr']=pnr; y[p+'_tarih']=tarih; const apts=_sTrim(rota).split('-').map(x=>x.trim()).filter(Boolean); const times=_sTrim(saat).split('/').map(x=>x.trim()).filter(Boolean); const legs=Math.max(apts.length-1,times.length,1); const t1=(times[0]||'').split('-'),t2=(times[1]||'').split('-'); let u1=_sTrim(uno),u2=''; if(legs>1){ const parts=_sTrim(uno).split('-'); if(parts.length>=2){ u1=parts[0]; u2=parts.slice(1).join('-'); } } y[p+'_u1']=u1; y[p+'_k1']=apts[0]||''; y[p+'_ks1']=t1[0]||''; y[p+'_v1']=apts[1]||''; y[p+'_vs1']=t1[1]||''; if(legs>1&&p!=='a'){ y[p+'_u2']=u2; y[p+'_k2']=apts[1]||''; y[p+'_ks2']=t2[0]||''; y[p+'_v2']=apts[2]||''; y[p+'_vs2']=t2[1]||''; } }
 function _migrateResData(){
   let ch=false;
+  try{
+    let n=0;
+    (getReservations()||[]).forEach(g=>(g.rows||[]).forEach(r=>{
+      if(!r||Array.isArray(r)) return;
+      ['g_tarih','d_tarih','a_tarih'].forEach(f=>{ const v=String(r[f]||'').trim(); if(!v||/^\d{2}\.\d{2}\.\d{4}$/.test(v)) return; const y2=_tarihNorm(v); if(y2!==v){ r[f]=y2; n++; } });
+    }));
+    if(n){ setReservations(getReservations()); console.log('Tarih formatı birleştirildi:',n,'alan → GG.AA.YYYY'); }
+  }catch(e){}
   (getReservations()||[]).forEach(g=>{ if(!g.rows||!g.rows.length||!Array.isArray(g.rows[0])) return;
     g.rows=g.rows.map(r=>{ const y=_bosRow(); y.op=_sTrim(r[0]); y.kod=_sTrim(r[1]); y.resno=_sTrim(r[2]); y.ad=_sTrim(r[3]); y.soyad=_sTrim(r[4]); y.tip=_sTrim(r[5]); y.bagaj=_sTrim(r[8]); y.not=_sTrim(r[23]); _parseLegs(y,'g',_sTrim(r[10]),_sTrim(r[11]),_pdate(r[12]),_sTrim(r[13]),_sTrim(r[14]),_sTrim(r[15])); _parseLegs(y,'d',_sTrim(r[17]),_sTrim(r[18]),_pdate(r[19]),_sTrim(r[20]),_sTrim(r[21]),_sTrim(r[22])); return y; }); ch=true; });
   (getPnrLedger()||[]).forEach(g=>{ if(!g.rows||!g.rows.length||!Array.isArray(g.rows[0])) return; g.rows=g.rows.map(r=>({pnr:_sTrim(r[0]),maliyet:parseFloat(r[1])||0,para:_sTrim(r[2])||'TL',hy:_sTrim(r[3]),hesap:_sTrim(r[4]),alim:_pdate(r[5])})); ch=true; });
@@ -7351,9 +7359,11 @@ function _saatNorm(v){
   if(m){ const h=+m[1], mm=+m[2]; if(h<=23&&mm<=59) return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
   return t;
 }
+function _tarihNorm(v){ const t=String(v||'').trim(); if(!t) return t; const p=_pdate(t); if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p)){ const a=p.split('-'); return a[2]+'.'+a[1]+'.'+a[0]; } return t; }
 function _resSetFlight(r,f,v){
   const g=_resGrid(true), y=g.rows[r]; if(!y) return;
   if(/_(ks|vs)\d$/.test(f)){ v=_saatNorm(v); }
+  if(/_tarih$/.test(f)){ v=_tarihNorm(v); }
   const old=y[f];
   if(f.endsWith('_pnr')){ y[f]=v; setReservations(getReservations()); renderRezervasyon(); return; }
   const p=f.split('_')[0], pnrF=p+'_pnr';
