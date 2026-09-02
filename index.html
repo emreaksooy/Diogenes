@@ -1159,6 +1159,12 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <label style="display:flex;align-items:center;gap:9px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:9px 12px;margin-bottom:12px;cursor:pointer;font-size:.84rem;font-weight:600;color:#92400e">
         <input type="checkbox" id="pkgUcakOperatorde" onchange="markDirty()" style="width:16px;height:16px;flex-shrink:0"> <span><svg class="ic"><use href="#i-plane"/></svg> <b>Uçuş operatör tarafından alınır</b> <span style="font-weight:400">— bizim uçak/bilet modülümüzde takip edilmez</span></span>
       </label>
+      <label style="display:flex;align-items:center;gap:9px;background:#e0f2fe;border:1px solid #7dd3fc;border-radius:8px;padding:9px 12px;margin-bottom:8px;cursor:pointer;font-size:.84rem;font-weight:600;color:#0369a1">
+        <input type="checkbox" id="pkgOpsDisAcente" onchange="markDirty()" style="width:16px;height:16px;flex-shrink:0"> <span>🚌 <b>Operasyon/transferler dış acentede</b> <span style="font-weight:400">— transfer listesi ve 'atanmamış' uyarıları bu ürün için üretilmez</span></span>
+      </label>
+      <label style="display:flex;align-items:center;gap:9px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;margin-bottom:12px;cursor:pointer;font-size:.84rem;font-weight:600;color:#475569">
+        <input type="checkbox" id="pkgRehbersiz" onchange="markDirty()" style="width:16px;height:16px;flex-shrink:0"> <span>🧭 <b>Rehbersiz ürün</b> <span style="font-weight:400">— 'rehber atanmamış' uyarısı verilmez</span></span>
+      </label>
       <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px">
         <div class="field" style="flex:1;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Varış Havalimanı (TR)</label><input id="varisHavalimani" value="" oninput="varisHavalimani=this.value.toUpperCase().trim();markDirty()" placeholder="SAW, IST, AYT..."></div>
         <div class="field" style="flex:1;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Dönüş Havalimanı (TR)</label><input id="donusHavalimani" value="" oninput="donusHavalimani=this.value.toUpperCase().trim();markDirty()" placeholder="AYT, IST, SAW..."></div>
@@ -1895,7 +1901,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v296 · 02.09.2026';
+const APP_VER='v297 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -3175,6 +3181,8 @@ function collectData(){
     marginPct:v('marginPct'), maliyetNot:v('maliyetNot'),
     operatorId: currentOpId,
     ucakOperatorde: (document.getElementById('pkgUcakOperatorde')||{}).checked||false,
+    opsDisAcente: (document.getElementById('pkgOpsDisAcente')||{}).checked||false,
+    rehbersiz: (document.getElementById('pkgRehbersiz')||{}).checked||false,
     bagajlar:JSON.parse(JSON.stringify(bagajlar)),
     ozelGrupFiyat:!!ozelGrupAktif,
     ozelKalemler:JSON.parse(JSON.stringify(ozelKalemler)),
@@ -3518,6 +3526,8 @@ function fillForm(d){
   const _rawU=d.araUcuslar||(d.ucuslar||[]).filter(u=>u.from&&u.to)||[];
   ucuslar=_rawU; varisHavalimani=d.varisHavalimani||''; donusHavalimani=d.donusHavalimani||'';
   const _uoEl=document.getElementById('pkgUcakOperatorde');if(_uoEl)_uoEl.checked=!!d.ucakOperatorde;
+  { const _e1=document.getElementById('pkgOpsDisAcente'); if(_e1)_e1.checked=!!d.opsDisAcente; }
+  { const _e2=document.getElementById('pkgRehbersiz'); if(_e2)_e2.checked=!!d.rehbersiz; }
   ozelGrupAktif=!!d.ozelGrupFiyat; ozelKalemler=Array.isArray(d.ozelKalemler)?JSON.parse(JSON.stringify(d.ozelKalemler)):[]; renderOzelKalemler();
   bagajlar = Array.isArray(d.bagajlar) ? d.bagajlar.map(b=>({ad:b.ad||'',fiyat:+b.fiyat||0,dahil:!!b.dahil,havalimanlari:b.havalimanlari||''})) : ((d.bagajDetay||'').trim()?[{ad:d.bagajDetay,fiyat:0,dahil:true}]:[]); if(bagajlar.length&&!bagajlar.some(b=>b.dahil)) bagajlar[0].dahil=true; renderBagajlar();
   ekstraCharges = Array.isArray(d.ekstraCharges)?d.ekstraCharges.map(c=>({ad:c.ad||'',sezonBazli:!!c.sezonBazli,tutar:+c.tutar||0,sezonTutar:(c.sezonTutar&&typeof c.sezonTutar==='object')?c.sezonTutar:{}})):[]; renderEkstraCharges();
@@ -6537,6 +6547,7 @@ function renderUcakGenel(){
       <div class="ud-pax">${it.real?it.pax+' yolcu':'—'}</div>
       ${it.ozel?'<div class="ud-status ozelg">özel grup</div>':(it.ekstra?'<div class="ud-status urunyok">üründe yok</div>':'')}
       ${it.pkg.ucakOperatorde?'<div class="ud-status" style="background:#dbeafe;color:#1d4ed8;white-space:nowrap">✈ Uçakları Operatör Alıyor</div>':''}
+      ${it.pkg.opsDisAcente?'<div class="ud-status" style="background:#e0f2fe;color:#0369a1;white-space:nowrap">🚌 Dış Operasyon</div>':''}
       ${it.iptal?'<div class="ud-status" style="background:#fee2e2;color:#dc2626">İPTAL</div>':''}
       <div class="ud-status ${it.status}">${stTxt[it.status]}</div>
     </div>`; };
@@ -11105,7 +11116,7 @@ function _opsUyarilar(gun){
       out.push({tarih:p[0],ikon:p[1]==='G'?'🛬':'🛫',onem:2,mesaj:(p[1]==='G'?'GELİŞ':'DÖNÜŞ')+' transferi atanmamış — '+g.n+' transfer · '+g.pax+' pax',git:"opsTab('transfer');opsTrSet('"+p[0]+"')"}); });
   }catch(e){}
   // rehbersiz turlar
-  try{ _rtTurlar(bugun,son).filter(t=>!t.rehberAd&&t.pax>0).forEach(t=>{
+  try{ _rtTurlar(bugun,son).filter(t=>{ const pk=getPackages().find(p=>p.id===t.pkgId)||{}; return !t.rehberAd&&t.pax>0&&!pk.rehbersiz&&!pk.opsDisAcente; }).forEach(t=>{
     const d=_opsPaxDetay(t.pkgId,t.kalkis);
     out.push({tarih:t.kalkis,ikon:'🧭',onem:1,pkgId:t.pkgId,kalkis:t.kalkis,mesaj:'Rehber atanmamış — '+t.kod+(t.op?' · '+t.op:'')+' · '+t.pax+' pax (uçak listesi: '+d.ucak+' · rezervasyon: '+d.rezvP+' yolcu / '+d.rezvSay+' kayıt)',git:"opsTab('rehtak')"}); }); }catch(e){}
   // mağaza atanmamış ziyaretler
@@ -13197,6 +13208,7 @@ function _trGenRows(){
     o.grup=m.grup||null; o.onay=!!m.onay; o.depar=m.depar||''; o.deparMan=!!m.deparMan; o.not=m.not!=null?m.not:''; return o; };
   getReservations().forEach(g=>{
     const pkg=pkgs.find(p=>p.id===g.pkgId)||{}; const op=_resOpAd(pkg)||''; const urun=pkg.paketKodu||pkg.paketAdi||'';
+    if(pkg.opsDisAcente) return; // operasyon dış acentede — transferleri biz ayarlamıyoruz
     const hotel=_trHotel(g.pkgId,g.kalkis,pkg); const bolge=_trBolge(pkg);
     const real=(g.rows||[]).filter(_isim); if(!real.length) return;
     _trGroup(real,'g').forEach(grp=>{ const y=grp.y;
