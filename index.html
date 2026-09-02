@@ -830,6 +830,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -1884,7 +1885,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v270 · 02.09.2026';
+const APP_VER='v271 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13384,6 +13385,7 @@ function _mutAracExcel(){
     aoa.push(['TOPLAM','','','','',L.reduce((t,x)=>t+x.isSay,0),L.reduce((t,x)=>t+x.gun,0),Object.entries(tut).map(([p,v])=>(Math.round(v*100)/100)+' '+p).join(' + '),'']);
     const ws=XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols']=[11,11,12,20,40,5,5,12,6].map(w2=>({wch:w2}));
+    try{ _xsSusle(ws,aoa,{baslikR:0,altR:null,hdrR:2,veriBas:3,veriSon:2+L.length,toplamR:aoa.length-1,nC:9,tipC:null,durumC:null}); ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:8}}); }catch(e){}
     XLSX.utils.book_append_sheet(wb,ws,String(F).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Firma');
   });
   const adx='arac_mutabakat_'+_mutAy+'.xlsx';
@@ -13565,6 +13567,45 @@ function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!
     <div class="imza"><span>Şoför: ____________</span><span>Rehber: ____________</span><span>Operasyon: ____________</span></div></div>`; }
 function _trPrint(html){ let p=document.getElementById('trfPrint'); if(!p){ p=document.createElement('div'); p.id='trfPrint'; document.body.appendChild(p); } p.innerHTML=html; document.body.classList.add('trf-printing'); window.print(); setTimeout(()=>document.body.classList.remove('trf-printing'),400); }
 function _trPrintGrup(kod){ const h=_trGorevHtml(kod); if(!h){ showToast('Görev bulunamadı','error'); return; } _trPrint(h); }
+// ═══ ŞIK EXCEL: marka renkleri + çerçeve + zebra (xlsx-js-style yüklüyse; değilse düz ama çalışır) ═══
+const _XSC={navy:'FF1E3A5F',turuncu:'FFE8630A',turuncuSoft:'FFFDEBDD',zebra:'FFF5F7FA',cizgi:'FFC9CDD4',yesil:'FFDCFCE7',yesilK:'FF166534',kirmizi:'FFFEE2E2',kirmiziK:'FFB91C1C',mavi:'FFE0F2FE',maviK:'FF0369A1',beyaz:'FFFFFFFF',gri:'FF555555'};
+function _xsB(c){ const l={style:'thin',color:{rgb:c||_XSC.cizgi}}; return {top:l,bottom:l,left:l,right:l}; }
+function _xsSet(ws,r,c,st){ const ad=XLSX.utils.encode_cell({r,c}); if(ws[ad]) ws[ad].s=Object.assign({},ws[ad].s||{},st); }
+function _xsSatirStil(ws,r,nC,st){ for(let c=0;c<nC;c++) _xsSet(ws,r,c,st); }
+function _xsSusle(ws,aoa,ops){
+  // ops:{baslikR,altR,hdrR,veriBas,veriSon,toplamR,nC,durumC,tipC}
+  const o=ops;
+  ws['!merges']=(ws['!merges']||[]).concat([{s:{r:o.baslikR,c:0},e:{r:o.baslikR,c:o.nC-1}}]);
+  if(o.altR!=null) ws['!merges'].push({s:{r:o.altR,c:0},e:{r:o.altR,c:o.nC-1}});
+  ws['!rows']=ws['!rows']||[]; ws['!rows'][o.baslikR]={hpt:30}; if(o.altR!=null) ws['!rows'][o.altR]={hpt:15}; ws['!rows'][o.hdrR]={hpt:20};
+  _xsSet(ws,o.baslikR,0,{font:{bold:true,sz:15,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'left',vertical:'center',indent:1}});
+  for(let c=1;c<o.nC;c++) _xsSet(ws,o.baslikR,c,{fill:{fgColor:{rgb:_XSC.navy}}});
+  if(o.altR!=null){ _xsSet(ws,o.altR,0,{font:{sz:9,color:{rgb:_XSC.gri},italic:true},alignment:{horizontal:'left',indent:1}}); }
+  _xsSatirStil(ws,o.hdrR,o.nC,{font:{bold:true,sz:9,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:_xsB(_XSC.beyaz)});
+  for(let r=o.veriBas;r<=o.veriSon;r++){
+    const zebra=(r-o.veriBas)%2===1;
+    _xsSatirStil(ws,r,o.nC,{font:{sz:9},border:_xsB(),alignment:{vertical:'center'},fill:zebra?{fgColor:{rgb:_XSC.zebra}}:undefined});
+    if(o.tipC!=null){ const ad=XLSX.utils.encode_cell({r,c:o.tipC}); const v=ws[ad]&&String(ws[ad].v||'');
+      if(v==='GELİŞ') _xsSet(ws,r,o.tipC,{font:{sz:9,bold:true,color:{rgb:_XSC.yesilK}},fill:{fgColor:{rgb:_XSC.yesil}},border:_xsB()});
+      else if(v==='DÖNÜŞ') _xsSet(ws,r,o.tipC,{font:{sz:9,bold:true,color:{rgb:_XSC.maviK}},fill:{fgColor:{rgb:_XSC.mavi}},border:_xsB()});
+    }
+    if(o.durumC!=null){ const ad=XLSX.utils.encode_cell({r,c:o.durumC}); const v=ws[ad]&&String(ws[ad].v||'');
+      if(v==='ATANMAMIŞ') _xsSet(ws,r,o.durumC,{font:{sz:9,bold:true,color:{rgb:_XSC.kirmiziK}},fill:{fgColor:{rgb:_XSC.kirmizi}},border:_xsB()});
+      else if(v==='ONAYLI') _xsSet(ws,r,o.durumC,{font:{sz:9,bold:true,color:{rgb:_XSC.yesilK}},fill:{fgColor:{rgb:_XSC.yesil}},border:_xsB()});
+    }
+  }
+  if(o.toplamR!=null) _xsSatirStil(ws,o.toplamR,o.nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)});
+  return ws;
+}
+function _trExcelWsYap(list,baslik,alt){
+  const govde=_trExcelAoa(list);
+  const aoa=[[baslik],[alt],[]].concat(govde);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=_trWsCols();
+  const nC=govde[0].length;
+  _xsSusle(ws,aoa,{baslikR:0,altR:1,hdrR:3,veriBas:4,veriSon:3+(govde.length-3),toplamR:aoa.length-1,nC,tipC:3,durumC:nC-1});
+  return ws;
+}
 function _trExcelAoa(list){
   const T=getTransfer();
   const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR'};
@@ -13638,6 +13679,11 @@ function _trUetdsExcel(){
     aoa.push(['TOPLAM YOLCU',n]);
     const ws=XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols']=[5,7,16,18,16,11,13,10,24,24,9,8,7].map(w2=>({wch:w2}));
+    try{
+      _xsSusle(ws,aoa,{baslikR:0,altR:null,hdrR:7,veriBas:8,veriSon:7+n,toplamR:aoa.length-1,nC:13,tipC:7,durumC:null});
+      ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:12}});
+      for(let r2=1;r2<=5;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}}}); _xsSet(ws,r2,3,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}}}); _xsSet(ws,r2,1,{font:{sz:10,bold:true}}); _xsSet(ws,r2,4,{font:{sz:10,bold:true}}); }
+    }catch(e){}
     XLSX.utils.book_append_sheet(wb,ws,String(kod).slice(0,31));
   });
   const adx='uetds_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
@@ -13654,9 +13700,10 @@ function _trExcelFirma(){
   const grupla={};
   list.forEach(x=>{ const g=x.r.grup?(G[x.r.grup]||{}):null; const f=(g&&(g.firma||'').trim())||(x.r.grup?'Firmasız görevler':'ATANMAMIŞ'); (grupla[f]=grupla[f]||[]).push(x); });
   const wb=XLSX.utils.book_new();
+  const donemF=_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate);
   Object.keys(grupla).sort((a,b)=>a.localeCompare(b,'tr')).forEach(f=>{
-    const ws=XLSX.utils.aoa_to_sheet(_trExcelAoa(grupla[f]));
-    ws['!cols']=_trWsCols();
+    const L2=grupla[f];
+    const ws=_trExcelWsYap(L2,'DIOGENES TRAVEL — TRANSFER LİSTESİ · '+f,donemF+' · '+L2.length+' transfer · '+L2.reduce((t,x)=>t+(+x.r.pax||0),0)+' pax');
     XLSX.utils.book_append_sheet(wb,ws,String(f).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Sayfa');
   });
   const adx='transfer_firmalar_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
@@ -13667,8 +13714,8 @@ function _trExcelDay(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   let list=_trGorunur();
   if(!list.length){ showToast('Listelenecek transfer yok','error'); return; }
-  const ws=XLSX.utils.aoa_to_sheet(_trExcelAoa(list));
-  ws['!cols']=_trWsCols();
+  const donem=_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate);
+  const ws=_trExcelWsYap(list,'DIOGENES TRAVEL — TRANSFER LİSTESİ'+(_trUst.firma?' · '+_trUst.firma:''),donem+' · '+list.length+' transfer · '+list.reduce((t,x)=>t+(+x.r.pax||0),0)+' pax');
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Transferler');
   const adx='transfer_'+(_trUst.firma?String(_trUst.firma).replace(/\s+/g,'')+'_':'')+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
