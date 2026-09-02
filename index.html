@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v256 · 02.09.2026';
+const APP_VER='v257 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10102,6 +10102,23 @@ const _docSig={res:new Map(),pnr:new Map(),ops:new Map(),transfer:new Map(),opsg
 // MEZAR TAŞLARI: silinen doc kayıtları buluta col='sil', id='<col>:<docId>' olarak işlenir.
 // Amaç: silme push'u yarım kalsa bile kayıt backfill/tam çekimle bir daha HORTLAMASIN.
 let _silTomb=new Map();
+// SENKRON İMZALARI ARTIK KALICI (IDB): taze açılan tarayıcı neyin senkronlanmış olduğunu bilir.
+// Böylece 'buluta hiç gitmemiş yerel veri koruması' ESKİ kayıtları hortlatamaz (HER7D vakası).
+function _dsig(v){ const st=typeof v==='string'?v:JSON.stringify(v); let h=5381; for(let i=0;i<st.length;i++){ h=((h<<5)+h+st.charCodeAt(i))|0; } return 'h'+(h>>>0).toString(36)+'_'+st.length; }
+let _docSigSaveT=null;
+function _docSigSave(){
+  clearTimeout(_docSigSaveT);
+  _docSigSaveT=setTimeout(()=>{ try{
+    const o={}; Object.keys(_docSig).forEach(c=>{ o[c]=Object.fromEntries(_docSig[c]); });
+    idbSet('docSig',o);
+  }catch(e){} },800);
+}
+async function _docSigLoad(){
+  try{
+    const o=await idbGet('docSig');
+    if(o&&typeof o==='object') Object.keys(_docSig).forEach(c=>{ if(o[c]&&typeof o[c]==='object') _docSig[c]=new Map(Object.entries(o[c])); });
+  }catch(e){}
+}
 const _KIND2COL={reservations:'res',pnrLedger:'pnr',operasyon:'ops',transfer:'transfer',opsgrup:'opsgrup',rezervasyonlar:'rezv'};
 function _docSplit(col){
   if(col==='res') return (_resCache||[]).filter(g=>g&&g.pkgId&&g.kalkis).map(g=>({id:g.pkgId+'|'+g.kalkis,parent:String(g.kalkis||''),data:g}));
@@ -10171,7 +10188,7 @@ async function _docPush(col){
   const rows=_docSplit(col), sig=_docSig[col], cur=new Set(), ups=[];
   rows.forEach(r=>{
     cur.add(r.id);
-    const s2=JSON.stringify(r.data);
+    const s2=_dsig(r.data);
     if(sig.get(r.id)!==s2){ ups.push({col,id:r.id,parent:r.parent||null,data:r.data,updated_at:new Date().toISOString(),updated_by:sbUser?sbUser.id:null}); sig.set(r.id,s2); }
   });
   const del=[...sig.keys()].filter(id=>!cur.has(id));
@@ -10208,6 +10225,7 @@ async function _docPush(col){
     if(r.error) throw new Error('Silme gönderilemedi ('+col+', '+(i+parca.length)+'/'+del.length+') — '+(r.error.message||r.error));
     parca.forEach(id=>sig.delete(id));
   }
+  _docSigSave();
 }
 function _onDocRemote(p){
   try{
@@ -10217,10 +10235,11 @@ function _onDocRemote(p){
       if(!_docSig[col].has(id)) return;
       _docSig[col].delete(id); _docApplyOne(col,id,null);
     } else {
-      const sig=JSON.stringify(p.new.data);
+      const sig=_dsig(p.new.data);
       if(_docSig[col].get(id)===sig) return;
       _docSig[col].set(id,sig); _docApplyOne(col,id,p.new.data);
     }
+    _docSigSave();
     _docRerender(col);
   }catch(e){ console.warn('doc remote',e); }
 }
@@ -10335,11 +10354,12 @@ async function _cloudPullFull(){
         const yerel=_docSplit(col);
         _docJoin(col,docBy[col]);
         _docSig[col].clear();
-        docBy[col].forEach(r=>_docSig[col].set(r.id,JSON.stringify(r.data)));
+        docBy[col].forEach(r=>_docSig[col].set(r.id,_dsig(r.data)));
         let kurtarilan=0;
         yerel.forEach(r=>{
           if(_docSig[col].has(r.id)) return;      // bulutta var
           if(eskiSig.has(r.id)) return;           // daha önce senkronize olmuştu → bulut sildi, biz de sileriz
+          if(_silTomb.has(col+':'+r.id)) return;  // MEZAR TAŞLI → silinmişti, hortlatma
           _docApplyOne(col,r.id,r.data); kurtarilan++;  // hiç gitmemiş yerel kayıt → koru
         });
         if(kurtarilan){ console.warn(col+': '+kurtarilan+' yerel kayıt buluta hiç gitmemişti — korundu, yeniden gönderiliyor'); _cloudQueue(_COL2KIND[col]||col); }
@@ -10369,6 +10389,7 @@ async function _cloudPullFull(){
     _pkgCache.forEach(p=>_sigPkg.set(p.id,JSON.stringify(p)));
     _opCache.forEach(o=>_sigOp.set(o.id,JSON.stringify(o)));
     _rezvDedupe();
+    _docSigSave();
     renderOpList(); renderOperatorSelect(); renderDashboard();
     if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); }
     _pullDususKontrol('tam çekim',_rezvOnce);
@@ -10414,7 +10435,7 @@ async function _cloudPullIncre(last){
       if(ci>0){ const c=r.id.slice(0,ci), did=r.id.slice(ci+1);
         if(_docSig[c]&&_docSig[c].has(did)){ _docSig[c].delete(did); _docApplyOne(c,did,null); degisti++; } }
       return; }
-    if(!_docSig[r.col])return; const sig=JSON.stringify(r.data); if(_docSig[r.col].get(r.id)===sig)return;
+    if(!_docSig[r.col])return; const sig=_dsig(r.data); if(_docSig[r.col].get(r.id)===sig)return;
     if(_silTomb.has(r.col+':'+r.id)) _silTomb.delete(r.col+':'+r.id); // güncel satır geldi → taş düşer (yeniden oluşturma)
     _docSig[r.col].set(r.id,sig); _docApplyOne(r.col,r.id,r.data); degisti++; });
   { const uzak={}; (drIds.data||[]).forEach(r=>{ (uzak[r.col]=uzak[r.col]||new Set()).add(r.id); });
@@ -10449,13 +10470,16 @@ async function _cloudPullIncre(last){
       for(let i=0;i<ids.length;i+=100){
         const r2=await sb.from('doc_rows').select('col,id,data').eq('col',col).in('id',ids.slice(i,i+100));
         if(r2.error){ console.warn('backfill',col,r2.error.message||r2.error); continue; }
-        (r2.data||[]).forEach(r=>{ _docSig[col].set(r.id,JSON.stringify(r.data)); _docApplyOne(col,r.id,r.data); degisti++; });
+        (r2.data||[]).forEach(r=>{ _docSig[col].set(r.id,_dsig(r.data)); _docApplyOne(col,r.id,r.data); degisti++; });
       }
       _docRerender(col);
     }
     if(eksikSay||pkEksik.length||opEksik.length) console.warn('Bulut backfill: '+eksikSay+' doc + '+pkEksik.length+' paket + '+opEksik.length+' operatör eksikti — tamamlandı');
   }catch(e){ console.warn('backfill hata',e); }
+  // taşlı yerel kayıtlar (eski IDB kopyalarından kalanlar) temizlenir
+  try{ Object.keys(_docSig).forEach(c=>{ _docSplit(c).forEach(r=>{ if(_silTomb.has(c+':'+r.id)){ _docSig[c].delete(r.id); _docApplyOne(c,r.id,null); degisti++; } }); }); }catch(e){}
   _rezvDedupe();
+  _docSigSave();
   if(degisti){ renderOpList(); renderOperatorSelect(); renderDashboard(); if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); } }
   _pullDususKontrol('artımlı çekim',_rezvOnce);
 }
@@ -10756,6 +10780,7 @@ async function _boot(){
   let ekp = await idbGet('ekip');          _ekipCache   = Array.isArray(ekp)?ekp:null;
   let trf = await idbGet('transfer');      _trCache = (trf&&typeof trf==='object')?trf:null;
   let ogr = await idbGet('opsgrup');       _ogCache = (ogr&&typeof ogr==='object')?ogr:null;
+  await _docSigLoad();
   seedData();
   _migrateResData();
   renderDestinasyonSelect('');
