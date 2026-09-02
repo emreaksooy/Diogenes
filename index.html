@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v285 · 02.09.2026';
+const APP_VER='v286 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13344,6 +13344,19 @@ function _trMonTgl(){ try{ localStorage.setItem('dmc_trMonAcik',localStorage.get
 // ═══ ARAÇ MUTABAKATI — transfer görevleri + tur araçları (tahsis/nokta) birleşik döküm ═══
 let _mutAy=''; let _mutFirmaF='';
 function _mutUcretSet(kod,f,v){ const T=getTransfer(); if(!T.gruplar||!T.gruplar[kod]) return; T.gruplar[kod][f]=String(v).trim(); setTransfer(T); if(f==='ucretPara') renderOpsMutabakat(); }
+function _afFirmaBul(ad){ return (getTanimlar().aracFirmalari||[]).find(x=>(x.ad||'')===ad)||null; }
+function _afDonemBul(f,tarihIso){ let don=(f.kDonem||[]).find(d=>{ const db=_pdate(d.bas||''), de=_pdate(d.bit||''); return db&&de&&db<=tarihIso&&tarihIso<=de; }); if(!don&&(f.kDonem||[]).length===1) don=f.kDonem[0]; return don||null; }
+function _afTipN(t){ return String(t||'').replace(/İ/g,'I').toUpperCase().trim(); }
+function _afHizmetFiyat(firmaAd,tarihIso,hzId,arTip){
+  const f=_afFirmaBul(firmaAd); if(!f) return null; const don=_afDonemBul(f,tarihIso); if(!don) return null;
+  const v=(f.kHiz||{})[hzId+'|'+_afTipN(arTip)+'|'+don.id];
+  return (v!=null&&String(v).trim()!=='')?{fiyat:_tdN(v),para:f.kPara||'EUR'}:null;
+}
+function _afTahsisFiyat(firmaAd,tarihIso,arTip){
+  const f=_afFirmaBul(firmaAd); if(!f) return null; const don=_afDonemBul(f,tarihIso); if(!don) return null;
+  const v=(f.kTahsis||{})[_afTipN(arTip)+'|'+don.id];
+  return (v!=null&&String(v).trim()!=='')?{fiyat:_tdN(v),para:f.kPara||'EUR'}:null;
+}
 // firma kontrat tarifesinden fiyat: dönem (tarih) × güzergâh (yönsüz) × araç tipi
 function _afTarife(firmaAd,tarihIso,ucA,ucB,arTip){
   try{
@@ -13403,14 +13416,20 @@ function _mutAracSatirlar(){
     const guzergah=ilk.tip==='D'?((bolge||'?')+'-'+uc):(uc+'-'+(bolge||'?'));
     const arTip=String(gr.arac||'').split('(')[0].trim().split(' · ').pop()||'';
     const paxT=L.reduce((t2,r)=>t2+(+r.pax||0),0);
-    const trf=gr.tahsis?null:_afTarife(gr.firma||'',_pdate(tarih),uc,bolge,arTip);
+    const sec=String(gr.tarifeSec||'');
+    let trf=null, fk='', kaynakAd='TRANSFER';
+    if(!gr.tahsis){
+      if(sec==='TAHSIS'){ trf=_afTahsisFiyat(gr.firma||'',_pdate(tarih),arTip); fk=trf?'tahsis yevmiye':''; kaynakAd='TAHSİS'; }
+      else if(sec.indexOf('hz:')===0){ trf=_afHizmetFiyat(gr.firma||'',_pdate(tarih),sec.slice(3),arTip); fk=trf?(gr.hizmetAd||'hizmet'):''; }
+      else { trf=_afTarife(gr.firma||'',_pdate(tarih),uc,bolge,arTip); fk=trf?'tarife':''; }
+    }
     const elle=String(gr.ucret||'').trim();
-    out.push({kaynak:'TRANSFER',kod:_trKodOf(kod),tarih:_pdate(tarih),firma:gr.firma||'',arac:[gr.arac,gr.arac2].filter(Boolean).join(' + '),
+    out.push({kaynak:kaynakAd,kod:_trKodOf(kod),tarih:_pdate(tarih),firma:gr.firma||'',arac:[gr.arac,gr.arac2].filter(Boolean).join(' + '),
       guzergah:guzergah+(bolgeler2.length>1?' +'+(bolgeler2.length-1):''),pax:paxT,
-      detay:[...new Set(L.map(r=>r.urun))].join('/')+' · '+L.length+' uçuş'+(gr.rehber?' · '+gr.rehber:''),
+      detay:[...new Set(L.map(r=>r.urun))].join('/')+' · '+L.length+' uçuş'+(gr.rehber?' · '+gr.rehber:'')+(sec==='TAHSIS'?' · günlük tahsis':''),
       isSay:1,gun:1,tahsis:!!gr.tahsis,
       ucret:elle||(trf?String(trf.fiyat):''),ucretPara:elle?(gr.ucretPara||'EUR'):(trf?trf.para:(gr.ucretPara||'EUR')),
-      fKaynak:elle?'elle':(trf?'tarife':''),ts:gr.ts||0,edit:kod});
+      fKaynak:elle?'elle':fk,ts:gr.ts||0,edit:kod});
   });
   // 2) tur araçları (rehber dosyası: tahsis + nokta görevler)
   try{
@@ -13478,7 +13497,7 @@ function renderOpsMutabakat(){
       <td style="${td}"><b>${x.pax||''}</b></td>
       <td style="${td};font-size:.7rem;color:var(--muted)">${esc(x.detay)}</td>
       <td style="${td}">${x.gun}</td>
-      <td style="${td};white-space:nowrap">${x.tahsis?'<span style="color:#92400e;font-weight:700;font-size:.68rem">tahsise dahil</span>':(x.edit?`<input inputmode="decimal" value="${esc(x.fKaynak==='elle'?x.ucret:'')}" placeholder="${esc(x.fKaynak==='tarife'?x.ucret:'—')}" style="width:64px;padding:3px 6px;border:1.5px solid ${x.fKaynak==='tarife'?'#86efac':'var(--border)'};border-radius:7px;text-align:right;font-family:inherit" onchange="_mutUcretSet('${x.edit}','ucret',this.value)"><select onchange="_mutUcretSet('${x.edit}','ucretPara',this.value)" style="padding:3px 4px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.7rem">${['EUR','USD','TRY'].map(p=>`<option ${x.ucretPara===p?'selected':''}>${p}</option>`).join('')}</select>${x.fKaynak==='tarife'?'<span style="color:#166534;font-weight:700;font-size:.62rem;margin-left:3px">'+esc(x.ucret)+' '+esc(x.ucretPara)+' tarife</span>':(x.fKaynak===''&&!x.ucret?'<span style="color:#b45309;font-weight:700;font-size:.62rem;margin-left:3px" title="Firma kontratında bu güzergâh/araç tipi için fiyat tanımlı değil">tarife yok</span>':'')}`:esc(x.ucret?x.ucret+' '+x.ucretPara:'—'))}</td></tr>`;
+      <td style="${td};white-space:nowrap">${x.tahsis?'<span style="color:#92400e;font-weight:700;font-size:.68rem">tahsise dahil</span>':(x.edit?(function(){ const oto=x.fKaynak&&x.fKaynak!=='elle'; return `<input inputmode="decimal" value="${esc(x.fKaynak==='elle'?x.ucret:'')}" placeholder="${esc(oto?x.ucret:'—')}" style="width:64px;padding:3px 6px;border:1.5px solid ${oto?'#86efac':'var(--border)'};border-radius:7px;text-align:right;font-family:inherit" onchange="_mutUcretSet('${x.edit}','ucret',this.value)"><select onchange="_mutUcretSet('${x.edit}','ucretPara',this.value)" style="padding:3px 4px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.7rem">${['EUR','USD','TRY'].map(p=>`<option ${x.ucretPara===p?'selected':''}>${p}</option>`).join('')}</select>${oto?'<span style="color:#166534;font-weight:700;font-size:.62rem;margin-left:3px">'+esc(x.ucret)+' '+esc(x.ucretPara)+' · '+esc(x.fKaynak)+'</span>':(x.fKaynak===''&&!x.ucret?'<span style="color:#b45309;font-weight:700;font-size:.62rem;margin-left:3px" title="Firma kontratında bu iş için fiyat tanımlı değil — tarife gir ya da elle yaz">tarife yok</span>':'')}`; })():esc(x.ucret?x.ucret+' '+x.ucretPara:'—'))}</td></tr>`;
   });
   if(curF!==null) h+=araToplam(curF);
   h+='</table></div>';
@@ -13643,6 +13662,15 @@ function _trFiloList(firmaAd){
 function _trAracDoldur(){
   const firma=(document.getElementById('trFirma')||{}).value;
   const L=_trFiloList(firma);
+  // tarife seçenekleri: firmanın hizmet satırları + tahsis
+  const tSel=document.getElementById('trTarife');
+  if(tSel){
+    const cur=tSel.value; const f=firma?_afFirmaBul(firma):null;
+    tSel.innerHTML='<option value="">Tarife: Otomatik</option>'
+      +(f?((f.kHizmet||[]).filter(h=>(h.ad||'').trim()).map(h=>`<option value="hz:${esc(h.id)}">${esc(h.ad)}</option>`).join('')
+      +'<option value="TAHSIS">TAHSİS (günlük yevmiye)</option>'):'');
+    if([...tSel.options].some(o=>o.value===cur)) tSel.value=cur;
+  }
   [['trArac','Araç…'],['trArac2','2. araç yok']].forEach(([id,bos])=>{
     const el=document.getElementById(id); if(!el) return; const cur=el.value;
     el.innerHTML=`<option value="">${bos}</option>`+L.map(a=>`<option value="${esc(a.id)}">${esc((firma?'':(a.firma?a.firma+' · ':''))+a.ad)} — ${a.kap||'?'} koltuk${a.sofor?' · '+esc(a.sofor):''}</option>`).join('');
@@ -13657,6 +13685,7 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
     <select id="trFirma" onchange="_trAracDoldur()"><option value="">Firma…</option>${(T.aracFirmalari||[]).map(x=>`<option>${esc(x.ad)}</option>`).join('')}</select>
     <select id="trArac" onchange="_trKapKontrol()"><option value="">Araç…</option></select>
     <select id="trArac2" onchange="_trKapKontrol()"><option value="">2. araç yok</option></select>
+    <select id="trTarife" title="Fiyat kaynağı — Otomatik: güzergâh tarifesinden; ya da firmanın hizmet satırı / günlük tahsis yevmiyesi"><option value="">Tarife: Otomatik</option></select>
     <input id="trDepar" placeholder="Toplu depar (boş=oto)" style="width:150px">
     <input id="trGuzergah" placeholder="Güzergâh notu" style="width:150px">
     <button class="btn btn-s" onclick="_trAtama()">Birleştir & Ata</button>
@@ -13669,7 +13698,9 @@ function _trAtama(){ if(!_trSel.size) return; const firmaSec=(document.getElemen
   Tr.gruplar[kod]={tip:'nokta',rehber:(document.getElementById('trRehber')||{}).value,
     arac:a.ad+(a.kap?' ('+a.kap+')':''),arac2:a2?(a2.ad+(a2.kap?' ('+a2.kap+')':'')):'',
     firma:firmaSec||a.firma||'',sofor:[a.sofor,a2&&a2.sofor].filter(Boolean).join(' / '),stel:[a.stel,a2&&a2.stel].filter(Boolean).join(' / '),
-    guzergah:(document.getElementById('trGuzergah')||{}).value,ts:Date.now(),tahsis:!!a.tahsis}; Tr.sat=Tr.sat||{};
+    guzergah:(document.getElementById('trGuzergah')||{}).value,ts:Date.now(),tahsis:!!a.tahsis,
+    tarifeSec:(document.getElementById('trTarife')||{}).value||'',
+    hizmetAd:(function(){ const el=document.getElementById('trTarife'); return (el&&el.selectedIndex>0)?el.options[el.selectedIndex].text:''; })()}; Tr.sat=Tr.sat||{};
   rows.forEach(r=>{ Tr.sat[r.id]=Object.assign({},Tr.sat[r.id]||{},{grup:kod,onay:false}); if(dep){ Tr.sat[r.id].depar=dep; Tr.sat[r.id].deparMan=true; } });
   setTransfer(Tr); _trSel.clear(); window._trKod=null; renderOpsTransfer(); showToast(_trKodOf(kod)+' oluşturuldu — '+rows.length+' transfer, '+pax+' pax','success'); }
 function _trAtamaKaldir(id){ _trSatKaydet(id,{grup:null,onay:false}); window._trKod=null; renderOpsTransfer(); }
