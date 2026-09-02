@@ -1895,7 +1895,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v292 · 02.09.2026';
+const APP_VER='v293 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13619,7 +13619,7 @@ function renderOpsTransfer(){
     h+=`<td style="white-space:nowrap"><input type="checkbox" ${_trSel.has(r.id)?'checked':''} onchange="_trSecToggle('${r.id}',this.checked)"><button onclick="_trDetayAc('${r.id}')" title="Detay: yolcular, uçuşlar, gruba git" style="background:none;border:none;cursor:pointer;font-size:.72rem;padding:0 2px">🔍</button></td>`;
     if(_opsTrDate2) h+=`<td style="white-space:nowrap"><b>${_fmtDateTR(r.tarih)}</b></td>`;
     h+=`<td><span class="tipb tb-${r.tip}">${tipAd[r.tip]}</span>${gece?' <span class="gecechip">GECE</span>':''}</td>`;
-    h+=`<td>${esc(r.op)}</td><td><b>${esc(r.urun)}</b> <span style="color:var(--muted)">${esc(r.grupKod||'')}</span></td>`;
+    h+=`<td>${esc(r.op)}</td><td><b>${esc(r.urun)}</b></td>`;
     h+=`<td>${esc(r.nereden)}</td><td>${esc(r.nereye)}</td><td>${esc(r.ucus||'—')}</td><td>${esc(r.saat||'—')}</td>`;
     h+=`<td><input class="saatin${r.deparMan?' man':''}" value="${esc(dh.saat)}" onchange="_trDeparElle('${r.id}',this.value)" title="${r.deparMan?'Elle girildi':'Bölgeden otomatik'}"></td>`;
     h+=`<td><b>${r.pax}</b></td>`;
