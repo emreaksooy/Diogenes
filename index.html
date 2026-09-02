@@ -1885,7 +1885,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v275 · 02.09.2026';
+const APP_VER='v276 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13723,17 +13723,21 @@ function _trTasimaciExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const V=_trTasimaciBloklar(); if(!V) return;
   const aoa=[['DIOGENES TRAVEL — TRANSFER LİSTESİ · '+V.firma],[V.donem],[]];
-  const bantlar=[], bolumBant=[], yolcuHdr=[];
+  const bantlar=[], bolumBant=[], yolcuHdr=[], detaylar=[];
   Object.keys(V.bolumler).forEach(B=>{
     const L=V.bolumler[B]; if(!L.length) return;
     bolumBant.push(aoa.length);
     aoa.push([B+' TRANSFER LİSTESİ']);
-    L.forEach(b=>{
-      bantlar.push(aoa.length);
-      const reh=(b.gr.rehber||'')+(b.gr.sofor?' · Şoför: '+b.gr.sofor:'')+(b.gr.stel?' ('+b.gr.stel+')':'');
+    L.forEach((b,bi)=>{
+      const reh=(b.gr.rehber||'—')+(b.gr.sofor?' · Şoför: '+b.gr.sofor:'')+(b.gr.stel?' ('+b.gr.stel+')':'');
       const ucusOzet=[...new Set(b.ucuslar.map(u=>(u.ucus+(u.saat?' '+u.saat:'')).trim()).filter(Boolean))].join(' + ');
-      const aracTxt=[b.gr.arac,b.gr.arac2].filter(Boolean).join(' + ');
-      aoa.push([b.kod,_fmtDateTR(b.tarih),ucusOzet,(B==='DÖNÜŞ'?b.hedef+'  →  '+b.ucuslar.map(u=>u.yer)[0]:b.ucuslar.map(u=>u.yer)[0].split(' · ')[0]+'  →  '+b.hedef),'Depar: '+(b.depar||'—'),b.pax+' pax',reh,aracTxt,'']);
+      const aracTxt=[b.gr.arac,b.gr.arac2].filter(Boolean).join(' + ')||'—';
+      const rota=B==='DÖNÜŞ'?(b.hedef+'  →  '+b.ucuslar.map(u=>u.yer)[0]):(b.ucuslar.map(u=>u.yer)[0].split(' · ')[0]+'  →  '+b.hedef);
+      bantlar.push(aoa.length);
+      aoa.push([B.charAt(0)+B.slice(1).toLocaleLowerCase('tr')+' Transfer: '+(bi+1)+'   ·   '+b.kod+'   ·   '+_fmtDateTR(b.tarih)]);
+      detaylar.push(aoa.length); aoa.push(['Uçuş',ucusOzet||'—']);
+      detaylar.push(aoa.length); aoa.push(['Güzergâh',rota]);
+      detaylar.push(aoa.length); aoa.push(['Detay','Depar: '+(b.depar||'—')+'   ·   '+b.pax+' pax   ·   Araç: '+aracTxt+'   ·   Rehber: '+reh]);
       yolcuHdr.push(aoa.length);
       aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Uçuş','Saat','Operatör','']);
       b.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.ucus,y.usaat,y.op,'']));
@@ -13744,7 +13748,7 @@ function _trTasimaciExcel(){
     aoa.push([]);
   });
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[8,12,22,42,7,9,14,16,22].map(w2=>({wch:w2}));
+  ws['!cols']=[10,15,8,32,7,10,9,16,10].map(w2=>({wch:w2}));
   try{
     const nC=9;
     ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
@@ -13753,7 +13757,10 @@ function _trTasimaciExcel(){
     for(let c=1;c<nC;c++) _xsSet(ws,0,c,{fill:{fgColor:{rgb:_XSC.navy}}});
     _xsSet(ws,1,0,{font:{sz:9,italic:true,color:{rgb:_XSC.gri}},alignment:{horizontal:'left',indent:1}});
     bolumBant.forEach(r2=>{ ws['!merges'].push({s:{r:r2,c:0},e:{r:r2,c:nC-1}}); _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:12,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},alignment:{vertical:'center'}}); ws['!rows'][r2]={hpt:20}; });
-    bantlar.forEach(r2=>{ _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10,color:{rgb:_XSC.navy}},fill:{fgColor:{rgb:'FFE8EEF7'}},border:_xsB()}); });
+    bantlar.forEach(r2=>{ ws['!merges'].push({s:{r:r2,c:0},e:{r:r2,c:nC-1}}); ws['!rows'][r2]={hpt:18}; _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.navy}},fill:{fgColor:{rgb:'FFE8EEF7'}},border:_xsB(),alignment:{vertical:'center'}}); });
+    detaylar.forEach(r2=>{ ws['!merges'].push({s:{r:r2,c:1},e:{r:r2,c:nC-1}});
+      _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}},alignment:{horizontal:'right',vertical:'center'}});
+      _xsSet(ws,r2,1,{font:{sz:10},alignment:{vertical:'center'}}); });
     yolcuHdr.forEach(r2=>{ _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:8,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},border:_xsB(_XSC.beyaz)});
       for(let r3=r2+1;r3<aoa.length&&aoa[r3].length&&aoa[r3][0]!=='';r3++){ if(typeof aoa[r3][0]!=='number') break; _xsSatirStil(ws,r3,nC,{font:{sz:9},border:_xsB(),fill:(r3-r2)%2===0?{fgColor:{rgb:_XSC.zebra}}:undefined}); } });
     aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
@@ -13770,11 +13777,15 @@ function _trTasimaciPdf(){
   Object.keys(V.bolumler).forEach(B=>{
     const L=V.bolumler[B]; if(!L.length) return;
     h+=`<div class="gorev"><h1>${esc(B)} TRANSFER LİSTESİ — ${esc(V.firma)}</h1><h2>${esc(V.donem)} · Diogenes Travel</h2>`;
-    L.forEach(b=>{
+    L.forEach((b,bi)=>{
       const ucusOzet=[...new Set(b.ucuslar.map(u=>(u.ucus+(u.saat?' '+u.saat:'')).trim()).filter(Boolean))].join(' + ');
       const rota=B==='DÖNÜŞ'?(b.hedef+' → '+b.ucuslar.map(u=>u.yer)[0]):(b.ucuslar.map(u=>u.yer)[0].split(' · ')[0]+' → '+b.hedef);
-      const aracTxt=[b.gr.arac,b.gr.arac2].filter(Boolean).join(' + ');
-      h+=`<div style="background:#e8eef7;border:1px solid #99a;padding:3px 8px;margin-top:6px;font-size:10pt"><b>${esc(b.kod)}</b> · ${_fmtDateTR(b.tarih)} · ${esc(ucusOzet)} · <b>${esc(rota)}</b> · Depar: <b>${esc(b.depar||'—')}</b> · ${b.pax} pax${aracTxt?' · Araç: <b>'+esc(aracTxt)+'</b>':''}${b.gr.rehber?' · Rehber: '+esc(b.gr.rehber):''}</div>
+      const aracTxt=[b.gr.arac,b.gr.arac2].filter(Boolean).join(' + ')||'—';
+      const reh=(b.gr.rehber||'—')+(b.gr.sofor?' · Şoför: '+b.gr.sofor:'')+(b.gr.stel?' ('+b.gr.stel+')':'');
+      h+=`<div style="background:#e8eef7;border:1px solid #99a;padding:4px 8px;margin-top:8px;font-size:10.5pt"><b>${esc(B.charAt(0)+B.slice(1).toLocaleLowerCase('tr'))} Transfer: ${bi+1}</b> &nbsp;·&nbsp; <b>${esc(b.kod)}</b> &nbsp;·&nbsp; ${_fmtDateTR(b.tarih)}</div>
+      <div style="font-size:9.5pt;padding:2px 8px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Uçuş:</b> ${esc(ucusOzet||'—')}</div>
+      <div style="font-size:9.5pt;padding:2px 8px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Güzergâh:</b> ${esc(rota)}</div>
+      <div style="font-size:9.5pt;padding:2px 8px 4px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Depar:</b> ${esc(b.depar||'—')} &nbsp;·&nbsp; <b>${b.pax} pax</b> &nbsp;·&nbsp; <b>Araç:</b> ${esc(aracTxt)} &nbsp;·&nbsp; <b>Rehber:</b> ${esc(reh)}</div>
       <table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Voucher</th><th>Unvan</th><th>Soyadı, Adı</th><th>Yaş</th><th>Uçuş</th><th>Saat</th><th>Operatör</th></tr>
       ${b.yolcular.map((y,i)=>`<tr><td>${i+1}</td><td>${esc(y.voucher)}</td><td>${esc(y.unvan)}</td><td><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td><td>${esc(String(y.yas))}</td><td>${esc(y.ucus)}</td><td>${esc(y.usaat)}</td><td>${esc(y.op)}</td></tr>`).join('')}</table>`;
     });
