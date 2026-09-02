@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v248 · 31.08.2026';
+const APP_VER='v249 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12674,8 +12674,63 @@ function _tdDocOtel(g,E){
   });
   return _tdDocBas('Otel Listesi',E)+(satir.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Otel</th><th style="${_tdTh}">Giriş</th><th style="${_tdTh}">Gece</th><th style="${_tdTh}">Pansiyon</th></tr>${satir.map(x=>`<tr><td style="${_tdTd}">${esc(x.resno)}</td><td style="${_tdTd}"><b>${esc(x.otel)}</b></td><td style="${_tdTd}">${_rzTrT(x.bas)}</td><td style="${_tdTd}">${esc(x.gece)}</td><td style="${_tdTd}">${esc(x.pans)}</td></tr>`).join('')}</table>`:'<p style="font-size:10pt">Açılım kaydı bulunamadı — rezervasyon modülünde açılım yapılmalı.</p>')+'</div>';
 }
-function _tdDocUcus(g,E){ const K=_tdKisiler(E);
-  return _tdDocBas('Uçuş Bilgileri',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Geliş</th><th style="${_tdTh}">Dönüş</th></tr>${K.map(k=>`<tr><td style="${_tdTd}">${esc(k.resno)}</td><td style="${_tdTd}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd}">${esc(k.gelis)||'—'}</td><td style="${_tdTd}">${esc(k.donus)||'—'}</td></tr>`).join('')}</table></div>`; }
+function _tdUcusSatirlar(E){
+  // her yolcunun uçuş bacaklarını yapılandırılmış topla (geliş 2 bacak, ara, dönüş 2 bacak)
+  const legs=[];
+  (E.uyeler||[]).forEach(u=>{
+    const grid=getReservations().find(x=>x.pkgId===u.pkgId&&x.kalkis===u.kalkis); if(!grid) return;
+    (grid.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===u.resno).forEach(r=>{
+      const push=(yon,sira,tarih,hy,ucus,k,v,ks,vs,pnr)=>{
+        if(!(String(ucus||'').trim()||String(k||'').trim()||String(ks||'').trim())) return;
+        legs.push({yon,sira,tarih:String(tarih||'').trim(),hy:String(hy||'').trim(),ucus:String(ucus||'').trim(),
+          rota:[String(k||'').trim(),String(v||'').trim()].filter(Boolean).join('–'),
+          saat:[String(ks||'').trim(),String(vs||'').trim()].filter(Boolean).join('-'),
+          pnr:String(pnr||'').trim(),ad:r.ad||'',soyad:r.soyad||'',resno:u.resno});
+      };
+      push('G',1,r.g_tarih,r.g_hy,r.g_u1,r.g_k1,r.g_v1,r.g_ks1,r.g_vs1,r.g_pnr);
+      push('G',2,r.g_tarih,r.g_hy,r.g_u2,r.g_k2,r.g_v2,r.g_ks2,r.g_vs2,r.g_pnr);
+      push('A',1,r.a_tarih,r.a_hy,r.a_u1,r.a_k1,r.a_v1,r.a_ks1,r.a_vs1,r.a_pnr);
+      push('D',1,r.d_tarih,r.d_hy,r.d_u1,r.d_k1,r.d_v1,r.d_ks1,r.d_vs1,r.d_pnr);
+      push('D',2,r.d_tarih,r.d_hy,r.d_u2,r.d_k2,r.d_v2,r.d_ks2,r.d_vs2,r.d_pnr);
+    });
+  });
+  return legs;
+}
+function _tdDocUcus(g,E){
+  const legs=_tdUcusSatirlar(E), K=_tdKisiler(E);
+  const YON={G:'GELİŞ UÇUŞLARI',A:'ARA UÇUŞLAR',D:'DÖNÜŞ UÇUŞLARI'};
+  const h2s='font-size:11pt;margin:5mm 0 2mm;border-bottom:2px solid #333;padding-bottom:1mm';
+  let h=_tdDocBas('Uçuş Bilgileri',E);
+  ['G','A','D'].forEach(yon=>{
+    const yl=legs.filter(l=>l.yon===yon); if(!yl.length) return;
+    const gr={};
+    yl.forEach(l=>{ const k=[l.sira,l.tarih,l.hy,l.ucus,l.rota,l.saat].join('|'); (gr[k]=gr[k]||[]).push(l); });
+    const kl=Object.values(gr).sort((a,b)=>{
+      const t=x=>((typeof _pdate==='function'&&_pdate(x[0].tarih))||'9999')+'T'+(x[0].saat||'99')+'|'+x[0].sira;
+      return t(a)<t(b)?-1:1;
+    });
+    h+=`<h2 style="${h2s}">${YON[yon]}</h2>`;
+    kl.forEach(grp=>{
+      const f=grp[0];
+      const pnrs=[...new Set(grp.map(x=>x.pnr).filter(Boolean))];
+      const bas=[f.tarih,f.hy,f.ucus,f.rota,f.saat].filter(Boolean).join(' · ')+(pnrs.length===1?' · PNR '+pnrs[0]:'');
+      const tekil=[]; const seen=new Set();
+      grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad; if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
+      tekil.sort((a,b)=>(a.soyad+a.ad).localeCompare(b.soyad+b.ad,'tr'));
+      h+=`<div style="margin:0 0 3mm">
+        <div style="background:#e8e8e8;border:1px solid #999;border-bottom:none;padding:2px 7px;font-size:10pt"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi</div>
+        <table style="width:100%;border-collapse:collapse">${tekil.map((x,i)=>`<tr><td style="${_tdTd};width:26px;text-align:right">${i+1}</td><td style="${_tdTd};width:110px">${esc(x.resno)}</td><td style="${_tdTd}"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td>${pnrs.length>1?`<td style="${_tdTd};width:80px">${esc(x.pnr)}</td>`:''}</tr>`).join('')}</table>
+      </div>`;
+    });
+  });
+  // uçak listesinde yapılandırılmış kaydı olmayan yolcular (rezervasyondan serbest metin)
+  const serbest=K.filter(k=>!legs.some(l=>l.resno===k.resno&&l.soyad===k.soyad&&l.ad===k.ad)&&String((k.gelis||'')+(k.donus||'')).trim());
+  if(serbest.length){
+    h+=`<h2 style="${h2s}">DİĞER (uçak listesinde detay yok)</h2><table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Geliş</th><th style="${_tdTh}">Dönüş</th></tr>${serbest.map(k=>`<tr><td style="${_tdTd}">${esc(k.resno)}</td><td style="${_tdTd}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd}">${esc(k.gelis)||'—'}</td><td style="${_tdTd}">${esc(k.donus)||'—'}</td></tr>`).join('')}</table>`;
+  }
+  if(!legs.length&&!serbest.length) h+='<p style="font-size:10pt">Uçuş kaydı bulunamadı — uçak listesi import edilmemiş olabilir.</p>';
+  return h+'</div>';
+}
 function _tdDocCizelge(g,E){ const K=_tdKisiler(E); const P=g.satislar.length?g.satislar:[{ad:''},{ad:''},{ad:''}];
   return _tdDocBas('Paket Satış Çizelgesi',E)+`<p style="font-size:9pt;color:#555">Rehber turda işaretler; dönüşte adetler sisteme girilir.</p><table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">Yolcu</th>${P.map(p=>`<th style="${_tdTh};text-align:center">${esc(p.ad||'')}</th>`).join('')}</tr>${K.map(k=>`<tr><td style="${_tdTd}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td>${P.map(()=>`<td style="${_tdTd};height:16px"></td>`).join('')}</tr>`).join('')}</table></div>`; }
 function _tdDocMasraf(g,E){
