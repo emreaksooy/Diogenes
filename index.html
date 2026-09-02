@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v255 · 02.09.2026';
+const APP_VER='v256 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7075,7 +7075,11 @@ async function ucakTopluImport(evt){
         if(hIdx2>=0){ const oi=(rows[hIdx2]||[]).findIndex(h=>/operat/i.test(String(h||'')));
           if(oi>=0){ const ov=(rows.slice(hIdx2+1).find(r2=>r2&&String(r2[oi]||'').trim())||[])[oi]; if(ov) ipuclari.push(String(ov)); } } }
       const pkg=_ucakOpSecim(adaylar,ipuclari);
-      if(!pkg){ kodYok.push(coz.kod+' (operatör belirsiz: '+ipuclari.slice(-3).join(' ')+')'); continue; }
+      if(!pkg){
+        // aynı kod birden çok operatörde ve ipuçları yetersiz → panelde operatör+ürün seçtir (kalıcı öğrenme YOK — tarihe göre değişebilir)
+        (window._ucakBekleyen=window._ucakBekleyen||[]).push({kod:coz.kod,kalkis,rows,wb,ad:f.name,tanimli:true});
+        continue;
+      }
       _resPkgId=pkg.id; _resKalkis=kalkis;
       const oz=_ucakSablonAktar(rows,wb,true);
       ok++; toplamYolcu+=(oz.n+oz.atla); toplamDegisim+=oz.degisim;
@@ -7095,25 +7099,49 @@ async function ucakTopluImport(evt){
   if((window._ucakBekleyen||[]).length) ucakKodEsleAc();
 }
 // ── TANIMSIZ KOD EŞLEŞTİRME PANELİ ──
+function _ukeUrunDoldur(opSel){
+  const urunSel=opSel.parentElement.querySelector('select[data-kod]'); if(!urunSel) return;
+  const opId=opSel.value;
+  const kod=urunSel.getAttribute('data-kod');
+  const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&(!opId||p.operatorId===opId));
+  // aynı kodlu ürünler öne
+  pkgs.sort((a,b)=>{
+    const ak=_norm(a.paketKodu||'')===_norm(kod)?0:1, bk=_norm(b.paketKodu||'')===_norm(kod)?0:1;
+    return ak-bk||String(a.paketKodu||'').localeCompare(String(b.paketKodu||''),'tr');
+  });
+  urunSel.innerHTML='<option value="">'+(opId?'— Ürün seç (atla) —':'— önce operatör seç —')+'</option>'
+    +pkgs.map(p=>'<option value="'+p.id+'">'+esc((p.paketKodu||'')+' · '+(p.paketAdi||''))+'</option>').join('');
+  // tek aday varsa otomatik seç
+  const ayni=pkgs.filter(p=>_norm(p.paketKodu||'')===_norm(kod));
+  if(opId&&ayni.length===1) urunSel.value=ayni[0].id;
+}
 function ucakKodEsleAc(){
   const bek=window._ucakBekleyen||[]; if(!bek.length) return;
   const kodlar=[...new Set(bek.map(b=>b.kod))];
-  const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv');
-  const opAd=p=>{ const o=getOperators().find(x=>x.id===p.operatorId); return o?(' · '+o.ad):''; };
+  const ops=getOperators();
   let eski=document.getElementById('ucakKodModal'); if(eski) eski.remove();
   const div=document.createElement('div');
   div.id='ucakKodModal';
   div.style.cssText='position:fixed;inset:0;z-index:1000;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:20px';
-  div.innerHTML='<div style="background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:80vh;overflow:auto;padding:20px">'
-   +'<h3 style="margin:0 0 6px;font-size:1rem">Tanımsız kodları eşleştir</h3>'
-   +'<p style="font-size:.78rem;color:var(--muted);margin:0 0 12px">Bu kodlar üründe tanımlı değil. Sistemdeki karşılığını seç — eşleme HATIRLANIR, bir daha sorulmaz. Boş bırakırsan o dosyalar atlanır.</p>'
-   +kodlar.map(k=>'<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">'
-     +'<b style="min-width:90px;font-size:.85rem">'+esc(k)+'</b>'
-     +'<span style="font-size:.7rem;color:var(--muted);min-width:60px">'+bek.filter(b=>b.kod===k).length+' dosya</span>'
-     +'<select data-kod="'+esc(k)+'" style="flex:1;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit">'
-     +'<option value="">— Ürün seç (atla) —</option>'
-     +pkgs.map(p=>'<option value="'+p.id+'">'+esc((p.paketKodu||'')+' · '+(p.paketAdi||''))+esc(opAd(p))+'</option>').join('')
-     +'</select></div>').join('')
+  div.innerHTML='<div style="background:#fff;border-radius:14px;max-width:640px;width:100%;max-height:80vh;overflow:auto;padding:20px">'
+   +'<h3 style="margin:0 0 6px;font-size:1rem">Dosyaları ürünlerle eşleştir</h3>'
+   +'<p style="font-size:.78rem;color:var(--muted);margin:0 0 12px">Önce OPERATÖRÜ seç, sonra o operatörün ürününü seç. Tanımsız kod eşlemeleri hatırlanır; aynı kodun farklı operatörlerde olduğu durumlar her seferinde sorulur. Boş bırakırsan o dosyalar atlanır.</p>'
+   +kodlar.map(k=>{
+     const dosyalar=[...new Set(bek.filter(b=>b.kod===k).map(b=>b.ad))];
+     const cokOp=bek.some(b=>b.kod===k&&b.tanimli);
+     return '<div style="border:1px solid var(--border);border-radius:11px;padding:9px 11px;margin-bottom:9px">'
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:.85rem">'+esc(k)+'</b>'
+      +'<span style="font-size:.68rem;color:var(--muted)">'+dosyalar.length+' dosya'+(cokOp?' · kod birden çok operatörde':'')+'</span></div>'
+      +'<div style="font-size:.68rem;color:var(--muted);margin:3px 0 6px">📄 '+esc(dosyalar.slice(0,5).join(' · '))+(dosyalar.length>5?' +'+(dosyalar.length-5)+' dosya':'')+'</div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<select onchange="_ukeUrunDoldur(this)" style="width:170px;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit">'
+      +'<option value="">— Operatör —</option>'
+      +ops.map(o=>'<option value="'+o.id+'">'+esc(o.ad||'')+'</option>').join('')
+      +'</select>'
+      +'<select data-kod="'+esc(k)+'" style="flex:1;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit">'
+      +'<option value="">— önce operatör seç —</option>'
+      +'</select></div></div>';
+   }).join('')
    +'<div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">'
    +'<button class="btn btn-outline btn-sm" onclick="window._ucakBekleyen=[];document.getElementById(\'ucakKodModal\').remove()">Vazgeç</button>'
    +'<button class="btn btn-primary btn-sm" onclick="ucakKodEsleKaydet()">Eşle ve Aktar</button></div></div>';
@@ -7126,8 +7154,10 @@ function ucakKodEsleKaydet(){
   div.remove();
   const bek=window._ucakBekleyen||[]; window._ucakBekleyen=[];
   if(!Object.keys(secim).length){ showToast('Eşleme seçilmedi — dosyalar atlandı','error'); return; }
-  // eşlemeyi kalıcı öğren
-  const t=getTanimlar(); t.ucakKodEsleme=Object.assign({},t.ucakKodEsleme||{},secim); setTanimlar(t);
+  // eşlemeyi kalıcı öğren — yalnız sistemde hiç olmayan (tanımsız) kodlar; çok-operatörlü kodlar her seferinde sorulur
+  const cokOpKod=new Set(bek.filter(b=>b.tanimli).map(b=>b.kod));
+  const ogren={}; Object.keys(secim).forEach(k=>{ if(!cokOpKod.has(k)) ogren[k]=secim[k]; });
+  if(Object.keys(ogren).length){ const t=getTanimlar(); t.ucakKodEsleme=Object.assign({},t.ucakKodEsleme||{},ogren); setTanimlar(t); }
   const eskiP=_resPkgId, eskiK=_resKalkis;
   let ok=0, yolcu=0, degisim=0, atla=0;
   bek.forEach(b=>{
@@ -7140,7 +7170,7 @@ function ucakKodEsleKaydet(){
   });
   _resPkgId=eskiP; _resKalkis=eskiK; _resTglKey='';
   try{ renderUcakGenel(); }catch(_e){}
-  showToast(ok+' bekleyen dosya aktarıldı · '+yolcu+' yolcu'+(degisim?' · ⚠ '+degisim+' uçuş değişikliği':'')+(atla?' · '+atla+' atlandı':'')+' — eşlemeler kaydedildi, bir daha sorulmaz','success',7000);
+  showToast(ok+' bekleyen dosya aktarıldı · '+yolcu+' yolcu'+(degisim?' · ⚠ '+degisim+' uçuş değişikliği':'')+(atla?' · '+atla+' atlandı':''),'success',7000);
 }
 function _resGrid(create){ const all=getReservations(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setReservations(all); } return g; }
 function _pnrGrid(create){ const all=getPnrLedger(); let g=all.find(x=>x.pkgId===_resPkgId && x.kalkis===_resKalkis); if(!g && create){ g={pkgId:_resPkgId,kalkis:_resKalkis,rows:[]}; all.push(g); setPnrLedger(all); } return g; }
