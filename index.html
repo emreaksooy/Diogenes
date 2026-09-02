@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v283 · 02.09.2026';
+const APP_VER='v284 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13348,9 +13348,13 @@ function _mutUcretSet(kod,f,v){ const T=getTransfer(); if(!T.gruplar||!T.gruplar
 function _afTarife(firmaAd,tarihIso,ucA,ucB,arTip){
   try{
     const f=(getTanimlar().aracFirmalari||[]).find(x=>(x.ad||'')===firmaAd); if(!f||!Array.isArray(f.kRota)||!f.kRota.length) return null;
-    const N=t=>String(t||'').replace(/İ/g,'I').toUpperCase().trim();
-    const a=N(ucA), b=N(ucB), tip=N(arTip);
-    const rota=f.kRota.find(r=>{ const x=N(r.nereden), y=N(r.nereye); return (x===a&&y===b)||(x===b&&y===a); });
+    const N=t=>String(t||'').replace(/İ/g,'I').replace(/ı/g,'i').toUpperCase().trim();
+    const temiz=t=>N(String(t||'').split('·')[0].split('(')[0]).replace(/\bHAVALIMANI\b|\bHAVA\b/g,'').trim();
+    const a=temiz(ucA), b=temiz(ucB), tip=N(arTip);
+    const es=(rotaAd,hedef)=>{ const x=temiz(rotaAd); if(!x||!hedef) return false; if(x===hedef) return true; return x.includes(hedef)||hedef.includes(x); };
+    // önce tam eşleşme, sonra gevşek (uzun bölge adları: 'AYT-Antalya Havalimanı', 'Kemer · Antalya')
+    let rota=f.kRota.find(r=>{ const x=temiz(r.nereden), y=temiz(r.nereye); return (x===a&&y===b)||(x===b&&y===a); });
+    if(!rota) rota=f.kRota.find(r=>(es(r.nereden,a)&&es(r.nereye,b))||(es(r.nereden,b)&&es(r.nereye,a)));
     if(!rota) return null;
     let don=(f.kDonem||[]).find(d=>{ const db=_pdate(d.bas||''), de=_pdate(d.bit||''); return db&&de&&db<=tarihIso&&tarihIso<=de; });
     if(!don&&(f.kDonem||[]).length===1) don=f.kDonem[0];
