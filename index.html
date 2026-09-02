@@ -185,7 +185,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 .app-body{display:flex;min-height:calc(100vh - var(--nav-h))}
 
 /* ── SIDEBAR ── */
-.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:var(--nav-h);height:calc(100vh - var(--nav-h));overflow:hidden}
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--sidebar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:var(--nav-h);height:calc(100vh - var(--nav-h));overflow:hidden;transition:margin-left .18s ease}
+body.sb-kapali .sidebar{margin-left:calc(-1 * var(--sidebar-w));visibility:hidden}
 .side-nav{padding:10px 8px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;flex-shrink:0}
 .nav-tab{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border-radius:9px;cursor:pointer;font-size:.85rem;color:var(--muted);transition:all .16s;border:none;background:none;font-family:inherit;font-weight:600;text-align:left}
 .nav-tab:hover{background:var(--light);color:var(--primary)}
@@ -857,6 +858,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   <span class="save-status" id="saveStatus"><span class="dot"></span><span id="saveStatusTxt">Hazır</span></span>
   <span class="save-status" id="cloudStatus" title="Bulut bağlantısı — tıkla: hata günlüğü" onclick="hataGunluguAc()" style="cursor:pointer"><span class="dot"></span><span id="cloudStatusTxt">Bulut: —</span></span>
   <span id="userChip" style="display:none;align-items:center;gap:6px;font-size:.78rem;color:var(--text);white-space:nowrap"></span>
+  <button class="theme-toggle" id="sbToggleBtn" onclick="sbToggle()" title="Menüyü aç/kapat — çalışma alanını genişletir">☰</button>
   <button class="theme-toggle" id="themeToggle" onclick="toggleDark()" title="Koyu temaya geç"><svg class="ic"><use href="#i-moon"/></svg></button>
   <button class="nav-undo-btn" id="navUndoBtn" onclick="undoLast()" title="Geri alınacak işlem yok" disabled style="opacity:.4"><svg class="ic"><use href="#i-undo"/></svg> Geri Al</button>
   <button class="nav-save-btn" id="navSaveBtn" onclick="saveCurrentPackage()"><svg class="ic"><use href="#i-save"/></svg> <span id="navSaveTxt">Kaydet</span></button>
@@ -1893,7 +1895,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v289 · 02.09.2026';
+const APP_VER='v290 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11853,6 +11855,11 @@ function renderMagazaOps(){
   }
   box.innerHTML=h;
 }
+function sbToggle(){
+  const kapali=document.body.classList.toggle('sb-kapali');
+  try{ localStorage.setItem('dmc_sbKapali',kapali?'1':'0'); }catch(e){}
+}
+try{ if(localStorage.getItem('dmc_sbKapali')==='1') document.body.classList.add('sb-kapali'); }catch(e){}
 function opsTab(t){
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
