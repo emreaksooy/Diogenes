@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v287 · 02.09.2026';
+const APP_VER='v288 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13175,7 +13175,7 @@ function _trHotel(pkgId,kalkis,pkg){ const o=getOperasyon().find(x=>x.pkgId===pk
 function _trBolge(pkg){ return (pkg.bolge||(pkg.destinasyonSehir||'').split(/[·,\/]/)[0]||'').trim().toUpperCase(); }
 function _trBolgeOnce(ad){ const b=(getTanimlar().bolgeler||[]).find(x=>(x.ad||'').toUpperCase()===(ad||'').toUpperCase().trim()); return b?_dk(b.once):null; }
 function _trDeparHesap(r){ if(r.deparMan&&r.depar) return {saat:r.depar,onceki:false}; if(r.tip==='D'||r.tip==='ARAD'){ const u=_dk(r.saat),o=_trBolgeOnce(r.bolge); if(u===null||o===null) return {saat:r.depar||'',onceki:false}; const d=u-o; return {saat:_mmss(d),onceki:d<0}; } return {saat:r.saat||'',onceki:false}; }
-function _trGroup(rows,p){ const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={}; rows.forEach(y=>{ if(!has(y))return; const key=(y[p+'_pnr']||'').trim()||(p+':'+(y[p+'_u1']||'')+'_'+(y[p+'_k1']||'')+'_'+(y[p+'_ks1']||'')); if(!map[key]) map[key]={pnr:(y[p+'_pnr']||'').trim()||'—',y,n:0}; map[key].n++; }); return Object.values(map); }
+function _trGroup(rows,p){ const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={}; rows.forEach(y=>{ if(!has(y))return; const key=(y[p+'_pnr']||'').trim()||(p+':'+(y[p+'_u1']||'')+'_'+(y[p+'_k1']||'')+'_'+(y[p+'_ks1']||'')); if(!map[key]) map[key]={key,pnr:(y[p+'_pnr']||'').trim()||'—',y,n:0}; map[key].n++; }); return Object.values(map); }
 function _trGenRows(){
   const T=getTransfer(); const sat=T.sat||{}; const pkgs=getPackages(); const out=[];
   const merge=o=>{ const p=(o.id||'').split('|'); o.pkgId=p[0]||''; o.kalkis=p[1]||''; o.opsGrupId=(p[0]||'')+'|'+(p[1]||''); /* şimdilik her kalkış kendi grubu; birleştirme/bölünme gelince buradan yeniden yönlendirilir */ const m=sat[o.id]||{}; o.grup=m.grup||null; o.onay=!!m.onay; o.depar=m.depar||''; o.deparMan=!!m.deparMan; o.not=m.not!=null?m.not:''; return o; };
@@ -13188,19 +13188,19 @@ function _trGenRows(){
       if(!((y.g_u1||'').trim()||(y.g_v1||'').trim()||(y.g_vs1||'').trim()||(y.g_vs2||'').trim()||(y.g_tarih||'').toString().trim()||(y.g_pnr||'').trim()||(y.g_hy||'').trim())) return;
       const landAp=(y.g_v2||y.g_v1||'').toUpperCase(); const landTime=y.g_vs2||y.g_vs1||''; const cross=_dk(y.g_vs2||y.g_vs1)!==null&&_dk(y.g_ks1)!==null&&_dk(y.g_vs2||y.g_vs1)<_dk(y.g_ks1); const tarihIso=_pdate(y.g_tarih)||g.kalkis; const tarih=cross?_trGunEkle(tarihIso,1):tarihIso;
       const otelG=_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'ilk')||hotel;
-      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|G|'+grp.pnr,tip:'G',tarih,op,urun,grupKod:grp.pnr,nereden:landAp+(y.g_u1?' · '+y.g_u1:''),nereye:otelG,bolge,ucus:y.g_u1||'',saat:landTime,pax:grp.n,yet:grp.n,coc:0,beb:0})); });
+      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|G|'+grp.key,tip:'G',tarih,op,urun,grupKod:grp.pnr,nereden:landAp+(y.g_u1?' · '+y.g_u1:''),nereye:otelG,bolge,ucus:y.g_u1||'',saat:landTime,pax:grp.n,yet:grp.n,coc:0,beb:0})); });
     _trGroup(real.filter(_araVar),'a').forEach(grp=>{ const y=grp.y;
       const aT=_pdate(y.a_tarih)||g.kalkis;
       const ksA=_trRezvKartlar(g.pkgId,g.kalkis,y.resno);
       const otelOnce=_trOtelSec(ksA,'tarih',_isoAdd(aT,-1))||_trOtelSec(ksA,'ilk')||hotel;
       const otelSonra=_trOtelSec(ksA,'baslayan',aT)||_trOtelSec(ksA,'tarih',aT)||hotel;
-      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|ARAD|'+grp.pnr,tip:'ARAD',tarih:aT,op,urun,grupKod:grp.pnr,nereden:otelOnce,nereye:(y.a_k1||'')+(y.a_u1?' · '+y.a_u1+' '+(y.a_ks1||''):''),bolge,ucus:y.a_u1||'',saat:y.a_ks1||'',pax:grp.n,yet:grp.n,coc:0,beb:0}));
-      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|ARAG|'+grp.pnr,tip:'ARAG',tarih:aT,op,urun,grupKod:grp.pnr,nereden:(y.a_v1||'')+(y.a_u1?' · '+y.a_u1+' iniş '+(y.a_vs1||''):''),nereye:otelSonra,bolge,ucus:y.a_u1||'',saat:y.a_vs1||'',pax:grp.n,yet:grp.n,coc:0,beb:0})); });
+      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|ARAD|'+grp.key,tip:'ARAD',tarih:aT,op,urun,grupKod:grp.pnr,nereden:otelOnce,nereye:(y.a_k1||'')+(y.a_u1?' · '+y.a_u1+' '+(y.a_ks1||''):''),bolge,ucus:y.a_u1||'',saat:y.a_ks1||'',pax:grp.n,yet:grp.n,coc:0,beb:0}));
+      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|ARAG|'+grp.key,tip:'ARAG',tarih:aT,op,urun,grupKod:grp.pnr,nereden:(y.a_v1||'')+(y.a_u1?' · '+y.a_u1+' iniş '+(y.a_vs1||''):''),nereye:otelSonra,bolge,ucus:y.a_u1||'',saat:y.a_vs1||'',pax:grp.n,yet:grp.n,coc:0,beb:0})); });
     _trGroup(real,'d').forEach(grp=>{ const y=grp.y;
       if(!((y.d_u1||'').trim()||(y.d_k1||'').trim()||(y.d_ks1||'').trim()||(y.d_tarih||'').toString().trim()||(y.d_pnr||'').trim()||(y.d_hy||'').trim())) return;
       const depAp=(y.d_k1||'').toUpperCase();
       const otelD=_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'son')||hotel;
-      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|D|'+grp.pnr,tip:'D',tarih:_pdate(y.d_tarih)||_donusTarihi(g.kalkis,pkg)||'',op,urun,grupKod:grp.pnr,nereden:otelD,nereye:depAp+(y.d_u1?' · '+y.d_u1:''),bolge,ucus:y.d_u1||'',saat:y.d_ks1||'',pax:grp.n,yet:grp.n,coc:0,beb:0})); });
+      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|D|'+grp.key,tip:'D',tarih:_pdate(y.d_tarih)||_donusTarihi(g.kalkis,pkg)||'',op,urun,grupKod:grp.pnr,nereden:otelD,nereye:depAp+(y.d_u1?' · '+y.d_u1:''),bolge,ucus:y.d_u1||'',saat:y.d_ks1||'',pax:grp.n,yet:grp.n,coc:0,beb:0})); });
     const gunler=pkg.gunler||[]; let prevCity='';
     gunler.forEach((gd,i)=>{ const nk=(gd.noktalar||[]).filter(x=>x&&x.trim()); const city=(gd.konaklamaSehir||(nk.length?nk[nk.length-1]:'')||'').trim();
       if(i>0&&city&&prevCity&&city!==prevCity){ out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+i,tip:'TUR',tarih:_trGunEkle(g.kalkis,i),op,urun,grupKod:'',nereden:prevCity,nereye:city,bolge:'',ucus:'',saat:'08:00',pax:real.length,yet:real.length,coc:0,beb:0})); }
@@ -13694,7 +13694,7 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
   _trAracDoldur();
 }
 function _trKapKontrol(){ const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const L=_trFiloList((document.getElementById('trFirma')||{}).value); const a=L.find(x=>x.id===(document.getElementById('trArac')||{}).value); const a2=L.find(x=>x.id===(document.getElementById('trArac2')||{}).value); const kap=(a?a.kap:0)+(a2?a2.kap:0); const el=document.getElementById('trSecPax'); if(el){ el.textContent=pax+' pax'+(a?(a.tahsis?' / tur aracı':' / '+kap+' koltuk'):''); el.classList.toggle('asim',!!a&&!a.tahsis&&pax>kap); } }
-function _trAtama(){ if(!_trSel.size) return; const firmaSec=(document.getElementById('trFirma')||{}).value; const L=_trFiloList(firmaSec); const a=L.find(x=>x.id===(document.getElementById('trArac')||{}).value); if(!a){ showToast('Araç seç','error'); return; } const a2=L.find(x=>x.id===(document.getElementById('trArac2')||{}).value); const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const kap=(a.kap||0)+(a2?a2.kap:0); if(!a.tahsis&&pax>kap&&!confirm(pax+' pax, '+kap+' koltuğa sığmıyor. Yine de atansın mı?')) return; const dep=(document.getElementById('trDepar')||{}).value.trim(); if(dep&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(dep)){ showToast('Depar SS:DD olmalı (ör. 06:30)','error'); return; }
+function _trAtama(){ if(!_trSel.size) return; const firmaSec=(document.getElementById('trFirma')||{}).value; const L=_trFiloList(firmaSec); const a=L.find(x=>x.id===(document.getElementById('trArac')||{}).value); if(!a){ showToast('Araç seç','error'); return; } const a2=L.find(x=>x.id===(document.getElementById('trArac2')||{}).value); const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const kap=(a.kap||0)+(a2?a2.kap:0); if(!a.tahsis&&pax>kap&&!confirm(pax+' pax, '+kap+' koltuğa sığmıyor. Yine de atansın mı?')) return; const dep=_saatNorm((document.getElementById('trDepar')||{}).value.trim()); if(dep&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(dep)){ showToast('Depar SS:DD olmalı (ör. 06:30)','error'); return; }
   const Tr=getTransfer(); const kod='A'+String(Tr.seq||1).padStart(2,'0'); Tr.seq=(Tr.seq||1)+1; Tr.gruplar=Tr.gruplar||{};
   Tr.gruplar[kod]={tip:'nokta',rehber:(document.getElementById('trRehber')||{}).value,
     arac:a.ad+(a.kap?' ('+a.kap+')':''),arac2:a2?(a2.ad+(a2.kap?' ('+a2.kap+')':'')):'',
@@ -13706,7 +13706,7 @@ function _trAtama(){ if(!_trSel.size) return; const firmaSec=(document.getElemen
   setTransfer(Tr); _trSel.clear(); window._trKod=null; renderOpsTransfer(); showToast(_trKodOf(kod)+' oluşturuldu — '+rows.length+' transfer, '+pax+' pax','success'); }
 function _trAtamaKaldir(id){ _trSatKaydet(id,{grup:null,onay:false}); window._trKod=null; renderOpsTransfer(); }
 function _trOnay(id){ const T=getTransfer(); const cur=(T.sat&&T.sat[id])||{}; _trSatKaydet(id,{onay:!cur.onay}); renderOpsTransfer(); }
-function _trDeparElle(id,v){ v=(v||'').trim(); _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
+function _trDeparElle(id,v){ v=_saatNorm((v||'').trim()); _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
 function _trNotElle(id,v){ _trSatKaydet(id,{not:(v||'').trim()}); }
 // ── PDF ──
 function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!gr)return''; const rowsAll=_trGenRows(); const rows=rowsAll.filter(r=>r.grup===kod).sort((a,b)=>(_dk(_trDeparHesap(a).saat)??9999)-(_dk(_trDeparHesap(b).saat)??9999)); if(!rows.length)return''; const tarih=_trGunAd(rows[0].tarih); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0);
