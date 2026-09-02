@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v288 · 02.09.2026';
+const APP_VER='v289 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13596,12 +13596,12 @@ function renderOpsTransfer(){
   if(!tam.length){ h+='<p style="color:var(--muted);font-size:.86rem;margin-top:10px">Bu tarihte transfer yok. Uçak listelerine yolcu/uçuş girildikçe (ve tur programı şehir geçişlerinde) burada otomatik oluşur.</p>'; box.innerHTML=h; _trRenderAtabar(); return; }
   const ok=c=>_trSort.col===c?`<span style="font-size:.6rem">${_trSort.dir>0?'▲':'▼'}</span>`:'';
   const COLS=_trCols();
-  h+=`<div class="gridwrap"><table class="tm tm-ince"><tr><th class="nosort" style="width:26px"></th>${COLS.map(c=>`<th onclick="_trSortBy('${c[0]}')">${c[1]}${ok(c[0])}</th>`).join('')}<th class="nosort" style="width:52px"></th></tr>`;
+  h+=`<div class="gridwrap"><table class="tm tm-ince"><tr><th class="nosort" style="width:46px"></th>${COLS.map(c=>`<th onclick="_trSortBy('${c[0]}')">${c[1]}${ok(c[0])}</th>`).join('')}<th class="nosort" style="width:52px"></th></tr>`;
   h+=`<tr class="filtrow"><td style="text-align:center"><button class="rowbtn" onclick="_trFiltClear()" title="Temizle">✕</button></td>`+COLS.map(c=>{ const cur=_trFilt[c[0]]||''; if(c[3]==='sel'){ const vals=[...new Set(tam.map(x=>String(c[2](x))).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')); return `<td><select data-fk="${c[0]}" onchange="_trFiltSet('${c[0]}',this.value,true)"><option value="">Hepsi</option>${vals.map(v=>`<option ${v===cur?'selected':''}>${esc(v)}</option>`).join('')}</select></td>`; } return `<td><input data-fk="${c[0]}" value="${esc(cur)}" oninput="_trFiltSet('${c[0]}',this.value,false)" placeholder="süz…"></td>`; }).join('')+`<td></td></tr>`;
   const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR'};
   list.forEach(({r,dh,gece})=>{ const gr=r.grup?getTransfer().gruplar[r.grup]:null;
     h+=`<tr class="t-${r.tip}${gece?' gece':''}">`;
-    h+=`<td><input type="checkbox" ${_trSel.has(r.id)?'checked':''} onchange="_trSecToggle('${r.id}',this.checked)"></td>`;
+    h+=`<td style="white-space:nowrap"><input type="checkbox" ${_trSel.has(r.id)?'checked':''} onchange="_trSecToggle('${r.id}',this.checked)"><button onclick="_trDetayAc('${r.id}')" title="Detay: yolcular, uçuşlar, gruba git" style="background:none;border:none;cursor:pointer;font-size:.72rem;padding:0 2px">🔍</button></td>`;
     if(_opsTrDate2) h+=`<td style="white-space:nowrap"><b>${_fmtDateTR(r.tarih)}</b></td>`;
     h+=`<td><span class="tipb tb-${r.tip}">${tipAd[r.tip]}</span>${gece?' <span class="gecechip">GECE</span>':''}</td>`;
     h+=`<td>${esc(r.op)}</td><td><b>${esc(r.urun)}</b> <span style="color:var(--muted)">${esc(r.grupKod||'')}</span></td>`;
@@ -13622,6 +13622,39 @@ function renderOpsTransfer(){
   box.innerHTML=h;
   if(fk){ const el=box.querySelector(`[data-fk="${fk}"]`); if(el){ el.focus(); if(ss!=null){ try{el.setSelectionRange(ss,ss);}catch(e){} } } }
   _trRenderAtabar();
+}
+function _trDetayAc(id){
+  const r=_trGenRows().find(x=>x.id===id); if(!r){ showToast('Satır bulunamadı','error'); return; }
+  const dh=_trDeparHesap(r);
+  const gr=_trGrupOf(r);
+  const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR'};
+  let yolcular=[]; try{ yolcular=_trYolcularDetay(r); }catch(e){}
+  let box=document.getElementById('trDetayModal');
+  if(!box){ box=document.createElement('div'); box.id='trDetayModal';
+    box.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    box.onclick=e=>{ if(e.target===box) box.remove(); };
+    document.body.appendChild(box); }
+  const st='border:1px solid var(--border);padding:3px 8px;font-size:.72rem;text-align:left';
+  const bilgi=(l,v)=>v?`<div style="font-size:.74rem"><span style="color:var(--muted);font-weight:700;font-size:.6rem;text-transform:uppercase">${l}</span><br><b>${esc(v)}</b></div>`:'';
+  box.innerHTML=`<div style="background:var(--card);border-radius:16px;max-width:640px;width:100%;max-height:84vh;overflow:auto;padding:18px" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span class="tipb tb-${r.tip}" style="font-size:.66rem;padding:3px 9px">${tipAd[r.tip]||r.tip}</span>
+      <b style="font-size:.92rem">${_fmtDateTR(r.tarih)} · ${esc(r.urun)}${r.grup?' · '+esc(_trKodOf(r.grup)):''}</b>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="document.getElementById('trDetayModal').remove()">✕ Kapat</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px">
+      ${bilgi('Nereden',r.nereden)}${bilgi('Nereye',r.nereye)}${bilgi('Uçuş',(r.ucus||'')+(r.saat?' · '+r.saat:''))}${bilgi('Depar',dh.saat)}${bilgi('Pax',String(r.pax))}${bilgi('Bölge',r.bolge)}${bilgi('Operatör',r.op)}
+      ${bilgi('Araç',[gr.arac,gr.arac2].filter(Boolean).join(' + '))}${bilgi('Firma',gr.firma)}${bilgi('Rehber',gr.rehber)}${bilgi('Şoför',gr.sofor?(gr.sofor+(gr.stel?' '+gr.stel:'')):'')}${bilgi('Not',r.not)}
+    </div>
+    <div style="font-weight:800;font-size:.8rem;margin-bottom:5px">👥 Yolcular (${yolcular.length})</div>
+    ${yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${st}">#</th><th style="${st}">Voucher</th><th style="${st}">Soyadı, Adı</th><th style="${st}">Yaş</th><th style="${st}">Uyruk</th></tr>
+      ${yolcular.map((y,i)=>`<tr><td style="${st}">${i+1}</td><td style="${st}">${esc(y.voucher)}</td><td style="${st}"><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td><td style="${st}">${esc(String(y.yas||''))}</td><td style="${st}">${esc(y.uyruk||'')}</td></tr>`).join('')}</table>`
+      :'<div style="font-size:.74rem;color:var(--muted)">Yolcu detayı bulunamadı (uçak listesi eşleşmedi).</div>'}
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary btn-sm" onclick="document.getElementById('trDetayModal').remove();opsOpen('${r.pkgId}','${r.kalkis}')">👥 Gruba git — tur dosyası (araç tahsis / düzenleme)</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('trDetayModal').remove();showPage('ucak');setTimeout(()=>{try{ucakOpen('${r.pkgId}','${r.kalkis}')}catch(e){}},80)">✈ Uçak listesine git</button>
+    </div>
+  </div>`;
 }
 function _trSecToggle(id,on){ on?_trSel.add(id):_trSel.delete(id); _trRenderAtabar(); }
 function _trSecTemizle(){ _trSel.clear(); renderOpsTransfer(); }
