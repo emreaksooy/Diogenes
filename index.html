@@ -744,6 +744,14 @@ body.dark .resgrid tr.farkli td{background:#3a2f12}body.dark .resgrid tr.farkli 
 table.tm{width:100%;border-collapse:collapse;font-size:.76rem}
 table.tm th{background:var(--navy);color:#fff;padding:5px 7px;font-size:.62rem;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none}
 table.tm th.nosort{cursor:default}
+table.tm-ince th{padding:2px 6px;font-size:.58rem}
+table.tm-ince td{padding:1px 6px;font-size:.7rem;line-height:1.45}
+table.tm-ince .filtrow td{padding:1px 3px}
+table.tm-ince .filtrow input,table.tm-ince .filtrow select{padding:2px 4px;font-size:.64rem}
+table.tm-ince .tipb{font-size:.56rem;padding:1px 6px}
+table.tm-ince .trchip{font-size:.56rem;padding:1px 6px}
+table.tm-ince .grupb{font-size:.62rem;padding:1px 6px}
+table.tm-ince input.saatin,table.tm-ince input.notin{padding:1px 4px;font-size:.66rem}
 tr.filtrow td{background:var(--light);padding:2px 4px;border-bottom:2px solid var(--navy)}
 tr.filtrow input,tr.filtrow select{width:100%;padding:3px 5px;border:1px solid var(--border);border-radius:5px;font-size:.7rem;font-family:inherit;background:var(--bg);color:var(--text)}
 table.tm td{border-bottom:1px solid var(--border);padding:4px 7px;vertical-align:middle;color:var(--text)}
@@ -1885,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v276 · 02.09.2026';
+const APP_VER='v277 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13287,8 +13295,8 @@ function _trMonitorHTML(){
     </div>`;
   if(!acik) return bas+'</div>';
   if(!gunler.length) return bas+'<div style="font-size:.76rem;color:var(--muted);padding:8px 2px">Önümüzdeki 14 günde transfer yok.</div></div>';
-  const hc='padding:4px 8px;font-size:.62rem;text-align:left;background:var(--navy);color:#fff;white-space:nowrap';
-  const tc='padding:4px 8px;font-size:.74rem;border-bottom:1px solid var(--border);white-space:nowrap';
+  const hc='padding:2px 7px;font-size:.58rem;text-align:left;background:var(--navy);color:#fff;white-space:nowrap';
+  const tc='padding:1px 7px;font-size:.68rem;border-bottom:1px solid var(--border);white-space:nowrap;line-height:1.5';
   const cell=(L,pax)=>L.length?`<b>${L.length}</b> <span style="color:var(--muted);font-size:.66rem">· ${pax(L)} pax</span>`:'<span style="color:var(--muted)">—</span>';
   return bas+`<div style="overflow:auto;margin-top:6px"><table style="width:100%;border-collapse:collapse">
     <tr><th style="${hc}">Tarih</th><th style="${hc}">🛬 Geliş</th><th style="${hc}">🛫 Dönüş</th><th style="${hc}">Ara</th><th style="${hc}">Tur</th><th style="${hc}">Atanmamış</th><th style="${hc}">Araç görevi</th><th style="${hc}">Onay</th></tr>
@@ -13489,7 +13497,7 @@ function renderOpsTransfer(){
   if(!tam.length){ h+='<p style="color:var(--muted);font-size:.86rem;margin-top:10px">Bu tarihte transfer yok. Uçak listelerine yolcu/uçuş girildikçe (ve tur programı şehir geçişlerinde) burada otomatik oluşur.</p>'; box.innerHTML=h; _trRenderAtabar(); return; }
   const ok=c=>_trSort.col===c?`<span style="font-size:.6rem">${_trSort.dir>0?'▲':'▼'}</span>`:'';
   const COLS=_trCols();
-  h+=`<div class="gridwrap"><table class="tm"><tr><th class="nosort" style="width:26px"></th>${COLS.map(c=>`<th onclick="_trSortBy('${c[0]}')">${c[1]}${ok(c[0])}</th>`).join('')}<th class="nosort" style="width:52px"></th></tr>`;
+  h+=`<div class="gridwrap"><table class="tm tm-ince"><tr><th class="nosort" style="width:26px"></th>${COLS.map(c=>`<th onclick="_trSortBy('${c[0]}')">${c[1]}${ok(c[0])}</th>`).join('')}<th class="nosort" style="width:52px"></th></tr>`;
   h+=`<tr class="filtrow"><td style="text-align:center"><button class="rowbtn" onclick="_trFiltClear()" title="Temizle">✕</button></td>`+COLS.map(c=>{ const cur=_trFilt[c[0]]||''; if(c[3]==='sel'){ const vals=[...new Set(tam.map(x=>String(c[2](x))).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')); return `<td><select data-fk="${c[0]}" onchange="_trFiltSet('${c[0]}',this.value,true)"><option value="">Hepsi</option>${vals.map(v=>`<option ${v===cur?'selected':''}>${esc(v)}</option>`).join('')}</select></td>`; } return `<td><input data-fk="${c[0]}" value="${esc(cur)}" oninput="_trFiltSet('${c[0]}',this.value,false)" placeholder="süz…"></td>`; }).join('')+`<td></td></tr>`;
   const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR'};
   list.forEach(({r,dh,gece})=>{ const gr=r.grup?getTransfer().gruplar[r.grup]:null;
@@ -13712,6 +13720,7 @@ function _trTasimaciBloklar(){
     }
     blok.ucuslar.push({ucus:x.r.ucus||'',saat:x.r.saat||'',yer:x.r.tip==='D'?x.r.nereye:x.r.nereden});
     (blok.ops=blok.ops||new Set()).add(x.r.op||'');
+    if((x.r.not||'').trim()) (blok.notlar=blok.notlar||new Set()).add(x.r.not.trim());
     blok.pax+=(+x.r.pax||0);
     const dk=_dk(x.dh.saat); if(dk!==null&&(blok.depar===null||dk<blok.depar)) blok.depar=x.dh.saat;
     blok.hedef=x.r.tip==='D'?x.r.nereden:x.r.nereye; // otel tarafı
@@ -13738,6 +13747,7 @@ function _trTasimaciExcel(){
       detaylar.push(aoa.length); aoa.push(['Uçuş',ucusOzet||'—']);
       detaylar.push(aoa.length); aoa.push(['Güzergâh',rota]);
       detaylar.push(aoa.length); aoa.push(['Detay','Depar: '+(b.depar||'—')+'   ·   '+b.pax+' pax   ·   Araç: '+aracTxt+'   ·   Rehber: '+reh]);
+      if(b.notlar&&b.notlar.size){ detaylar.push(aoa.length); aoa.push(['Not',[...b.notlar].join('  ·  ')]); }
       yolcuHdr.push(aoa.length);
       aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Uçuş','Saat','Operatör','']);
       b.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.ucus,y.usaat,y.op,'']));
@@ -13786,6 +13796,7 @@ function _trTasimaciPdf(){
       <div style="font-size:9.5pt;padding:2px 8px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Uçuş:</b> ${esc(ucusOzet||'—')}</div>
       <div style="font-size:9.5pt;padding:2px 8px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Güzergâh:</b> ${esc(rota)}</div>
       <div style="font-size:9.5pt;padding:2px 8px 4px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Depar:</b> ${esc(b.depar||'—')} &nbsp;·&nbsp; <b>${b.pax} pax</b> &nbsp;·&nbsp; <b>Araç:</b> ${esc(aracTxt)} &nbsp;·&nbsp; <b>Rehber:</b> ${esc(reh)}</div>
+      ${b.notlar&&b.notlar.size?`<div style="font-size:9.5pt;padding:2px 8px 4px;border-left:1px solid #99a;border-right:1px solid #99a;color:#92400e"><b>Not:</b> ${esc([...b.notlar].join('  ·  '))}</div>`:''}
       <table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Voucher</th><th>Unvan</th><th>Soyadı, Adı</th><th>Yaş</th><th>Uçuş</th><th>Saat</th><th>Operatör</th></tr>
       ${b.yolcular.map((y,i)=>`<tr><td>${i+1}</td><td>${esc(y.voucher)}</td><td>${esc(y.unvan)}</td><td><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td><td>${esc(String(y.yas))}</td><td>${esc(y.ucus)}</td><td>${esc(y.usaat)}</td><td>${esc(y.op)}</td></tr>`).join('')}</table>`;
     });
