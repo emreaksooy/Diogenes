@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v279 · 02.09.2026';
+const APP_VER='v280 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7249,6 +7249,12 @@ function _resOzetHTML(rows){
 }
 // ── ana render ──
 function renderRezervasyon(){
+  const _w0=document.querySelector('#resBody .gridwrap');
+  const _sl=_w0?_w0.scrollLeft:0, _st=_w0?_w0.scrollTop:0;
+  _renderRezervasyonIc();
+  if(_sl||_st){ const _w1=document.querySelector('#resBody .gridwrap'); if(_w1){ _w1.scrollLeft=_sl; _w1.scrollTop=_st; } }
+}
+function _renderRezervasyonIc(){
   _migrateResData();
   const body=document.getElementById('resBody'); if(!body) return;
   if(!_resPkgId||!_resKalkis){ body.innerHTML='<div class="card"><p style="color:var(--muted);font-size:.88rem">Liste için yukarıdan paket ve kalkış seçin.</p></div>'; return; }
@@ -7339,8 +7345,15 @@ function renderRezervasyon(){
 // ── düzenleme ──
 function _resSetP(r,f,v){ const g=_resGrid(true); const y=g.rows[r]; if(!y)return; y[f]=v; setReservations(getReservations()); _resSoftRefresh(); }
 let _resUndoSnap=null;
+function _saatNorm(v){
+  const t=String(v||'').trim(); if(!t) return t;
+  const m=t.match(/^(\d{1,2})[:.\s]?(\d{2})$/);
+  if(m){ const h=+m[1], mm=+m[2]; if(h<=23&&mm<=59) return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
+  return t;
+}
 function _resSetFlight(r,f,v){
   const g=_resGrid(true), y=g.rows[r]; if(!y) return;
+  if(/_(ks|vs)\d$/.test(f)){ v=_saatNorm(v); }
   const old=y[f];
   if(f.endsWith('_pnr')){ y[f]=v; setReservations(getReservations()); renderRezervasyon(); return; }
   const p=f.split('_')[0], pnrF=p+'_pnr';
