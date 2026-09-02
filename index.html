@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v282 · 02.09.2026';
+const APP_VER='v283 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13398,6 +13398,8 @@ function _mutAracSatirlar(){
     _ogResolve().forEach(g=>{
       const raw=((S.gruplar||{})[g.id]||{}).araclar||[];
       raw.forEach(a=>{
+        // içi boş araç kayıtları (yanlışlıkla eklenmiş satırlar) mutabakata girmez
+        if(!String(a.ad||'').trim()&&!String(a.arTip||'').trim()&&!String(a.plaka||'').trim()&&!String(a.firma||'').trim()&&!_tdN(a.fiyat)) return;
         const tarih=_pdate(a.tarih||a.bas||g.tarih||''); if(!tarih||!icinde(tarih)) return;
         const b=_pdate(a.bas||''), e=_pdate(a.bit||'');
         const gun=(b&&e&&e>=b)?(_isoDiff(b,e)+1):1;
