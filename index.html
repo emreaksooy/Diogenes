@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v278 · 02.09.2026';
+const APP_VER='v279 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6751,6 +6751,7 @@ function _ucakSablonAktar(rows,wb,sessiz){
   const dHy=hyA[1]!=null?hyA[1]:-1, dPnr=pnrA[1]!=null?pnrA[1]:-1, dUc=ucA[1]!=null?ucA[1]:-1, dHav=havA[1]!=null?havA[1]:-1, dSaat=saatA[1]!=null?saatA[1]:-1;
   const iNot2=col(/^note/);
   const iDom=col(/domestic/);
+  const iOpK=col(/operat/), iProdK=col(/^product/);
   let iSaat=saatA[0]!=null?saatA[0]:-1;
   if(iSaat<0){ for(let c=0;c<20;c++){ if(rows.slice(hIdx+1,hIdx+12).some(r=>r&&/^\s*\d{1,2}:\d{2}-\d{1,2}:\d{2}/.test(String(r[c]||'')))){ iSaat=c; break; } } }
   const rotaBol=(v,y,p2)=>{ const a=String(v||'').trim().toUpperCase().split(/[-\/]/).map(x=>x.trim()).filter(Boolean);
@@ -6776,6 +6777,8 @@ function _ucakSablonAktar(rows,wb,sessiz){
     const y={resno,soyad:p.soyad,ad:p.ad};
     if(p.dogum) y.dogum=p.dogum;
     if(iOda>=0){ const o=String(r[iOda]||'').trim(); if(o) sonOda=o; y.oda=o||sonOda; } // oda boşsa üstten taşınır (aile blokları)
+    if(iOpK>=0){ const v2=String(r[iOpK]||'').trim(); if(v2) window._sonOpK=v2; y.op=v2||window._sonOpK||''; }
+    if(iProdK>=0){ const v3=String(r[iProdK]||'').trim(); if(v3) window._sonProdK=v3; y.kod=v3||window._sonProdK||''; }
     if(iBag>=0) y.bagaj=String(r[iBag]||'').trim();
     if(iPkt>=0&&String(r[iPkt]||'').trim()) y.not=String(r[iPkt]).trim();
     if(iHy>=0) y.g_hy=String(r[iHy]||'').trim();
@@ -6830,7 +6833,7 @@ function _ucakSablonAktar(rows,wb,sessiz){
       mevcutY.soyad=p.soyad; mevcutY.ad=p.ad; if(p.dogum) mevcutY.dogum=p.dogum; if(resno) mevcutY.resno=resno;
       if(y.not&&!(mevcutY.not||'').includes(y.not)) mevcutY.not=((mevcutY.not?mevcutY.not+' · ':'')+y.not);
       if(y.oda&&!mevcutY.oda) mevcutY.oda=y.oda; if(y.bagaj&&!mevcutY.bagaj) mevcutY.bagaj=y.bagaj;
-      ['g_u1','g_u2','g_pnr','g_hy','g_ks1','g_vs1','g_ks2','g_vs2','g_tarih','g_k1','g_v1','g_k2','g_v2','d_u1','d_u2','d_pnr','d_hy','d_ks1','d_vs1','d_ks2','d_vs2','d_tarih','d_k1','d_v1','d_k2','d_v2','a_u1','a_k1','a_v1','a_ks1','a_vs1','a_tarih','a_hy','a_pnr'].forEach(f=>{
+      ['op','kod','g_u1','g_u2','g_pnr','g_hy','g_ks1','g_vs1','g_ks2','g_vs2','g_tarih','g_k1','g_v1','g_k2','g_v2','d_u1','d_u2','d_pnr','d_hy','d_ks1','d_vs1','d_ks2','d_vs2','d_tarih','d_k1','d_v1','d_k2','d_v2','a_u1','a_k1','a_v1','a_ks1','a_vs1','a_tarih','a_hy','a_pnr'].forEach(f=>{
         const yeni=String(y[f]||'').trim(); const eski=String(mevcutY[f]||'').trim();
         if(yeni&&eski&&yeni!==eski){ degisimler.push({alan:f,eski,yeni}); mevcutY[f]=yeni; }
         else if(yeni&&!eski) mevcutY[f]=yeni;
