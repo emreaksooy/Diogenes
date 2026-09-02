@@ -1901,7 +1901,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v297 · 02.09.2026';
+const APP_VER='v298 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11308,7 +11308,7 @@ function _rtTurlar(bas,son){
       const b=String(m.grupBolum||rb);
       (bolumMap[kk]=bolumMap[kk]||{})[b]=((bolumMap[kk]||{})[b]||0)+1; }); } }); }catch(e){}
   const out=[];
-  getPackages().filter(p=>pkgDurum(p)!=='arsiv').forEach(pkg=>{
+  getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&!p.opsDisAcente&&!p.rehbersiz).forEach(pkg=>{
     const gece=parseInt(pkg.gece)||0;
     (_opsTarihler(pkg)||[]).forEach(k=>{
       const end=_isoAdd(k,gece);
