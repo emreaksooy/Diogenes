@@ -1882,7 +1882,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v264 · 02.09.2026';
+const APP_VER='v265 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13255,7 +13255,8 @@ function renderOpsTransfer(){
       
       <span style="font-weight:700;margin-left:6px">${esc(_trGunAd(_opsTrDate))}</span>
       <span style="color:var(--muted);font-size:.76rem">· ${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</span>
-      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trExcelDay()">📥 Excel</button>
+      <button class="btn btn-outline btn-sm" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
     </div>`;
   if(_mutGun.length||_mutTum.length) h+=_mutPanel(_mutGun,'— '+_fmtDateTR(_opsTrDate),_mutTum.length-_mutGun.length);
   h+=`
@@ -13358,6 +13359,29 @@ function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!
     <div class="imza"><span>Şoför: ____________</span><span>Rehber: ____________</span><span>Operasyon: ____________</span></div></div>`; }
 function _trPrint(html){ let p=document.getElementById('trfPrint'); if(!p){ p=document.createElement('div'); p.id='trfPrint'; document.body.appendChild(p); } p.innerHTML=html; document.body.classList.add('trf-printing'); window.print(); setTimeout(()=>document.body.classList.remove('trf-printing'),400); }
 function _trPrintGrup(kod){ const h=_trGorevHtml(kod); if(!h){ showToast('Görev bulunamadı','error'); return; } _trPrint(h); }
+function _trExcelDay(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const list=_trDayRows();
+  if(!list.length){ showToast('Bu tarihte transfer yok','error'); return; }
+  const T=getTransfer();
+  const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR'};
+  const aoa=[['Görev','Depar','Tip','Nereden','Nereye','Uçuş','Uçuş Saati','Operatör','Ürün','PNR/Grup','Pax','Rehber','Firma','Araç','Şoför','Not','Durum']];
+  const sirali=[...list].sort((a,b)=>String(a.r.grup||'ZZ').localeCompare(String(b.r.grup||'ZZ'))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+  sirali.forEach(({r,dh})=>{
+    const gr=r.grup?(T.gruplar||{})[r.grup]||{}:{};
+    aoa.push([r.grup||'—',dh.saat||'',tipAd[r.tip]||r.tip,r.nereden||'',r.nereye||'',r.ucus||'',r.saat||'',r.op||'',r.urun||'',r.grupKod||'',+r.pax||0,
+      gr.rehber||'',gr.firma||'',[gr.arac,gr.arac2].filter(Boolean).join(' + '),gr.sofor?(gr.sofor+(gr.stel?' '+gr.stel:'')):'',r.not||'',
+      r.grup?(r.onay?'ONAYLI':'ATANDI'):'ATANMAMIŞ']);
+  });
+  aoa.push([]);
+  aoa.push(['TOPLAM','','','','','','','','','',list.reduce((t,x)=>t+(+x.r.pax||0),0),'','','','','','']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[8,7,10,26,26,9,11,14,9,10,5,14,16,18,16,18,11].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Transferler');
+  XLSX.writeFile(wb,'transfer_'+_opsTrDate+'.xlsx');
+  showToast('Excel indirildi: transfer_'+_opsTrDate+'.xlsx','success');
+}
 function _trPrintDay(){ const kodlar=[...new Set(_trDayRows().filter(x=>x.r.grup).map(x=>x.r.grup))]; if(!kodlar.length){ showToast('Bugün atanmış araç görevi yok','error'); return; } _trPrint(kodlar.map(_trGorevHtml).join('')); }
 
 function renderOperasyonDetay(){
