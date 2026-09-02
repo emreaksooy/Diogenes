@@ -1893,7 +1893,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v281 · 02.09.2026';
+const APP_VER='v282 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13344,6 +13344,23 @@ function _trMonTgl(){ try{ localStorage.setItem('dmc_trMonAcik',localStorage.get
 // ═══ ARAÇ MUTABAKATI — transfer görevleri + tur araçları (tahsis/nokta) birleşik döküm ═══
 let _mutAy=''; let _mutFirmaF='';
 function _mutUcretSet(kod,f,v){ const T=getTransfer(); if(!T.gruplar||!T.gruplar[kod]) return; T.gruplar[kod][f]=String(v).trim(); setTransfer(T); if(f==='ucretPara') renderOpsMutabakat(); }
+// firma kontrat tarifesinden fiyat: dönem (tarih) × güzergâh (yönsüz) × araç tipi
+function _afTarife(firmaAd,tarihIso,ucA,ucB,arTip){
+  try{
+    const f=(getTanimlar().aracFirmalari||[]).find(x=>(x.ad||'')===firmaAd); if(!f||!Array.isArray(f.kRota)||!f.kRota.length) return null;
+    const N=t=>String(t||'').replace(/İ/g,'I').toUpperCase().trim();
+    const a=N(ucA), b=N(ucB), tip=N(arTip);
+    const rota=f.kRota.find(r=>{ const x=N(r.nereden), y=N(r.nereye); return (x===a&&y===b)||(x===b&&y===a); });
+    if(!rota) return null;
+    let don=(f.kDonem||[]).find(d=>{ const db=_pdate(d.bas||''), de=_pdate(d.bit||''); return db&&de&&db<=tarihIso&&tarihIso<=de; });
+    if(!don&&(f.kDonem||[]).length===1) don=f.kDonem[0];
+    if(!don) return null;
+    const key=rota.id+'|'+tip+'|'+don.id;
+    const v=(f.kTrf||{})[key];
+    if(v==null||String(v).trim()==='') return null;
+    return {fiyat:_tdN(v),para:f.kPara||'EUR'};
+  }catch(e){ return null; }
+}
 function _mutAracSatirlar(){
   const ay=_mutAy; // 'YYYY-MM'
   const icinde=t=>{ const p=_pdate(t); return p&&(!ay||p.slice(0,7)===ay); };
@@ -13358,9 +13375,22 @@ function _mutAracSatirlar(){
     const tarih=L.map(r=>r.tarih).sort()[0];
     if(!icinde(tarih)) return;
     const gr=G[kod];
+    // güzergâh: bölge bazlı — G: AYT-KEMER, D: KEMER-AYT (uç kodu satırın havalimanından)
+    const ilk=L[0];
+    const uc=(ilk.tip==='D'?String(ilk.nereye||''):String(ilk.nereden||'')).split(' · ')[0].trim()||'AYT';
+    const bolgeler2=[...new Set(L.map(r=>String(r.bolge||'').trim()).filter(Boolean))];
+    const bolge=bolgeler2[0]||'';
+    const guzergah=ilk.tip==='D'?((bolge||'?')+'-'+uc):(uc+'-'+(bolge||'?'));
+    const arTip=String(gr.arac||'').split('(')[0].trim().split(' · ').pop()||'';
+    const paxT=L.reduce((t2,r)=>t2+(+r.pax||0),0);
+    const trf=gr.tahsis?null:_afTarife(gr.firma||'',_pdate(tarih),uc,bolge,arTip);
+    const elle=String(gr.ucret||'').trim();
     out.push({kaynak:'TRANSFER',kod:_trKodOf(kod),tarih:_pdate(tarih),firma:gr.firma||'',arac:[gr.arac,gr.arac2].filter(Boolean).join(' + '),
-      detay:[...new Set(L.map(r=>r.urun))].join('/')+' · '+L.length+' iş · '+L.reduce((t2,r)=>t2+(+r.pax||0),0)+' pax'+(gr.rehber?' · '+gr.rehber:''),
-      isSay:L.length,gun:1,tahsis:!!gr.tahsis,ucret:gr.ucret||'',ucretPara:gr.ucretPara||'EUR',ts:gr.ts||0,edit:kod});
+      guzergah:guzergah+(bolgeler2.length>1?' +'+(bolgeler2.length-1):''),pax:paxT,
+      detay:[...new Set(L.map(r=>r.urun))].join('/')+' · '+L.length+' uçuş'+(gr.rehber?' · '+gr.rehber:''),
+      isSay:1,gun:1,tahsis:!!gr.tahsis,
+      ucret:elle||(trf?String(trf.fiyat):''),ucretPara:elle?(gr.ucretPara||'EUR'):(trf?trf.para:(gr.ucretPara||'EUR')),
+      fKaynak:elle?'elle':(trf?'tarife':''),ts:gr.ts||0,edit:kod});
   });
   // 2) tur araçları (rehber dosyası: tahsis + nokta görevler)
   try{
@@ -13372,9 +13402,9 @@ function _mutAracSatirlar(){
         const b=_pdate(a.bas||''), e=_pdate(a.bit||'');
         const gun=(b&&e&&e>=b)?(_isoDiff(b,e)+1):1;
         out.push({kaynak:a.tip==='tahsis'?'TAHSİS':'TUR GÖREVİ',kod:(g.no||'')||(g.urunler||[]).join('/'),tarih,firma:a.firma||'',
-          arac:[a.arTip||a.ad,a.plaka].filter(Boolean).join(' · '),
+          arac:[a.arTip||a.ad,a.plaka].filter(Boolean).join(' · '),guzergah:'',pax:g.pax||'',
           detay:(g.urunler||[]).join('/')+(b&&e?' · '+_fmtDateTR(b)+'–'+_fmtDateTR(e):'')+(a.not?' · '+a.not:''),
-          isSay:1,gun,tahsis:false,ucret:a.fiyat||'',ucretPara:a.fiyatPara||'EUR',ts:0,edit:null});
+          isSay:1,gun,tahsis:false,ucret:a.fiyat||'',ucretPara:a.fiyatPara||'EUR',fKaynak:a.fiyat?'rehber dosyası':'',ts:0,edit:null});
       });
     });
   }catch(e){}
@@ -13403,29 +13433,30 @@ function renderOpsMutabakat(){
   if(!list.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt yok.</p>'; return; }
   let curF=null;
   h+=`<div class="card" style="padding:.4rem .6rem"><table style="width:100%;border-collapse:collapse">
-    <tr><th style="${th}">Tarih</th><th style="${th}">Kaynak</th><th style="${th}">Görev/Tur</th><th style="${th}">Araç</th><th style="${th}">Detay</th><th style="${th}">İş</th><th style="${th}">Gün</th><th style="${th}">Ücret</th></tr>`;
+    <tr><th style="${th}">Tarih</th><th style="${th}">Kaynak</th><th style="${th}">Görev/Tur</th><th style="${th}">Güzergâh</th><th style="${th}">Araç</th><th style="${th}">Pax</th><th style="${th}">Detay</th><th style="${th}">Gün</th><th style="${th}">Ücret</th></tr>`;
   const araToplam=F=>{
     const L=list.filter(x=>(x.firma||'—')===F);
     const tut={}; L.forEach(x=>{ const v=_tdN(x.ucret); if(v&&!x.tahsis) tut[x.ucretPara]=(tut[x.ucretPara]||0)+v*(x.kaynak==='TAHSİS'?1:1); });
-    return `<tr><td colspan="5" style="${td};background:var(--primary-soft);font-weight:800">${esc(F)} — ARA TOPLAM</td>
-      <td style="${td};background:var(--primary-soft);font-weight:800">${L.reduce((t2,x)=>t2+x.isSay,0)}</td>
+    return `<tr><td colspan="6" style="${td};background:var(--primary-soft);font-weight:800">${esc(F)} — ARA TOPLAM · ${L.reduce((t2,x)=>t2+x.isSay,0)} iş</td>
+      <td style="${td};background:var(--primary-soft);font-weight:800"></td>
       <td style="${td};background:var(--primary-soft);font-weight:800">${L.reduce((t2,x)=>t2+x.gun,0)}</td>
       <td style="${td};background:var(--primary-soft);font-weight:800">${Object.keys(tut).length?Object.entries(tut).map(([p,v])=>(Math.round(v*100)/100).toLocaleString('tr-TR')+' '+p).join(' + '):'—'}</td></tr>`;
   };
   list.forEach((x,i)=>{
     const F=x.firma||'—';
     if(curF!==null&&F!==curF) h+=araToplam(curF);
-    if(F!==curF){ h+=`<tr><td colspan="8" style="${td};background:#f1f5f9;font-weight:800;font-size:.8rem">🚐 ${esc(F)}</td></tr>`; curF=F; }
+    if(F!==curF){ h+=`<tr><td colspan="9" style="${td};background:#f1f5f9;font-weight:800;font-size:.8rem">🚐 ${esc(F)}</td></tr>`; curF=F; }
     const KAY={'TRANSFER':['#e0f2fe','#0369a1'],'TAHSİS':['#fef3c7','#92400e'],'TUR GÖREVİ':['#e4ecf7','#1e3a5f']};
     h+=`<tr>
       <td style="${td};white-space:nowrap"><b>${_fmtDateTR(x.tarih)}</b></td>
       <td style="${td}"><span style="background:${(KAY[x.kaynak]||[])[0]};color:${(KAY[x.kaynak]||[])[1]};font-weight:800;font-size:.6rem;padding:2px 7px;border-radius:8px;white-space:nowrap">${x.kaynak}</span></td>
       <td style="${td}"><b>${esc(x.kod)}</b></td>
+      <td style="${td};white-space:nowrap"><b>${esc(x.guzergah||'—')}</b></td>
       <td style="${td}">${esc(x.arac||'—')}</td>
+      <td style="${td}"><b>${x.pax||''}</b></td>
       <td style="${td};font-size:.7rem;color:var(--muted)">${esc(x.detay)}</td>
-      <td style="${td}"><b>${x.isSay}</b></td>
       <td style="${td}">${x.gun}</td>
-      <td style="${td};white-space:nowrap">${x.tahsis?'<span style="color:#92400e;font-weight:700;font-size:.68rem">tahsise dahil</span>':(x.edit?`<input inputmode="decimal" value="${esc(x.ucret)}" placeholder="—" style="width:70px;padding:3px 6px;border:1.5px solid var(--border);border-radius:7px;text-align:right;font-family:inherit" onchange="_mutUcretSet('${x.edit}','ucret',this.value)"><select onchange="_mutUcretSet('${x.edit}','ucretPara',this.value)" style="padding:3px 4px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.7rem">${['EUR','USD','TRY'].map(p=>`<option ${x.ucretPara===p?'selected':''}>${p}</option>`).join('')}</select>`:esc(x.ucret?x.ucret+' '+x.ucretPara:'—'))}</td></tr>`;
+      <td style="${td};white-space:nowrap">${x.tahsis?'<span style="color:#92400e;font-weight:700;font-size:.68rem">tahsise dahil</span>':(x.edit?`<input inputmode="decimal" value="${esc(x.fKaynak==='elle'?x.ucret:'')}" placeholder="${esc(x.fKaynak==='tarife'?x.ucret:'—')}" style="width:64px;padding:3px 6px;border:1.5px solid ${x.fKaynak==='tarife'?'#86efac':'var(--border)'};border-radius:7px;text-align:right;font-family:inherit" onchange="_mutUcretSet('${x.edit}','ucret',this.value)"><select onchange="_mutUcretSet('${x.edit}','ucretPara',this.value)" style="padding:3px 4px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.7rem">${['EUR','USD','TRY'].map(p=>`<option ${x.ucretPara===p?'selected':''}>${p}</option>`).join('')}</select>${x.fKaynak==='tarife'?'<span style="color:#166534;font-weight:700;font-size:.62rem;margin-left:3px">'+esc(x.ucret)+' '+esc(x.ucretPara)+' tarife</span>':(x.fKaynak===''&&!x.ucret?'<span style="color:#b45309;font-weight:700;font-size:.62rem;margin-left:3px" title="Firma kontratında bu güzergâh/araç tipi için fiyat tanımlı değil">tarife yok</span>':'')}`:esc(x.ucret?x.ucret+' '+x.ucretPara:'—'))}</td></tr>`;
   });
   if(curF!==null) h+=araToplam(curF);
   h+='</table></div>';
@@ -13439,14 +13470,14 @@ function _mutAracExcel(){
   const firmalar=[...new Set(list.map(x=>x.firma||'—'))].sort((a,b)=>a.localeCompare(b,'tr'));
   firmalar.forEach(F=>{
     const L=list.filter(x=>(x.firma||'—')===F);
-    const aoa=[['ARAÇ MUTABAKATI — '+F+' — '+_mutAy],[],['Tarih','Kaynak','Görev/Tur','Araç','Detay','İş','Gün','Ücret','Para']];
-    L.forEach(x=>aoa.push([_fmtDateTR(x.tarih),x.kaynak,x.kod,x.arac,x.detay,x.isSay,x.gun,x.tahsis?'tahsise dahil':(_tdN(x.ucret)||''),x.tahsis?'':x.ucretPara]));
+    const aoa=[['ARAÇ MUTABAKATI — '+F+' — '+_mutAy],[],['Tarih','Kaynak','Görev/Tur','Güzergâh','Araç','Pax','Detay','Gün','Ücret','Para','Fiyat Kaynağı']];
+    L.forEach(x=>aoa.push([_fmtDateTR(x.tarih),x.kaynak,x.kod,x.guzergah||'',x.arac,x.pax||'',x.detay,x.gun,x.tahsis?'tahsise dahil':(_tdN(x.ucret)||''),x.tahsis?'':x.ucretPara,x.tahsis?'':(x.fKaynak||'')]));
     const tut={}; L.forEach(x=>{ const v=_tdN(x.ucret); if(v&&!x.tahsis) tut[x.ucretPara]=(tut[x.ucretPara]||0)+v; });
     aoa.push([]);
-    aoa.push(['TOPLAM','','','','',L.reduce((t,x)=>t+x.isSay,0),L.reduce((t,x)=>t+x.gun,0),Object.entries(tut).map(([p,v])=>(Math.round(v*100)/100)+' '+p).join(' + '),'']);
+    aoa.push(['TOPLAM','','','','','','',L.reduce((t,x)=>t+x.gun,0),Object.entries(tut).map(([p,v])=>(Math.round(v*100)/100)+' '+p).join(' + '),'',L.length+' iş']);
     const ws=XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols']=[11,11,12,20,40,5,5,12,6].map(w2=>({wch:w2}));
-    try{ _xsSusle(ws,aoa,{baslikR:0,altR:null,hdrR:2,veriBas:3,veriSon:2+L.length,toplamR:aoa.length-1,nC:9,tipC:null,durumC:null}); ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:8}}); }catch(e){}
+    ws['!cols']=[11,11,10,16,16,5,34,5,10,6,12].map(w2=>({wch:w2}));
+    try{ _xsSusle(ws,aoa,{baslikR:0,altR:null,hdrR:2,veriBas:3,veriSon:2+L.length,toplamR:aoa.length-1,nC:11,tipC:null,durumC:null}); ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:10}}); }catch(e){}
     XLSX.utils.book_append_sheet(wb,ws,String(F).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Firma');
   });
   const adx='arac_mutabakat_'+_mutAy+'.xlsx';
