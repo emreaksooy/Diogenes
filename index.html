@@ -1868,7 +1868,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v252 · 02.09.2026';
+const APP_VER='v253 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10069,6 +10069,9 @@ function rzMailParse(){
 
 // ═══════════ FAZ 2: SATIR-BAZLI BULUT (doc_rows) ═══════════
 const _docSig={res:new Map(),pnr:new Map(),ops:new Map(),transfer:new Map(),opsgrup:new Map(),rezv:new Map()};
+// MEZAR TAŞLARI: silinen doc kayıtları buluta col='sil', id='<col>:<docId>' olarak işlenir.
+// Amaç: silme push'u yarım kalsa bile kayıt backfill/tam çekimle bir daha HORTLAMASIN.
+let _silTomb=new Map();
 const _KIND2COL={reservations:'res',pnrLedger:'pnr',operasyon:'ops',transfer:'transfer',opsgrup:'opsgrup',rezervasyonlar:'rezv'};
 function _docSplit(col){
   if(col==='res') return (_resCache||[]).filter(g=>g&&g.pkgId&&g.kalkis).map(g=>({id:g.pkgId+'|'+g.kalkis,parent:String(g.kalkis||''),data:g}));
@@ -10142,6 +10145,19 @@ async function _docPush(col){
     if(sig.get(r.id)!==s2){ ups.push({col,id:r.id,parent:r.parent||null,data:r.data,updated_at:new Date().toISOString(),updated_by:sbUser?sbUser.id:null}); sig.set(r.id,s2); }
   });
   const del=[...sig.keys()].filter(id=>!cur.has(id));
+  // silinecekler için ÖNCE mezar taşı (delete başarısız kalsa bile pull'lar diriltmez, kalıntıyı temizler)
+  if(del.length){
+    const ts=Date.now();
+    const silRows=del.map(id=>({col:'sil',id:col+':'+id,parent:null,data:{ts},updated_at:new Date().toISOString(),updated_by:sbUser?sbUser.id:null}));
+    for(let i=0;i<silRows.length;i+=50){ try{ await sb.from('doc_rows').upsert(silRows.slice(i,i+50)); }catch(e){} }
+    del.forEach(id=>_silTomb.set(col+':'+id,ts));
+  }
+  // yeniden oluşturulan id'ler (ör. aynı sefere uçak listesi tekrar import) → taş kalkar
+  const geriGelen=ups.map(u=>u.id).filter(id=>_silTomb.has(col+':'+id));
+  if(geriGelen.length){
+    geriGelen.forEach(id=>_silTomb.delete(col+':'+id));
+    try{ await sb.from('doc_rows').delete().eq('col','sil').in('id',geriGelen.map(id=>col+':'+id)); }catch(e){}
+  }
   for(let i=0;i<ups.length;i+=50){
     const dilim=ups.slice(i,i+50);
     let r; try{ r=await sb.from('doc_rows').upsert(dilim); }catch(e){ r={error:e}; }
@@ -10265,7 +10281,16 @@ async function _cloudPullFull(){
     if(Array.isArray(kvMap.duyurular)){ _duyuruCache=kvMap.duyurular; idbSet('duyurular',_duyuruCache); _sigKv.set('duyurular',JSON.stringify(kvMap.duyurular)); }
     if(Array.isArray(kvMap.ekip)){ _ekipCache=kvMap.ekip; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(kvMap.ekip)); }
     const docBy={res:[],pnr:[],ops:[],transfer:[],opsgrup:[],rezv:[]};
-    if(!dr.error) (dr.data||[]).forEach(r=>{ if(docBy[r.col]) docBy[r.col].push(r); });
+    _silTomb=new Map();
+    if(!dr.error) (dr.data||[]).forEach(r=>{ if(r.col==='sil'){ _silTomb.set(r.id,(r.data&&r.data.ts)||0); return; } if(docBy[r.col]) docBy[r.col].push(r); });
+    // mezar taşlı kayıtlar diriltilmez; bulut kalıntıları arka planda silinir
+    const _tombKalinti=[];
+    Object.keys(docBy).forEach(col=>{ docBy[col]=docBy[col].filter(r=>{ if(_silTomb.has(col+':'+r.id)){ _tombKalinti.push({col,id:r.id}); return false; } return true; }); });
+    if(_tombKalinti.length){ setTimeout(async()=>{ try{
+      const byCol={}; _tombKalinti.forEach(x=>(byCol[x.col]=byCol[x.col]||[]).push(x.id));
+      for(const c of Object.keys(byCol)) for(let i=0;i<byCol[c].length;i+=100) await sb.from('doc_rows').delete().eq('col',c).in('id',byCol[c].slice(i,i+100));
+      console.warn('Silinmiş kayıtların bulut kalıntıları temizlendi:',_tombKalinti.length);
+    }catch(e){} },1500); }
     const legacy={rezv:['rezervasyonlar',null],
                   res:['reservations',Array.isArray(kvMap.reservations)?kvMap.reservations:null],
                   pnr:['pnrLedger',Array.isArray(kvMap.pnrLedger)?kvMap.pnrLedger:null],
@@ -10353,7 +10378,15 @@ async function _cloudPullIncre(last){
     else if(r.key==='ekip'&&Array.isArray(r.data)){ _ekipCache=r.data; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(r.data)); degisti++; }
   });
   // doc_rows: satır satır merge + uzak id diff ile silme
-  (dr.data||[]).forEach(r=>{ if(!_docSig[r.col])return; const sig=JSON.stringify(r.data); if(_docSig[r.col].get(r.id)===sig)return; _docSig[r.col].set(r.id,sig); _docApplyOne(r.col,r.id,r.data); degisti++; });
+  (dr.data||[]).forEach(r=>{
+    if(r.col==='sil'){ _silTomb.set(r.id,(r.data&&r.data.ts)||0);
+      const ci=r.id.indexOf(':');
+      if(ci>0){ const c=r.id.slice(0,ci), did=r.id.slice(ci+1);
+        if(_docSig[c]&&_docSig[c].has(did)){ _docSig[c].delete(did); _docApplyOne(c,did,null); degisti++; } }
+      return; }
+    if(!_docSig[r.col])return; const sig=JSON.stringify(r.data); if(_docSig[r.col].get(r.id)===sig)return;
+    if(_silTomb.has(r.col+':'+r.id)) _silTomb.delete(r.col+':'+r.id); // güncel satır geldi → taş düşer (yeniden oluşturma)
+    _docSig[r.col].set(r.id,sig); _docApplyOne(r.col,r.id,r.data); degisti++; });
   { const uzak={}; (drIds.data||[]).forEach(r=>{ (uzak[r.col]=uzak[r.col]||new Set()).add(r.id); });
     Object.keys(_docSig).forEach(col=>{ const set=uzak[col]||new Set(); [..._docSig[col].keys()].forEach(id=>{ if(!set.has(id)){ _docSig[col].delete(id); _docApplyOne(col,id,null); degisti++; } }); }); }
   // ── BACKFILL: bulutta olup YERELDE OLMAYAN kayıtları tamamla ──
@@ -10361,8 +10394,9 @@ async function _cloudPullIncre(last){
   // hiç getirmez ve delik kalıcılaşır (yanlış 'uçak listesinde yok' uyarılarının kök nedeni).
   try{
     const yerelDoc={}; Object.keys(_docSig).forEach(c=>{ yerelDoc[c]=new Set(_docSplit(c).map(r=>r.id)); });
+    (drIds.data||[]).forEach(r=>{ if(r.col==='sil'&&!_silTomb.has(r.id)) _silTomb.set(r.id,0); });
     const eksikCol={}; let eksikSay=0;
-    (drIds.data||[]).forEach(r=>{ if(_docSig[r.col]&&!_docSig[r.col].has(r.id)&&!yerelDoc[r.col].has(r.id)){ (eksikCol[r.col]=eksikCol[r.col]||[]).push(r.id); eksikSay++; } });
+    (drIds.data||[]).forEach(r=>{ if(r.col==='sil') return; if(_silTomb.has(r.col+':'+r.id)) return; if(_docSig[r.col]&&!_docSig[r.col].has(r.id)&&!yerelDoc[r.col].has(r.id)){ (eksikCol[r.col]=eksikCol[r.col]||[]).push(r.id); eksikSay++; } });
     const pkVar=new Set(_pkgCache.map(p=>p&&p.id)), opVar=new Set(_opCache.map(o=>o&&o.id));
     const pkEksik=(pkIds.data||[]).map(r=>r.id).filter(id=>!pkVar.has(id));
     const opEksik=(opIds.data||[]).map(r=>r.id).filter(id=>!opVar.has(id));
