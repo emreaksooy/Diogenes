@@ -1895,7 +1895,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v291 · 02.09.2026';
+const APP_VER='v292 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13182,7 +13182,8 @@ function _trHotel(pkgId,kalkis,pkg){ const o=getOperasyon().find(x=>x.pkgId===pk
 function _trBolge(pkg){ return (pkg.bolge||(pkg.destinasyonSehir||'').split(/[·,\/]/)[0]||'').trim().toUpperCase(); }
 function _trBolgeOnce(ad){ const b=(getTanimlar().bolgeler||[]).find(x=>(x.ad||'').toUpperCase()===(ad||'').toUpperCase().trim()); return b?_dk(b.once):null; }
 function _trDeparHesap(r){ if(r.deparMan&&r.depar) return {saat:r.depar,onceki:false}; if(r.tip==='D'||r.tip==='ARAD'){ const u=_dk(r.saat),o=_trBolgeOnce(r.bolge); if(u===null||o===null) return {saat:r.depar||'',onceki:false}; const d=u-o; return {saat:_mmss(d),onceki:d<0}; } return {saat:r.saat||'',onceki:false}; }
-function _trGroup(rows,p){ const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={}; rows.forEach(y=>{ if(!has(y))return; const key=(y[p+'_pnr']||'').trim()||(p+':'+(y[p+'_u1']||'')+'_'+(y[p+'_k1']||'')+'_'+(y[p+'_ks1']||'')); if(!map[key]) map[key]={key,pnr:(y[p+'_pnr']||'').trim()||'—',y,n:0}; map[key].n++; }); return Object.values(map); }
+function _trGrupKey(y,p){ return p+':'+String(y[p+'_u1']||'').trim().toUpperCase()+'_'+String(y[p+'_k1']||'').trim().toUpperCase()+'_'+String(y[p+'_ks1']||'').trim(); }
+function _trGroup(rows,p){ const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={}; rows.forEach(y=>{ if(!has(y))return; const key=_trGrupKey(y,p); if(!map[key]) map[key]={key,pnrs:new Set(),y,n:0}; const pn=(y[p+'_pnr']||'').trim(); if(pn) map[key].pnrs.add(pn); map[key].n++; }); return Object.values(map).map(g=>{ const L=[...g.pnrs]; g.pnr=L.length===0?'—':(L.length===1?L[0]:L.length+' PNR'); return g; }); }
 function _trGenRows(){
   const T=getTransfer(); const sat=T.sat||{}; const pkgs=getPackages(); const out=[];
   const merge=o=>{ const p=(o.id||'').split('|'); o.pkgId=p[0]||''; o.kalkis=p[1]||''; o.opsGrupId=(p[0]||'')+'|'+(p[1]||''); /* şimdilik her kalkış kendi grubu; birleştirme/bölünme gelince buradan yeniden yönlendirilir */ const m=sat[o.id]||{}; o.grup=m.grup||null; o.onay=!!m.onay; o.depar=m.depar||''; o.deparMan=!!m.deparMan; o.not=m.not!=null?m.not:''; return o; };
@@ -13828,7 +13829,8 @@ function _trYolcular(r){
   if(r.tip==='TUR') secilen=rows;
   else{
     const p=r.tip==='G'?'g':(r.tip==='D'?'d':'a');
-    secilen=rows.filter(y=>{ const k=String(y[p+'_pnr']||'').trim()||'—'; return k===String(r.grupKod||'—'); });
+    const hedefKey=String(r.id||'').split('|')[3]||'';
+    secilen=rows.filter(y=>_trGrupKey(y,p)===hedefKey);
   }
   // uyruk: rezervasyon müşterisinden (voucher + isim token eşleşmesi)
   const rezvler=(getRezv()||[]).filter(x=>x.tip==='urun'&&x.pkgId===r.pkgId&&x.kalkis===r.kalkis);
