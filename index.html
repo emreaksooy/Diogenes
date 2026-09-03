@@ -1901,7 +1901,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v298 · 02.09.2026';
+const APP_VER='v299 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13628,11 +13628,9 @@ function renderOpsTransfer(){
       ${_opsTrDate2?'<button class="btn btn-outline btn-sm" onclick="opsTrAralik(0)">Tek gün</button>':''}
       <span style="font-weight:700;margin-left:6px">${_opsTrDate2?esc(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):esc(_trGunAd(_opsTrDate))}</span>
       <span style="color:var(--muted);font-size:.76rem">· ${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</span>
-      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trExcelDay()">📥 Excel${_trUst.firma?' ('+esc(_trUst.firma)+')':''}</button>
-      <button class="btn btn-outline btn-sm" onclick="_trExcelFirma()" title="Her araç firması ayrı sayfada — firmalara tek tek göndermek için">📥 Firma bazlı</button>
-      <button class="btn btn-outline btn-sm" onclick="_trUetdsExcel()" title="Görev başına sayfa: sefer bilgisi + YOLCU İSİMLERİ (uyruk/doğum/voucher) — UETDS bildirimi için">🧾 UETDS</button>
-      <button class="btn btn-outline btn-sm" onclick="_trTasimaciExcel()" title="Seçili firmaya özel, yolcu isimli GELİŞ/DÖNÜŞ transfer listesi (Sejour düzeni) — üst filtreden firma seç">🚌 Taşımacı Excel</button>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trTasimaciExcel()" title="Seçili firmaya özel, yolcu isimli GELİŞ/DÖNÜŞ transfer listesi — üst filtreden firma seç">🚌 Taşımacı Excel</button>
       <button class="btn btn-outline btn-sm" onclick="_trTasimaciPdf()" title="Aynı listenin yazdırılabilir hali">🚌 Taşımacı PDF</button>
+      <button class="btn btn-outline btn-sm" onclick="_trWhatsapp()" title="Taşımacı Excel'ini indirir + firmanın WhatsApp sohbetini hazır mesajla açar — dosyayı sohbete sürüklemen yeterli">📲 WhatsApp</button>
       <button class="btn btn-outline btn-sm" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
     </div>`;
   // ── ÜST FİLTRE PANELİ ──
@@ -14012,6 +14010,19 @@ function _trTasimaciExcel(){
   const adx='tasimaci_'+String(V.firma).replace(/\s+/g,'')+'_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
   XLSX.writeFile(wb,adx);
   showToast('Taşımacı listesi indirildi: '+adx,'success',6000);
+}
+function _trWhatsapp(){
+  const V=_trTasimaciBloklar(); if(!V) return;
+  _trTasimaciExcel(); // dosya iner
+  const f=_afFirmaBul(V.firma);
+  let tel=String((f&&f.tel)||'').replace(/\D/g,'');
+  if(tel.length===11&&tel.startsWith('0')) tel='9'+tel;
+  else if(tel.length===10&&tel.startsWith('5')) tel='90'+tel;
+  const topIs=Object.values(V.bolumler).reduce((t,L)=>t+L.length,0);
+  const topPax=Object.values(V.bolumler).reduce((t,L)=>t+L.reduce((a,b)=>a+(+b.pax||0),0),0);
+  const msg='Merhaba, '+V.donem+' transfer listemiz ektedir — '+topIs+' iş · '+topPax+' pax.\nDiogenes Travel';
+  window.open('https://wa.me/'+(tel||'')+'?text='+encodeURIComponent(msg),'_blank');
+  showToast(tel?'WhatsApp açıldı — indirilen Excel dosyasını sohbete sürükle':'Firmanın telefonu tanımlı değil — WhatsApp kişi seçimiyle açıldı, dosyayı sohbete sürükle', tel?'success':'error',7000);
 }
 function _trTasimaciPdf(){
   const V=_trTasimaciBloklar(); if(!V) return;
