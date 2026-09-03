@@ -1857,6 +1857,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <label class="otl-f" style="grid-column:span 2"><span>Firma adı *</span><input id="afAd" onchange="afAdChange()"></label>
         <label class="otl-f"><span>Yetkili</span><input id="afYetkili"></label>
         <label class="otl-f"><span>Telefon</span><input id="afTel"></label>
+        <label class="otl-f"><span>📲 Operasyon Tel (WhatsApp)</span><input id="afOpTel" placeholder="05xx xxx xx xx"></label>
         <label class="otl-f"><span>E-posta</span><input id="afEmail"></label>
         <label class="otl-f" style="grid-column:span 3"><span>Adres</span><input id="afAdres"></label>
         <label class="otl-f" style="grid-column:span 3"><span>Not</span><input id="afNot" placeholder="anlaşma koşulları, çalışma bölgesi…"></label>
@@ -1901,7 +1902,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v299 · 02.09.2026';
+const APP_VER='v300 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11974,7 +11975,7 @@ function afModalAc(i){
   _afEdit=(i==null?-1:i);
   const f=(_afEdit>=0?_afList()[_afEdit]:null)||{};
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=(v==null?'':v); };
-  set('afKod',f.kod); set('afAd',f.ad); set('afYetkili',f.yetkili); set('afTel',f.tel); set('afEmail',f.email); set('afAdres',f.adres); set('afNot',f.not);
+  set('afKod',f.kod); set('afAd',f.ad); set('afYetkili',f.yetkili); set('afTel',f.tel); set('afOpTel',f.opTel); set('afEmail',f.email); set('afAdres',f.adres); set('afNot',f.not);
   set('afUnvan',f.unvan); set('afWeb',f.web); set('afVd',f.vd); set('afVno',f.vno); set('afIban',f.iban);
   _afLogoTmp=f.logo||''; _afLogoPrevRender();
   const b=document.getElementById('afBaslik'); if(b) b.innerHTML='<svg class="ic"><use href="#i-bus"/></svg> '+(_afEdit>=0?'Firmayı Düzenle':'Araç Firması Ekle');
@@ -11990,7 +11991,7 @@ function afKaydet(){
   if(ayni){ showToast('Bu firma zaten kayıtlı: '+ayni.ad,'error'); return; }
   let kod=g('afKod').toUpperCase(); if(!kod) kod=_afKod(ad,_afEdit);
   if(kod&&L.some((f,ix)=>ix!==_afEdit&&String(f.kod||'').toUpperCase()===kod)){ showToast('Bu kod başka firmada: '+kod,'error'); return; }
-  const o={kod,ad,yetkili:g('afYetkili'),tel:g('afTel'),email:g('afEmail'),adres:g('afAdres'),not:g('afNot'),unvan:g('afUnvan'),web:g('afWeb'),vd:g('afVd'),vno:g('afVno'),iban:g('afIban'),logo:_afLogoTmp};
+  const o={kod,ad,yetkili:g('afYetkili'),tel:g('afTel'),opTel:g('afOpTel'),email:g('afEmail'),adres:g('afAdres'),not:g('afNot'),unvan:g('afUnvan'),web:g('afWeb'),vd:g('afVd'),vno:g('afVno'),iban:g('afIban'),logo:_afLogoTmp};
   const t=getTanimlar();
   if(_afEdit>=0&&t.aracFirmalari[_afEdit]) Object.assign(t.aracFirmalari[_afEdit],o);
   else t.aracFirmalari.push(Object.assign({id:genId(),filo:[],aracTipleri:[]},o));
@@ -14015,7 +14016,7 @@ function _trWhatsapp(){
   const V=_trTasimaciBloklar(); if(!V) return;
   _trTasimaciExcel(); // dosya iner
   const f=_afFirmaBul(V.firma);
-  let tel=String((f&&f.tel)||'').replace(/\D/g,'');
+  let tel=String((f&&(f.opTel||f.tel))||'').replace(/\D/g,'');
   if(tel.length===11&&tel.startsWith('0')) tel='9'+tel;
   else if(tel.length===10&&tel.startsWith('5')) tel='90'+tel;
   const topIs=Object.values(V.bolumler).reduce((t,L)=>t+L.length,0);
