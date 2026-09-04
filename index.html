@@ -712,6 +712,7 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 @media(max-width:640px){
   html{-webkit-text-size-adjust:100%}
 }
+@media(min-width:641px){ .mm-tabbar{display:none !important} }
 
 
 /* Uçak v3 grid */
@@ -983,6 +984,15 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> Tanımlamalar</div>
       </div>
     </div>
+    <!-- MAĞAZALAR mode -->
+    <div id="sidebarMagaza" style="display:none">
+      <div class="sidebar-header"><h3>🏬 Mağazalar</h3></div>
+      <div class="sidebar-list">
+        <div class="pkg-section-item mm-navitem active-ops" data-mt="firmalar" onclick="mmTab('firmalar')">🏬 Mağazalar</div>
+        <div class="pkg-section-item mm-navitem" data-mt="muh" onclick="mmTab('muh')">📒 Mağaza Muhasebesi</div>
+        <div class="pkg-section-item mm-navitem" data-mt="plan" onclick="mmTab('plan')">📅 Mağaza Operasyonu</div>
+      </div>
+    </div>
     </div><!-- /sidebar-ctx -->
   </div>
 
@@ -1039,7 +1049,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
   <!-- PAGE: OPERATÖR PAKETLERİ -->
   <div id="page-magmuh" class="page">
-    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
+    <div class="mm-tabbar" style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
       <button class="btn btn-sm" id="mmTabFirmaBtn" onclick="mmTab('firmalar')">🏬 Mağazalar</button>
       <button class="btn btn-sm" id="mmTabMuhBtn" onclick="mmTab('muh')">📒 Mağaza Muhasebesi</button>
       <button class="btn btn-sm" id="mmTabPlanBtn" onclick="mmTab('plan')">📅 Mağaza Operasyonu</button>
@@ -1966,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v329 · 04.09.2026';
+const APP_VER='v330 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2339,6 +2349,7 @@ function showPage(id, tabEl) {
   const sPkg = document.getElementById('sidebarPkg');
   if (sOps) sOps.style.display = 'none';
   const sOpr = document.getElementById('sidebarOperasyon'); if (sOpr) sOpr.style.display = (id==='operasyon') ? '' : 'none';
+  const sMag = document.getElementById('sidebarMagaza'); if (sMag) sMag.style.display = (id==='magmuh') ? '' : 'none';
   const sRzv = document.getElementById('sidebarRezv'); if (sRzv) sRzv.style.display = (id==='rezervasyon') ? '' : 'none';
   if (sPkg) sPkg.style.display = isPkgMode ? '' : 'none';
   if (isPkgMode) updatePkgSidebarMeta();
@@ -14318,6 +14329,7 @@ function mmTab(t){
   if(b) b.style.display=(t==='muh')?'':'none';
   if(p) p.style.display=(t==='plan')?'':'none';
   if(bf) bf.className='btn btn-sm '+(t==='firmalar'?'btn-primary':'btn-outline');
+  try{ document.querySelectorAll('.mm-navitem').forEach(x=>x.classList.toggle('active-ops', x.getAttribute('data-mt')===t)); }catch(e){}
   if(bm) bm.className='btn btn-sm '+(t==='muh'?'btn-primary':'btn-outline');
   if(bp) bp.className='btn btn-sm '+(t==='plan'?'btn-primary':'btn-outline');
   if(t==='firmalar') renderMagFirmalar();
