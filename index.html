@@ -1951,7 +1951,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v321 · 04.09.2026';
+const APP_VER='v322 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10934,8 +10934,25 @@ function rehbTurAc(pkgId,kalkis,gid){
   const ok=_rehbTurlar().some(t=>(gid&&t.birlesikGrupId===gid)||(t.pkgId===pkgId&&t.kalkis===kalkis));
   if(!ok){ showToast('Bu tur artık erişimine kapalı','error'); return; }
   let hedef=gid||null;
-  if(!hedef){ try{ const g=_ogResolve().find(x=>(x.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)); if(g) hedef=g.id; }catch(e){} }
-  if(!hedef){ showToast('Tur dosyası henüz hazırlanmamış — operasyon ekibine bildir','error'); return; }
+  if(!hedef){ try{
+    let gruplar=_ogResolve().filter(x=>(x.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)||(x.sefer&&x.sefer.pkgId===pkgId&&x.sefer.kalkis===kalkis));
+    gruplar.sort((a,b)=>new Set((b.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis)).size-new Set((a.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis)).size);
+    if(gruplar.length) hedef=gruplar[0].id;
+  }catch(e){} }
+  if(!hedef){ // yolcu işlenmemiş sefer: opsOpen ile aynı — sefer bazlı kalıcı dosya aç
+    try{
+      const S=getOpsGrup(); S.gruplar=S.gruplar||{};
+      let sg=Object.values(S.gruplar).find(g2=>g2.sefer&&g2.sefer.pkgId===pkgId&&g2.sefer.kalkis===kalkis);
+      if(!sg){
+        const pk=getPackages().find(p=>p.id===pkgId)||{};
+        const nid='og'+R_GID().slice(1);
+        sg={id:nid,no:_ogNoVer(S,kalkis),ad:(pk.paketKodu?pk.paketKodu+' ':'')+_fmtDateTR(kalkis),rehberId:'',not:'',uyeler:[],tahsisler:[],sefer:{pkgId:pkgId,kalkis:kalkis}};
+        S.gruplar[nid]=sg; setOpsGrup(S);
+      }
+      hedef=sg.id;
+    }catch(e){}
+  }
+  if(!hedef){ showToast('Tur dosyası açılamadı — operasyon ekibine bildir','error'); return; }
   try{ hedef=_ogMaterialize(hedef); }catch(e){}
   _tdGid=hedef; _tdTab='program'; renderRehberim();
 }
