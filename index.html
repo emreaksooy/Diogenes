@@ -1929,7 +1929,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v315 · 04.09.2026';
+const APP_VER='v316 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7857,6 +7857,7 @@ async function _cloudStart(session){
     _cloudSubscribe();
     renderPano&&renderPano();
     _setCloud('ok','Bulut: eşitlendi');
+    try{ _rehbOtoRol(); }catch(e){}
     if(sbRol==='yonetici'){
       sb.from('profiles').select('email,ad,rol').then(pr=>{ if(!pr.error&&Array.isArray(pr.data)){ _ekipCache=pr.data; idbSet('ekip',_ekipCache); _cloudQueue('ekip'); renderPano&&renderPano(); } }).catch(()=>{});
     }
@@ -10874,7 +10875,27 @@ function _onRemote(kind,p){
 
 // ═══ REHBER PANELİ ═══
 const _rehbNrm=x=>String(x||'').replace(/İ/g,'i').replace(/I/g,'i').toLocaleLowerCase('tr').trim();
-function _rehbBen(){ const ek=getEkipEk()[(sbUser&&sbUser.email)||'']||{}; return (ek.rehberAd||'').trim(); }
+function _rehbBen(){
+  const em=(sbUser&&sbUser.email)||'';
+  const ek=getEkipEk()[em]||{};
+  if((ek.rehberAd||'').trim()) return ek.rehberAd.trim();
+  const rh=(getTanimlar().rehberler||[]).find(r=>(r.email||'').trim()&&_rehbNrm(r.email)===_rehbNrm(em));
+  return rh?(rh.ad||'').trim():'';
+}
+function _rehbOtoRol(){
+  // Rehber tanımındaki e-postayla giren kullanıcı otomatik 'rehber' rolü alır (elle atanmış özel roller korunur)
+  if(!(sbUser&&sbUser.email)) return false;
+  if(sbRol&&sbRol!=='goruntuleme') return false;
+  const rh=(getTanimlar().rehberler||[]).find(r=>(r.email||'').trim()&&_rehbNrm(r.email)===_rehbNrm(sbUser.email));
+  if(!rh) return false;
+  sbRol='rehber';
+  try{ if(sb) sb.from('profiles').update({rol:'rehber'}).eq('id',sbUser.id).then(()=>{}); }catch(e){}
+  try{ _renderUserChip(); }catch(e){}
+  try{ _applyRoleNav(); }catch(e){}
+  try{ showPage('rehberim'); }catch(e){}
+  try{ showToast('Rehber hesabın tanındı: '+(rh.ad||''),'success'); }catch(e){}
+  return true;
+}
 function _rehbTurlar(){
   const ad=_rehbBen(); if(!ad) return [];
   const bugun=_opsToday();
@@ -12186,7 +12207,7 @@ function _renderRehberYon(box){
         <div class="ops-c"><label class="ops-f"><span>Rehber tipi</span><select id="rehBolgeTip" onchange="var w=document.getElementById('rehBolgelerWrap');if(w)w.style.display=this.value==='bolgesel'?'':'none'"><option value="ulkesel"${(r.bolgeTip||'ulkesel')==='ulkesel'?' selected':''}>Ülkesel</option><option value="bolgesel"${r.bolgeTip==='bolgesel'?' selected':''}>Bölgesel</option></select></label>
           <label class="ops-f" id="rehBolgelerWrap" style="${(r.bolgeTip==='bolgesel')?'':'display:none'}"><span>Bölge(ler)</span><input id="rehBolgeler" value="${esc(r.bolgeler||'')}" placeholder="ör. Antalya, Kapadokya"></label>
           <label class="ops-f"><span>Dil / Diller (çoklu seç)</span><div class="dilchips">${[...DIL_LISTE,..._rehDiller.filter(x=>!DIL_LISTE.includes(x))].map(dl=>`<span class="dilchip${_rehDiller.includes(dl)?' active':''}" onclick="_rehDilToggle('${dl}',this)">${esc(dl)}</span>`).join('')}</div></label>${F('Ev Tel No','rehEv',r.ev)}${F('Mobil Tel No','rehTel',r.tel)}</div>
-        <div class="ops-c">${F('E-posta','rehEmail',r.email)}${F('Banka Hesap No / IBAN','rehIban',r.iban)}
+        <div class="ops-c">${F('E-posta (rehber bu adresle sisteme girer)','rehEmail',r.email)}${F('Banka Hesap No / IBAN','rehIban',r.iban)}
           <label class="ops-f"><span>İkametgah Adresi</span><textarea id="rehAdres" rows="4" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-family:inherit;font-size:.86rem;resize:vertical">${esc(r.adres||'')}</textarea></label></div>
       </div></div>`;
     return;
