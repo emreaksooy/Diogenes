@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v338 · 04.09.2026';
+const APP_VER='v339 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12470,8 +12470,8 @@ function renderMagazaOps(){
      +'</div>';
   }
   const thS='padding:7px 10px;border:1px solid #e5e9f0;background:#1a3c5e;color:#fff;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;text-align:left;white-space:nowrap';
-  const tdS='padding:6px 10px;border:1px solid #e5e9f0;font-size:.79rem;white-space:nowrap';
-  h+='<div class="card" style="overflow-x:auto"><table style="border-collapse:collapse;min-width:800px;width:100%">'
+  const tdS='padding:5px 8px;border:1px solid #e5e9f0;font-size:.76rem';
+  h+='<div class="card" style="overflow-x:auto"><table style="border-collapse:collapse;width:100%">'
    +'<tr><th style="'+thS+'">Tarih</th><th style="'+thS+'">Tur</th><th style="'+thS+'">Operatör</th><th style="'+thS+'">Şehir</th><th style="'+thS+'">Tür</th><th style="'+thS+'">Pax</th><th style="'+thS+'">Rehber</th><th style="'+thS+'">Mağaza</th></tr>';
   if(!rows.length) h+='<tr><td colspan="8" style="'+tdS+';text-align:center;color:var(--muted);padding:16px">Kayıt yok — ürünlerin gün planlarına mağaza işaretleyin.</td></tr>';
   window._moRows=rows;
@@ -12494,7 +12494,7 @@ function renderMagazaOps(){
      +'<td style="'+tdS+'">'+esc(r.tur||'—')+'</td>'
      +'<td style="'+tdS+';font-weight:800">'+r.pax+'</td>'
      +'<td style="'+tdS+'">'+(r.rehber?esc(r.rehber):'<span style="color:#b45309;font-weight:700">açıkta</span>')+'</td>'
-     +'<td style="'+tdS+'"><select onchange="moAtaCoklu('+ri+',this.value)" style="padding:5px 8px;border:1.5px solid '+(r.firmaId?'#86efac':'#fcd34d')+';border-radius:7px;font-size:.78rem;font-family:inherit;min-width:150px'+(r.firmaId?';background:#f0fdf4':'')+'">'
+     +'<td style="'+tdS+'"><select onchange="moAtaCoklu('+ri+',this.value)" style="padding:5px 6px;border:1.5px solid '+(r.firmaId?'#86efac':'#fcd34d')+';border-radius:7px;font-size:.74rem;font-family:inherit;width:100%;max-width:220px;min-width:110px'+(r.firmaId?';background:#f0fdf4':'')+'">'
      +'<option value="">— Mağaza seç —</option>'
      +secenekler.map(o=>'<option value="'+o.val+'"'+(o.val===r.firmaId?' selected':'')+'>'+esc(o.etiket)+'</option>').join('')
      +'</select></td></tr>';
