@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v340 · 04.09.2026';
+const APP_VER='v341 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14566,6 +14566,21 @@ function mmSablonYap(id){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.firm
   fm.kalemler=(k.magKalemler||[]).filter(x=>(x.ad||'').trim()).map(x=>({ad:x.ad,oran:x.oran}));
   setTanimlar(t); showToast(fm.ad+' kalem şablonu güncellendi ('+fm.kalemler.length+' kalem)','success'); }
 function mmAcKapa(id){ _mmAcik.has(id)?_mmAcik.delete(id):_mmAcik.add(id); renderMagMuh(); }
+function _mmBildirimKart(){
+  const bugun=_opsToday();
+  const B=getRehBildirim().filter(b=>String(b.tarih||'')>=_isoAdd(bugun,-14)).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
+  if(!B.length) return '';
+  const L=getMagMuh();
+  const esik=b=>L.find(k=>_pdate(k.tarih)===_pdate(b.tarih)&&_rehbNrm(k.rehberAd)===_rehbNrm(b.rehberAd)&&(!b.magaza||!k.magaza||_rehbNrm(k.magaza)===_rehbNrm(b.magaza)));
+  const td='padding:4px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
+  return `<div class="card" style="margin-bottom:12px"><div class="card-title">📲 Rehber Bildirimleri <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">son 14 gün · ${B.length} bildirim — WhatsApp yerine buradan takip</span></div>
+    <table style="width:100%;border-collapse:collapse">
+    <tr><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Tarih</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Rehber</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Tur</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Mağaza</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:right">Pax</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:right">Bildirilen Ciro</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Durum</th></tr>
+    ${B.map(b=>{ const k=esik(b);
+      const durum=k?((k.rehCiro||'').trim()?'<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px">✓ İŞLENDİ</span>':`<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;cursor:pointer" title="Tıkla — rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">→ KAYDA YAZ</span>`):'<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px" title="Muhasebe kaydı ziyaret gününden sonra otomatik açılır">⏳ KAYIT BEKLİYOR</span>';
+      return `<tr><td style="${td}"><b>${_fmtDateTR(b.tarih)}</b></td><td style="${td}">${esc(b.rehberAd||'')}</td><td style="${td}">${esc(b.tur||'—')}</td><td style="${td}">${esc(b.magaza||'—')}</td><td style="${td};text-align:right">${esc(b.pax||'')}</td><td style="${td};text-align:right"><b>${esc(b.tutar)}</b> ${esc(b.para||'EUR')}</td><td style="${td}">${durum}</td></tr>`; }).join('')}
+    </table></div>`;
+}
 function renderMagMuh(){
   const box=document.getElementById('magmuhBody'); if(!box) return;
   if(_cloudOn&&sbRol&&sbRol!=='yonetici'){ box.innerHTML='<div class="card"><b>Bu bölüm yalnız yönetime açıktır.</b></div>'; return; }
@@ -14575,12 +14590,13 @@ function renderMagMuh(){
   let L=getMagMuh().filter(k=>String(_pdate(k.tarih)||'').slice(0,7)===_mmAy);
   if(_mmFirmaF) L=L.filter(k=>k.firmaId===_mmFirmaF);
   if(_mmDurumF) L=L.filter(k=>(k.durum||'bekliyor')===_mmDurumF);
+  window._mmBildKartHTML=_mmBildirimKart();
   L.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
   const th='background:var(--navy);color:#fff;padding:4px 8px;font-size:.62rem;text-align:left;white-space:nowrap';
   const td='padding:4px 8px;font-size:.76rem;border-bottom:1px solid var(--border)';
   const inp='padding:3px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.74rem';
   const DAD={bekliyor:['Bekliyor','#fef3c7','#92400e'],mutabik:['Mutabık','#dcfce7','#166534'],tahsil:['Tahsil edildi','#e0f2fe','#0369a1']};
-  let h=`<div class="card"><div class="card-title">🏬 Mağaza Muhasebesi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetim · mağaza bildirimi ↔ rehber bildirimi</span></div>
+  let h=(window._mmBildKartHTML||'')+`<div class="card"><div class="card-title">🏬 Mağaza Muhasebesi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetim · mağaza bildirimi ↔ rehber bildirimi</span></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
       <input type="month" value="${_mmAy}" onchange="_mmAy=this.value;renderMagMuh()" style="${inp}">
       <select onchange="_mmFirmaF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm mağazalar</option>${firmalar.map(f=>`<option value="${f.id}" ${_mmFirmaF===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>
@@ -14608,7 +14624,7 @@ function renderMagMuh(){
       <td style="${td}"><input value="${esc(k.rehberAd||'')}" list="mmRehL" onchange="mmSet('${k.id}','rehberAd',this.value)" style="${inp};width:110px"></td>
       <td style="${td}"><input value="${esc(k.pax||'')}" inputmode="numeric" onchange="mmSet('${k.id}','pax',this.value)" style="${inp};width:44px;text-align:right"></td>
       <td style="${td};white-space:nowrap"><b>${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')}</b> ${esc(k.para||'EUR')}</td>
-      <td style="${td}"><input value="${esc(k.rehCiro||'')}" inputmode="decimal" placeholder="—" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:84px;text-align:right">${(()=>{try{const b=getRehBildirim().find(x=>_pdate(x.tarih)===_pdate(k.tarih)&&_rehbNrm(x.rehberAd)===_rehbNrm(k.rehberAd)&&x.rehberAd); return b?`<div style="font-size:.62rem;color:var(--primary);cursor:pointer;white-space:nowrap" title="Rehber bildirimi — tıkla, rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">📲 ${esc(b.tutar)} ${esc(b.para||'')}</div>`:'';}catch(e){return '';}})()}</td>
+      <td style="${td}"><input value="${esc(k.rehCiro||'')}" inputmode="decimal" placeholder="—" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:84px;text-align:right">${(()=>{try{const bl=getRehBildirim().filter(x=>x.rehberAd&&_pdate(x.tarih)===_pdate(k.tarih)&&_rehbNrm(x.rehberAd)===_rehbNrm(k.rehberAd)&&(!x.magaza||!k.magaza||_rehbNrm(x.magaza)===_rehbNrm(k.magaza))); return bl.map(b=>`<div style="font-size:.62rem;color:var(--primary);cursor:pointer;white-space:nowrap" title="Rehber bildirimi${b.magaza?' — '+esc(b.magaza):''} — tıkla, rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">📲 ${esc(b.tutar)} ${esc(b.para||'')}</div>`).join('');}catch(e){return '';}})()}</td>
       <td style="${td};white-space:nowrap">${farkHtml}</td>
       <td style="${td};white-space:nowrap"><b style="color:var(--primary)">${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')}</b> ${esc(k.para||'EUR')}</td>
       <td style="${td}"><select onchange="mmSet('${k.id}','durum',this.value)" style="${inp};background:${dd[1]};color:${dd[2]};font-weight:700">${Object.keys(DAD).map(d=>`<option value="${d}" ${(k.durum||'bekliyor')===d?'selected':''}>${DAD[d][0]}</option>`).join('')}</select></td>
