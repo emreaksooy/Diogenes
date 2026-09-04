@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v339 · 04.09.2026';
+const APP_VER='v340 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12254,6 +12254,7 @@ function renderMagFirmalar(){
        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'
        +'<input id="mgMagAd" value="'+esc(em.ad||'')+'" placeholder="Mağaza adı * (ör. Pamukkale Halı)" style="'+inp+';min-width:210px">'
        +'<input id="mgMagSehir" value="'+esc(em.sehir||'')+'" placeholder="Lokasyon / şehir" style="'+inp+';width:140px">'
+       +'<select id="mgMagTur" style="'+inp+'"><option value="">— Tür —</option>'+['Kuyum','Deri','Halı','Seramik / Çini','Tekstil','Lokum / Baharat','Ozon / Kozmetik'].map(x=>'<option'+(String(em.tur||'')===x?' selected':'')+'>'+x+'</option>').join('')+'</select>'
        +'<input id="mgMagTel" value="'+esc(em.tel||'')+'" placeholder="Telefon" style="'+inp+';width:130px">'
        +'<input id="mgMagYet" value="'+esc(em.yetkili||'')+'" placeholder="Yetkili" style="'+inp+';width:120px">'
        +'<input id="mgMagAdr" value="'+esc(em.adres||'')+'" placeholder="Adres" style="'+inp+';min-width:180px">'
@@ -12269,7 +12270,7 @@ function renderMagFirmalar(){
      +((g.subeler||[]).map((m,si)=>'<div class="card" style="margin:0">'
         +'<div style="display:flex;align-items:flex-start;gap:8px">'
         +'<div style="min-width:0;flex:1">'
-        +'<div style="font-weight:800;font-size:.9rem">🏬 '+esc(m.ad||m.sehir||'—')+'</div>'
+        +'<div style="font-weight:800;font-size:.9rem">🏬 '+esc(m.ad||m.sehir||'—')+(m.tur?' <span style="background:#ede9fe;color:#6d28d9;border-radius:6px;font-size:.6rem;font-weight:800;padding:1px 7px;vertical-align:middle">'+esc(m.tur)+'</span>':'')+'</div>'
         +(m.sehir?'<div style="font-size:.72rem;color:var(--muted)">📍 '+esc(m.sehir)+'</div>':'')
         +(m.tel?'<div style="font-size:.76rem;margin-top:3px"><a href="tel:'+esc(m.tel)+'" style="color:inherit;text-decoration:none">☎ '+esc(m.tel)+'</a></div>':'')
         +(m.yetkili?'<div style="font-size:.72rem;color:var(--muted)">👤 '+esc(m.yetkili)+'</div>':'')
@@ -12378,10 +12379,10 @@ function mgMagKaydet(gid){
   const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); if(!f) return;
   f.subeler=f.subeler||[];
   if(window._mgMagEdit!=null&&f.subeler[window._mgMagEdit]){
-    Object.assign(f.subeler[window._mgMagEdit],{ad,sehir:g('mgMagSehir'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
+    Object.assign(f.subeler[window._mgMagEdit],{ad,sehir:g('mgMagSehir'),tur:g('mgMagTur'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
     showToast('Mağaza güncellendi: '+ad,'success');
   } else {
-    f.subeler.push({id:genId(),ad,sehir:g('mgMagSehir'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
+    f.subeler.push({id:genId(),ad,sehir:g('mgMagSehir'),tur:g('mgMagTur'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
     showToast('Mağaza eklendi: '+ad,'success');
   }
   window._mgMagEdit=null;
@@ -12482,7 +12483,13 @@ function renderMagazaOps(){
       if((f.subeler||[]).length) f.subeler.forEach(sb2=>secenekler.push({val:f.id+'|'+sb2.id,etiket:f.ad+' · '+(sb2.ad||sb2.sehir||''),sehir:sb2.sehir||f.sehir||'',tur:sb2.tur||f.tur||''}));
       else secenekler.push({val:f.id,etiket:f.ad+(f.sehir?' ('+f.sehir+')':''),sehir:f.sehir||'',tur:f.tur||''});
     });
-    secenekler.sort((a,b)=>{
+    let sec2=secenekler;
+    if((r.tur||'').trim()){
+      const nt=_norm(r.tur);
+      sec2=secenekler.filter(o=>!o.tur||_norm(o.tur)===nt||_norm(o.tur).includes(nt)||nt.includes(_norm(o.tur))||o.val===r.firmaId);
+      if(!sec2.length) sec2=secenekler;
+    }
+    sec2.sort((a,b)=>{
       const pa=((a.sehir&&r.sehir&&_norm(a.sehir)===_norm(r.sehir))?2:0)+((a.tur&&r.tur&&_norm(a.tur)===_norm(r.tur))?1:0);
       const pb=((b.sehir&&r.sehir&&_norm(b.sehir)===_norm(r.sehir))?2:0)+((b.tur&&r.tur&&_norm(b.tur)===_norm(r.tur))?1:0);
       return pb-pa||a.etiket.localeCompare(b.etiket,'tr'); });
@@ -12496,7 +12503,7 @@ function renderMagazaOps(){
      +'<td style="'+tdS+'">'+(r.rehber?esc(r.rehber):'<span style="color:#b45309;font-weight:700">açıkta</span>')+'</td>'
      +'<td style="'+tdS+'"><select onchange="moAtaCoklu('+ri+',this.value)" style="padding:5px 6px;border:1.5px solid '+(r.firmaId?'#86efac':'#fcd34d')+';border-radius:7px;font-size:.74rem;font-family:inherit;width:100%;max-width:220px;min-width:110px'+(r.firmaId?';background:#f0fdf4':'')+'">'
      +'<option value="">— Mağaza seç —</option>'
-     +secenekler.map(o=>'<option value="'+o.val+'"'+(o.val===r.firmaId?' selected':'')+'>'+esc(o.etiket)+'</option>').join('')
+     +sec2.map(o=>'<option value="'+o.val+'"'+(o.val===r.firmaId?' selected':'')+'>'+esc(o.etiket)+'</option>').join('')
      +'</select></td></tr>';
   });
   h+='</table></div>';
