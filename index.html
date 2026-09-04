@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v334 · 04.09.2026';
+const APP_VER='v335 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12208,20 +12208,22 @@ function renderMagFirmalar(){
      +'<b style="font-size:1rem">🏬 '+esc(g.ad)+'</b>'
      +(g.sehir?'<span style="color:var(--muted);font-size:.8rem">'+esc(g.sehir)+'</span>':'')
      +'<span style="flex:1"></span>'
-     +'<button class="btn btn-primary btn-sm" onclick="window._mgMagForm=!window._mgMagForm;renderMagFirmalar()">'+(window._mgMagForm?'✕ Vazgeç':'+ Mağaza Tanımla')+'</button>'
+     +'<button class="btn btn-primary btn-sm" onclick="window._mgMagForm=!window._mgMagForm;if(!window._mgMagForm)window._mgMagEdit=null;renderMagFirmalar()">'+(window._mgMagForm?'✕ Vazgeç':'+ Mağaza Tanımla')+'</button>'
      +'</div>';
     if(window._mgMagForm){
-      h+='<div class="card" style="border:2px solid var(--primary)"><div class="card-title">Yeni Mağaza</div>'
+      const em=(window._mgMagEdit!=null)?((g.subeler||[])[window._mgMagEdit]||{}):{};
+      const eOran=i=>{ const kl=(em.kalemler||[])[i]; if(!kl) return ''; const o=String(kl.oran||''); return o==='0'?'':o; };
+      h+='<div class="card" style="border:2px solid var(--primary)"><div class="card-title">'+(window._mgMagEdit!=null?'✏️ Mağazayı Düzenle':'Yeni Mağaza')+'</div>'
        +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'
-       +'<input id="mgMagAd" placeholder="Mağaza adı * (ör. Pamukkale Halı)" style="'+inp+';min-width:210px">'
-       +'<input id="mgMagSehir" placeholder="Lokasyon / şehir" style="'+inp+';width:140px">'
-       +'<input id="mgMagTel" placeholder="Telefon" style="'+inp+';width:130px">'
-       +'<input id="mgMagYet" placeholder="Yetkili" style="'+inp+';width:120px">'
-       +'<input id="mgMagAdr" placeholder="Adres" style="'+inp+';min-width:180px">'
+       +'<input id="mgMagAd" value="'+esc(em.ad||'')+'" placeholder="Mağaza adı * (ör. Pamukkale Halı)" style="'+inp+';min-width:210px">'
+       +'<input id="mgMagSehir" value="'+esc(em.sehir||'')+'" placeholder="Lokasyon / şehir" style="'+inp+';width:140px">'
+       +'<input id="mgMagTel" value="'+esc(em.tel||'')+'" placeholder="Telefon" style="'+inp+';width:130px">'
+       +'<input id="mgMagYet" value="'+esc(em.yetkili||'')+'" placeholder="Yetkili" style="'+inp+';width:120px">'
+       +'<input id="mgMagAdr" value="'+esc(em.adres||'')+'" placeholder="Adres" style="'+inp+';min-width:180px">'
        +'</div>'
        +'<div style="font-weight:700;font-size:.8rem;margin-bottom:6px">Komisyon Oranları <span style="font-weight:500;color:var(--muted);font-size:.7rem">(boş = 0 kabul edilir)</span></div>'
-       +'<div style="display:flex;gap:10px;flex-wrap:wrap">'+_MG_PAYLAR.map((ad,i)=>'<label style="display:flex;flex-direction:column;gap:3px;font-size:.72rem;font-weight:700">'+ad+'<input id="mgOran_'+i+'" placeholder="%" inputmode="decimal" style="'+inp+';width:86px"></label>').join('')+'</div>'
-       +'<div style="margin-top:12px"><button class="btn btn-primary" onclick="mgMagKaydet(\''+g.id+'\')">Mağazayı Kaydet</button></div>'
+       +'<div style="display:flex;gap:10px;flex-wrap:wrap">'+_MG_PAYLAR.map((pAd,i)=>'<label style="display:flex;flex-direction:column;gap:3px;font-size:.72rem;font-weight:700">'+pAd+'<input id="mgOran_'+i+'" value="'+esc(eOran(i))+'" placeholder="%" inputmode="decimal" style="'+inp+';width:86px"></label>').join('')+'</div>'
+       +'<div style="margin-top:12px"><button class="btn btn-primary" onclick="mgMagKaydet(\''+g.id+'\')">'+(window._mgMagEdit!=null?'Değişiklikleri Kaydet':'Mağazayı Kaydet')+'</button></div>'
        +'</div>';
     }
     h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px">'
@@ -12234,6 +12236,7 @@ function renderMagFirmalar(){
         +(m.yetkili?'<div style="font-size:.72rem;color:var(--muted)">👤 '+esc(m.yetkili)+'</div>':'')
         +(m.adres?'<div style="font-size:.68rem;color:var(--muted)">'+esc(m.adres)+'</div>':'')
         +'</div>'
+        +'<button onclick="window._mgMagEdit='+si+';window._mgMagForm=true;renderMagFirmalar();window.scrollTo(0,0)" title="Düzenle" style="border:none;background:none;cursor:pointer">✏️</button>'
         +'<button onclick="mgMagSil(\''+g.id+'\','+si+')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
         +'</div>'
         +'<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">'
@@ -12246,18 +12249,19 @@ function renderMagFirmalar(){
    +'<b style="font-size:1rem">🏬 Mağaza Grupları</b>'
    +'<span style="color:var(--muted);font-size:.76rem">'+gruplar.length+' grup</span>'
    +'<span style="flex:1"></span>'
-   +'<button class="btn btn-primary btn-sm" onclick="window._mgForm=!window._mgForm;renderMagFirmalar()">'+(window._mgForm?'✕ Vazgeç':'+ Mağaza Grubu Ekle')+'</button>'
+   +'<button class="btn btn-primary btn-sm" onclick="window._mgForm=!window._mgForm;if(!window._mgForm)window._mgGrupEdit=null;renderMagFirmalar()">'+(window._mgForm?'✕ Vazgeç':'+ Mağaza Grubu Ekle')+'</button>'
    +'</div>';
   if(window._mgForm){
-    h+='<div class="card" style="border:2px solid var(--primary)"><div class="card-title">Yeni Mağaza Grubu</div>'
+    const eg=window._mgGrupEdit?(gruplar.find(x=>x.id===window._mgGrupEdit)||{}):{};
+    h+='<div class="card" style="border:2px solid var(--primary)"><div class="card-title">'+(window._mgGrupEdit?'✏️ Grubu Düzenle':'Yeni Mağaza Grubu')+'</div>'
      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-     +'<input id="mgGrupAd" placeholder="Grup adı * (ör. Doğuş)" style="'+inp+';min-width:200px">'
-     +'<input id="mgGrupSehir" placeholder="Merkez / şehir" style="'+inp+';width:140px">'
-     +'<input id="mgGrupTel" placeholder="Telefon" style="'+inp+';width:130px">'
-     +'<input id="mgGrupYet" placeholder="Yetkili" style="'+inp+';width:130px">'
-     +'<input id="mgGrupNot" placeholder="Not" style="'+inp+';min-width:160px">'
+     +'<input id="mgGrupAd" value="'+esc(eg.ad||'')+'" placeholder="Grup adı * (ör. Doğuş)" style="'+inp+';min-width:200px">'
+     +'<input id="mgGrupSehir" value="'+esc(eg.sehir||'')+'" placeholder="Merkez / şehir" style="'+inp+';width:140px">'
+     +'<input id="mgGrupTel" value="'+esc(eg.tel||'')+'" placeholder="Telefon" style="'+inp+';width:130px">'
+     +'<input id="mgGrupYet" value="'+esc(eg.yetkili||'')+'" placeholder="Yetkili" style="'+inp+';width:130px">'
+     +'<input id="mgGrupNot" value="'+esc(eg.not||'')+'" placeholder="Not" style="'+inp+';min-width:160px">'
      +'</div>'
-     +'<div style="margin-top:12px"><button class="btn btn-primary" onclick="mgGrupKaydet()">Grubu Kaydet</button></div>'
+     +'<div style="margin-top:12px"><button class="btn btn-primary" onclick="mgGrupKaydet()">'+(window._mgGrupEdit?'Değişiklikleri Kaydet':'Grubu Kaydet')+'</button></div>'
      +'</div>';
   }
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">'
@@ -12269,6 +12273,7 @@ function renderMagFirmalar(){
       +(gr.tel?'<div style="font-size:.72rem;color:var(--muted)">☎ '+esc(gr.tel)+(gr.yetkili?' · 👤 '+esc(gr.yetkili):'')+'</div>':'')
       +(gr.not?'<div style="font-size:.68rem;color:var(--muted)">'+esc(gr.not)+'</div>':'')
       +'</div>'
+      +'<button onclick="event.stopPropagation();window._mgGrupEdit=\''+gr.id+'\';window._mgForm=true;renderMagFirmalar();window.scrollTo(0,0)" title="Düzenle" style="border:none;background:none;cursor:pointer">✏️</button>'
       +'<button onclick="event.stopPropagation();mgGrupSil(\''+gr.id+'\')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
       +'</div>'
       +'<div style="margin-top:8px;font-size:.72rem;color:var(--primary);font-weight:700">Mağazaları yönet →</div>'
@@ -12286,6 +12291,12 @@ function mgGrupKaydet(){
   const g=id=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
   const ad=g('mgGrupAd'); if(!ad){ showToast('Grup adı girin','error'); return; }
   const t=getTanimlar(); t.magazaFirmalari=t.magazaFirmalari||[];
+  if(window._mgGrupEdit){
+    const gr=t.magazaFirmalari.find(x=>x.id===window._mgGrupEdit);
+    if(gr){ Object.assign(gr,{ad,sehir:g('mgGrupSehir'),tel:g('mgGrupTel'),yetkili:g('mgGrupYet'),not:g('mgGrupNot')}); }
+    setTanimlar(t); window._mgForm=false; window._mgGrupEdit=null; renderMagFirmalar();
+    showToast('Grup güncellendi: '+ad,'success'); return;
+  }
   const yeni={id:genId(),ad,sehir:g('mgGrupSehir'),tel:g('mgGrupTel'),yetkili:g('mgGrupYet'),not:g('mgGrupNot'),subeler:[]};
   t.magazaFirmalari.push(yeni);
   setTanimlar(t); window._mgForm=false; window._mgSayfa=yeni.id; renderMagFirmalar();
@@ -12304,9 +12315,15 @@ function mgMagKaydet(gid){
   const kalemler=_MG_PAYLAR.map((pAd,i)=>({ad:pAd,oran:(g('mgOran_'+i)||'0')}));
   const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); if(!f) return;
   f.subeler=f.subeler||[];
-  f.subeler.push({id:genId(),ad,sehir:g('mgMagSehir'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
+  if(window._mgMagEdit!=null&&f.subeler[window._mgMagEdit]){
+    Object.assign(f.subeler[window._mgMagEdit],{ad,sehir:g('mgMagSehir'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
+    showToast('Mağaza güncellendi: '+ad,'success');
+  } else {
+    f.subeler.push({id:genId(),ad,sehir:g('mgMagSehir'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
+    showToast('Mağaza eklendi: '+ad,'success');
+  }
+  window._mgMagEdit=null;
   setTanimlar(t); window._mgMagForm=false; renderMagFirmalar(); try{renderMagazaOps();}catch(e){}
-  showToast('Mağaza eklendi: '+ad,'success');
 }
 function mgMagSil(gid,si){
   const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); if(!f||!f.subeler) return;
