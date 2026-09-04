@@ -677,8 +677,15 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
   .container{padding:.7rem .55rem}
   .save-status{display:none}
   /* ── telefon paketi (v321/v323) ── */
-  body{overflow-x:hidden}
-  .navbar{flex-wrap:nowrap;overflow:visible}
+  html,body{overflow-x:hidden;max-width:100%}
+  .navbar{flex-wrap:nowrap;overflow:visible;padding:6px 8px;gap:4px}
+  .brand{gap:6px;min-width:0;flex-shrink:1;overflow:hidden}
+  .brand img{width:28px;height:28px}
+  .brand span{font-size:.86rem;overflow:hidden;text-overflow:ellipsis}
+  .nav-save-btn{padding:8px 10px;flex-shrink:0}
+  #userChip{overflow:hidden;max-width:38vw;flex-shrink:1}
+  #userChip>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:20vw}
+  .app-body,.container,.page{max-width:100vw;min-width:0}
   .navbar .theme-toggle{display:none}
   #sbToggleBtn{display:inline-flex !important}
   #userChip .chip-btn{display:none}
@@ -1957,7 +1964,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v323 · 04.09.2026';
+const APP_VER='v324 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
