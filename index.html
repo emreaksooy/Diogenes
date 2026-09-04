@@ -1929,7 +1929,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v317 · 04.09.2026';
+const APP_VER='v318 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12209,7 +12209,7 @@ function _renderRehberYon(box){
         <div class="ops-c"><label class="ops-f"><span>Rehber tipi</span><select id="rehBolgeTip" onchange="var w=document.getElementById('rehBolgelerWrap');if(w)w.style.display=this.value==='bolgesel'?'':'none'"><option value="ulkesel"${(r.bolgeTip||'ulkesel')==='ulkesel'?' selected':''}>Ülkesel</option><option value="bolgesel"${r.bolgeTip==='bolgesel'?' selected':''}>Bölgesel</option></select></label>
           <label class="ops-f" id="rehBolgelerWrap" style="${(r.bolgeTip==='bolgesel')?'':'display:none'}"><span>Bölge(ler)</span><input id="rehBolgeler" value="${esc(r.bolgeler||'')}" placeholder="ör. Antalya, Kapadokya"></label>
           <label class="ops-f"><span>Dil / Diller (çoklu seç)</span><div class="dilchips">${[...DIL_LISTE,..._rehDiller.filter(x=>!DIL_LISTE.includes(x))].map(dl=>`<span class="dilchip${_rehDiller.includes(dl)?' active':''}" onclick="_rehDilToggle('${dl}',this)">${esc(dl)}</span>`).join('')}</div></label>${F('Ev Tel No','rehEv',r.ev)}${F('Mobil Tel No','rehTel',r.tel)}</div>
-        <div class="ops-c">${F('E-posta (rehber bu adresle sisteme girer)','rehEmail',r.email)}${F('Banka Hesap No / IBAN','rehIban',r.iban)}
+        <div class="ops-c">${F('Kullanıcı adı / e-posta (boş bırak → ad soyaddan otomatik üretilir)','rehEmail',r.email)}${F('Banka Hesap No / IBAN','rehIban',r.iban)}
           <label class="ops-f"><span>İkametgah Adresi</span><textarea id="rehAdres" rows="4" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-family:inherit;font-size:.86rem;resize:vertical">${esc(r.adres||'')}</textarea></label></div>
       </div></div>`;
     return;
@@ -12223,9 +12223,19 @@ function _renderRehberYon(box){
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="rehYeni()">+ Yeni Rehber</button></div>
     <div style="font-size:.72rem;color:var(--muted);margin-bottom:6px">${flt.length} / ${list.length} rehber${_rehDilFilter?' · dil: '+esc(_rehDilFilter):''}</div>
     ${flt.length?flt.map(({r,i})=>`<div class="ops-row" onclick="rehDuzenle(${i})">
-      <div class="ops-main"><div class="ops-nm">${esc(r.ad||'(adsız)')}</div><div class="ops-sub">${esc(r.dil||r.diller||'')}${(r.bolgeTip==='bolgesel'&&r.bolgeler)?' · '+esc(r.bolgeler):' · Ülkesel'}${r.tel?' · '+esc(r.tel):''}${r.tc?' · TC '+esc(r.tc):''}</div></div>
+      <div class="ops-main"><div class="ops-nm">${esc(r.ad||'(adsız)')}</div><div class="ops-sub">${esc(r.dil||r.diller||'')}${(r.bolgeTip==='bolgesel'&&r.bolgeler)?' · '+esc(r.bolgeler):' · Ülkesel'}${r.tel?' · '+esc(r.tel):''}${r.email?' · 👤 '+esc(String(r.email).split('@')[0]):''}</div></div>
       <div class="ops-badge">${r.calisma?'Kart '+esc(r.calisma):''}</div>
     </div>`).join(''):('<p style="color:var(--muted);font-size:.85rem">'+(list.length?'Eşleşen rehber yok.':'Henüz rehber yok. + Yeni Rehber ile ekle.')+'</p>')}`;
+}
+function _rehbKulAdi(ad,mevcut){
+  const map={'ş':'s','Ş':'s','ı':'i','İ':'i','ö':'o','Ö':'o','ü':'u','Ü':'u','ç':'c','Ç':'c','ğ':'g','Ğ':'g'};
+  let k=String(ad||'').trim().replace(/[şŞıİöÖüÜçÇğĞ]/g,c=>map[c]).toLowerCase()
+    .replace(/[^a-z0-9\s.]/g,'').replace(/\s+/g,'.').replace(/\.+/g,'.').replace(/^\.|\.$/g,'');
+  if(!k) return '';
+  const alinmis=e=>(mevcut||[]).some(r=>String(r.email||'').toLowerCase()===e);
+  let e=k+REH_DOMAIN, n=2;
+  while(alinmis(e)){ e=k+n+REH_DOMAIN; n++; }
+  return e;
 }
 function rehYeni(){ _rehEdit='new'; _rehDiller=[]; renderOpsTanim(); }
 function rehDuzenle(i){ _rehEdit=i; _rehDiller=_rehDilArr((getTanimlar().rehberler||[])[i]||{}); renderOpsTanim(); }
@@ -12238,8 +12248,14 @@ function rehKaydet(){ const g=id=>{ const el=document.getElementById(id); return
   o.diller=_rehDiller.slice(); o.dil=_rehDiller.join(', ');
   if(!o.ad){ showToast('Adı Soyadı gerekli','error'); return; }
   const t=getTanimlar(); t.rehberler=t.rehberler||[];
+  let otoKul='';
+  if(!o.email){ const digerleri=t.rehberler.filter((x,ix)=>_rehEdit==='new'||ix!==_rehEdit); o.email=_rehbKulAdi(o.ad,digerleri); otoKul=o.email; }
   if(_rehEdit==='new'){ o.id=R_GID(); t.rehberler.push(o); } else { o.id=(t.rehberler[_rehEdit]||{}).id||R_GID(); t.rehberler[_rehEdit]=o; }
-  setTanimlar(t); _rehEdit=null; renderOpsTanim(); showToast('Rehber kaydedildi','success');
+  setTanimlar(t); _rehEdit=null; renderOpsTanim();
+  const kul=(o.email||'').split('@')[0];
+  if(o.email){ try{ navigator.clipboard.writeText(o.email); }catch(e){}
+    showToast('Rehber kaydedildi · Kullanıcı adı: '+kul+(otoKul?' (otomatik)':'')+' — tam adres panoya kopyalandı: '+o.email+' (Supabase\'de bu adresle kullanıcı aç)','success',9000); }
+  else showToast('Rehber kaydedildi','success');
 }
 function rehSil(i){ const t=getTanimlar(); if(t.rehberler&&t.rehberler[i]){ t.rehberler.splice(i,1); setTanimlar(t); } _rehEdit=null; renderOpsTanim(); showToast('Rehber silindi'); }
 // ═══ ARAÇ FİRMALARI (otel deseni: modal + detay + filo) ═══
