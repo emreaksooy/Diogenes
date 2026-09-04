@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v336 · 04.09.2026';
+const APP_VER='v338 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11006,7 +11006,10 @@ function renderRehberim(){
     <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
       <input type="date" id="rbTarih" value="${bugun}" style="${inp}">
       <select id="rbTur" style="${inp}"><option value="">Tur…</option>${L.map(t=>`<option value="${esc(t.kod)}">${esc(t.kod)} ${_fmtDateTR(t.kalkis)}</option>`).join('')}</select>
-      <input id="rbMagaza" placeholder="Mağaza" style="${inp};width:120px">
+      ${(()=>{ const M=_rehbMagazalar(); window._rbMagList=M;
+        if(!M.length) return `<input id="rbMagaza" placeholder="Mağaza" style="${inp};width:130px">`;
+        return `<select id="rbMagazaSec" onchange="rehbMagSec(this)" style="${inp};max-width:250px"><option value="">Mağaza seç…</option>${M.map((x,i)=>`<option value="${i}">${_fmtDateTR(x.tarih)} · ${esc(x.kod)} — ${esc(x.mag)}</option>`).join('')}<option value="__d">Diğer (elle yaz)…</option></select><input id="rbMagaza" placeholder="Mağaza adı" style="${inp};width:130px;display:none">`;
+      })()}
       <input id="rbPax" placeholder="Pax" inputmode="numeric" style="${inp};width:56px">
       <input id="rbTutar" placeholder="Ciro" inputmode="decimal" style="${inp};width:90px">
       <select id="rbPara" style="${inp}"><option>EUR</option><option>USD</option><option>TL</option></select>
@@ -11016,6 +11019,41 @@ function renderRehberim(){
     ${B.length?`<table style="width:100%;border-collapse:collapse">${B.slice(0,30).map(b=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 8px;font-size:.76rem"><b>${_fmtDateTR(b.tarih)}</b></td><td style="padding:5px 8px;font-size:.76rem">${esc(b.tur||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.magaza||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.pax||'')}</td><td style="padding:5px 8px;font-size:.78rem;text-align:right"><b>${esc(b.tutar)}</b> ${esc(b.para||'EUR')}</td><td style="padding:5px 8px;font-size:.72rem;color:var(--muted)">${esc(b.not||'')}</td><td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="rehbBildirimSil('${b.id}')">✕</button></td></tr>`).join('')}</table>`:'<p class="section-tip">Henüz bildirim yok.</p>'}
   </div>`;
   box.innerHTML=h;
+}
+function _rehbMagazalar(){
+  const out=[];
+  try{
+    _rehbTurlar().forEach(t=>{
+      const sefler=(t.uyeSeferler&&t.uyeSeferler.length)?t.uyeSeferler:[{pkgId:t.pkgId,kalkis:t.kalkis}];
+      sefler.forEach(sf=>{
+        const pkg=getPackages().find(p=>p.id===sf.pkgId); if(!pkg) return;
+        let rec={}; try{ rec=_opsGet(sf.pkgId,sf.kalkis)||{}; }catch(e){}
+        (pkg.gunler||[]).forEach((gn,gi)=>{
+          if(!gn.magazaVar||!(gn.magazalar||[]).length) return;
+          const tarih=_isoAdd(sf.kalkis,gi);
+          (gn.magazalar||[]).forEach((m,mi)=>{
+            let fid=''; try{ const at=rec.magazaAtama||{}; const anah=Object.keys(at).find(kk=>kk.endsWith('_g'+gi+'_'+mi)); if(anah) fid=at[anah]; }catch(e){}
+            const cz=_moAtaCoz(fid); const f=cz.f; const sube=cz.sube||(f?_moSubeBul(f,m.sehir):null);
+            if(!f) return; // atanmamış ziyaret seçenek olmaz
+            out.push({tarih,kod:t.kod,mag:(sube&&(sube.ad||sube.sehir))?(f.ad+' · '+(sube.ad||sube.sehir)):f.ad});
+          });
+        });
+      });
+    });
+  }catch(e){}
+  out.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
+  return out;
+}
+function rehbMagSec(sel){
+  const v=sel.value;
+  const inp=document.getElementById('rbMagaza');
+  if(v==='__d'){ if(inp){ inp.style.display=''; inp.value=''; inp.focus(); } return; }
+  if(inp) inp.style.display='none';
+  const x=(window._rbMagList||[])[parseInt(v,10)];
+  if(!x){ if(inp) inp.value=''; return; }
+  if(inp) inp.value=x.mag;
+  const t=document.getElementById('rbTarih'); if(t) t.value=x.tarih;
+  const tu=document.getElementById('rbTur'); if(tu){ [...tu.options].forEach(o=>{ if(o.value===x.kod) tu.value=x.kod; }); }
 }
 function rehbBildirimEkle(){
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
@@ -12292,9 +12330,18 @@ function _mgKalemSatirHTML(kl){
   return '<div class="mg-kalem-satir" style="display:flex;gap:8px;margin-bottom:5px;align-items:center">'
    +'<input class="mgk-ad" value="'+esc(kl.ad||'')+'" placeholder="Kalem (ör. Kuyum)" style="'+inp+';width:150px">'
    +_MG_PAYKEY.map(k2=>'<input class="mgk-'+k2+'" value="'+esc(pv(k2))+'" placeholder="%" inputmode="decimal" style="'+inp+';width:64px;text-align:center">').join('')
+   +'<button onclick="mgKalemCogalt(this)" title="Bu oranlarla yeni kalem satırı" style="border:none;background:none;cursor:pointer;font-size:.9rem">⧉</button>'
    +'<button onclick="this.parentElement.remove()" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button></div>';
 }
 function mgKalemSatirEkle(){ const l=document.getElementById('mgKalemList'); if(l) l.insertAdjacentHTML('beforeend',_mgKalemSatirHTML()); }
+function mgKalemCogalt(btn){
+  const row=btn.closest('.mg-kalem-satir'); if(!row) return;
+  const gv=c=>((row.querySelector('.mgk-'+c)||{}).value||'').trim();
+  const pay={}; _MG_PAYKEY.forEach(k2=>{ pay[k2]=gv(k2); });
+  row.insertAdjacentHTML('afterend',_mgKalemSatirHTML({ad:'',pay}));
+  const yeni=row.nextElementSibling, adInp=yeni&&yeni.querySelector('.mgk-ad');
+  if(adInp) adInp.focus();
+}
 function mgGrupKaydet(){
   const g=id=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
   const ad=g('mgGrupAd'); if(!ad){ showToast('Grup adı girin','error'); return; }
