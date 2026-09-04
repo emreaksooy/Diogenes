@@ -881,6 +881,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <div class="nav-group">Yönetim</div>
       <button class="nav-tab" data-page="yonetim" onclick="showPage('yonetim',this)"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli</button>
       <button class="nav-tab" data-page="magmuh" onclick="showPage('magmuh',this)">🏬 Mağaza Muhasebesi</button>
+      <button class="nav-tab" data-page="ekip" onclick="showPage('ekip',this)"><svg class="ic"><use href="#i-users"/></svg> Ekip</button>
     </nav>
     <div class="sidebar-ctx">
     <!-- OPS mode -->
@@ -1010,6 +1011,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
     <div id="magmuhBody"></div>
     <div id="magmuhPlanWrap" style="display:none"><div id="opsPane_magaza"></div></div>
   </div>
+  <div id="page-ekip" class="page"><div id="ekipBox"></div></div>
   <div id="page-yonetim" class="page">
     <div class="card">
       <div class="card-title"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetici</span></div>
@@ -1715,6 +1717,18 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   </div>
 </div>
 
+<div id="modalPw" class="modal-overlay">
+  <div class="modal-box sm">
+    <div class="modal-header"><h2>🔑 Şifre Değiştir</h2><button class="modal-close" onclick="closeModal('modalPw')">✕ Kapat</button></div>
+    <div class="modal-body">
+      <p class="section-tip" id="pwTip">Yeni şifreni belirle (en az 6 karakter).</p>
+      <input type="password" id="pwYeni" placeholder="Yeni şifre" autocomplete="new-password" style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.86rem;margin-bottom:8px">
+      <input type="password" id="pwYeni2" placeholder="Yeni şifre (tekrar)" autocomplete="new-password" style="width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.86rem">
+      <button class="btn btn-primary" onclick="pwKaydet()" style="margin-top:12px;width:100%">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <div id="modalUsers" class="modal-overlay">
   <div class="modal-box sm">
     <div class="modal-header"><h2><svg class="ic"><use href="#i-users"/></svg> Kullanıcılar ve Roller</h2><button class="modal-close" onclick="closeModal('modalUsers')">✕ Kapat</button></div>
@@ -1913,7 +1927,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v313 · 04.09.2026';
+const APP_VER='v314 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -1972,6 +1986,9 @@ const setRezv         = a => {
       console.warn('REZV DÜŞÜŞ',eski,'→',yeni,st); } }catch(e){}
   _rezvCache=a; clearTimeout(_rezvSaveT); _rezvSaveT=setTimeout(()=>idbSet('rezervasyonlar', _rezvCache),250); _cloudQueue('rezervasyonlar'); return true; };
 let _mmCache=null,_mmSaveT=null;
+let _ekipEkCache=null,_ekeSaveT=null,_ekipProf=null,_ekDuzEmail=null;
+const getEkipEk = () => (_ekipEkCache&&typeof _ekipEkCache==='object')?_ekipEkCache:{};
+const setEkipEk = o => { _ekipEkCache=o; clearTimeout(_ekeSaveT); _ekeSaveT=setTimeout(()=>idbSet('ekipek',_ekipEkCache),250); _cloudQueue('ekipek'); return true; };
 const getMagMuh = () => Array.isArray(_mmCache)?_mmCache:[];
 const setMagMuh = a => { _mmCache=a; clearTimeout(_mmSaveT); _mmSaveT=setTimeout(()=>idbSet('magmuh',_mmCache),250); _cloudQueue('magmuh'); return true; };
 const getPnrLedger    = () => _pnrCache;
@@ -2261,6 +2278,7 @@ function showPage(id, tabEl) {
   if(id==='paketlerim') renderDashboard();
   if(id==='yonetim') renderYonetim();
   if(id==='magmuh') mmTab(window._mmTab||'muh');
+  if(id==='ekip') renderEkipPanel();
   if(id==='paket') refreshSidebarPkgSwitch();
   if(id==='harita') renderHarita();
   if(id==='ucak'){ renderRezervasyonPage();
@@ -7661,7 +7679,7 @@ const SB_URL='https://jyqwbzyevejyqxfafrtf.supabase.co';
 const SB_KEY='sb_publishable_65daq2tGCWi0fHcERLGwbQ_7zPH8TD2';
 let sb=null, sbUser=null, sbRol=null, _cloudOn=false;
 // ═══ ROL / YETKI ═══
-const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'yonetim'};
+const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'yonetim',ekip:'yonetim'};
 const _ACL={
   yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e'},
   rezervasyon: {home:'e',urun:'-',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-'},
@@ -7816,6 +7834,13 @@ async function _cloudStart(session){
       const r=await sb.from('profiles').select('*').eq('id',sbUser.id).maybeSingle(); prof=r.data;
     }
     sbRol=prof?.rol||'goruntuleme';
+    try{
+      const ekr=await sb.from('kv_store').select('data').eq('key','ekipek').maybeSingle();
+      if(ekr&&ekr.data&&ekr.data.data&&((ekr.data.data[sbUser.email]||{}).durum==='pasif')){
+        await sb.auth.signOut(); sbUser=null; sbRol=null; _showLogin(true); _setCloud('login','Hesap pasif');
+        showToast('Hesabınız pasif durumda — yöneticinizle görüşün','error',7000); return;
+      }
+    }catch(e){}
     _cloudOn=true;
     _renderUserChip();
     _applyRoleNav();
@@ -7839,7 +7864,8 @@ function _renderUserChip(){
   const rolAd={yonetici:'Yönetici',urun:'Ürün',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme'}[sbRol]||sbRol;
   chip.style.display='inline-flex';
   chip.innerHTML='<span>'+esc((sbUser.email||'').split('@')[0])+'</span><span class="user-role-badge">'+rolAd+'</span>'
-    +(sbRol==='yonetici'?'<button class="chip-btn" title="Kullanıcılar ve roller" onclick="openUsersModal()"><svg class="ic"><use href="#i-users"/></svg></button>':'')
+    +'<button class="chip-btn" title="Şifremi değiştir" onclick="openPwModal()">🔑</button>'
+    +(sbRol==='yonetici'?'<button class="chip-btn" title="Ekip paneli" onclick="showPage(\'ekip\')"><svg class="ic"><use href="#i-users"/></svg></button>':'')
     +'<button class="chip-btn" title="Çıkış yap" onclick="doLogout()"><svg class="ic"><use href="#i-x"/></svg></button>';
 }
 
@@ -10488,6 +10514,7 @@ async function _cloudPullFull(){
     if(Array.isArray(kvMap.duyurular)){ _duyuruCache=kvMap.duyurular; idbSet('duyurular',_duyuruCache); _sigKv.set('duyurular',JSON.stringify(kvMap.duyurular)); }
     if(Array.isArray(kvMap.ekip)){ _ekipCache=kvMap.ekip; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(kvMap.ekip)); }
     if(Array.isArray(kvMap.magmuh)){ _mmCache=kvMap.magmuh; idbSet('magmuh',_mmCache); _sigKv.set('magmuh',JSON.stringify(kvMap.magmuh)); }
+    if(kvMap.ekipek&&typeof kvMap.ekipek==='object'&&!Array.isArray(kvMap.ekipek)){ _ekipEkCache=kvMap.ekipek; idbSet('ekipek',_ekipEkCache); _sigKv.set('ekipek',JSON.stringify(kvMap.ekipek)); }
     const docBy={res:[],pnr:[],ops:[],transfer:[],opsgrup:[],rezv:[]};
     _silTomb=new Map();
     if(!dr.error) (dr.data||[]).forEach(r=>{ if(r.col==='sil'){ _silTomb.set(r.id,(r.data&&r.data.ts)||0); return; } if(docBy[r.col]) docBy[r.col].push(r); });
@@ -10587,6 +10614,7 @@ async function _cloudPullIncre(last){
     else if(r.key==='duyurular'&&Array.isArray(r.data)){ _duyuruCache=r.data; idbSet('duyurular',_duyuruCache); _sigKv.set('duyurular',JSON.stringify(r.data)); degisti++; }
     else if(r.key==='ekip'&&Array.isArray(r.data)){ _ekipCache=r.data; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(r.data)); degisti++; }
     else if(r.key==='magmuh'&&Array.isArray(r.data)){ _mmCache=r.data; idbSet('magmuh',_mmCache); _sigKv.set('magmuh',JSON.stringify(r.data)); degisti++; }
+    else if(r.key==='ekipek'&&r.data&&typeof r.data==='object'&&!Array.isArray(r.data)){ _ekipEkCache=r.data; idbSet('ekipek',_ekipEkCache); _sigKv.set('ekipek',JSON.stringify(r.data)); degisti++; }
   });
   // doc_rows: satır satır merge + uzak id diff ile silme
   (dr.data||[]).forEach(r=>{
@@ -10754,8 +10782,8 @@ async function _cloudPushKindIc(kind){
     for(let i=0;i<del.length;i+=100){ const p=del.slice(i,i+100); let r; try{ r=await sb.from('operators').delete().in('id',p); }catch(e){ r={error:e}; } if(r.error) throw r.error; p.forEach(id=>_sigOp.delete(id)); }
   } else if(_KIND2COL[kind]){
     await _docPush(_KIND2COL[kind]);
-  } else if(kind==='tanimlar'||kind==='gorevler'||kind==='duyurular'||kind==='ekip'||kind==='magmuh'){
-    const val=kind==='tanimlar'?(_tanimCache||{}):(kind==='gorevler'?(_gorevCache||[]):(kind==='duyurular'?(_duyuruCache||[]):(kind==='magmuh'?(getMagMuh()):(_ekipCache||[]))));
+  } else if(kind==='tanimlar'||kind==='gorevler'||kind==='duyurular'||kind==='ekip'||kind==='magmuh'||kind==='ekipek'){
+    const val=kind==='tanimlar'?(_tanimCache||{}):(kind==='gorevler'?(_gorevCache||[]):(kind==='duyurular'?(_duyuruCache||[]):(kind==='magmuh'?(getMagMuh()):(kind==='ekipek'?(getEkipEk()):(_ekipCache||[])))));
     const sig=JSON.stringify(val);
     if(_sigKv.get(kind)===sig) return;
     const r=await sb.from('kv_store').upsert({key:kind,data:val,updated_at:new Date().toISOString(),updated_by:sbUser.id});
@@ -10823,6 +10851,7 @@ function _onRemote(kind,p){
       if(row.key==='gorevler'&&Array.isArray(row.data)){ _gorevCache=row.data; idbSet('gorevler',_gorevCache); renderPano&&renderPano(); }
       if(row.key==='duyurular'&&Array.isArray(row.data)){ _duyuruCache=row.data; idbSet('duyurular',_duyuruCache); renderPano&&renderPano(); }
       if(row.key==='ekip'&&Array.isArray(row.data)){ _ekipCache=row.data; idbSet('ekip',_ekipCache); }
+      if(row.key==='ekipek'&&row.data&&typeof row.data==='object'&&!Array.isArray(row.data)){ _ekipEkCache=row.data; idbSet('ekipek',_ekipEkCache); if(document.querySelector('.page.active')?.id==='page-ekip') renderEkipPanel&&renderEkipPanel(); }
       if(row.key==='transfer'&&row.data&&typeof row.data==='object'){ _trCache=row.data; idbSet('transfer',_trCache); if(document.querySelector('.page.active')?.id==='page-operasyon'&&_opsTab==='transfer') renderOpsTransfer&&renderOpsTransfer(); }
       if(row.key==='opsgrup'&&row.data&&typeof row.data==='object'){ _ogCache=row.data; idbSet('opsgrup',_ogCache); if(document.querySelector('.page.active')?.id==='page-operasyon'&&_opsTab==='grup') renderOpsGrup&&renderOpsGrup(); }
       if(document.querySelector('.page.active')?.id==='page-rezervasyon') renderRezervasyon&&renderRezervasyon();
@@ -10833,6 +10862,83 @@ function _onRemote(kind,p){
   }catch(e){ console.warn('remote apply',e); }
 }
 
+// ═══ EKİP PANELİ (yalnız yönetici) ═══
+const _ROLLER=[['yonetici','Yönetici'],['urun','Ürün'],['rezervasyon','Rezervasyon'],['ucak','Uçak'],['operasyon','Operasyon'],['goruntuleme','Görüntüleme']];
+function _telWa(t){ let d=String(t||'').replace(/\D/g,''); if(!d) return ''; if(d.startsWith('0')) d='9'+d; else if(d.length===10&&d.startsWith('5')) d='90'+d; return d; }
+function _ekipAvatar(ad,email){ const src=(ad||email||'?').trim(); const par=src.split(/\s+/); const ini=(par.length>1?par[0][0]+par[par.length-1][0]:src.slice(0,2)).toLocaleUpperCase('tr'); let h=0; for(const c of (email||src)) h=(h*31+c.charCodeAt(0))>>>0; const renk=['#1F4E78','#C55A11','#166534','#7c3aed','#b91c1c','#0e7490'][h%6]; return `<div style="width:44px;height:44px;border-radius:50%;background:${renk};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0">${esc(ini)}</div>`; }
+function renderEkipPanel(){
+  const box=document.getElementById('ekipBox'); if(!box) return;
+  const EK=getEkipEk();
+  const liste=(Array.isArray(_ekipProf)&&_ekipProf.length)?_ekipProf:(_ekipCache||[]);
+  if(sb&&!_ekipProf){ sb.from('profiles').select('*').order('created_at').then(r=>{ if(!r.error&&Array.isArray(r.data)){ _ekipProf=r.data; renderEkipPanel(); } }).catch(()=>{}); }
+  const kartlar=liste.map(u=>{
+    const em=u.email||''; const ek=EK[em]||{}; const pasif=ek.durum==='pasif'; const ben=sbUser&&em===sbUser.email;
+    if(_ekDuzEmail===em){
+      const inp='width:100%;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;margin-bottom:7px';
+      return `<div class="card" style="margin:0">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">${_ekipAvatar(u.ad,em)}<div><div style="font-weight:800">${esc(u.ad||em.split('@')[0])}</div><div style="font-size:.7rem;color:var(--muted)">${esc(em)}</div></div></div>
+        <input id="ekeTel" placeholder="Telefon (05xx…)" value="${esc(ek.tel||'')}" style="${inp}">
+        <input id="ekeUnvan" placeholder="Görev / unvan" value="${esc(ek.unvan||'')}" style="${inp}">
+        <input id="ekeNot" placeholder="Not" value="${esc(ek.not||'')}" style="${inp}">
+        <select id="ekeDurum" style="${inp}" ${ben?'disabled title="Kendini pasif yapamazsın"':''}><option value="aktif" ${!pasif?'selected':''}>Aktif</option><option value="pasif" ${pasif?'selected':''}>Pasif — giriş yapamaz</option></select>
+        <div style="display:flex;gap:7px"><button class="btn btn-primary btn-sm" onclick="ekipDuzKaydet('${esc(em)}')">Kaydet</button><button class="btn btn-outline btn-sm" onclick="_ekDuzEmail=null;renderEkipPanel()">Vazgeç</button></div>
+      </div>`;
+    }
+    const wa=_telWa(ek.tel);
+    return `<div class="card" style="margin:0${pasif?';opacity:.55':''}">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        ${_ekipAvatar(u.ad,em)}
+        <div style="min-width:0;flex:1">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-weight:800;font-size:.92rem">${esc(u.ad||em.split('@')[0])}</span>
+            ${pasif?'<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.6rem;padding:1px 8px;border-radius:8px">PASİF</span>':'<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.6rem;padding:1px 8px;border-radius:8px">AKTİF</span>'}</div>
+          ${ek.unvan?`<div style="font-size:.72rem;color:var(--primary);font-weight:700">${esc(ek.unvan)}</div>`:''}
+          <div style="font-size:.7rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis">${esc(em)}</div>
+          ${ek.tel?`<div style="font-size:.76rem;margin-top:3px"><a href="tel:${esc(ek.tel)}" style="color:inherit;text-decoration:none">📞 ${esc(ek.tel)}</a>${wa?` <a href="https://wa.me/${wa}" target="_blank" style="text-decoration:none;margin-left:5px" title="WhatsApp">📲</a>`:''}</div>`:''}
+          ${ek.not?`<div style="font-size:.7rem;color:var(--muted);margin-top:3px">${esc(ek.not)}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap">
+        <select onchange="setUserRol('${esc(u.id||'')}',this.value);(_ekipProf||[]).forEach(p=>{if(p.email==='${esc(em)}')p.rol=this.value})" ${ben?'disabled title="Kendi rolünü değiştiremezsin"':''} style="padding:4px 7px;border:1.5px solid var(--border);border-radius:8px;font-size:.72rem;font-family:inherit">
+          ${_ROLLER.map(r=>`<option value="${r[0]}" ${u.rol===r[0]?'selected':''}>${r[1]}</option>`).join('')}
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="_ekDuzEmail='${esc(em)}';renderEkipPanel()">✏️ Düzenle</button>
+        ${ben?'':`<button class="btn btn-outline btn-sm" onclick="_rolOnizle('${esc(u.rol||'goruntuleme')}','${esc(em)}')">👁 Gözünden</button>
+        <button class="btn btn-outline btn-sm" onclick="ekipResetMail('${esc(em)}')" title="Şifre sıfırlama maili gönder">🔑 Sıfırlama</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  box.innerHTML=`<div class="card"><div class="card-title"><svg class="ic"><use href="#i-users"/></svg> Ekip <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${liste.length} kullanıcı · Yeni kullanıcıyı Supabase panelinden eklersin (Authentication → Users)</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">${kartlar||'<p class="section-tip">Kullanıcı listesi yükleniyor…</p>'}</div>
+    <div style="font-size:.68rem;color:var(--muted);margin-top:10px">Pasif kullanıcı sisteme giriş yapamaz. 🔑 Sıfırlama: kullanıcıya şifre belirleme maili gider. Herkes kendi şifresini üstteki 🔑 ile değiştirir.</div></div>`;
+}
+function ekipDuzKaydet(em){
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const EK=Object.assign({},getEkipEk());
+  const yeni={tel:g('ekeTel'),unvan:g('ekeUnvan'),not:g('ekeNot'),durum:g('ekeDurum')||'aktif'};
+  if(sbUser&&em===sbUser.email) yeni.durum='aktif';
+  EK[em]=yeni; setEkipEk(EK); _ekDuzEmail=null; renderEkipPanel(); showToast('Kaydedildi','success');
+}
+async function ekipResetMail(em){
+  if(!sb){ showToast('Bulut bağlantısı yok','error'); return; }
+  try{ const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});
+    if(error) showToast('Gönderilemedi: '+error.message,'error'); else showToast('Şifre sıfırlama maili gönderildi: '+em,'success',5000);
+  }catch(e){ showToast('Gönderilemedi','error'); }
+}
+function openPwModal(recovery){
+  const t=document.getElementById('pwTip'); if(t) t.textContent=recovery?'Şifre sıfırlama bağlantısıyla giriş yaptın — yeni şifreni belirle (en az 6 karakter).':'Yeni şifreni belirle (en az 6 karakter).';
+  const a=document.getElementById('pwYeni'),b=document.getElementById('pwYeni2'); if(a)a.value=''; if(b)b.value='';
+  document.getElementById('modalPw').classList.add('open');
+}
+async function pwKaydet(){
+  const a=(document.getElementById('pwYeni')||{}).value||'', b=(document.getElementById('pwYeni2')||{}).value||'';
+  if(a.length<6){ showToast('Şifre en az 6 karakter olmalı','error'); return; }
+  if(a!==b){ showToast('Şifreler aynı değil','error'); return; }
+  if(!sb){ showToast('Bulut bağlantısı yok','error'); return; }
+  try{ const {error}=await sb.auth.updateUser({password:a});
+    if(error){ showToast('Değiştirilemedi: '+error.message,'error'); return; }
+    closeModal('modalPw'); showToast('Şifren değiştirildi','success');
+  }catch(e){ showToast('Değiştirilemedi','error'); }
+}
 // Kullanıcı yönetimi (yalnız yönetici)
 async function openUsersModal(){
   const el=document.getElementById('usersList');
@@ -10858,6 +10964,7 @@ async function setUserRol(id,rol){
 
 async function _cloudBoot(){
   if(!_sbInit()){ _setCloud('err','Çevrimdışı — bulut kitaplığı yok'); return; }
+  try{ sb.auth.onAuthStateChange((ev)=>{ if(ev==='PASSWORD_RECOVERY'){ try{openPwModal(true);}catch(e){} } }); }catch(e){}
   try{
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ _showLogin(true); _setCloud('login','Giriş yapılmadı'); return; }
@@ -10939,6 +11046,7 @@ async function _boot(){
   let dyr = await idbGet('duyurular');     _duyuruCache = Array.isArray(dyr)?dyr:null;
   let ekp = await idbGet('ekip');          _ekipCache   = Array.isArray(ekp)?ekp:null;
   let mm  = await idbGet('magmuh');        _mmCache     = Array.isArray(mm)?mm:[];
+  let eke = await idbGet('ekipek');        _ekipEkCache = (eke&&typeof eke==='object'&&!Array.isArray(eke))?eke:{};
   let trf = await idbGet('transfer');      _trCache = (trf&&typeof trf==='object')?trf:null;
   let ogr = await idbGet('opsgrup');       _ogCache = (ogr&&typeof ogr==='object')?ogr:null;
   await _docSigLoad();
