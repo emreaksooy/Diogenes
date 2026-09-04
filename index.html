@@ -1914,7 +1914,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v309 · 04.09.2026';
+const APP_VER='v310 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13041,7 +13041,7 @@ function renderTurDosyasi(box){
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
   const kisiler=_tdKisiler(E);
   const T=_tdTopla(g);
-  const TB=[['yolcu','Yolcular'],['program','Program'],['rehber','Rehber'],['arac','Araçlar'],['satis','Tur Satışları'],['evrak','Rehber Dosyası'],['hesap','Hesaplaşma']];
+  const TB=[['yolcu','Yolcular'],['program','Program'],['ucak','Uçak'],['rehber','Rehber'],['arac','Araçlar'],['satis','Tur Satışları'],['evrak','Rehber Dosyası'],['hesap','Hesaplaşma']];
   let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
     <button class="btn btn-outline btn-sm" onclick="opsTdKapat()">← Geri</button>
     <span style="font-size:.74rem;color:var(--muted)">Operasyon › Gruplar › ${_fmtDateTR(E.tarih)} › <b>${esc(g.no||E.ad)}</b></span>
@@ -13186,6 +13186,46 @@ function renderTurDosyasi(box){
         </div>`).join('')}
       </div>`;
     });
+  }
+  if(_tdTab==='ucak'){
+    const legs=_tdUcusSatirlar(E);
+    const araVar=legs.some(l=>l.yon==='A');
+    if(!window._tdUcakYon) window._tdUcakYon='G';
+    if(window._tdUcakYon==='A'&&!araVar) window._tdUcakYon='G';
+    const yonBtn=(y,ad)=>`<button class="btn btn-sm ${window._tdUcakYon===y?'btn-primary':'btn-outline'}" onclick="window._tdUcakYon='${y}';renderOpsGrup()">${ad}</button>`;
+    h+=`<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      ${yonBtn('G','🛬 Geliş')}${yonBtn('D','🛫 Dönüş')}${araVar?yonBtn('A','✈ Ara Uçuş'):''}
+      <span style="font-size:.68rem;color:var(--muted);margin-left:auto">Uçak listelerinden canlı · transfer görevleriyle eşleşik</span>
+    </div>`;
+    const yl=legs.filter(l=>l.yon===window._tdUcakYon);
+    if(!yl.length) h+='<p style="color:var(--muted);font-size:.85rem">Bu yönde uçuş kaydı yok — uçak listesi import edilmemiş olabilir.</p>';
+    else{
+      // uçuş bazlı grupla
+      const gr={};
+      yl.forEach(l=>{ const k=[l.sira,l.tarih,l.hy,l.ucus,l.rota,l.saat].join('|'); (gr[k]=gr[k]||[]).push(l); });
+      // transfer görev eşleşmesi
+      let trRows=[]; try{ trRows=_trGenRows().filter(r=>r.tip!=='TUR'&&(E.uyeler||[]).some(u=>u.pkgId===r.pkgId&&u.kalkis===r.kalkis)); }catch(e){}
+      Object.values(gr).sort((a,b)=>{ const t=x=>((_pdate(x[0].tarih))||'9999')+'T'+(x[0].saat||'99'); return t(a)<t(b)?-1:1; }).forEach(grp=>{
+        const f=grp[0];
+        const tekil=[]; const seen=new Set();
+        grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad; if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
+        tekil.sort((a,b)=>(a.soyad+a.ad).localeCompare(b.soyad+b.ad,'tr'));
+        const tr=trRows.find(r=>String(r.ucus||'').trim()===String(f.ucus||'').trim()&&r.tarih===_pdate(f.tarih));
+        const gr2=tr&&tr.grup?_trGrupOf(tr):null;
+        h+=`<div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">
+          <div style="background:var(--primary-soft);padding:6px 12px;font-size:.8rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <b>✈ ${[_fmtDateTR(f.tarih),f.hy,f.ucus,f.rota,f.saat].filter(Boolean).map(esc).join(' · ')}</b>
+            <span style="color:var(--muted)">· ${tekil.length} kişi</span>
+            ${tr?(tr.grup?`<span style="margin-left:auto;font-size:.7rem;font-weight:700;color:#166534">🚌 ${esc(_trKodOf(tr.grup))} · ${esc([gr2.arac,gr2.arac2].filter(Boolean).join(' + ')||'—')} · Depar ${esc(_trDeparHesap(tr).saat||'—')}</span>`:'<span style="margin-left:auto;font-size:.7rem;font-weight:800;color:#b91c1c">🚌 transfer atanmamış</span>'):''}
+          </div>
+          <table style="width:100%;border-collapse:collapse">${tekil.map((x,i)=>`<tr>
+            <td style="padding:3px 10px;font-size:.74rem;border-bottom:1px solid var(--border);width:26px;text-align:right;color:var(--muted)">${i+1}</td>
+            <td style="padding:3px 10px;font-size:.74rem;border-bottom:1px solid var(--border);width:120px">${esc(x.resno)}</td>
+            <td style="padding:3px 10px;font-size:.76rem;border-bottom:1px solid var(--border)"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td>
+          </tr>`).join('')}</table>
+        </div>`;
+      });
+    }
   }
   if(_tdTab==='evrak'){
     const belgeler=[['program','Tur Programı','gün gün — rehbere verilir, fiyatsız'],
