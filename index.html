@@ -1964,7 +1964,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v326 · 04.09.2026';
+const APP_VER='v327 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -10943,8 +10943,8 @@ function _rehbOtoRol(){
 function _rehbTurlar(){
   const ad=_rehbBen(); if(!ad) return [];
   const bugun=_opsToday();
-  let L=[]; try{ L=_rtTurlar(_isoAdd(bugun,-45),_isoAdd(bugun,7)); }catch(e){}
-  return L.filter(t=>_rehbNrm(t.rehberAd)===_rehbNrm(ad)&&t.kalkis<=_isoAdd(bugun,7)&&_isoAdd(t.end,1)>=bugun);
+  let L=[]; try{ L=_rtTurlar(_isoAdd(bugun,-45),_isoAdd(bugun,15)); }catch(e){}
+  return L.filter(t=>_rehbNrm(t.rehberAd)===_rehbNrm(ad)&&t.kalkis<=_isoAdd(bugun,15)&&_isoAdd(t.end,1)>=bugun);
 }
 function rehbTurAc(pkgId,kalkis,gid){
   const ok=_rehbTurlar().some(t=>(gid&&t.birlesikGrupId===gid)||(t.pkgId===pkgId&&t.kalkis===kalkis));
@@ -10981,11 +10981,11 @@ function renderRehberim(){
   const bugun=_opsToday();
   const L=_rehbTurlar();
   const durum=t=>{ if(t.kalkis>bugun) return '<span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">YAKLAŞAN</span>'; if(_isoAdd(t.end,1)===bugun) return '<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">SON GÜN — bildirimleri tamamla</span>'; return '<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">AKTİF</span>'; };
-  let h=`<div class="card"><div class="card-title">🎤 Rehber Panelim <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${esc(ad)} · Turlar başlangıçtan 7 gün önce açılır, bitişten 1 gün sonra kapanır</span></div>
+  let h=`<div class="card"><div class="card-title">🎤 Rehber Panelim <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${esc(ad)} · Turlar başlangıçtan 15 gün önce açılır, bitişten 1 gün sonra kapanır</span></div>
     ${L.length?L.map(t=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid var(--border);flex-wrap:wrap">
       <div style="min-width:0;flex:1"><b style="font-size:.9rem">${esc(t.kod)}</b> ${durum(t)}<div style="font-size:.72rem;color:var(--muted)">${_fmtDateTR(t.kalkis)} – ${_fmtDateTR(t.end)} · ${t.pax} pax · ${esc(t.op||'')}</div></div>
       <button class="btn btn-primary btn-sm" onclick="rehbTurAc('${t.pkgId}','${t.kalkis}','${t.birlesikGrupId||''}')">📂 Tur Dosyam</button>
-    </div>`).join(''):'<p class="section-tip">Şu an erişime açık turun yok. Turlar başlangıçtan 7 gün önce burada görünür.</p>'}
+    </div>`).join(''):'<p class="section-tip">Şu an erişime açık turun yok. Turlar başlangıçtan 15 gün önce burada görünür.</p>'}
   </div>`;
   const B=getRehBildirim().filter(b=>_rehbNrm(b.rehberAd)===_rehbNrm(ad)).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
   const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
