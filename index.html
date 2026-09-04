@@ -859,6 +859,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   <span class="save-status" id="saveStatus"><span class="dot"></span><span id="saveStatusTxt">Hazır</span></span>
   <span class="save-status" id="cloudStatus" title="Bulut bağlantısı — tıkla: hata günlüğü" onclick="hataGunluguAc()" style="cursor:pointer"><span class="dot"></span><span id="cloudStatusTxt">Bulut: —</span></span>
   <span id="userChip" style="display:none;align-items:center;gap:6px;font-size:.78rem;color:var(--text);white-space:nowrap"></span>
+  <button class="theme-toggle" onclick="navGeri()" title="Önceki görünüme dön — nereden geldiysen oraya">←</button>
   <button class="theme-toggle" id="sbToggleBtn" onclick="sbToggle()" title="Menüyü aç/kapat — çalışma alanını genişletir">☰</button>
   <button class="theme-toggle" id="themeToggle" onclick="toggleDark()" title="Koyu temaya geç"><svg class="ic"><use href="#i-moon"/></svg></button>
   <button class="nav-undo-btn" id="navUndoBtn" onclick="undoLast()" title="Geri alınacak işlem yok" disabled style="opacity:.4"><svg class="ic"><use href="#i-undo"/></svg> Geri Al</button>
@@ -1913,7 +1914,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v307 · 04.09.2026';
+const APP_VER='v308 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2183,7 +2184,46 @@ function renderPkgSummary(){
 }
 
 // ── showPage ──────────────────────────────────────────────────
+// ═══ GLOBAL GERİ (Chrome mantığı): her görünüm değişimi geçmişe yazılır, ← geldiğin yere döner ═══
+let _navGecmis=[], _navGeriModu=false, _curPage='paketlerim';
+function _navSnap(){
+  const s={page:_curPage};
+  try{
+    if(_curPage==='operasyon'){ s.ops=(typeof _opsTab!=='undefined')?_opsTab:null; s.tdGid=(typeof _tdGid!=='undefined')?_tdGid:null; }
+    if(_curPage==='magmuh') s.mm=window._mmTab||'muh';
+    if(_curPage==='rezervasyon') s.rz=(typeof _rzCur!=='undefined')?_rzCur:null;
+    if(_curPage==='ucak'){ s.up=(typeof _resPkgId!=='undefined')?_resPkgId:null; s.uk=(typeof _resKalkis!=='undefined')?_resKalkis:null; }
+  }catch(e){}
+  return s;
+}
+function _navPush(){
+  if(_navGeriModu) return;
+  try{
+    const s=_navSnap();
+    const son=_navGecmis[_navGecmis.length-1];
+    if(son&&JSON.stringify(son)===JSON.stringify(s)) return;
+    _navGecmis.push(s);
+    if(_navGecmis.length>30) _navGecmis.shift();
+  }catch(e){}
+}
+function navGeri(){
+  const s=_navGecmis.pop();
+  if(!s){ showToast('Geri gidilecek görünüm yok',null,2000); return; }
+  _navGeriModu=true;
+  try{
+    showPage(s.page);
+    if(s.page==='operasyon'){
+      if(s.tdGid){ opsTab('grup'); _tdGid=s.tdGid; _tdTab=_tdTab||'yolcu'; renderOpsGrup(); }
+      else if(s.ops) opsTab(s.ops);
+    }
+    if(s.page==='magmuh') mmTab(s.mm||'muh');
+    if(s.page==='rezervasyon'){ if(s.rz) rzAc(s.rz); else rzListeGoster(); }
+    if(s.page==='ucak'&&s.up&&s.uk){ try{ ucakOpen(s.up,s.uk); }catch(e){} }
+  }catch(e){}
+  _navGeriModu=false;
+}
 function showPage(id, tabEl) {
+  _navPush();
   // Stash'teki modalı kapat (sayfa değiştiğinde)
   closeSectionModal();
   window.scrollTo(0,0);
@@ -2194,6 +2234,7 @@ function showPage(id, tabEl) {
   if(!document.getElementById('page-'+id)) id='paketlerim';
   if(_acl(id)==='-'){ if(sbRol&&_cloudOn) showToast('Bu bölüme erişim yetkiniz yok','error'); id='paketlerim'; }
   document.getElementById('page-'+id).classList.add('active');
+  _curPage=id;
   document.querySelectorAll('.page.ro-lock').forEach(function(p){p.classList.remove('ro-lock');});
   { const _avv=_acl(id), _pgel=document.getElementById('page-'+id); if(_pgel&&_avv==='v') _pgel.classList.add('ro-lock'); _roBanner(_avv==='v'); }
   // nav tab highlight: opdetay gösterilirken "Paketlerim" tabı aktif kalsın
@@ -9444,7 +9485,7 @@ function rzYeniTip(tip){
   const r={id:genId(),tip,operator:'',voucher:'',pkgId:'',urunKod:'',kalkis:'',satisTarihi:new Date().toISOString().slice(0,10),not:'',odaKomp:'',ukartlar:[],opUcusNot:'',musteriler:[],kartlar:[],transferler:[]};
   getRezv().push(r); rzSave(); rzAc(r.id);
 }
-function rzAc(id){ _rzCur=id; try{localStorage.setItem('dmc_lastRezv',id);}catch(e){} _rzViewShow('rzVDetay'); document.querySelectorAll('.rz-navitem').forEach(el=>el.classList.toggle('active-ops',el.getAttribute('data-rt')==='ekran')); rzDetay(); }
+function rzAc(id){ _navPush(); _rzCur=id; try{localStorage.setItem('dmc_lastRezv',id);}catch(e){} _rzViewShow('rzVDetay'); document.querySelectorAll('.rz-navitem').forEach(el=>el.classList.toggle('active-ops',el.getAttribute('data-rt')==='ekran')); rzDetay(); }
 function rzSil(){
   const r=rzR(); if(!r) return;
   showConfirm('🗑️','Rezervasyonu Sil',(r.operator||'')+' / '+(r.voucher||'—')+' silinecek.','Evet, Sil',()=>{
@@ -11922,6 +11963,7 @@ function sbToggle(){
 }
 try{ if(localStorage.getItem('dmc_sbKapali')==='1') document.body.classList.add('sb-kapali'); }catch(e){}
 function opsTab(t){
+  if(typeof _opsTab!=='undefined'&&t!==_opsTab) _navPush();
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
   ['anasayfa','gunluk','rehtak','grup','transfer','tanim','mutabakat','birlestir','turlar'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
@@ -12786,9 +12828,10 @@ function renderOpsGrup(){
 }
 // ═══ TUR DOSYASI (grup kartı) ═══
 let _tdGid=null,_tdTab='yolcu';
-function opsTdAc(gid){ gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; renderOpsGrup(); }
+function opsTdAc(gid){ _navPush(); gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; renderOpsGrup(); }
 function opsTdKapat(){
   _tdGid=null;
+  if(_navGecmis.length){ navGeri(); return; }
   const d=window._tdDonus;
   if(d&&d!=='grup'){ window._tdDonus=null; opsTab(d); return; }
   renderOpsGrup();
@@ -13700,6 +13743,7 @@ function _mutAracSatirlar(){
 // ═══ MAĞAZA MUHASEBESİ (yalnız yönetim): mağaza bildirimi (kalem kalem) ↔ rehber bildirimi (tek tutar) ═══
 let _mmAy='', _mmFirmaF='', _mmDurumF='', _mmAcik=new Set();
 function mmTab(t){
+  if(window._mmTab&&t!==window._mmTab) _navPush();
   window._mmTab=t;
   const b=document.getElementById('magmuhBody'), p=document.getElementById('magmuhPlanWrap');
   const bm=document.getElementById('mmTabMuhBtn'), bp=document.getElementById('mmTabPlanBtn');
