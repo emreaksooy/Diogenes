@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v332 · 04.09.2026';
+const APP_VER='v333 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12197,70 +12197,124 @@ function moExcel(){
 }
 function renderMagFirmalar(){
   const box=document.getElementById('magFirmaBox'); if(!box) return;
-  if(!document.getElementById('moKlAdL')) document.body.insertAdjacentHTML('beforeend','<datalist id="moKlAdL">'+['Kuyum','Deri','Halı','Seramik','Tekstil','Lokum','Kozmetik'].map(x=>'<option>'+x+'</option>').join('')+'</datalist>');
-  const firmalar=_moFirmalar();
-  const inpS='padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit';
-  let h='<div class="card"><div class="card-title">🏬 Mağaza Grupları <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">'+firmalar.length+' grup · Grubu ekle (Doğuş gibi), altına mağazalarını aç, her mağazaya oranlarını gir</span></div>'
-   +firmalar.map(f=>{
-      const acik=(window._moSubeAcik===f.id);
-      let fh='<div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:8px 12px;margin:0 0 8px 0;font-size:.78rem">'
-       +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
-       +'<b style="font-size:.84rem">🏬 '+esc(f.ad)+'</b>'
-       +'<span style="color:var(--muted)">'+esc(f.sehir||'')+(f.tur?' · '+esc(f.tur):'')+'</span>'
-       +'<span style="color:#0369a1;font-weight:700;font-size:.7rem">'+((f.subeler||[]).length)+' mağaza</span>'
-       +'<span style="flex:1"></span>'
-       +'<button class="btn btn-outline btn-sm" onclick="window._moSubeAcik=window._moSubeAcik===\''+f.id+'\'?null:\''+f.id+'\';renderMagFirmalar()">'+(acik?'▲ Kapat':'▼ Mağazalar')+'</button>'
-       +'<button onclick="moFirmaSil(\''+f.id+'\')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;cursor:pointer;font-size:.72rem;padding:3px 8px">× Firma sil</button>'
+  const gruplar=_moFirmalar();
+  const inp='padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:.84rem;font-family:inherit';
+  const gid=window._mgSayfa;
+  const g=gid?gruplar.find(x=>x.id===gid):null;
+  if(gid&&!g) window._mgSayfa=null;
+  if(g){
+    let h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'
+     +'<button class="btn btn-outline btn-sm" onclick="window._mgSayfa=null;window._mgMagForm=false;renderMagFirmalar()">← Mağaza Grupları</button>'
+     +'<b style="font-size:1rem">🏬 '+esc(g.ad)+'</b>'
+     +(g.sehir?'<span style="color:var(--muted);font-size:.8rem">'+esc(g.sehir)+'</span>':'')
+     +'<span style="flex:1"></span>'
+     +'<button class="btn btn-primary btn-sm" onclick="window._mgMagForm=!window._mgMagForm;renderMagFirmalar()">'+(window._mgMagForm?'✕ Vazgeç':'+ Mağaza Tanımla')+'</button>'
+     +'</div>';
+    if(window._mgMagForm){
+      h+='<div class="card" style="border:2px solid var(--primary)"><div class="card-title">Yeni Mağaza</div>'
+       +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'
+       +'<input id="mgMagAd" placeholder="Mağaza adı * (ör. Pamukkale Halı)" style="'+inp+';min-width:210px">'
+       +'<input id="mgMagSehir" placeholder="Lokasyon / şehir" style="'+inp+';width:140px">'
+       +'<input id="mgMagTel" placeholder="Telefon" style="'+inp+';width:130px">'
+       +'<input id="mgMagYet" placeholder="Yetkili" style="'+inp+';width:120px">'
+       +'<input id="mgMagAdr" placeholder="Adres" style="'+inp+';min-width:180px">'
+       +'</div>'
+       +'<div style="font-weight:700;font-size:.8rem;margin-bottom:6px">Komisyon Oranları</div>'
+       +'<div id="mgOranList">'+_mgOranSatirHTML()+'</div>'
+       +'<button class="btn btn-outline btn-sm" onclick="mgOranSatirEkle()" style="margin-top:4px">+ Oran satırı</button>'
+       +'<div style="margin-top:12px"><button class="btn btn-primary" onclick="mgMagKaydet(\''+g.id+'\')">Mağazayı Kaydet</button></div>'
        +'</div>';
-      if(acik){
-        fh+='<div style="margin-top:8px;border-top:1px dashed #bae6fd;padding-top:8px">'
-         +((f.subeler||[]).map((sb2,si)=>{
-            const oKey=f.id+'|'+si, oAcik=(window._moOranAcik===oKey);
-            let sh='<div style="border-bottom:1px dashed #e0f2fe;padding:4px 0">'
-             +'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:.78rem">'
-             +'<b>🏬 '+esc(sb2.ad||sb2.sehir||'—')+'</b>'
-             +(sb2.tur?'<span style="background:#ede9fe;color:#6d28d9;border-radius:6px;font-size:.62rem;font-weight:800;padding:1px 7px">'+esc(sb2.tur)+'</span>':'')
-             +(sb2.sehir?'<span style="color:var(--muted)">📍 '+esc(sb2.sehir)+'</span>':'')
-             +(sb2.tel?'<a href="tel:'+esc(sb2.tel)+'" style="color:inherit;text-decoration:none">☎ '+esc(sb2.tel)+'</a>':'')
-             +(sb2.yetkili?'<span style="color:var(--muted)">👤 '+esc(sb2.yetkili)+'</span>':'')
-             +(sb2.adres?'<span style="color:var(--muted);font-size:.7rem">'+esc(sb2.adres)+'</span>':'')
-             +'<span style="flex:1"></span>'
-             +'<button class="btn btn-outline btn-sm" onclick="window._moOranAcik=window._moOranAcik===\''+oKey+'\'?null:\''+oKey+'\';renderMagFirmalar()">'+(oAcik?'▲':'%')+' Oranlar ('+((sb2.kalemler||[]).length)+')</button>'
-             +'<button onclick="moSubeSil(\''+f.id+'\','+si+')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
-             +'</div>';
-            if(oAcik){
-              sh+='<div style="margin:6px 0 4px 18px;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:9px">'
-               +((sb2.kalemler||[]).map((kl,ki)=>'<div style="display:flex;gap:8px;align-items:center;font-size:.78rem;padding:2px 0">'
-                  +'<b style="min-width:110px">'+esc(kl.ad)+'</b><span style="color:#92400e;font-weight:800">%'+esc(String(kl.oran||''))+'</span>'
-                  +'<button onclick="moSubeKalemSil(\''+f.id+'\','+si+','+ki+')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
-                  +'</div>').join('')||'<div style="color:var(--muted);font-size:.72rem">Oran girilmedi — muhasebe kayıtları boş kalemle açılır.</div>')
-               +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'
-               +'<input id="moKlAd_'+f.id+'_'+si+'" placeholder="Kalem (ör. Kuyum)" style="padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:.78rem;font-family:inherit;width:130px" list="moKlAdL">'
-               +'<input id="moKlOran_'+f.id+'_'+si+'" placeholder="%" inputmode="decimal" style="padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:.78rem;font-family:inherit;width:60px">'
-               +'<button class="btn btn-primary btn-sm" onclick="moSubeKalemEkle(\''+f.id+'\','+si+')">+ Oran ekle</button>'
-               +'</div></div>';
-            }
-            return sh+'</div>';
-          }).join('')||'<div style="color:var(--muted);font-size:.74rem">Henüz mağaza girilmedi.</div>')
-         +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'
-         +'<input id="moSbAd_'+f.id+'" placeholder="Mağaza adı (ör. Pamukkale Halı)" style="'+inpS+';width:190px">'
-         +'<input id="moSbSehir_'+f.id+'" placeholder="Lokasyon / şehir" style="'+inpS+';width:120px">'
-         +'<select id="moSbTur_'+f.id+'" style="'+inpS+'"><option value="">— Tür —</option>'+['Kuyum','Deri','Halı','Seramik / Çini','Tekstil','Lokum / Baharat','Ozon / Kozmetik'].map(x=>'<option>'+x+'</option>').join('')+'</select>'
-         +'<input id="moSbTel_'+f.id+'" placeholder="Telefon" style="'+inpS+';width:115px">'
-         +'<input id="moSbYet_'+f.id+'" placeholder="Yetkili" style="'+inpS+';width:105px">'
-         +'<input id="moSbAdr_'+f.id+'" placeholder="Adres (ops.)" style="'+inpS+';width:140px">'
-         +'<button class="btn btn-primary btn-sm" onclick="moSubeEkle(\''+f.id+'\')">+ Mağaza ekle</button>'
-         +'</div></div>';
-      }
-      return fh+'</div>';
-    }).join('')
-   +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;padding-top:10px;border-top:1.5px dashed var(--border)">'
-   +'<input id="moFAd" placeholder="Mağaza grubu adı (ör. Doğuş)" style="'+inpS+';width:190px">'
-   +'<input id="moFSehir" placeholder="Merkez şehir (ops.)" style="'+inpS+';width:130px">'
-   +'<select id="moFTur" style="'+inpS+'"><option value="">— Tür —</option>'+['Kuyum','Deri','Halı','Seramik / Çini','Tekstil','Lokum / Baharat','Ozon / Kozmetik'].map(x=>'<option>'+x+'</option>').join('')+'</select>'
-   +'<button class="btn btn-primary btn-sm" onclick="moFirmaEkle()">+ Grup ekle</button>'
-   +'</div></div>';
+    }
+    h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px">'
+     +((g.subeler||[]).map((m,si)=>'<div class="card" style="margin:0">'
+        +'<div style="display:flex;align-items:flex-start;gap:8px">'
+        +'<div style="min-width:0;flex:1">'
+        +'<div style="font-weight:800;font-size:.9rem">🏬 '+esc(m.ad||m.sehir||'—')+'</div>'
+        +(m.sehir?'<div style="font-size:.72rem;color:var(--muted)">📍 '+esc(m.sehir)+'</div>':'')
+        +(m.tel?'<div style="font-size:.76rem;margin-top:3px"><a href="tel:'+esc(m.tel)+'" style="color:inherit;text-decoration:none">☎ '+esc(m.tel)+'</a></div>':'')
+        +(m.yetkili?'<div style="font-size:.72rem;color:var(--muted)">👤 '+esc(m.yetkili)+'</div>':'')
+        +(m.adres?'<div style="font-size:.68rem;color:var(--muted)">'+esc(m.adres)+'</div>':'')
+        +'</div>'
+        +'<button onclick="mgMagSil(\''+g.id+'\','+si+')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
+        +'</div>'
+        +'<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">'
+        +(((m.kalemler||[]).length)?m.kalemler.map(kl=>'<span style="display:inline-block;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:7px;padding:2px 9px;font-size:.7rem;font-weight:800;margin:0 4px 4px 0">'+esc(kl.ad)+' %'+esc(String(kl.oran||''))+'</span>').join(''):'<span style="color:var(--muted);font-size:.7rem">Oran girilmedi</span>')
+        +'</div></div>').join('')||'<p class="section-tip">Henüz mağaza yok — "+ Mağaza Tanımla" ile ekle.</p>')
+     +'</div>';
+    box.innerHTML=h; return;
+  }
+  let h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+   +'<b style="font-size:1rem">🏬 Mağaza Grupları</b>'
+   +'<span style="color:var(--muted);font-size:.76rem">'+gruplar.length+' grup</span>'
+   +'<span style="flex:1"></span>'
+   +'<button class="btn btn-primary btn-sm" onclick="window._mgForm=!window._mgForm;renderMagFirmalar()">'+(window._mgForm?'✕ Vazgeç':'+ Mağaza Grubu Ekle')+'</button>'
+   +'</div>';
+  if(window._mgForm){
+    h+='<div class="card" style="border:2px solid var(--primary)"><div class="card-title">Yeni Mağaza Grubu</div>'
+     +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+     +'<input id="mgGrupAd" placeholder="Grup adı * (ör. Doğuş)" style="'+inp+';min-width:200px">'
+     +'<input id="mgGrupSehir" placeholder="Merkez / şehir" style="'+inp+';width:140px">'
+     +'<input id="mgGrupTel" placeholder="Telefon" style="'+inp+';width:130px">'
+     +'<input id="mgGrupYet" placeholder="Yetkili" style="'+inp+';width:130px">'
+     +'<input id="mgGrupNot" placeholder="Not" style="'+inp+';min-width:160px">'
+     +'</div>'
+     +'<div style="margin-top:12px"><button class="btn btn-primary" onclick="mgGrupKaydet()">Grubu Kaydet</button></div>'
+     +'</div>';
+  }
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">'
+   +(gruplar.map(gr=>'<div class="card" style="margin:0;cursor:pointer" onclick="window._mgSayfa=\''+gr.id+'\';renderMagFirmalar()">'
+      +'<div style="display:flex;align-items:flex-start;gap:8px">'
+      +'<div style="min-width:0;flex:1">'
+      +'<div style="font-weight:800;font-size:.95rem">🏬 '+esc(gr.ad)+'</div>'
+      +'<div style="font-size:.72rem;color:var(--muted)">'+((gr.subeler||[]).length)+' mağaza'+(gr.sehir?' · '+esc(gr.sehir):'')+'</div>'
+      +(gr.tel?'<div style="font-size:.72rem;color:var(--muted)">☎ '+esc(gr.tel)+(gr.yetkili?' · 👤 '+esc(gr.yetkili):'')+'</div>':'')
+      +(gr.not?'<div style="font-size:.68rem;color:var(--muted)">'+esc(gr.not)+'</div>':'')
+      +'</div>'
+      +'<button onclick="event.stopPropagation();mgGrupSil(\''+gr.id+'\')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
+      +'</div>'
+      +'<div style="margin-top:8px;font-size:.72rem;color:var(--primary);font-weight:700">Mağazaları yönet →</div>'
+      +'</div>').join('')||'<p class="section-tip">Henüz grup yok — "+ Mağaza Grubu Ekle" ile başla.</p>')
+   +'</div>';
   box.innerHTML=h;
+}
+function _mgOranSatirHTML(){
+  const inp='padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit';
+  return '<div class="mg-oran-satir" style="display:flex;gap:6px;margin-bottom:5px"><input class="mg-oran-ad" placeholder="Kalem (ör. Kuyum)" style="'+inp+';width:160px"><input class="mg-oran-deger" placeholder="%" inputmode="decimal" style="'+inp+';width:64px"><button onclick="this.parentElement.remove()" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button></div>';
+}
+function mgOranSatirEkle(){ const l=document.getElementById('mgOranList'); if(l) l.insertAdjacentHTML('beforeend',_mgOranSatirHTML()); }
+function mgGrupKaydet(){
+  const g=id=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
+  const ad=g('mgGrupAd'); if(!ad){ showToast('Grup adı girin','error'); return; }
+  const t=getTanimlar(); t.magazaFirmalari=t.magazaFirmalari||[];
+  const yeni={id:genId(),ad,sehir:g('mgGrupSehir'),tel:g('mgGrupTel'),yetkili:g('mgGrupYet'),not:g('mgGrupNot'),subeler:[]};
+  t.magazaFirmalari.push(yeni);
+  setTanimlar(t); window._mgForm=false; window._mgSayfa=yeni.id; renderMagFirmalar();
+  showToast('Mağaza grubu eklendi: '+ad+' — şimdi mağazalarını tanımla','success',5000);
+}
+function mgGrupSil(id){
+  const t=getTanimlar(); const gr=(t.magazaFirmalari||[]).find(x=>x.id===id);
+  showConfirm('🗑','Grubu Sil',(gr?gr.ad:'')+' grubu ve altındaki '+(((gr||{}).subeler||[]).length)+' mağaza silinecek.','Sil',()=>{
+    const t2=getTanimlar(); t2.magazaFirmalari=(t2.magazaFirmalari||[]).filter(f=>f.id!==id);
+    setTanimlar(t2); if(window._mgSayfa===id) window._mgSayfa=null; renderMagFirmalar(); try{renderMagazaOps();}catch(e){}
+  });
+}
+function mgMagKaydet(gid){
+  const g=id=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
+  const ad=g('mgMagAd'); if(!ad){ showToast('Mağaza adı girin','error'); return; }
+  const kalemler=[];
+  document.querySelectorAll('#mgOranList .mg-oran-satir').forEach(row=>{
+    const ka=(row.querySelector('.mg-oran-ad')||{}).value||'', ko=(row.querySelector('.mg-oran-deger')||{}).value||'';
+    if(ka.trim()) kalemler.push({ad:ka.trim(),oran:ko.trim()});
+  });
+  const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); if(!f) return;
+  f.subeler=f.subeler||[];
+  f.subeler.push({id:genId(),ad,sehir:g('mgMagSehir'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
+  setTanimlar(t); window._mgMagForm=false; renderMagFirmalar(); try{renderMagazaOps();}catch(e){}
+  showToast('Mağaza eklendi: '+ad,'success');
+}
+function mgMagSil(gid,si){
+  const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); if(!f||!f.subeler) return;
+  f.subeler.splice(si,1); setTanimlar(t); renderMagFirmalar(); try{renderMagazaOps();}catch(e){}
 }
 function renderMagazaOps(){
   const box=document.getElementById('opsPane_magaza'); if(!box) return;
