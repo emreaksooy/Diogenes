@@ -1964,7 +1964,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v327 · 04.09.2026';
+const APP_VER='v328 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12053,6 +12053,24 @@ function moFirmaEkle(){
   setTanimlar(t); renderMagazaOps(); showToast('Mağaza firması eklendi: '+ad,'success');
 }
 function moFirmaSil(id){ const t=getTanimlar(); t.magazaFirmalari=(t.magazaFirmalari||[]).filter(f=>f.id!==id); setTanimlar(t); renderMagazaOps(); }
+function moSubeEkle(fid){
+  const g=id=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
+  const sehir=g('moSbSehir_'+fid);
+  if(!sehir){ showToast('Lokasyon / şehir girin','error'); return; }
+  const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===fid); if(!f) return;
+  f.subeler=f.subeler||[];
+  f.subeler.push({id:genId(),sehir,ad:g('moSbAd_'+fid),tel:g('moSbTel_'+fid),yetkili:g('moSbYet_'+fid),adres:g('moSbAdr_'+fid)});
+  setTanimlar(t); renderMagazaOps(); showToast('Mağaza eklendi: '+sehir,'success');
+}
+function moSubeSil(fid,si){
+  const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===fid); if(!f||!f.subeler) return;
+  f.subeler.splice(si,1); setTanimlar(t); renderMagazaOps();
+}
+function _moSubeBul(f,sehir){
+  if(!f||!(f.subeler||[]).length) return null;
+  const n=x=>String(x||'').replace(/İ/g,'i').replace(/I/g,'i').toLocaleLowerCase('tr').trim();
+  return f.subeler.find(sb2=>n(sb2.sehir)===n(sehir))||f.subeler[0]||null;
+}
 // ── birleşik kümeler: aynı rehberde tarihleri çakışan turlar (mağazaya birlikte girerler)
 function _moKumeler(turlar){
   const rehGrup={};
@@ -12164,8 +12182,40 @@ function renderMagazaOps(){
    +'<button class="btn btn-outline btn-sm" onclick="_moFirmaAcik=!_moFirmaAcik;renderMagazaOps()">'+(_moFirmaAcik?'▲':'▼')+' Mağaza Firmaları ('+firmalar.length+')</button>'
    +'</div>';
   if(_moFirmaAcik){
+    const inpS='padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit';
     h+='<div style="margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--border)">'
-     +firmalar.map(f=>'<div style="display:inline-flex;align-items:center;gap:7px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;padding:5px 10px;margin:0 6px 6px 0;font-size:.78rem"><b>'+esc(f.ad)+'</b><span style="color:var(--muted)">'+esc(f.sehir||'')+(f.tur?' · '+esc(f.tur):'')+'</span><button onclick="moFirmaSil(\''+f.id+'\')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;cursor:pointer;font-size:.7rem;padding:1px 6px">×</button></div>').join('')
+     +firmalar.map(f=>{
+        const acik=(window._moSubeAcik===f.id);
+        let fh='<div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:8px 12px;margin:0 0 8px 0;font-size:.78rem">'
+         +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+         +'<b style="font-size:.84rem">🏬 '+esc(f.ad)+'</b>'
+         +'<span style="color:var(--muted)">'+esc(f.sehir||'')+(f.tur?' · '+esc(f.tur):'')+'</span>'
+         +'<span style="color:#0369a1;font-weight:700;font-size:.7rem">'+((f.subeler||[]).length)+' mağaza</span>'
+         +'<span style="flex:1"></span>'
+         +'<button class="btn btn-outline btn-sm" onclick="window._moSubeAcik=window._moSubeAcik===\''+f.id+'\'?null:\''+f.id+'\';renderMagazaOps()">'+(acik?'▲ Kapat':'▼ Mağazalar')+'</button>'
+         +'<button onclick="moFirmaSil(\''+f.id+'\')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;cursor:pointer;font-size:.72rem;padding:3px 8px">× Firma sil</button>'
+         +'</div>';
+        if(acik){
+          fh+='<div style="margin-top:8px;border-top:1px dashed #bae6fd;padding-top:8px">'
+           +((f.subeler||[]).map((sb2,si)=>'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:4px 0;font-size:.78rem">'
+              +'<b>📍 '+esc(sb2.sehir||'—')+'</b>'
+              +(sb2.ad?'<span>'+esc(sb2.ad)+'</span>':'')
+              +(sb2.tel?'<a href="tel:'+esc(sb2.tel)+'" style="color:inherit;text-decoration:none">☎ '+esc(sb2.tel)+'</a>':'')
+              +(sb2.yetkili?'<span style="color:var(--muted)">👤 '+esc(sb2.yetkili)+'</span>':'')
+              +(sb2.adres?'<span style="color:var(--muted);font-size:.7rem">'+esc(sb2.adres)+'</span>':'')
+              +'<button onclick="moSubeSil(\''+f.id+'\','+si+')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
+              +'</div>').join('')||'<div style="color:var(--muted);font-size:.74rem">Henüz mağaza girilmedi.</div>')
+           +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'
+           +'<input id="moSbSehir_'+f.id+'" placeholder="Lokasyon / şehir" style="'+inpS+';width:130px">'
+           +'<input id="moSbAd_'+f.id+'" placeholder="Mağaza adı (ops.)" style="'+inpS+';width:140px">'
+           +'<input id="moSbTel_'+f.id+'" placeholder="Telefon" style="'+inpS+';width:120px">'
+           +'<input id="moSbYet_'+f.id+'" placeholder="Yetkili" style="'+inpS+';width:110px">'
+           +'<input id="moSbAdr_'+f.id+'" placeholder="Adres (ops.)" style="'+inpS+';width:150px">'
+           +'<button class="btn btn-primary btn-sm" onclick="moSubeEkle(\''+f.id+'\')">+ Mağaza ekle</button>'
+           +'</div></div>';
+        }
+        return fh+'</div>';
+      }).join('')
      +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:6px">'
      +'<input id="moFAd" placeholder="Firma adı" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit;width:170px">'
      +'<input id="moFSehir" placeholder="Şehir" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit;width:120px">'
@@ -13573,7 +13623,7 @@ function renderTurDosyasi(box){
   if(_tdTab==='magaza'){
     const sefler=[...new Set((E.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis))].map(k2=>{const p=k2.split('|');return {pkgId:p[0],kalkis:p[1]};});
     if(!sefler.length&&g.sefer&&g.sefer.pkgId) sefler.push({pkgId:g.sefer.pkgId,kalkis:g.sefer.kalkis});
-    const fAd=id=>{ const f=_moFirmalar().find(x=>x.id===id); return f?(f.ad||''):''; };
+    const fBul=id=>_moFirmalar().find(x=>x.id===String(id||'').split('|')[0])||null;
     const rows=[];
     sefler.forEach(sf=>{
       const pkg=getPackages().find(p=>p.id===sf.pkgId); if(!pkg) return;
@@ -13583,13 +13633,17 @@ function renderTurDosyasi(box){
         const tarih=_isoAdd(sf.kalkis,gi);
         (gn.magazalar||[]).forEach((m,mi)=>{
           let fid=''; try{ const at=rec.magazaAtama||{}; const anah=Object.keys(at).find(kk=>kk.endsWith('_g'+gi+'_'+mi)); if(anah) fid=at[anah]; }catch(e){}
-          rows.push({tarih,gun:gi+1,sehir:m.sehir||'',tip:m.tip||'',firma:fAd(fid)});
+          const f=fBul(fid); const sube=f?_moSubeBul(f,m.sehir):null;
+          rows.push({tarih,gun:gi+1,sehir:m.sehir||'',tip:m.tip||'',firma:f?(f.ad||''):'',
+            lok:sube?(sube.sehir||''):'',magAd:sube?(sube.ad||''):'',tel:sube?(sube.tel||''):'',yetkili:sube?(sube.yetkili||''):''});
         });
       });
     });
     rows.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
-    h+=rows.length?`<table class="rzmg"><tr><th style="width:96px">Tarih</th><th style="width:52px">Gün</th><th>Şehir</th><th>Mağaza Türü</th><th>Atanan Mağaza</th></tr>
-      ${rows.map(r=>`<tr><td><b>${_fmtDateTR(r.tarih)}</b></td><td>${r.gun}. gün</td><td>${esc(r.sehir)||'—'}</td><td>${esc(r.tip)||'—'}</td><td>${r.firma?`<b>🏬 ${esc(r.firma)}</b>`:'<span style="color:var(--muted)">atanmadı</span>'}</td></tr>`).join('')}
+    h+=rows.length?`<table class="rzmg"><tr><th style="width:96px">Tarih</th><th style="width:52px">Gün</th><th>Şehir</th><th>Mağaza Türü</th><th>Atanan Mağaza</th><th>İletişim</th></tr>
+      ${rows.map(r=>`<tr><td><b>${_fmtDateTR(r.tarih)}</b></td><td>${r.gun}. gün</td><td>${esc(r.sehir)||'—'}</td><td>${esc(r.tip)||'—'}</td>
+        <td>${r.firma?`<b>🏬 ${esc(r.firma)}</b>${r.magAd?' · '+esc(r.magAd):''}${r.lok?` <span style="color:var(--muted);font-size:.7rem">📍 ${esc(r.lok)}</span>`:''}`:'<span style="color:var(--muted)">atanmadı</span>'}</td>
+        <td style="white-space:nowrap">${r.tel?`<a href="tel:${esc(r.tel)}" style="color:inherit;text-decoration:none">☎ ${esc(r.tel)}</a>`:''}${r.yetkili?` <span style="color:var(--muted);font-size:.7rem">👤 ${esc(r.yetkili)}</span>`:''}${(!r.tel&&!r.yetkili)?'—':''}</td></tr>`).join('')}
     </table>${rehMod?'':'<div style="font-size:.7rem;color:var(--muted);margin-top:8px">Mağaza firması ataması Mağaza Muhasebesi › Ziyaret Planı ekranından yapılır.</div>'}`
     :'<p style="color:var(--muted);font-size:.82rem;padding:6px 2px">Bu turun programında mağaza günü tanımlı değil (ürünün gün planında "mağaza var" işaretli gün yok).</p>';
   }
