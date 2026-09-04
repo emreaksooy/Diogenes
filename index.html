@@ -882,6 +882,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <button class="nav-tab" data-page="yonetim" onclick="showPage('yonetim',this)"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli</button>
       <button class="nav-tab" data-page="magmuh" onclick="showPage('magmuh',this)">🏬 Mağaza Muhasebesi</button>
       <button class="nav-tab" data-page="ekip" onclick="showPage('ekip',this)"><svg class="ic"><use href="#i-users"/></svg> Ekip</button>
+      <button class="nav-tab" data-page="rehberim" onclick="showPage('rehberim',this)">🎤 Rehber Panelim</button>
     </nav>
     <div class="sidebar-ctx">
     <!-- OPS mode -->
@@ -1012,6 +1013,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
     <div id="magmuhPlanWrap" style="display:none"><div id="opsPane_magaza"></div></div>
   </div>
   <div id="page-ekip" class="page"><div id="ekipBox"></div></div>
+  <div id="page-rehberim" class="page"><div id="rehberimBox"></div></div>
   <div id="page-yonetim" class="page">
     <div class="card">
       <div class="card-title"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetici</span></div>
@@ -1927,7 +1929,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v314 · 04.09.2026';
+const APP_VER='v315 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -1988,6 +1990,9 @@ const setRezv         = a => {
 let _mmCache=null,_mmSaveT=null;
 let _ekipEkCache=null,_ekeSaveT=null,_ekipProf=null,_ekDuzEmail=null;
 const getEkipEk = () => (_ekipEkCache&&typeof _ekipEkCache==='object')?_ekipEkCache:{};
+let _rbCache=null,_rbSaveT=null;
+const getRehBildirim = () => Array.isArray(_rbCache)?_rbCache:[];
+const setRehBildirim = a => { _rbCache=a; clearTimeout(_rbSaveT); _rbSaveT=setTimeout(()=>idbSet('rehbildirim',_rbCache),250); _cloudQueue('rehbildirim'); return true; };
 const setEkipEk = o => { _ekipEkCache=o; clearTimeout(_ekeSaveT); _ekeSaveT=setTimeout(()=>idbSet('ekipek',_ekipEkCache),250); _cloudQueue('ekipek'); return true; };
 const getMagMuh = () => Array.isArray(_mmCache)?_mmCache:[];
 const setMagMuh = a => { _mmCache=a; clearTimeout(_mmSaveT); _mmSaveT=setTimeout(()=>idbSet('magmuh',_mmCache),250); _cloudQueue('magmuh'); return true; };
@@ -2250,7 +2255,7 @@ function showPage(id, tabEl) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   if(!document.getElementById('page-'+id)) id='paketlerim';
-  if(_acl(id)==='-'){ if(sbRol&&_cloudOn) showToast('Bu bölüme erişim yetkiniz yok','error'); id='paketlerim'; }
+  if(_acl(id)==='-'){ if(sbRol&&_cloudOn) showToast('Bu bölüme erişim yetkiniz yok','error'); id=(sbRol==='rehber')?'rehberim':'paketlerim'; }
   document.getElementById('page-'+id).classList.add('active');
   _curPage=id;
   document.querySelectorAll('.page.ro-lock').forEach(function(p){p.classList.remove('ro-lock');});
@@ -2279,6 +2284,7 @@ function showPage(id, tabEl) {
   if(id==='yonetim') renderYonetim();
   if(id==='magmuh') mmTab(window._mmTab||'muh');
   if(id==='ekip') renderEkipPanel();
+  if(id==='rehberim') renderRehberim();
   if(id==='paket') refreshSidebarPkgSwitch();
   if(id==='harita') renderHarita();
   if(id==='ucak'){ renderRezervasyonPage();
@@ -7679,9 +7685,10 @@ const SB_URL='https://jyqwbzyevejyqxfafrtf.supabase.co';
 const SB_KEY='sb_publishable_65daq2tGCWi0fHcERLGwbQ_7zPH8TD2';
 let sb=null, sbUser=null, sbRol=null, _cloudOn=false;
 // ═══ ROL / YETKI ═══
-const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'yonetim',ekip:'yonetim'};
+const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'yonetim',ekip:'yonetim',rehberim:'rehberim'};
 const _ACL={
-  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e'},
+  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e',rehberim:'e'},
+  rehber:      {home:'-',urun:'-',rezervasyon:'-',ucak:'-',operasyon:'-',rapor:'-',yonetim:'-',rehberim:'e'},
   rezervasyon: {home:'e',urun:'-',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-'},
   ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-'},
   operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v'},
@@ -7689,14 +7696,14 @@ const _ACL={
   urun:        {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v'}
 };
 function _acl(pageId){ if(!_cloudOn||!sbRol) return 'e'; const grp=_PAGEGRP[pageId]||'home'; const m=_ACL[sbRol]||_ACL.goruntuleme; return m[grp]||'-'; }
-function _applyRoleNav(){ document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=''; return; } t.style.display=(_acl(pg)==='-')?'none':''; }); }
+function _applyRoleNav(){ document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=(sbRol==='rehber'&&_cloudOn)?'none':''; return; } t.style.display=(_acl(pg)==='-')?'none':''; }); }
 function _roBanner(show){ let b=document.getElementById('roBar'); if(show){ if(!b){ b=document.createElement('div'); b.id='roBar'; b.textContent='Salt-okunur — bu bölümde yalnızca görüntüleme yetkiniz var'; document.body.appendChild(b); } b.style.display=''; } else if(b){ b.style.display='none'; } }
 // ═══ ROL ÖNİZLEME (yönetici başka rolün gözünden bakar) ═══
-const _ROLAD={yonetici:'Yönetici',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',urun:'Ürün (eski)'};
+const _ROLAD={yonetici:'Yönetici',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',urun:'Ürün (eski)',rehber:'Rehber'};
 let _rolGercek=null,_rolOnizleKim='';
 function _rolOnizle(rol,kim){ if(_rolGercek==null && sbRol!=='yonetici'){ showToast('Yalnız yönetici önizleyebilir','error'); return; } if(_rolGercek==null) _rolGercek=sbRol; sbRol=rol||'goruntuleme'; _rolOnizleKim=kim||''; try{closeModal('modalUsers');}catch(e){} _applyRoleNav(); _rolOnizleBar(); try{showToast('"'+(_ROLAD[sbRol]||sbRol)+'" rolü gözünden önizleniyor','success');}catch(e){} try{showPage('paketlerim');}catch(e){} }
 function _rolOnizleCik(){ if(_rolGercek==null) return; sbRol=_rolGercek; _rolGercek=null; _rolOnizleKim=''; _applyRoleNav(); _rolOnizleBar(); try{_renderUserChip();}catch(e){} try{showPage('paketlerim');}catch(e){} }
-function _rolOnizleBar(){ let b=document.getElementById('rolPvBar'); if(_rolGercek==null){ if(b) b.remove(); return; } if(!b){ b=document.createElement('div'); b.id='rolPvBar'; document.body.appendChild(b); } const roles=['yonetici','rezervasyon','ucak','operasyon','goruntuleme']; b.innerHTML='<span class="rpv-eye">ÖNİZLEME</span><span>'+(_rolOnizleKim?'<b>'+esc(_rolOnizleKim)+'</b> · ':'')+'<b>'+esc(_ROLAD[sbRol]||sbRol)+'</b> gözünden</span><select class="rpv-sel">'+roles.map(r=>'<option value="'+r+'"'+(sbRol===r?' selected':'')+'>'+(_ROLAD[r]||r)+'</option>').join('')+'</select><button type="button" class="rpv-cik">Yöneticiye dön</button>'; }
+function _rolOnizleBar(){ let b=document.getElementById('rolPvBar'); if(_rolGercek==null){ if(b) b.remove(); return; } if(!b){ b=document.createElement('div'); b.id='rolPvBar'; document.body.appendChild(b); } const roles=['yonetici','rezervasyon','ucak','operasyon','goruntuleme','rehber']; b.innerHTML='<span class="rpv-eye">ÖNİZLEME</span><span>'+(_rolOnizleKim?'<b>'+esc(_rolOnizleKim)+'</b> · ':'')+'<b>'+esc(_ROLAD[sbRol]||sbRol)+'</b> gözünden</span><select class="rpv-sel">'+roles.map(r=>'<option value="'+r+'"'+(sbRol===r?' selected':'')+'>'+(_ROLAD[r]||r)+'</option>').join('')+'</select><button type="button" class="rpv-cik">Yöneticiye dön</button>'; }
 document.addEventListener('click',function(e){ const t=e.target; if(!t||!t.closest) return; if(t.closest('.rolpv-btn')){ e.preventDefault(); const b=t.closest('.rolpv-btn'); _rolOnizle(b.getAttribute('data-rol'),b.getAttribute('data-kim')); } else if(t.closest('.rpv-cik')){ e.preventDefault(); _rolOnizleCik(); } });
 document.addEventListener('change',function(e){ const t=e.target; if(t&&t.closest&&t.closest('.rpv-sel')){ _rolOnizle(t.value); } });
 try{ window._rolOnizle=_rolOnizle; window._rolOnizleCik=_rolOnizleCik; }catch(e){}
@@ -7844,7 +7851,7 @@ async function _cloudStart(session){
     _cloudOn=true;
     _renderUserChip();
     _applyRoleNav();
-    try{ showPage(((document.querySelector('.page.active')||{id:'page-paketlerim'}).id||'page-paketlerim').replace('page-','')); }catch(e){}
+    try{ if(sbRol==='rehber'){ showPage('rehberim'); } else { showPage(((document.querySelector('.page.active')||{id:'page-paketlerim'}).id||'page-paketlerim').replace('page-','')); } }catch(e){}
     _setCloud('ok','Bulut: bağlanıyor…');
     await Promise.race([_cloudPull(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Bulut çekimi 60 sn içinde tamamlanamadı — bağlantıyı kontrol edip sayfayı yenileyin')),60000))]);
     _cloudSubscribe();
@@ -7861,7 +7868,7 @@ async function _cloudStart(session){
 }
 function _renderUserChip(){
   const chip=document.getElementById('userChip'); if(!chip) return;
-  const rolAd={yonetici:'Yönetici',urun:'Ürün',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme'}[sbRol]||sbRol;
+  const rolAd={yonetici:'Yönetici',urun:'Ürün',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',rehber:'Rehber'}[sbRol]||sbRol;
   chip.style.display='inline-flex';
   chip.innerHTML='<span>'+esc((sbUser.email||'').split('@')[0])+'</span><span class="user-role-badge">'+rolAd+'</span>'
     +'<button class="chip-btn" title="Şifremi değiştir" onclick="openPwModal()">🔑</button>'
@@ -10515,6 +10522,7 @@ async function _cloudPullFull(){
     if(Array.isArray(kvMap.ekip)){ _ekipCache=kvMap.ekip; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(kvMap.ekip)); }
     if(Array.isArray(kvMap.magmuh)){ _mmCache=kvMap.magmuh; idbSet('magmuh',_mmCache); _sigKv.set('magmuh',JSON.stringify(kvMap.magmuh)); }
     if(kvMap.ekipek&&typeof kvMap.ekipek==='object'&&!Array.isArray(kvMap.ekipek)){ _ekipEkCache=kvMap.ekipek; idbSet('ekipek',_ekipEkCache); _sigKv.set('ekipek',JSON.stringify(kvMap.ekipek)); }
+    if(Array.isArray(kvMap.rehbildirim)){ _rbCache=kvMap.rehbildirim; idbSet('rehbildirim',_rbCache); _sigKv.set('rehbildirim',JSON.stringify(kvMap.rehbildirim)); }
     const docBy={res:[],pnr:[],ops:[],transfer:[],opsgrup:[],rezv:[]};
     _silTomb=new Map();
     if(!dr.error) (dr.data||[]).forEach(r=>{ if(r.col==='sil'){ _silTomb.set(r.id,(r.data&&r.data.ts)||0); return; } if(docBy[r.col]) docBy[r.col].push(r); });
@@ -10615,6 +10623,7 @@ async function _cloudPullIncre(last){
     else if(r.key==='ekip'&&Array.isArray(r.data)){ _ekipCache=r.data; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(r.data)); degisti++; }
     else if(r.key==='magmuh'&&Array.isArray(r.data)){ _mmCache=r.data; idbSet('magmuh',_mmCache); _sigKv.set('magmuh',JSON.stringify(r.data)); degisti++; }
     else if(r.key==='ekipek'&&r.data&&typeof r.data==='object'&&!Array.isArray(r.data)){ _ekipEkCache=r.data; idbSet('ekipek',_ekipEkCache); _sigKv.set('ekipek',JSON.stringify(r.data)); degisti++; }
+    else if(r.key==='rehbildirim'&&Array.isArray(r.data)){ _rbCache=r.data; idbSet('rehbildirim',_rbCache); _sigKv.set('rehbildirim',JSON.stringify(r.data)); degisti++; }
   });
   // doc_rows: satır satır merge + uzak id diff ile silme
   (dr.data||[]).forEach(r=>{
@@ -10782,8 +10791,8 @@ async function _cloudPushKindIc(kind){
     for(let i=0;i<del.length;i+=100){ const p=del.slice(i,i+100); let r; try{ r=await sb.from('operators').delete().in('id',p); }catch(e){ r={error:e}; } if(r.error) throw r.error; p.forEach(id=>_sigOp.delete(id)); }
   } else if(_KIND2COL[kind]){
     await _docPush(_KIND2COL[kind]);
-  } else if(kind==='tanimlar'||kind==='gorevler'||kind==='duyurular'||kind==='ekip'||kind==='magmuh'||kind==='ekipek'){
-    const val=kind==='tanimlar'?(_tanimCache||{}):(kind==='gorevler'?(_gorevCache||[]):(kind==='duyurular'?(_duyuruCache||[]):(kind==='magmuh'?(getMagMuh()):(kind==='ekipek'?(getEkipEk()):(_ekipCache||[])))));
+  } else if(kind==='tanimlar'||kind==='gorevler'||kind==='duyurular'||kind==='ekip'||kind==='magmuh'||kind==='ekipek'||kind==='rehbildirim'){
+    const val=kind==='tanimlar'?(_tanimCache||{}):(kind==='gorevler'?(_gorevCache||[]):(kind==='duyurular'?(_duyuruCache||[]):(kind==='magmuh'?(getMagMuh()):(kind==='ekipek'?(getEkipEk()):(kind==='rehbildirim'?(getRehBildirim()):(_ekipCache||[]))))));
     const sig=JSON.stringify(val);
     if(_sigKv.get(kind)===sig) return;
     const r=await sb.from('kv_store').upsert({key:kind,data:val,updated_at:new Date().toISOString(),updated_by:sbUser.id});
@@ -10852,6 +10861,7 @@ function _onRemote(kind,p){
       if(row.key==='duyurular'&&Array.isArray(row.data)){ _duyuruCache=row.data; idbSet('duyurular',_duyuruCache); renderPano&&renderPano(); }
       if(row.key==='ekip'&&Array.isArray(row.data)){ _ekipCache=row.data; idbSet('ekip',_ekipCache); }
       if(row.key==='ekipek'&&row.data&&typeof row.data==='object'&&!Array.isArray(row.data)){ _ekipEkCache=row.data; idbSet('ekipek',_ekipEkCache); if(document.querySelector('.page.active')?.id==='page-ekip') renderEkipPanel&&renderEkipPanel(); }
+      if(row.key==='rehbildirim'&&Array.isArray(row.data)){ _rbCache=row.data; idbSet('rehbildirim',_rbCache); if(document.querySelector('.page.active')?.id==='page-rehberim') renderRehberim&&renderRehberim(); }
       if(row.key==='transfer'&&row.data&&typeof row.data==='object'){ _trCache=row.data; idbSet('transfer',_trCache); if(document.querySelector('.page.active')?.id==='page-operasyon'&&_opsTab==='transfer') renderOpsTransfer&&renderOpsTransfer(); }
       if(row.key==='opsgrup'&&row.data&&typeof row.data==='object'){ _ogCache=row.data; idbSet('opsgrup',_ogCache); if(document.querySelector('.page.active')?.id==='page-operasyon'&&_opsTab==='grup') renderOpsGrup&&renderOpsGrup(); }
       if(document.querySelector('.page.active')?.id==='page-rezervasyon') renderRezervasyon&&renderRezervasyon();
@@ -10862,8 +10872,69 @@ function _onRemote(kind,p){
   }catch(e){ console.warn('remote apply',e); }
 }
 
+// ═══ REHBER PANELİ ═══
+const _rehbNrm=x=>String(x||'').replace(/İ/g,'i').replace(/I/g,'i').toLocaleLowerCase('tr').trim();
+function _rehbBen(){ const ek=getEkipEk()[(sbUser&&sbUser.email)||'']||{}; return (ek.rehberAd||'').trim(); }
+function _rehbTurlar(){
+  const ad=_rehbBen(); if(!ad) return [];
+  const bugun=_opsToday();
+  let L=[]; try{ L=_rtTurlar(_isoAdd(bugun,-45),_isoAdd(bugun,7)); }catch(e){}
+  return L.filter(t=>_rehbNrm(t.rehberAd)===_rehbNrm(ad)&&t.kalkis<=_isoAdd(bugun,7)&&_isoAdd(t.end,1)>=bugun);
+}
+function rehbTurAc(pkgId,kalkis,gid){
+  const ok=_rehbTurlar().some(t=>(gid&&t.birlesikGrupId===gid)||(t.pkgId===pkgId&&t.kalkis===kalkis));
+  if(!ok){ showToast('Bu tur artık erişimine kapalı','error'); return; }
+  let hedef=gid||null;
+  if(!hedef){ try{ const g=_ogResolve().find(x=>(x.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)); if(g) hedef=g.id; }catch(e){} }
+  if(!hedef){ showToast('Tur dosyası henüz hazırlanmamış — operasyon ekibine bildir','error'); return; }
+  try{ hedef=_ogMaterialize(hedef); }catch(e){}
+  _tdGid=hedef; _tdTab='program'; renderRehberim();
+}
+function rehbGeri(){ _tdGid=null; renderRehberim(); }
+function renderRehberim(){
+  const box=document.getElementById('rehberimBox'); if(!box) return;
+  const ad=_rehbBen();
+  if(!ad){ box.innerHTML='<div class="card"><div class="card-title">🎤 Rehber Panelim</div><p class="section-tip">Hesabın bir rehber tanımıyla eşleştirilmemiş. Yöneticinden Ekip panelinde seni rehber tanımıyla eşleştirmesini iste.</p></div>'; return; }
+  if(_tdGid){ box.innerHTML='<div id="rehberimTur"></div>'; renderTurDosyasi(document.getElementById('rehberimTur')); return; }
+  const bugun=_opsToday();
+  const L=_rehbTurlar();
+  const durum=t=>{ if(t.kalkis>bugun) return '<span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">YAKLAŞAN</span>'; if(_isoAdd(t.end,1)===bugun) return '<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">SON GÜN — bildirimleri tamamla</span>'; return '<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">AKTİF</span>'; };
+  let h=`<div class="card"><div class="card-title">🎤 Rehber Panelim <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${esc(ad)} · Turlar başlangıçtan 7 gün önce açılır, bitişten 1 gün sonra kapanır</span></div>
+    ${L.length?L.map(t=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <div style="min-width:0;flex:1"><b style="font-size:.9rem">${esc(t.kod)}</b> ${durum(t)}<div style="font-size:.72rem;color:var(--muted)">${_fmtDateTR(t.kalkis)} – ${_fmtDateTR(t.end)} · ${t.pax} pax · ${esc(t.op||'')}</div></div>
+      <button class="btn btn-primary btn-sm" onclick="rehbTurAc('${t.pkgId}','${t.kalkis}','${t.birlesikGrupId||''}')">📂 Tur Dosyam</button>
+    </div>`).join(''):'<p class="section-tip">Şu an erişime açık turun yok. Turlar başlangıçtan 7 gün önce burada görünür.</p>'}
+  </div>`;
+  const B=getRehBildirim().filter(b=>_rehbNrm(b.rehberAd)===_rehbNrm(ad)).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
+  const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
+  h+=`<div class="card"><div class="card-title">🏬 Mağaza Bildirimlerim <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Mağaza ziyareti sonrası toplam ciroyu bildir</span></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <input type="date" id="rbTarih" value="${bugun}" style="${inp}">
+      <select id="rbTur" style="${inp}"><option value="">Tur…</option>${L.map(t=>`<option value="${esc(t.kod)}">${esc(t.kod)} ${_fmtDateTR(t.kalkis)}</option>`).join('')}</select>
+      <input id="rbMagaza" placeholder="Mağaza" style="${inp};width:120px">
+      <input id="rbPax" placeholder="Pax" inputmode="numeric" style="${inp};width:56px">
+      <input id="rbTutar" placeholder="Ciro" inputmode="decimal" style="${inp};width:90px">
+      <select id="rbPara" style="${inp}"><option>EUR</option><option>USD</option><option>TL</option></select>
+      <input id="rbNot" placeholder="Not" style="${inp};width:110px">
+      <button class="btn btn-primary btn-sm" onclick="rehbBildirimEkle()">+ Bildir</button>
+    </div>
+    ${B.length?`<table style="width:100%;border-collapse:collapse">${B.slice(0,30).map(b=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 8px;font-size:.76rem"><b>${_fmtDateTR(b.tarih)}</b></td><td style="padding:5px 8px;font-size:.76rem">${esc(b.tur||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.magaza||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.pax||'')}</td><td style="padding:5px 8px;font-size:.78rem;text-align:right"><b>${esc(b.tutar)}</b> ${esc(b.para||'EUR')}</td><td style="padding:5px 8px;font-size:.72rem;color:var(--muted)">${esc(b.not||'')}</td><td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="rehbBildirimSil('${b.id}')">✕</button></td></tr>`).join('')}</table>`:'<p class="section-tip">Henüz bildirim yok.</p>'}
+  </div>`;
+  box.innerHTML=h;
+}
+function rehbBildirimEkle(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const tutar=g('rbTutar'); if(!tutar){ showToast('Ciro tutarı gir','error'); return; }
+  const L=getRehBildirim().slice();
+  L.push({id:R_GID(),tarih:g('rbTarih')||_opsToday(),rehberAd:_rehbBen(),tur:g('rbTur'),magaza:g('rbMagaza'),pax:g('rbPax'),tutar,para:g('rbPara')||'EUR',not:g('rbNot'),email:(sbUser&&sbUser.email)||'',ts:Date.now()});
+  setRehBildirim(L); renderRehberim(); showToast('Bildirim kaydedildi','success');
+}
+function rehbBildirimSil(id){
+  const L=getRehBildirim().filter(b=>b.id!==id);
+  setRehBildirim(L); renderRehberim();
+}
 // ═══ EKİP PANELİ (yalnız yönetici) ═══
-const _ROLLER=[['yonetici','Yönetici'],['urun','Ürün'],['rezervasyon','Rezervasyon'],['ucak','Uçak'],['operasyon','Operasyon'],['goruntuleme','Görüntüleme']];
+const _ROLLER=[['yonetici','Yönetici'],['urun','Ürün'],['rezervasyon','Rezervasyon'],['ucak','Uçak'],['operasyon','Operasyon'],['rehber','Rehber'],['goruntuleme','Görüntüleme']];
 function _telWa(t){ let d=String(t||'').replace(/\D/g,''); if(!d) return ''; if(d.startsWith('0')) d='9'+d; else if(d.length===10&&d.startsWith('5')) d='90'+d; return d; }
 function _ekipAvatar(ad,email){ const src=(ad||email||'?').trim(); const par=src.split(/\s+/); const ini=(par.length>1?par[0][0]+par[par.length-1][0]:src.slice(0,2)).toLocaleUpperCase('tr'); let h=0; for(const c of (email||src)) h=(h*31+c.charCodeAt(0))>>>0; const renk=['#1F4E78','#C55A11','#166534','#7c3aed','#b91c1c','#0e7490'][h%6]; return `<div style="width:44px;height:44px;border-radius:50%;background:${renk};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0">${esc(ini)}</div>`; }
 function renderEkipPanel(){
@@ -10880,6 +10951,7 @@ function renderEkipPanel(){
         <input id="ekeTel" placeholder="Telefon (05xx…)" value="${esc(ek.tel||'')}" style="${inp}">
         <input id="ekeUnvan" placeholder="Görev / unvan" value="${esc(ek.unvan||'')}" style="${inp}">
         <input id="ekeNot" placeholder="Not" value="${esc(ek.not||'')}" style="${inp}">
+        <select id="ekeRehber" style="${inp}"><option value="">Rehber tanımıyla eşleştir (rehber rolü için)…</option>${(getTanimlar().rehberler||[]).map(r=>`<option value="${esc(r.ad||'')}" ${(ek.rehberAd||'')===(r.ad||'')?'selected':''}>${esc(r.ad||'—')}</option>`).join('')}</select>
         <select id="ekeDurum" style="${inp}" ${ben?'disabled title="Kendini pasif yapamazsın"':''}><option value="aktif" ${!pasif?'selected':''}>Aktif</option><option value="pasif" ${pasif?'selected':''}>Pasif — giriş yapamaz</option></select>
         <div style="display:flex;gap:7px"><button class="btn btn-primary btn-sm" onclick="ekipDuzKaydet('${esc(em)}')">Kaydet</button><button class="btn btn-outline btn-sm" onclick="_ekDuzEmail=null;renderEkipPanel()">Vazgeç</button></div>
       </div>`;
@@ -10892,6 +10964,7 @@ function renderEkipPanel(){
           <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-weight:800;font-size:.92rem">${esc(u.ad||em.split('@')[0])}</span>
             ${pasif?'<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.6rem;padding:1px 8px;border-radius:8px">PASİF</span>':'<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.6rem;padding:1px 8px;border-radius:8px">AKTİF</span>'}</div>
           ${ek.unvan?`<div style="font-size:.72rem;color:var(--primary);font-weight:700">${esc(ek.unvan)}</div>`:''}
+          ${ek.rehberAd?`<div style="font-size:.66rem;color:var(--muted)">🎤 ${esc(ek.rehberAd)}</div>`:''}
           <div style="font-size:.7rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis">${esc(em)}</div>
           ${ek.tel?`<div style="font-size:.76rem;margin-top:3px"><a href="tel:${esc(ek.tel)}" style="color:inherit;text-decoration:none">📞 ${esc(ek.tel)}</a>${wa?` <a href="https://wa.me/${wa}" target="_blank" style="text-decoration:none;margin-left:5px" title="WhatsApp">📲</a>`:''}</div>`:''}
           ${ek.not?`<div style="font-size:.7rem;color:var(--muted);margin-top:3px">${esc(ek.not)}</div>`:''}
@@ -10914,7 +10987,7 @@ function renderEkipPanel(){
 function ekipDuzKaydet(em){
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
   const EK=Object.assign({},getEkipEk());
-  const yeni={tel:g('ekeTel'),unvan:g('ekeUnvan'),not:g('ekeNot'),durum:g('ekeDurum')||'aktif'};
+  const yeni={tel:g('ekeTel'),unvan:g('ekeUnvan'),not:g('ekeNot'),durum:g('ekeDurum')||'aktif',rehberAd:g('ekeRehber')};
   if(sbUser&&em===sbUser.email) yeni.durum='aktif';
   EK[em]=yeni; setEkipEk(EK); _ekDuzEmail=null; renderEkipPanel(); showToast('Kaydedildi','success');
 }
@@ -11047,6 +11120,7 @@ async function _boot(){
   let ekp = await idbGet('ekip');          _ekipCache   = Array.isArray(ekp)?ekp:null;
   let mm  = await idbGet('magmuh');        _mmCache     = Array.isArray(mm)?mm:[];
   let eke = await idbGet('ekipek');        _ekipEkCache = (eke&&typeof eke==='object'&&!Array.isArray(eke))?eke:{};
+  let rb  = await idbGet('rehbildirim');   _rbCache     = Array.isArray(rb)?rb:[];
   let trf = await idbGet('transfer');      _trCache = (trf&&typeof trf==='object')?trf:null;
   let ogr = await idbGet('opsgrup');       _ogCache = (ogr&&typeof ogr==='object')?ogr:null;
   await _docSigLoad();
@@ -12881,6 +12955,7 @@ function _ogSplitApply(){
 function opsGrupNav(d){ _ogDate=_isoAdd(_ogDate||_opsToday(),d); _ogSel.clear(); _ogSplitGid=null; renderOpsGrup(); }
 function opsGrupSet(v){ _ogDate=v||_opsToday(); _ogSel.clear(); _ogSplitGid=null; renderOpsGrup(); }
 function renderOpsGrup(){
+  if(sbRol==='rehber'){ const rb=document.getElementById('rehberimTur'); if(rb&&_tdGid){ renderTurDosyasi(rb); } else { renderRehberim(); } return; }
   if(typeof _tdGid!=='undefined'&&!_tdGid){ try{ opsTab('turlar'); }catch(e){} return; }
   const box=document.getElementById('opsPane_grup'); if(!box) return;
   if(_tdGid){ renderTurDosyasi(box); return; }
@@ -13162,10 +13237,12 @@ function renderTurDosyasi(box){
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
   const kisiler=_tdKisiler(E);
   const T=_tdTopla(g);
-  const TB=[['yolcu','Yolcular'],['program','Program'],['ucak','Uçak'],['rehber','Rehber'],['arac','Araçlar'],['satis','Tur Satışları'],['evrak','Rehber Dosyası'],['hesap','Hesaplaşma']];
+  const rehMod=(sbRol==='rehber');
+  if(rehMod&&!['program','ucak','yolcu','satis','evrak'].includes(_tdTab)) _tdTab='program';
+  const TB=rehMod?[['program','Program'],['ucak','Uçak'],['yolcu','Yolcular'],['satis','Tur Satışları'],['evrak','Rehber Dosyası']]:[['yolcu','Yolcular'],['program','Program'],['ucak','Uçak'],['rehber','Rehber'],['arac','Araçlar'],['satis','Tur Satışları'],['evrak','Rehber Dosyası'],['hesap','Hesaplaşma']];
   let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-    <button class="btn btn-outline btn-sm" onclick="opsTdKapat()">← Geri</button>
-    <span style="font-size:.74rem;color:var(--muted)">Operasyon › Gruplar › ${_fmtDateTR(E.tarih)} › <b>${esc(g.no||E.ad)}</b></span>
+    <button class="btn btn-outline btn-sm" onclick="${rehMod?'rehbGeri()':'opsTdKapat()'}">← Geri</button>
+    <span style="font-size:.74rem;color:var(--muted)">${rehMod?'Rehber Panelim › Turlarım':'Operasyon › Gruplar'} › ${_fmtDateTR(E.tarih)} › <b>${esc(g.no||E.ad)}</b></span>
     <span style="flex:1"></span>
     <button class="btn btn-primary btn-sm" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Rehber Dosyasını Yazdır</button>
   </div>
@@ -14058,7 +14135,7 @@ function renderMagMuh(){
       <td style="${td}"><input value="${esc(k.rehberAd||'')}" list="mmRehL" onchange="mmSet('${k.id}','rehberAd',this.value)" style="${inp};width:110px"></td>
       <td style="${td}"><input value="${esc(k.pax||'')}" inputmode="numeric" onchange="mmSet('${k.id}','pax',this.value)" style="${inp};width:44px;text-align:right"></td>
       <td style="${td};white-space:nowrap"><b>${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')}</b> ${esc(k.para||'EUR')}</td>
-      <td style="${td}"><input value="${esc(k.rehCiro||'')}" inputmode="decimal" placeholder="—" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:84px;text-align:right"></td>
+      <td style="${td}"><input value="${esc(k.rehCiro||'')}" inputmode="decimal" placeholder="—" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:84px;text-align:right">${(()=>{try{const b=getRehBildirim().find(x=>_pdate(x.tarih)===_pdate(k.tarih)&&_rehbNrm(x.rehberAd)===_rehbNrm(k.rehberAd)&&x.rehberAd); return b?`<div style="font-size:.62rem;color:var(--primary);cursor:pointer;white-space:nowrap" title="Rehber bildirimi — tıkla, rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">📲 ${esc(b.tutar)} ${esc(b.para||'')}</div>`:'';}catch(e){return '';}})()}</td>
       <td style="${td};white-space:nowrap">${farkHtml}</td>
       <td style="${td};white-space:nowrap"><b style="color:var(--primary)">${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')}</b> ${esc(k.para||'EUR')}</td>
       <td style="${td}"><select onchange="mmSet('${k.id}','durum',this.value)" style="${inp};background:${dd[1]};color:${dd[2]};font-weight:700">${Object.keys(DAD).map(d=>`<option value="${d}" ${(k.durum||'bekliyor')===d?'selected':''}>${DAD[d][0]}</option>`).join('')}</select></td>
