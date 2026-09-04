@@ -938,6 +938,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <div class="sidebar-header"><h3><svg class="ic"><use href="#i-calendar"/></svg> Operasyon</h3></div>
       <div class="sidebar-list">
         <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa</div>
+        <div class="pkg-section-item ops-navitem" data-ot="turlar" onclick="opsTab('turlar')"><svg class="ic"><use href="#i-map"/></svg> Turlar</div>
         <div class="pkg-section-item ops-navitem" data-ot="rehtak" onclick="opsTab('rehtak')"><svg class="ic"><use href="#i-calendar"/></svg> Rehber Takvimi</div>
         <div class="pkg-section-item ops-navitem" data-ot="birlestir" onclick="opsTab('birlestir')"><svg class="ic"><use href="#i-users"/></svg> Grup Birleştirme</div>
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> Transfer</div>
@@ -1678,6 +1679,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         </div>
         <div id="opsPane_rehtak" style="display:none"></div>
         <div id="opsPane_grup" style="display:none"></div>
+        <div id="opsPane_turlar" style="display:none"></div>
         <div id="opsPane_birlestir" style="display:none"></div>
         <div id="opsPane_transfer" style="display:none"></div>
         <div id="opsPane_mutabakat" style="display:none"></div>
@@ -1911,7 +1913,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v305 · 04.09.2026';
+const APP_VER='v306 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11921,13 +11923,14 @@ try{ if(localStorage.getItem('dmc_sbKapali')==='1') document.body.classList.add(
 function opsTab(t){
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
-  ['anasayfa','gunluk','rehtak','grup','transfer','tanim','mutabakat','birlestir'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
+  ['anasayfa','gunluk','rehtak','grup','transfer','tanim','mutabakat','birlestir','turlar'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
   if(t==='anasayfa') renderOpsAnasayfa();
   else if(t==='rehtak') renderRehberTakvim();
   else if(t==='gunluk') renderOperasyonPage();
   else if(t==='grup') renderOpsGrup();
   else if(t==='transfer') renderOpsTransfer();
   else if(t==='birlestir') renderGrupBirlestir();
+  else if(t==='turlar') renderOpsTurlar();
   else if(t==='mutabakat') renderOpsMutabakat();
   else if(t==='tanim') renderOpsTanim();
 }
@@ -12568,6 +12571,71 @@ function gbDagit(gid){
   });
 }
 function gbDosya(gid){ opsTab('grup'); opsTdAc(gid); }
+// ═══ TURLAR — tüm turlar tek listede (birleşikler TEK satır) ═══
+let _otBas='', _otSon='', _otAra='';
+function renderOpsTurlar(){
+  const box=document.getElementById('opsPane_turlar'); if(!box) return;
+  if(!_otBas){ _otBas=_opsToday(); _otSon=_isoAdd(_otBas,60); }
+  let L=_rtTurlar(_otBas,_otSon);
+  const q=(_otAra||'').toLocaleLowerCase('tr').trim();
+  if(q) L=L.filter(t=>(t.kod+' '+(t.op||'')+' '+(t.rehberAd||'')).toLocaleLowerCase('tr').includes(q));
+  // transfer durumu: tur bazında atanmamış uçuş transferi sayısı
+  const trMap={};
+  try{ _trGenRows().forEach(r=>{ if(r.tip==='TUR') return; const k=r.pkgId+'|'+r.kalkis; const o=trMap[k]=trMap[k]||{n:0,atasiz:0}; o.n++; if(!r.grup) o.atasiz++; }); }catch(e){}
+  const trDurum=t=>{
+    const sefler=(t.uyeSeferler&&t.uyeSeferler.length)?t.uyeSeferler:[{pkgId:t.pkgId,kalkis:t.kalkis}];
+    let n=0,a=0; sefler.forEach(sf=>{ const o=trMap[sf.pkgId+'|'+sf.kalkis]; if(o){ n+=o.n; a+=o.atasiz; } });
+    if(!n) return '<span style="color:var(--muted)">—</span>';
+    return a?`<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.64rem;padding:2px 8px;border-radius:8px">${a}/${n} atanmamış</span>`:`<span style="color:#166534;font-weight:700;font-size:.7rem">✓ ${n} transfer</span>`;
+  };
+  const inp='padding:4px 7px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.76rem';
+  const th='background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left;white-space:nowrap';
+  const td='padding:4px 9px;font-size:.78rem;border-bottom:1px solid var(--border)';
+  const topPax=L.reduce((t,x)=>t+(+x.pax||0),0);
+  let h=`<div style="margin-bottom:8px"><button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')">← Ana Sayfa</button></div>
+    <div class="card"><div class="card-title"><svg class="ic"><use href="#i-map"/></svg> Turlar <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Birleşik gruplar tek tur olarak listelenir</span></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <input type="date" value="${_otBas}" onchange="_otBas=this.value;renderOpsTurlar()" style="${inp}"> ~
+      <input type="date" value="${_otSon}" onchange="_otSon=this.value;renderOpsTurlar()" style="${inp}">
+      <input placeholder="Ara: kod, operatör, rehber…" value="${esc(_otAra)}" oninput="_otAra=this.value;renderOpsTurlar()" style="${inp};min-width:190px">
+      <span style="color:var(--muted);font-size:.74rem">· ${L.length} tur · ${topPax} pax</span>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="otExcel()">📥 Excel</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <tr><th style="${th}">Giriş</th><th style="${th}">Çıkış</th><th style="${th}">Tur</th><th style="${th}">Operatör</th><th style="${th}">Pax</th><th style="${th}">Rehber</th><th style="${th}">Transferler</th><th style="${th}"></th></tr>
+      ${L.map(t=>{
+        const bl=(t.uyeSeferler&&t.uyeSeferler.length)?`<span style="background:var(--primary);color:#fff;font-weight:800;font-size:.58rem;padding:1px 7px;border-radius:8px;margin-left:5px">🔗 ${t.uyeSeferler.length}</span>`:'';
+        const reh=t.rehberAd?`${esc(t.rehberAd)}${_rehTelBul(t.rehberAd)?` <span style="color:var(--muted);font-size:.66rem">${esc(_rehTelBul(t.rehberAd))}</span>`:''}`:'<span style="color:#b91c1c;font-weight:800">— atanmadı</span>';
+        return `<tr>
+        <td style="${td}"><b>${_fmtDateTR(t.kalkis)}</b></td>
+        <td style="${td}">${_fmtDateTR(t.end)}</td>
+        <td style="${td}"><b>${esc(t.kod)}</b>${t.bolum&&t.bolum!=='01'?' <span style="color:var(--muted);font-size:.64rem">G'+esc(t.bolum)+'</span>':''}${bl}</td>
+        <td style="${td}">${esc(t.op||'—')}</td>
+        <td style="${td}"><b>${t.pax}</b></td>
+        <td style="${td}">${reh}</td>
+        <td style="${td}">${trDurum(t)}</td>
+        <td style="${td};white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="opsOpen('${t.pkgId}','${t.kalkis}')">📂 Dosya</button></td></tr>`;
+      }).join('')}
+    </table>
+    ${L.length?'':'<p style="color:var(--muted);font-size:.85rem;padding:10px 2px">Bu aralıkta tur yok.</p>'}
+    </div>`;
+  box.innerHTML=h;
+}
+function otExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  let L=_rtTurlar(_otBas||_opsToday(),_otSon||_isoAdd(_opsToday(),60));
+  if(!L.length){ showToast('Tur yok','error'); return; }
+  const aoa=[['DIOGENES TRAVEL — TUR LİSTESİ'],[_fmtDateTR(_otBas)+' – '+_fmtDateTR(_otSon)],[],['Giriş','Çıkış','Tur','Operatör','Pax','Rehber','Rehber Tel']];
+  L.forEach(t=>aoa.push([_fmtDateTR(t.kalkis),_fmtDateTR(t.end),t.kod+((t.uyeSeferler&&t.uyeSeferler.length)?' (birleşik '+t.uyeSeferler.length+' sefer)':''),t.op||'',t.pax,t.rehberAd||'ATANMAMIŞ',t.rehberAd?_rehTelBul(t.rehberAd):'']));
+  aoa.push([]);
+  aoa.push(['TOPLAM','','','',L.reduce((s2,t)=>s2+(+t.pax||0),0),L.length+' tur','']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[12,12,26,16,6,18,14].map(w2=>({wch:w2}));
+  try{ _xsSusle(ws,aoa,{baslikR:0,altR:1,hdrR:3,veriBas:4,veriSon:3+L.length,toplamR:aoa.length-1,nC:7,tipC:null,durumC:null}); }catch(e){}
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Turlar');
+  XLSX.writeFile(wb,'turlar_'+(_otBas||'')+'_'+(_otSon||'')+'.xlsx');
+  showToast('Excel indirildi','success');
+}
 function renderGrupBirlestir(){
   const box=document.getElementById('opsPane_birlestir'); if(!box) return;
   if(!_gbBas){ _gbBas=_opsToday(); _gbSon=_isoAdd(_gbBas,45); }
