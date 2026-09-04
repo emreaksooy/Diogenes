@@ -1913,7 +1913,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v306 · 04.09.2026';
+const APP_VER='v307 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11071,6 +11071,7 @@ function opsSetDate(v){ _opsDate=v||_opsToday(); try{localStorage.setItem('dmc_o
 function _opsView(det){ const l=document.getElementById('opsListe'),d=document.getElementById('opsDetay'); if(l)l.style.display=det?'none':''; if(d)d.style.display=det?'':'none'; }
 function opsBack(){ _opsView(false); renderOperasyonPage(); window.scrollTo(0,0); }
 function opsOpen(pkgId,kalkis){
+  if(typeof _opsTab!=='undefined'&&_opsTab&&_opsTab!=='grup') window._tdDonus=_opsTab;
   // Artık ana ekran TUR DOSYASI: kalkışın grubunu bul/aç
   let gruplar=[];
   try{ gruplar=_ogResolve().filter(g=>(g.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)); }catch(e){}
@@ -12570,7 +12571,7 @@ function gbDagit(gid){
     setOpsGrup(S); renderGrupBirlestir(); showToast('Grup dağıtıldı','success');
   });
 }
-function gbDosya(gid){ opsTab('grup'); opsTdAc(gid); }
+function gbDosya(gid){ window._tdDonus='birlestir'; opsTab('grup'); opsTdAc(gid); }
 // ═══ TURLAR — tüm turlar tek listede (birleşikler TEK satır) ═══
 let _otBas='', _otSon='', _otAra='';
 function renderOpsTurlar(){
@@ -12786,7 +12787,12 @@ function renderOpsGrup(){
 // ═══ TUR DOSYASI (grup kartı) ═══
 let _tdGid=null,_tdTab='yolcu';
 function opsTdAc(gid){ gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; renderOpsGrup(); }
-function opsTdKapat(){ _tdGid=null; renderOpsGrup(); }
+function opsTdKapat(){
+  _tdGid=null;
+  const d=window._tdDonus;
+  if(d&&d!=='grup'){ window._tdDonus=null; opsTab(d); return; }
+  renderOpsGrup();
+}
 function tdTabSec(t){ _tdTab=t; renderOpsGrup(); }
 function _tdG(){ const S=getOpsGrup(); return (S.gruplar||{})[_tdGid]||null; }
 function _tdE(){ return _ogResolve().find(x=>x.id===_tdGid)||null; }
@@ -12994,7 +13000,7 @@ function renderTurDosyasi(box){
   const T=_tdTopla(g);
   const TB=[['yolcu','Yolcular'],['rehber','Rehber'],['arac','Araçlar'],['satis','Tur Satışları'],['evrak','Rehber Dosyası'],['hesap','Hesaplaşma']];
   let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-    <button class="btn btn-outline btn-sm" onclick="opsTdKapat()">← Gruplar</button>
+    <button class="btn btn-outline btn-sm" onclick="opsTdKapat()">← Geri</button>
     <span style="font-size:.74rem;color:var(--muted)">Operasyon › Gruplar › ${_fmtDateTR(E.tarih)} › <b>${esc(g.no||E.ad)}</b></span>
     <span style="flex:1"></span>
     <button class="btn btn-primary btn-sm" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Rehber Dosyasını Yazdır</button>
