@@ -878,6 +878,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <button class="nav-tab" data-page="rapor" onclick="showPage('rapor',this)"><svg class="ic"><use href="#i-chart"/></svg> Rapor</button>
       <div class="nav-group">Yönetim</div>
       <button class="nav-tab" data-page="yonetim" onclick="showPage('yonetim',this)"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli</button>
+      <button class="nav-tab" data-page="magmuh" onclick="showPage('magmuh',this)">🏬 Mağaza Muhasebesi</button>
     </nav>
     <div class="sidebar-ctx">
     <!-- OPS mode -->
@@ -1000,6 +1001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   </div>
 
   <!-- PAGE: OPERATÖR PAKETLERİ -->
+  <div id="page-magmuh" class="page"><div id="magmuhBody"></div></div>
   <div id="page-yonetim" class="page">
     <div class="card">
       <div class="card-title"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetici</span></div>
@@ -1902,7 +1904,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v300 · 02.09.2026';
+const APP_VER='v301 · 02.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -1960,6 +1962,9 @@ const setRezv         = a => {
       _hataKaydet&&_hataKaydet('REZV-DÜŞÜŞ',eski+' → '+yeni+' · '+st);
       console.warn('REZV DÜŞÜŞ',eski,'→',yeni,st); } }catch(e){}
   _rezvCache=a; clearTimeout(_rezvSaveT); _rezvSaveT=setTimeout(()=>idbSet('rezervasyonlar', _rezvCache),250); _cloudQueue('rezervasyonlar'); return true; };
+let _mmCache=null,_mmSaveT=null;
+const getMagMuh = () => Array.isArray(_mmCache)?_mmCache:[];
+const setMagMuh = a => { _mmCache=a; clearTimeout(_mmSaveT); _mmSaveT=setTimeout(()=>idbSet('magmuh',_mmCache),250); _cloudQueue('magmuh'); return true; };
 const getPnrLedger    = () => _pnrCache;
 const setPnrLedger    = a => { _pnrCache=a; clearTimeout(_pnrSaveT); _pnrSaveT=setTimeout(()=>idbSet('pnrLedger', _pnrCache),250); _cloudQueue('pnrLedger'); return true; };
 const getOperasyon    = () => _opsCache;
@@ -2204,6 +2209,7 @@ function showPage(id, tabEl) {
   if(id==='maliyet') updateCalc();
   if(id==='paketlerim') renderDashboard();
   if(id==='yonetim') renderYonetim();
+  if(id==='magmuh') renderMagMuh();
   if(id==='paket') refreshSidebarPkgSwitch();
   if(id==='harita') renderHarita();
   if(id==='ucak'){ renderRezervasyonPage();
@@ -7604,7 +7610,7 @@ const SB_URL='https://jyqwbzyevejyqxfafrtf.supabase.co';
 const SB_KEY='sb_publishable_65daq2tGCWi0fHcERLGwbQ_7zPH8TD2';
 let sb=null, sbUser=null, sbRol=null, _cloudOn=false;
 // ═══ ROL / YETKI ═══
-const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim'};
+const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'yonetim'};
 const _ACL={
   yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e'},
   rezervasyon: {home:'e',urun:'-',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-'},
@@ -10430,6 +10436,7 @@ async function _cloudPullFull(){
     if(Array.isArray(kvMap.gorevler)){ _gorevCache=kvMap.gorevler; idbSet('gorevler',_gorevCache); _sigKv.set('gorevler',JSON.stringify(kvMap.gorevler)); }
     if(Array.isArray(kvMap.duyurular)){ _duyuruCache=kvMap.duyurular; idbSet('duyurular',_duyuruCache); _sigKv.set('duyurular',JSON.stringify(kvMap.duyurular)); }
     if(Array.isArray(kvMap.ekip)){ _ekipCache=kvMap.ekip; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(kvMap.ekip)); }
+    if(Array.isArray(kvMap.magmuh)){ _mmCache=kvMap.magmuh; idbSet('magmuh',_mmCache); _sigKv.set('magmuh',JSON.stringify(kvMap.magmuh)); }
     const docBy={res:[],pnr:[],ops:[],transfer:[],opsgrup:[],rezv:[]};
     _silTomb=new Map();
     if(!dr.error) (dr.data||[]).forEach(r=>{ if(r.col==='sil'){ _silTomb.set(r.id,(r.data&&r.data.ts)||0); return; } if(docBy[r.col]) docBy[r.col].push(r); });
@@ -10528,6 +10535,7 @@ async function _cloudPullIncre(last){
     else if(r.key==='gorevler'&&Array.isArray(r.data)){ _gorevCache=r.data; idbSet('gorevler',_gorevCache); _sigKv.set('gorevler',JSON.stringify(r.data)); degisti++; }
     else if(r.key==='duyurular'&&Array.isArray(r.data)){ _duyuruCache=r.data; idbSet('duyurular',_duyuruCache); _sigKv.set('duyurular',JSON.stringify(r.data)); degisti++; }
     else if(r.key==='ekip'&&Array.isArray(r.data)){ _ekipCache=r.data; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(r.data)); degisti++; }
+    else if(r.key==='magmuh'&&Array.isArray(r.data)){ _mmCache=r.data; idbSet('magmuh',_mmCache); _sigKv.set('magmuh',JSON.stringify(r.data)); degisti++; }
   });
   // doc_rows: satır satır merge + uzak id diff ile silme
   (dr.data||[]).forEach(r=>{
@@ -10695,8 +10703,8 @@ async function _cloudPushKindIc(kind){
     for(let i=0;i<del.length;i+=100){ const p=del.slice(i,i+100); let r; try{ r=await sb.from('operators').delete().in('id',p); }catch(e){ r={error:e}; } if(r.error) throw r.error; p.forEach(id=>_sigOp.delete(id)); }
   } else if(_KIND2COL[kind]){
     await _docPush(_KIND2COL[kind]);
-  } else if(kind==='tanimlar'||kind==='gorevler'||kind==='duyurular'||kind==='ekip'){
-    const val=kind==='tanimlar'?(_tanimCache||{}):(kind==='gorevler'?(_gorevCache||[]):(kind==='duyurular'?(_duyuruCache||[]):(_ekipCache||[])));
+  } else if(kind==='tanimlar'||kind==='gorevler'||kind==='duyurular'||kind==='ekip'||kind==='magmuh'){
+    const val=kind==='tanimlar'?(_tanimCache||{}):(kind==='gorevler'?(_gorevCache||[]):(kind==='duyurular'?(_duyuruCache||[]):(kind==='magmuh'?(getMagMuh()):(_ekipCache||[]))));
     const sig=JSON.stringify(val);
     if(_sigKv.get(kind)===sig) return;
     const r=await sb.from('kv_store').upsert({key:kind,data:val,updated_at:new Date().toISOString(),updated_by:sbUser.id});
@@ -10879,6 +10887,7 @@ async function _boot(){
   let grv = await idbGet('gorevler');      _gorevCache  = Array.isArray(grv)?grv:null;
   let dyr = await idbGet('duyurular');     _duyuruCache = Array.isArray(dyr)?dyr:null;
   let ekp = await idbGet('ekip');          _ekipCache   = Array.isArray(ekp)?ekp:null;
+  let mm  = await idbGet('magmuh');        _mmCache     = Array.isArray(mm)?mm:[];
   let trf = await idbGet('transfer');      _trCache = (trf&&typeof trf==='object')?trf:null;
   let ogr = await idbGet('opsgrup');       _ogCache = (ogr&&typeof ogr==='object')?ogr:null;
   await _docSigLoad();
@@ -13496,6 +13505,129 @@ function _mutAracSatirlar(){
   }catch(e){}
   out.sort((a,b)=>String(a.firma).localeCompare(String(b.firma),'tr')||String(a.tarih).localeCompare(String(b.tarih)));
   return out;
+}
+// ═══ MAĞAZA MUHASEBESİ (yalnız yönetim): mağaza bildirimi (kalem kalem) ↔ rehber bildirimi (tek tutar) ═══
+let _mmAy='', _mmFirmaF='', _mmDurumF='', _mmAcik=new Set();
+function _mmHesap(k){
+  const mag=(k.magKalemler||[]).reduce((t,x)=>t+_tdN(x.ciro),0);
+  const kom=(k.magKalemler||[]).reduce((t,x)=>t+_tdN(x.ciro)*_tdN(x.oran)/100,0);
+  const reh=_tdN(k.rehCiro);
+  const fark=(reh>0||mag>0)?(mag-reh):0;
+  const farkY=reh>0?Math.abs(fark)/reh*100:0;
+  return {mag,kom,reh,fark,farkY};
+}
+function mmYeni(){
+  const L=getMagMuh();
+  L.unshift({id:genId(),tarih:_opsToday(),firmaId:'',kod:'',rehberAd:'',pax:'',para:'EUR',magKalemler:[],rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()});
+  setMagMuh(L); _mmAcik.add(L[0].id); renderMagMuh();
+}
+function mmSet(id,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k[f]=v;
+  if(f==='firmaId'){ const fm=_moFirmalar().find(x=>x.id===v); if(fm&&(fm.kalemler||[]).length&&!(k.magKalemler||[]).length){ k.magKalemler=fm.kalemler.map(x=>({ad:x.ad,oran:x.oran,ciro:''})); } }
+  setMagMuh(getMagMuh()); renderMagMuh(); }
+function mmSil(id){ showConfirm('🗑️','Kaydı Sil','Bildirim kaydı silinecek.','Sil',()=>{ setMagMuh(getMagMuh().filter(x=>x.id!==id)); renderMagMuh(); }); }
+function mmKalemAdd(id){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; (k.magKalemler=k.magKalemler||[]).push({ad:'',ciro:'',oran:''}); setMagMuh(getMagMuh()); renderMagMuh(); }
+function mmKalemSet(id,i,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.magKalemler[i]) return; k.magKalemler[i][f]=String(v).trim(); setMagMuh(getMagMuh()); renderMagMuh(); }
+function mmKalemDel(id,i){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k.magKalemler.splice(i,1); setMagMuh(getMagMuh()); renderMagMuh(); }
+function mmSablonYap(id){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.firmaId) return;
+  const t=getTanimlar(); const fm=(t.magazaFirmalari||[]).find(x=>x.id===k.firmaId); if(!fm) return;
+  fm.kalemler=(k.magKalemler||[]).filter(x=>(x.ad||'').trim()).map(x=>({ad:x.ad,oran:x.oran}));
+  setTanimlar(t); showToast(fm.ad+' kalem şablonu güncellendi ('+fm.kalemler.length+' kalem)','success'); }
+function mmAcKapa(id){ _mmAcik.has(id)?_mmAcik.delete(id):_mmAcik.add(id); renderMagMuh(); }
+function renderMagMuh(){
+  const box=document.getElementById('magmuhBody'); if(!box) return;
+  if(_cloudOn&&sbRol&&sbRol!=='yonetici'){ box.innerHTML='<div class="card"><b>Bu bölüm yalnız yönetime açıktır.</b></div>'; return; }
+  if(!_mmAy) _mmAy=_opsToday().slice(0,7);
+  const firmalar=_moFirmalar();
+  let L=getMagMuh().filter(k=>String(_pdate(k.tarih)||'').slice(0,7)===_mmAy);
+  if(_mmFirmaF) L=L.filter(k=>k.firmaId===_mmFirmaF);
+  if(_mmDurumF) L=L.filter(k=>(k.durum||'bekliyor')===_mmDurumF);
+  L.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
+  const th='background:var(--navy);color:#fff;padding:4px 8px;font-size:.62rem;text-align:left;white-space:nowrap';
+  const td='padding:4px 8px;font-size:.76rem;border-bottom:1px solid var(--border)';
+  const inp='padding:3px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.74rem';
+  const DAD={bekliyor:['Bekliyor','#fef3c7','#92400e'],mutabik:['Mutabık','#dcfce7','#166534'],tahsil:['Tahsil edildi','#e0f2fe','#0369a1']};
+  let h=`<div class="card"><div class="card-title">🏬 Mağaza Muhasebesi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetim · mağaza bildirimi ↔ rehber bildirimi</span></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <input type="month" value="${_mmAy}" onchange="_mmAy=this.value;renderMagMuh()" style="${inp}">
+      <select onchange="_mmFirmaF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm mağazalar</option>${firmalar.map(f=>`<option value="${f.id}" ${_mmFirmaF===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>
+      <select onchange="_mmDurumF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm durumlar</option><option value="bekliyor" ${_mmDurumF==='bekliyor'?'selected':''}>Bekliyor</option><option value="mutabik" ${_mmDurumF==='mutabik'?'selected':''}>Mutabık</option><option value="tahsil" ${_mmDurumF==='tahsil'?'selected':''}>Tahsil edildi</option></select>
+      <span style="color:var(--muted);font-size:.74rem">· ${L.length} kayıt</span>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mmYeni()">+ Bildirim Kaydı</button>
+      <button class="btn btn-outline btn-sm" onclick="mmExcel()">📥 Excel</button>
+    </div>`;
+  if(!L.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt yok — \'+ Bildirim Kaydı\' ile başla.</p></div>'; return; }
+  h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+    <tr><th style="${th}"></th><th style="${th}">Tarih</th><th style="${th}">Mağaza</th><th style="${th}">Tur</th><th style="${th}">Rehber</th><th style="${th}">Pax</th><th style="${th}">Mağaza Ciro</th><th style="${th}">Rehber Ciro</th><th style="${th}">Fark</th><th style="${th}">Komisyon</th><th style="${th}">Durum</th><th style="${th}"></th></tr>`;
+  L.forEach(k=>{
+    const c=_mmHesap(k);
+    const fm=firmalar.find(x=>x.id===k.firmaId);
+    const acik=_mmAcik.has(k.id);
+    const dd=DAD[k.durum||'bekliyor'];
+    const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓ tutuyor</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')} (${Math.round(c.farkY)}%)</span>`):'<span style="color:var(--muted)">—</span>';
+    h+=`<tr>
+      <td style="${td}"><button onclick="mmAcKapa('${k.id}')" style="background:none;border:none;cursor:pointer">${acik?'▼':'▶'}</button></td>
+      <td style="${td}"><input type="date" value="${esc(_pdate(k.tarih)||'')}" onchange="mmSet('${k.id}','tarih',this.value)" style="${inp}"></td>
+      <td style="${td}"><select onchange="mmSet('${k.id}','firmaId',this.value)" style="${inp};min-width:120px"><option value="">seç…</option>${firmalar.map(f=>`<option value="${f.id}" ${k.firmaId===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select></td>
+      <td style="${td}"><input value="${esc(k.kod||'')}" placeholder="CAP7…" onchange="mmSet('${k.id}','kod',this.value)" style="${inp};width:76px"></td>
+      <td style="${td}"><input value="${esc(k.rehberAd||'')}" list="mmRehL" onchange="mmSet('${k.id}','rehberAd',this.value)" style="${inp};width:110px"></td>
+      <td style="${td}"><input value="${esc(k.pax||'')}" inputmode="numeric" onchange="mmSet('${k.id}','pax',this.value)" style="${inp};width:44px;text-align:right"></td>
+      <td style="${td};white-space:nowrap"><b>${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')}</b> ${esc(k.para||'EUR')}</td>
+      <td style="${td}"><input value="${esc(k.rehCiro||'')}" inputmode="decimal" placeholder="—" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:84px;text-align:right"></td>
+      <td style="${td};white-space:nowrap">${farkHtml}</td>
+      <td style="${td};white-space:nowrap"><b style="color:var(--primary)">${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')}</b> ${esc(k.para||'EUR')}</td>
+      <td style="${td}"><select onchange="mmSet('${k.id}','durum',this.value)" style="${inp};background:${dd[1]};color:${dd[2]};font-weight:700">${Object.keys(DAD).map(d=>`<option value="${d}" ${(k.durum||'bekliyor')===d?'selected':''}>${DAD[d][0]}</option>`).join('')}</select></td>
+      <td style="${td}"><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmSil('${k.id}')">✕</button></td></tr>`;
+    if(acik){
+      h+=`<tr><td style="${td}"></td><td colspan="11" style="${td};background:var(--primary-soft)">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+          <b style="font-size:.74rem">MAĞAZA BİLDİRİMİ — kalemler</b>
+          <button class="btn btn-outline btn-sm" onclick="mmKalemAdd('${k.id}')">+ Kalem</button>
+          <button class="btn btn-outline btn-sm" onclick="mmSablonYap('${k.id}')" title="Bu kalem adları+oranları mağazanın şablonu olarak kaydedilir — sonraki kayıtlarda otomatik gelir">⭐ Şablon yap</button>
+          <label style="font-size:.7rem;font-weight:700;margin-left:auto">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp}">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
+        </div>
+        <table style="border-collapse:collapse">${(k.magKalemler||[]).map((x,i)=>{const kk=_tdN(x.ciro)*_tdN(x.oran)/100;return `<tr>
+          <td style="padding:2px 4px"><input value="${esc(x.ad||'')}" placeholder="Halı / Kuyum…" onchange="mmKalemSet('${k.id}',${i},'ad',this.value)" style="${inp};width:130px"></td>
+          <td style="padding:2px 4px"><input value="${esc(x.ciro||'')}" inputmode="decimal" placeholder="ciro" onchange="mmKalemSet('${k.id}',${i},'ciro',this.value)" style="${inp};width:100px;text-align:right"></td>
+          <td style="padding:2px 4px"><input value="${esc(x.oran||'')}" inputmode="decimal" placeholder="%" onchange="mmKalemSet('${k.id}',${i},'oran',this.value)" style="${inp};width:52px;text-align:right"> <span style="font-size:.68rem;color:var(--muted)">%</span></td>
+          <td style="padding:2px 6px;font-size:.72rem;color:var(--primary);font-weight:700">${(Math.round(kk*100)/100).toLocaleString('tr-TR')}</td>
+          <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmKalemDel('${k.id}',${i})">✕</button></td></tr>`;}).join('')}</table>
+        <div style="margin-top:6px"><input value="${esc(k.not||'')}" placeholder="not…" onchange="mmSet('${k.id}','not',this.value)" style="${inp};width:100%;max-width:480px"></div>
+      </td></tr>`;
+    }
+  });
+  h+='</table></div>';
+  // ay özeti (firma bazlı)
+  const oz={};
+  L.forEach(k=>{ const c=_mmHesap(k); const ad=(firmalar.find(x=>x.id===k.firmaId)||{}).ad||'—'; const o=oz[ad]=oz[ad]||{ciro:0,kom:0,tahsil:0,n:0,para:k.para||'EUR'}; o.ciro+=c.mag; o.kom+=c.kom; o.n++; if(k.durum==='tahsil') o.tahsil+=c.kom; });
+  h+=`<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${Object.entries(oz).map(([ad,o])=>`<div style="border:1.5px solid var(--border);border-radius:11px;padding:9px 12px">
+    <b style="font-size:.78rem">${esc(ad)}</b> <span style="font-size:.64rem;color:var(--muted)">· ${o.n} ziyaret</span>
+    <div style="font-size:.72rem;margin-top:4px">Ciro: <b>${(Math.round(o.ciro*100)/100).toLocaleString('tr-TR')}</b> · Komisyon: <b style="color:var(--primary)">${(Math.round(o.kom*100)/100).toLocaleString('tr-TR')}</b> ${esc(o.para)}</div>
+    <div style="font-size:.7rem;color:${o.tahsil>=o.kom-0.01?'#166534':'#b45309'}">Tahsil: ${(Math.round(o.tahsil*100)/100).toLocaleString('tr-TR')} / kalan ${(Math.round((o.kom-o.tahsil)*100)/100).toLocaleString('tr-TR')}</div>
+  </div>`).join('')}</div>`;
+  h+=`<datalist id="mmRehL">${(getTanimlar().rehberler||[]).map(r=>`<option value="${esc(r.ad)}">`).join('')}</datalist></div>`;
+  box.innerHTML=h;
+}
+function mmExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  const firmalar=_moFirmalar();
+  const L=getMagMuh().filter(k=>String(_pdate(k.tarih)||'').slice(0,7)===_mmAy);
+  if(!L.length){ showToast('Bu ayda kayıt yok','error'); return; }
+  const DAD={bekliyor:'Bekliyor',mutabik:'Mutabık',tahsil:'Tahsil edildi'};
+  const aoa=[['MAĞAZA MUHASEBESİ — '+_mmAy],[],['Tarih','Mağaza','Tur','Rehber','Pax','Kalemler','Mağaza Ciro','Rehber Ciro','Fark','Komisyon','Para','Durum','Not']];
+  L.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih))).forEach(k=>{
+    const c=_mmHesap(k); const fm=firmalar.find(x=>x.id===k.firmaId);
+    aoa.push([_fmtDateTR(k.tarih),(fm||{}).ad||'',k.kod||'',k.rehberAd||'',+k.pax||'',(k.magKalemler||[]).map(x=>x.ad+': '+x.ciro+' (%'+x.oran+')').join(' · '),
+      Math.round(c.mag*100)/100,c.reh||'',Math.round(c.fark*100)/100,Math.round(c.kom*100)/100,k.para||'EUR',DAD[k.durum||'bekliyor'],k.not||'']);
+  });
+  const topK=L.reduce((t,k)=>t+_mmHesap(k).kom,0), topC=L.reduce((t,k)=>t+_mmHesap(k).mag,0);
+  aoa.push([]);
+  aoa.push(['TOPLAM','','','','','',Math.round(topC*100)/100,'','',Math.round(topK*100)/100,'','','']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[11,18,9,14,5,44,12,12,10,11,6,12,20].map(w2=>({wch:w2}));
+  try{ _xsSusle(ws,aoa,{baslikR:0,altR:null,hdrR:2,veriBas:3,veriSon:2+L.length,toplamR:aoa.length-1,nC:13,tipC:null,durumC:null}); ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:12}}); }catch(e){}
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Mağaza');
+  XLSX.writeFile(wb,'magaza_muhasebe_'+_mmAy+'.xlsx');
+  showToast('Excel indirildi','success');
 }
 function renderOpsMutabakat(){
   const box=document.getElementById('opsPane_mutabakat'); if(!box) return;
