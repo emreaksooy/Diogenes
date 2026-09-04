@@ -1913,7 +1913,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v312 · 04.09.2026';
+const APP_VER='v313 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12663,7 +12663,7 @@ function renderOpsTurlar(){
         <td style="${td}">${secOk?`<input type="checkbox" ${_gbSec.has(key)?'checked':''} onchange="otSecTog('${key}',this.checked)" title="Birleştirmek için seç">`:''}</td>
         <td style="${td}"><b>${_fmtDateTR(t.kalkis)}</b></td>
         <td style="${td}">${_fmtDateTR(t.end)}</td>
-        <td style="${td}"><b>${esc(t.kod)}</b>${t.bolum&&t.bolum!=='01'?' <span style="color:var(--muted);font-size:.64rem">G'+esc(t.bolum)+'</span>':''}${bl}</td>
+        <td style="${td}"><b>${esc(t.kod)}</b>${t.bolum&&t.bolum!=='01'?' <span style="color:var(--muted);font-size:.64rem">G'+esc(t.bolum)+'</span>':''}${bl}${(t.uyeSeferler&&t.uyeSeferler.length)?`<div style="font-size:.62rem;color:var(--muted);margin-top:2px;line-height:1.5">${t.uyeSeferler.map(sf=>{const pk=getPackages().find(p=>p.id===sf.pkgId)||{};return esc(pk.paketKodu||'?')+' '+_fmtDateTR(sf.kalkis)+' ('+_opsPax(sf.pkgId,sf.kalkis)+' pax)';}).join(' + ')}</div>`:''}</td>
         <td style="${td}">${esc(t.op||'—')}</td>
         <td style="${td}"><b>${t.pax}</b></td>
         <td style="${td}">${reh}</td>
