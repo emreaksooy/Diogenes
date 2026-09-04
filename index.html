@@ -1914,7 +1914,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v308 · 04.09.2026';
+const APP_VER='v309 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13041,7 +13041,7 @@ function renderTurDosyasi(box){
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
   const kisiler=_tdKisiler(E);
   const T=_tdTopla(g);
-  const TB=[['yolcu','Yolcular'],['rehber','Rehber'],['arac','Araçlar'],['satis','Tur Satışları'],['evrak','Rehber Dosyası'],['hesap','Hesaplaşma']];
+  const TB=[['yolcu','Yolcular'],['program','Program'],['rehber','Rehber'],['arac','Araçlar'],['satis','Tur Satışları'],['evrak','Rehber Dosyası'],['hesap','Hesaplaşma']];
   let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
     <button class="btn btn-outline btn-sm" onclick="opsTdKapat()">← Geri</button>
     <span style="font-size:.74rem;color:var(--muted)">Operasyon › Gruplar › ${_fmtDateTR(E.tarih)} › <b>${esc(g.no||E.ad)}</b></span>
@@ -13165,8 +13165,31 @@ function renderTurDosyasi(box){
     </div>`;
   }
   // ═ REHBER DOSYASI ═
+  if(_tdTab==='program'){
+    const P=_tdProgramData(E);
+    if(!P.length) h+='<p style="color:var(--muted);font-size:.85rem">Ürünlerde tur programı (günler) tanımlı değil.</p>';
+    P.forEach(blok=>{
+      h+=`<div style="margin-bottom:14px">
+        <div style="font-weight:800;font-size:.86rem;margin-bottom:8px">${esc(blok.kod)} · ${_fmtDateTR(blok.kalkis)} girişi</div>
+        ${blok.gunler.map(gd=>`<div style="border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:8px">
+          <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+            <b style="color:var(--primary);font-size:.8rem;white-space:nowrap">${_fmtDateTR(gd.tarih)} · Gün ${gd.no}</b>
+            <b style="font-size:.82rem">${esc(gd.baslik||'')}</b>
+            ${gd.rota?`<span style="color:var(--muted);font-size:.74rem">${esc(gd.rota)}</span>`:''}
+            ${gd.mesafe?`<span style="margin-left:auto;color:var(--muted);font-size:.68rem">${esc(gd.mesafe)}${gd.sure?' · '+esc(gd.sure):''}</span>`:''}
+          </div>
+          ${gd.program?`<div style="font-size:.78rem;margin-top:6px;white-space:pre-wrap">${esc(gd.program)}</div>`:''}
+          <div style="display:flex;gap:14px;margin-top:6px;font-size:.7rem;color:var(--muted);flex-wrap:wrap">
+            ${gd.konak?`<span>🏨 ${esc(gd.konak)}</span>`:''}
+            ${gd.ops?`<span>🎟 Opsiyonel: ${esc(gd.ops)}</span>`:''}
+          </div>
+        </div>`).join('')}
+      </div>`;
+    });
+  }
   if(_tdTab==='evrak'){
-    const belgeler=[['isim','İsim Listesi',kisiler.length+' yolcu · uçak listelerinden'],
+    const belgeler=[['program','Tur Programı','gün gün — rehbere verilir, fiyatsız'],
+      ['isim','İsim Listesi',kisiler.length+' yolcu · uçak listelerinden'],
       ['otel','Otel Listesi','rezervasyon açılımlarından'],
       ['ucus','Uçuş Bilgileri','geliş/dönüş uçuşları'],
       ['cizelge','Paket Satış Çizelgesi','yolcu × paket boş tablo'],
@@ -13180,7 +13203,7 @@ function renderTurDosyasi(box){
         <button class="btn btn-outline btn-sm" onclick="tdYazdir('${b[0]}')">Yazdır</button>
       </div>`).join('')}
     </div>
-    <div style="margin-top:14px"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (7 belge)</button></div>`;
+    <div style="margin-top:14px"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (8 belge)</button></div>`;
   }
   // ═ HESAPLAŞMA ═
   if(_tdTab==='hesap'){
@@ -13258,6 +13281,43 @@ function _tdUcusSatirlar(E){
     });
   });
   return legs;
+}
+function _tdProgramData(E){
+  const sefler=[...new Set((E.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis))].map(k=>{ const p=k.split('|'); return {pkgId:p[0],kalkis:p[1]}; });
+  try{ const g2=_tdG(); if(!sefler.length&&g2&&g2.sefer&&g2.sefer.pkgId) sefler.push({pkgId:g2.sefer.pkgId,kalkis:g2.sefer.kalkis}); }catch(e){}
+  const out=[];
+  sefler.sort((a,b)=>String(a.kalkis).localeCompare(String(b.kalkis))).forEach(sf=>{
+    const pk=getPackages().find(p=>p.id===sf.pkgId); if(!pk||!(pk.gunler||[]).length) return;
+    out.push({kod:pk.paketKodu||pk.paketAdi||'',kalkis:sf.kalkis,gunler:(pk.gunler||[]).map((gd,gi)=>({
+      no:gd.no||gi+1,
+      tarih:_isoAdd(sf.kalkis,gi),
+      baslik:gd.baslik||'',
+      rota:(gd.noktalar||[]).filter(Boolean).join(' → '),
+      program:String(gd.program||'').trim(),
+      mesafe:gd.mesafe||'', sure:gd.seyahatSuresi||'',
+      konak:[gd.konaklamaAd,gd.konaklamaBolge,gd.konaklamaPansiyon].filter(Boolean).join(' · '),
+      ops:(gd.opsiyonelTurlar||[]).map(o=>String(o.ad||'').trim()).filter(Boolean).join(', ')
+    }))});
+  });
+  return out;
+}
+function _tdDocProgram(g,E){
+  const P=_tdProgramData(E);
+  let h=_tdDocBas('Tur Programı',E);
+  if(!P.length) return h+'<p style="font-size:10pt">Tur programı tanımlı değil.</p></div>';
+  P.forEach(blok=>{
+    if(P.length>1) h+=`<h2 style="font-size:11.5pt;margin:4mm 0 2mm">${esc(blok.kod)} — ${_fmtDateTR(blok.kalkis)} girişi</h2>`;
+    blok.gunler.forEach(gd=>{
+      h+=`<div style="margin-bottom:3mm;page-break-inside:avoid">
+        <div style="background:#eee;border:1px solid #999;padding:2px 7px;font-size:10pt"><b>${_fmtDateTR(gd.tarih)} · Gün ${gd.no}</b>${gd.baslik?' — <b>'+esc(gd.baslik)+'</b>':''}${gd.rota?' <span style="color:#555">('+esc(gd.rota)+')</span>':''}</div>
+        <div style="border:1px solid #999;border-top:none;padding:3px 7px;font-size:9.5pt">
+          ${gd.program?`<div style="white-space:pre-wrap">${esc(gd.program)}</div>`:'<span style="color:#777">—</span>'}
+          <div style="margin-top:2px;color:#555;font-size:8.5pt">${[gd.mesafe&&('Mesafe: '+gd.mesafe+(gd.sure?' · '+gd.sure:'')),gd.konak&&('Konaklama: '+gd.konak),gd.ops&&('Opsiyonel: '+gd.ops)].filter(Boolean).join('  ·  ')}</div>
+        </div>
+      </div>`;
+    });
+  });
+  return h+'</div>';
 }
 function _tdDocUcus(g,E){
   const legs=_tdUcusSatirlar(E), K=_tdKisiler(E);
@@ -13397,17 +13457,17 @@ function _tdDocHesap(g,E){
 }
 function tdYazdir(tip){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
-  const map={isim:_tdDocIsim,otel:_tdDocOtel,ucus:_tdDocUcus,cizelge:_tdDocCizelge,masraf:_tdDocMasraf,sozlesme:_tdDocSozlesme,acente:_tdDocAcente,hesap:_tdDocHesap};
+  const map={program:_tdDocProgram,isim:_tdDocIsim,otel:_tdDocOtel,ucus:_tdDocUcus,cizelge:_tdDocCizelge,masraf:_tdDocMasraf,sozlesme:_tdDocSozlesme,acente:_tdDocAcente,hesap:_tdDocHesap};
   if(!map[tip]) return;
   document.getElementById('rzPrintBox').innerHTML=map[tip](g,E);
   doPrint('rzPrintBox');
 }
 function tdYazdirHepsi(){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
-  const parcalar=[_tdDocSozlesme,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocAcente,_tdDocMasraf,_tdDocCizelge].map(f=>'<div style="page-break-after:always">'+f(g,E)+'</div>');
+  const parcalar=[_tdDocSozlesme,_tdDocProgram,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocAcente,_tdDocMasraf,_tdDocCizelge].map(f=>'<div style="page-break-after:always">'+f(g,E)+'</div>');
   document.getElementById('rzPrintBox').innerHTML=parcalar.join('');
   doPrint('rzPrintBox');
-  showToast('Rehber Dosyası hazırlandı — 7 belge','success');
+  showToast('Rehber Dosyası hazırlandı — 8 belge','success');
 }
 // ═══ Transfer Monitörü ═══
 let _trSel=new Set(), _trSort={col:null,dir:1}, _trFilt={};
