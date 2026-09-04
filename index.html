@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v331 · 04.09.2026';
+const APP_VER='v332 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12068,12 +12068,12 @@ function moFirmaEkle(){
 function moFirmaSil(id){ const t=getTanimlar(); t.magazaFirmalari=(t.magazaFirmalari||[]).filter(f=>f.id!==id); setTanimlar(t); try{renderMagFirmalar();}catch(e){} try{renderMagazaOps();}catch(e){} }
 function moSubeEkle(fid){
   const g=id=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
-  const sehir=g('moSbSehir_'+fid);
-  if(!sehir){ showToast('Lokasyon / şehir girin','error'); return; }
+  const ad=g('moSbAd_'+fid);
+  if(!ad){ showToast('Mağaza adı girin (ör. Pamukkale Halı)','error'); return; }
   const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===fid); if(!f) return;
   f.subeler=f.subeler||[];
-  f.subeler.push({id:genId(),sehir,ad:g('moSbAd_'+fid),tel:g('moSbTel_'+fid),yetkili:g('moSbYet_'+fid),adres:g('moSbAdr_'+fid)});
-  setTanimlar(t); try{renderMagFirmalar();}catch(e){} try{renderMagazaOps();}catch(e){} showToast('Mağaza eklendi: '+sehir,'success');
+  f.subeler.push({id:genId(),ad,sehir:g('moSbSehir_'+fid),tur:g('moSbTur_'+fid),tel:g('moSbTel_'+fid),yetkili:g('moSbYet_'+fid),adres:g('moSbAdr_'+fid)});
+  setTanimlar(t); try{renderMagFirmalar();}catch(e){} try{renderMagazaOps();}catch(e){} showToast('Mağaza eklendi: '+ad,'success');
 }
 function moSubeSil(fid,si){
   const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===fid); if(!f||!f.subeler) return;
@@ -12091,6 +12091,14 @@ function moSubeKalemEkle(fid,si){
 function moSubeKalemSil(fid,si,ki){
   const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===fid); if(!f||!f.subeler||!f.subeler[si]||!f.subeler[si].kalemler) return;
   f.subeler[si].kalemler.splice(ki,1); setTanimlar(t); renderMagFirmalar();
+}
+function _moAtaCoz(val){
+  // atama değeri: 'grupId' (eski) veya 'grupId|subeId' → {f: grup, sube}
+  const p=String(val||'').split('|');
+  const f=_moFirmalar().find(x=>x.id===p[0])||null;
+  let sube=null;
+  if(f&&p[1]) sube=(f.subeler||[]).find(x=>x.id===p[1])||null;
+  return {f,sube};
 }
 function _moSubeBul(f,sehir){
   if(!f||!(f.subeler||[]).length) return null;
@@ -12192,7 +12200,7 @@ function renderMagFirmalar(){
   if(!document.getElementById('moKlAdL')) document.body.insertAdjacentHTML('beforeend','<datalist id="moKlAdL">'+['Kuyum','Deri','Halı','Seramik','Tekstil','Lokum','Kozmetik'].map(x=>'<option>'+x+'</option>').join('')+'</datalist>');
   const firmalar=_moFirmalar();
   const inpS='padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit';
-  let h='<div class="card"><div class="card-title">🏬 Mağazalar <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">'+firmalar.length+' firma · Firmayı ekle, altına lokasyon lokasyon mağazalarını gir</span></div>'
+  let h='<div class="card"><div class="card-title">🏬 Mağaza Grupları <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">'+firmalar.length+' grup · Grubu ekle (Doğuş gibi), altına mağazalarını aç, her mağazaya oranlarını gir</span></div>'
    +firmalar.map(f=>{
       const acik=(window._moSubeAcik===f.id);
       let fh='<div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:8px 12px;margin:0 0 8px 0;font-size:.78rem">'
@@ -12210,8 +12218,9 @@ function renderMagFirmalar(){
             const oKey=f.id+'|'+si, oAcik=(window._moOranAcik===oKey);
             let sh='<div style="border-bottom:1px dashed #e0f2fe;padding:4px 0">'
              +'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:.78rem">'
-             +'<b>📍 '+esc(sb2.sehir||'—')+'</b>'
-             +(sb2.ad?'<span>'+esc(sb2.ad)+'</span>':'')
+             +'<b>🏬 '+esc(sb2.ad||sb2.sehir||'—')+'</b>'
+             +(sb2.tur?'<span style="background:#ede9fe;color:#6d28d9;border-radius:6px;font-size:.62rem;font-weight:800;padding:1px 7px">'+esc(sb2.tur)+'</span>':'')
+             +(sb2.sehir?'<span style="color:var(--muted)">📍 '+esc(sb2.sehir)+'</span>':'')
              +(sb2.tel?'<a href="tel:'+esc(sb2.tel)+'" style="color:inherit;text-decoration:none">☎ '+esc(sb2.tel)+'</a>':'')
              +(sb2.yetkili?'<span style="color:var(--muted)">👤 '+esc(sb2.yetkili)+'</span>':'')
              +(sb2.adres?'<span style="color:var(--muted);font-size:.7rem">'+esc(sb2.adres)+'</span>':'')
@@ -12234,21 +12243,22 @@ function renderMagFirmalar(){
             return sh+'</div>';
           }).join('')||'<div style="color:var(--muted);font-size:.74rem">Henüz mağaza girilmedi.</div>')
          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'
-         +'<input id="moSbSehir_'+f.id+'" placeholder="Lokasyon / şehir" style="'+inpS+';width:130px">'
-         +'<input id="moSbAd_'+f.id+'" placeholder="Mağaza adı (ops.)" style="'+inpS+';width:140px">'
-         +'<input id="moSbTel_'+f.id+'" placeholder="Telefon" style="'+inpS+';width:120px">'
-         +'<input id="moSbYet_'+f.id+'" placeholder="Yetkili" style="'+inpS+';width:110px">'
-         +'<input id="moSbAdr_'+f.id+'" placeholder="Adres (ops.)" style="'+inpS+';width:150px">'
+         +'<input id="moSbAd_'+f.id+'" placeholder="Mağaza adı (ör. Pamukkale Halı)" style="'+inpS+';width:190px">'
+         +'<input id="moSbSehir_'+f.id+'" placeholder="Lokasyon / şehir" style="'+inpS+';width:120px">'
+         +'<select id="moSbTur_'+f.id+'" style="'+inpS+'"><option value="">— Tür —</option>'+['Kuyum','Deri','Halı','Seramik / Çini','Tekstil','Lokum / Baharat','Ozon / Kozmetik'].map(x=>'<option>'+x+'</option>').join('')+'</select>'
+         +'<input id="moSbTel_'+f.id+'" placeholder="Telefon" style="'+inpS+';width:115px">'
+         +'<input id="moSbYet_'+f.id+'" placeholder="Yetkili" style="'+inpS+';width:105px">'
+         +'<input id="moSbAdr_'+f.id+'" placeholder="Adres (ops.)" style="'+inpS+';width:140px">'
          +'<button class="btn btn-primary btn-sm" onclick="moSubeEkle(\''+f.id+'\')">+ Mağaza ekle</button>'
          +'</div></div>';
       }
       return fh+'</div>';
     }).join('')
    +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;padding-top:10px;border-top:1.5px dashed var(--border)">'
-   +'<input id="moFAd" placeholder="Firma adı" style="'+inpS+';width:170px">'
-   +'<input id="moFSehir" placeholder="Merkez şehir" style="'+inpS+';width:120px">'
+   +'<input id="moFAd" placeholder="Mağaza grubu adı (ör. Doğuş)" style="'+inpS+';width:190px">'
+   +'<input id="moFSehir" placeholder="Merkez şehir (ops.)" style="'+inpS+';width:130px">'
    +'<select id="moFTur" style="'+inpS+'"><option value="">— Tür —</option>'+['Kuyum','Deri','Halı','Seramik / Çini','Tekstil','Lokum / Baharat','Ozon / Kozmetik'].map(x=>'<option>'+x+'</option>').join('')+'</select>'
-   +'<button class="btn btn-primary btn-sm" onclick="moFirmaEkle()">+ Firma ekle</button>'
+   +'<button class="btn btn-primary btn-sm" onclick="moFirmaEkle()">+ Grup ekle</button>'
    +'</div></div>';
   box.innerHTML=h;
 }
@@ -12337,10 +12347,16 @@ function renderMagazaOps(){
   if(!rows.length) h+='<tr><td colspan="8" style="'+tdS+';text-align:center;color:var(--muted);padding:16px">Kayıt yok — ürünlerin gün planlarına mağaza işaretleyin.</td></tr>';
   window._moRows=rows;
   rows.forEach((r,ri)=>{
-    const uygun=firmalar.slice().sort((a,b)=>{
+    // seçenekler: her grubun MAĞAZALARI (value 'fid|sid'); mağazasız grup için grup kendisi (value 'fid')
+    const secenekler=[];
+    firmalar.forEach(f=>{
+      if((f.subeler||[]).length) f.subeler.forEach(sb2=>secenekler.push({val:f.id+'|'+sb2.id,etiket:f.ad+' · '+(sb2.ad||sb2.sehir||''),sehir:sb2.sehir||f.sehir||'',tur:sb2.tur||f.tur||''}));
+      else secenekler.push({val:f.id,etiket:f.ad+(f.sehir?' ('+f.sehir+')':''),sehir:f.sehir||'',tur:f.tur||''});
+    });
+    secenekler.sort((a,b)=>{
       const pa=((a.sehir&&r.sehir&&_norm(a.sehir)===_norm(r.sehir))?2:0)+((a.tur&&r.tur&&_norm(a.tur)===_norm(r.tur))?1:0);
       const pb=((b.sehir&&r.sehir&&_norm(b.sehir)===_norm(r.sehir))?2:0)+((b.tur&&r.tur&&_norm(b.tur)===_norm(r.tur))?1:0);
-      return pb-pa||String(a.ad).localeCompare(b.ad,'tr'); });
+      return pb-pa||a.etiket.localeCompare(b.etiket,'tr'); });
     h+='<tr'+(r.firmaId?'':' style="background:#fffbeb"')+'>'
      +'<td style="'+tdS+';font-weight:700">'+_fmtDateTR(r.tarih)+'</td>'
      +'<td style="'+tdS+'"><b>'+esc(r.kod)+'</b>'+(r.birlesik?' <span style="background:#ede9fe;color:#6d28d9;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">BİRLEŞİK</span>':'')+'</td>'
@@ -12351,14 +12367,14 @@ function renderMagazaOps(){
      +'<td style="'+tdS+'">'+(r.rehber?esc(r.rehber):'<span style="color:#b45309;font-weight:700">açıkta</span>')+'</td>'
      +'<td style="'+tdS+'"><select onchange="moAtaCoklu('+ri+',this.value)" style="padding:5px 8px;border:1.5px solid '+(r.firmaId?'#86efac':'#fcd34d')+';border-radius:7px;font-size:.78rem;font-family:inherit;min-width:150px'+(r.firmaId?';background:#f0fdf4':'')+'">'
      +'<option value="">— Mağaza seç —</option>'
-     +uygun.map(f=>'<option value="'+f.id+'"'+(f.id===r.firmaId?' selected':'')+'>'+esc(f.ad)+(f.sehir?' ('+esc(f.sehir)+')':'')+'</option>').join('')
+     +secenekler.map(o=>'<option value="'+o.val+'"'+(o.val===r.firmaId?' selected':'')+'>'+esc(o.etiket)+'</option>').join('')
      +'</select></td></tr>';
   });
   h+='</table></div>';
   const atanmis=tum.filter(r=>r.firmaId);
   if(atanmis.length){
     const fMap={};
-    atanmis.forEach(r=>{ const f=firmalar.find(x=>x.id===r.firmaId); const ad=f?f.ad:'?'; (fMap[ad]=fMap[ad]||{g:0,p:0}); fMap[ad].g++; fMap[ad].p+=r.pax; });
+    atanmis.forEach(r=>{ const cz=_moAtaCoz(r.firmaId); const ad=cz.f?(cz.f.ad+(cz.sube?' · '+(cz.sube.ad||cz.sube.sehir||''):'')):'?'; (fMap[ad]=fMap[ad]||{g:0,p:0}); fMap[ad].g++; fMap[ad].p+=r.pax; });
     h+='<div class="card" style="margin-top:12px"><div style="font-weight:800;font-size:.85rem;color:#1a3c5e;margin-bottom:7px">Firma Bazlı Özet</div><div style="display:flex;gap:8px;flex-wrap:wrap">'
      +Object.keys(fMap).sort((a,b)=>a.localeCompare(b,'tr')).map(ad=>'<span style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:9px;padding:6px 11px;font-size:.78rem"><b>'+esc(ad)+'</b> · '+fMap[ad].g+' grup · '+fMap[ad].p+' pax</span>').join('')
      +'</div></div>';
@@ -13714,7 +13730,7 @@ function renderTurDosyasi(box){
   if(_tdTab==='magaza'){
     const sefler=[...new Set((E.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis))].map(k2=>{const p=k2.split('|');return {pkgId:p[0],kalkis:p[1]};});
     if(!sefler.length&&g.sefer&&g.sefer.pkgId) sefler.push({pkgId:g.sefer.pkgId,kalkis:g.sefer.kalkis});
-    const fBul=id=>_moFirmalar().find(x=>x.id===String(id||'').split('|')[0])||null;
+
     const rows=[];
     sefler.forEach(sf=>{
       const pkg=getPackages().find(p=>p.id===sf.pkgId); if(!pkg) return;
@@ -13724,7 +13740,7 @@ function renderTurDosyasi(box){
         const tarih=_isoAdd(sf.kalkis,gi);
         (gn.magazalar||[]).forEach((m,mi)=>{
           let fid=''; try{ const at=rec.magazaAtama||{}; const anah=Object.keys(at).find(kk=>kk.endsWith('_g'+gi+'_'+mi)); if(anah) fid=at[anah]; }catch(e){}
-          const f=fBul(fid); const sube=f?_moSubeBul(f,m.sehir):null;
+          const cz=_moAtaCoz(fid); const f=cz.f; const sube=cz.sube||(f?_moSubeBul(f,m.sehir):null);
           rows.push({tarih,gun:gi+1,sehir:m.sehir||'',tip:m.tip||'',firma:f?(f.ad||''):'',
             lok:sube?(sube.sehir||''):'',magAd:sube?(sube.ad||''):'',tel:sube?(sube.tel||''):'',yetkili:sube?(sube.yetkili||''):''});
         });
@@ -14378,10 +14394,11 @@ function _mmZiyaretSenk(){
     rows.forEach(r=>{
       const zKey=r.tarih+'|'+r.firmaId+'|'+r.kod;
       if(L.some(k=>k.otoKey===zKey)) return;
-      const fm=_moFirmalar().find(x=>x.id===r.firmaId);
-      const sube=fm?_moSubeBul(fm,r.sehir):null;
+      const cz=_moAtaCoz(r.firmaId);
+      const fm=cz.f;
+      const sube=cz.sube||(fm?_moSubeBul(fm,r.sehir):null);
       const sablon=(sube&&(sube.kalemler||[]).length)?sube.kalemler:((fm&&fm.kalemler)||[]);
-      L.push({id:genId(),otoKey:zKey,tarih:r.tarih,firmaId:r.firmaId,kod:r.kod,rehberAd:r.rehber||'',pax:r.pax||'',para:'EUR',
+      L.push({id:genId(),otoKey:zKey,tarih:r.tarih,firmaId:(fm?fm.id:String(r.firmaId).split('|')[0]),magaza:sube?(sube.ad||sube.sehir||''):'',kod:r.kod,rehberAd:r.rehber||'',pax:r.pax||'',para:'EUR',
         magKalemler:sablon.map(x=>({ad:x.ad,oran:x.oran,ciro:''})),rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()});
       n++;
     });
@@ -14450,7 +14467,7 @@ function renderMagMuh(){
     h+=`<tr>
       <td style="${td}"><button onclick="mmAcKapa('${k.id}')" style="background:none;border:none;cursor:pointer">${acik?'▼':'▶'}</button></td>
       <td style="${td}"><input type="date" value="${esc(_pdate(k.tarih)||'')}" onchange="mmSet('${k.id}','tarih',this.value)" style="${inp}"></td>
-      <td style="${td}"><select onchange="mmSet('${k.id}','firmaId',this.value)" style="${inp};min-width:120px"><option value="">seç…</option>${firmalar.map(f=>`<option value="${f.id}" ${k.firmaId===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select></td>
+      <td style="${td}"><select onchange="mmSet('${k.id}','firmaId',this.value)" style="${inp};min-width:120px"><option value="">seç…</option>${firmalar.map(f=>`<option value="${f.id}" ${k.firmaId===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>${k.magaza?`<div style="font-size:.62rem;color:var(--muted);white-space:nowrap">🏬 ${esc(k.magaza)}</div>`:''}</td>
       <td style="${td}"><input value="${esc(k.kod||'')}" placeholder="CAP7…" onchange="mmSet('${k.id}','kod',this.value)" style="${inp};width:76px"></td>
       <td style="${td}"><input value="${esc(k.rehberAd||'')}" list="mmRehL" onchange="mmSet('${k.id}','rehberAd',this.value)" style="${inp};width:110px"></td>
       <td style="${td}"><input value="${esc(k.pax||'')}" inputmode="numeric" onchange="mmSet('${k.id}','pax',this.value)" style="${inp};width:44px;text-align:right"></td>
