@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v333 · 04.09.2026';
+const APP_VER='v334 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12219,9 +12219,8 @@ function renderMagFirmalar(){
        +'<input id="mgMagYet" placeholder="Yetkili" style="'+inp+';width:120px">'
        +'<input id="mgMagAdr" placeholder="Adres" style="'+inp+';min-width:180px">'
        +'</div>'
-       +'<div style="font-weight:700;font-size:.8rem;margin-bottom:6px">Komisyon Oranları</div>'
-       +'<div id="mgOranList">'+_mgOranSatirHTML()+'</div>'
-       +'<button class="btn btn-outline btn-sm" onclick="mgOranSatirEkle()" style="margin-top:4px">+ Oran satırı</button>'
+       +'<div style="font-weight:700;font-size:.8rem;margin-bottom:6px">Komisyon Oranları <span style="font-weight:500;color:var(--muted);font-size:.7rem">(boş = 0 kabul edilir)</span></div>'
+       +'<div style="display:flex;gap:10px;flex-wrap:wrap">'+_MG_PAYLAR.map((ad,i)=>'<label style="display:flex;flex-direction:column;gap:3px;font-size:.72rem;font-weight:700">'+ad+'<input id="mgOran_'+i+'" placeholder="%" inputmode="decimal" style="'+inp+';width:86px"></label>').join('')+'</div>'
        +'<div style="margin-top:12px"><button class="btn btn-primary" onclick="mgMagKaydet(\''+g.id+'\')">Mağazayı Kaydet</button></div>'
        +'</div>';
     }
@@ -12277,6 +12276,7 @@ function renderMagFirmalar(){
    +'</div>';
   box.innerHTML=h;
 }
+const _MG_PAYLAR=['Acente','Rehber','Ofis','Şef Rehber','Kaptan'];
 function _mgOranSatirHTML(){
   const inp='padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit';
   return '<div class="mg-oran-satir" style="display:flex;gap:6px;margin-bottom:5px"><input class="mg-oran-ad" placeholder="Kalem (ör. Kuyum)" style="'+inp+';width:160px"><input class="mg-oran-deger" placeholder="%" inputmode="decimal" style="'+inp+';width:64px"><button onclick="this.parentElement.remove()" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button></div>';
@@ -12301,11 +12301,7 @@ function mgGrupSil(id){
 function mgMagKaydet(gid){
   const g=id=>{const el=document.getElementById(id);return el?(el.value||'').trim():'';};
   const ad=g('mgMagAd'); if(!ad){ showToast('Mağaza adı girin','error'); return; }
-  const kalemler=[];
-  document.querySelectorAll('#mgOranList .mg-oran-satir').forEach(row=>{
-    const ka=(row.querySelector('.mg-oran-ad')||{}).value||'', ko=(row.querySelector('.mg-oran-deger')||{}).value||'';
-    if(ka.trim()) kalemler.push({ad:ka.trim(),oran:ko.trim()});
-  });
+  const kalemler=_MG_PAYLAR.map((pAd,i)=>({ad:pAd,oran:(g('mgOran_'+i)||'0')}));
   const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); if(!f) return;
   f.subeler=f.subeler||[];
   f.subeler.push({id:genId(),ad,sehir:g('mgMagSehir'),tel:g('mgMagTel'),yetkili:g('mgMagYet'),adres:g('mgMagAdr'),kalemler});
@@ -14477,7 +14473,9 @@ function mmSet(id,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k
   setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmSil(id){ showConfirm('🗑️','Kaydı Sil','Bildirim kaydı silinecek.','Sil',()=>{ setMagMuh(getMagMuh().filter(x=>x.id!==id)); renderMagMuh(); }); }
 function mmKalemAdd(id){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; (k.magKalemler=k.magKalemler||[]).push({ad:'',ciro:'',oran:''}); setMagMuh(getMagMuh()); renderMagMuh(); }
-function mmKalemSet(id,i,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.magKalemler[i]) return; k.magKalemler[i][f]=String(v).trim(); setMagMuh(getMagMuh()); renderMagMuh(); }
+function mmKalemSet(id,i,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.magKalemler[i]) return; k.magKalemler[i][f]=String(v).trim();
+  if(f==='ciro'&&i===0){ k.magKalemler.forEach((x,xi)=>{ if(xi>0&&!(x.ciro||'').trim()) x.ciro=String(v).trim(); }); }
+  setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmKalemDel(id,i){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k.magKalemler.splice(i,1); setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmSablonYap(id){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.firmaId) return;
   const t=getTanimlar(); const fm=(t.magazaFirmalari||[]).find(x=>x.id===k.firmaId); if(!fm) return;
