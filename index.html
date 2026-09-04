@@ -1964,7 +1964,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v325 · 04.09.2026';
+const APP_VER='v326 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7730,8 +7730,8 @@ const _ACL={
   goruntuleme: {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v'},
   urun:        {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v'}
 };
-function _acl(pageId){ if(!_cloudOn||!sbRol) return 'e'; const grp=_PAGEGRP[pageId]||'home'; const m=_ACL[sbRol]||_ACL.goruntuleme; return m[grp]||'-'; }
-function _applyRoleNav(){ document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=(sbRol==='rehber'&&_cloudOn)?'none':''; return; } t.style.display=(_acl(pg)==='-')?'none':''; }); }
+function _acl(pageId){ if(!sbRol) return 'e'; const grp=_PAGEGRP[pageId]||'home'; const m=_ACL[sbRol]||_ACL.goruntuleme; return m[grp]||'-'; }
+function _applyRoleNav(){ document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=(sbRol==='rehber')?'none':''; return; } t.style.display=(_acl(pg)==='-')?'none':''; }); }
 function _roBanner(show){ let b=document.getElementById('roBar'); if(show){ if(!b){ b=document.createElement('div'); b.id='roBar'; b.textContent='Salt-okunur — bu bölümde yalnızca görüntüleme yetkiniz var'; document.body.appendChild(b); } b.style.display=''; } else if(b){ b.style.display='none'; } }
 // ═══ ROL ÖNİZLEME (yönetici başka rolün gözünden bakar) ═══
 const _ROLAD={yonetici:'Yönetici',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',urun:'Ürün (eski)',rehber:'Rehber'};
@@ -7865,6 +7865,7 @@ async function doLogin(){
   if(btn){btn.disabled=false;btn.textContent='Giriş Yap';}
 }
 async function doLogout(){
+  try{ localStorage.removeItem('dmc_rolCache'); }catch(e){}
   try{ await sb.auth.signOut(); }catch(e){}
   location.reload();
 }
@@ -7878,6 +7879,7 @@ async function _cloudStart(session){
       const r=await sb.from('profiles').select('*').eq('id',sbUser.id).maybeSingle(); prof=r.data;
     }
     sbRol=prof?.rol||'goruntuleme';
+    try{ localStorage.setItem('dmc_rolCache',sbRol); }catch(e){}
     try{
       const ekr=await sb.from('kv_store').select('data').eq('key','ekipek').maybeSingle();
       if(ekr&&ekr.data&&ekr.data.data&&((ekr.data.data[sbUser.email]||{}).durum==='pasif')){
@@ -10930,6 +10932,7 @@ function _rehbOtoRol(){
   const rh=_rehbEsle(sbUser.email);
   if(!rh) return false;
   sbRol='rehber';
+  try{ localStorage.setItem('dmc_rolCache','rehber'); }catch(e){}
   try{ if(sb) sb.from('profiles').update({rol:'rehber'}).eq('id',sbUser.id).then(()=>{}); }catch(e){}
   try{ _renderUserChip(); }catch(e){}
   try{ _applyRoleNav(); }catch(e){}
@@ -11210,6 +11213,7 @@ async function _boot(){
   renderOperatorSelect();
   renderDashboard();
   updateCalc();
+  try{ const rc=localStorage.getItem('dmc_rolCache'); if(rc){ sbRol=rc; _applyRoleNav(); } }catch(e){}
   restoreLastState();
   try{ _initSecCollapse(); }catch(e){}
 }
