@@ -939,6 +939,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <div class="sidebar-list">
         <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa</div>
         <div class="pkg-section-item ops-navitem" data-ot="rehtak" onclick="opsTab('rehtak')"><svg class="ic"><use href="#i-calendar"/></svg> Rehber Takvimi</div>
+        <div class="pkg-section-item ops-navitem" data-ot="birlestir" onclick="opsTab('birlestir')"><svg class="ic"><use href="#i-users"/></svg> Grup Birleştirme</div>
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> Transfer</div>
         <div class="pkg-section-item ops-navitem" data-ot="mutabakat" onclick="opsTab('mutabakat')"><svg class="ic"><use href="#i-coins"/></svg> Araç Mutabakatı</div>
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> Tanımlamalar</div>
@@ -1677,6 +1678,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         </div>
         <div id="opsPane_rehtak" style="display:none"></div>
         <div id="opsPane_grup" style="display:none"></div>
+        <div id="opsPane_birlestir" style="display:none"></div>
         <div id="opsPane_transfer" style="display:none"></div>
         <div id="opsPane_mutabakat" style="display:none"></div>
         <div id="opsPane_tanim" style="display:none"></div>
@@ -1909,7 +1911,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v304 · 04.09.2026';
+const APP_VER='v305 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11919,12 +11921,13 @@ try{ if(localStorage.getItem('dmc_sbKapali')==='1') document.body.classList.add(
 function opsTab(t){
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
-  ['anasayfa','gunluk','rehtak','grup','transfer','tanim','mutabakat'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
+  ['anasayfa','gunluk','rehtak','grup','transfer','tanim','mutabakat','birlestir'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
   if(t==='anasayfa') renderOpsAnasayfa();
   else if(t==='rehtak') renderRehberTakvim();
   else if(t==='gunluk') renderOperasyonPage();
   else if(t==='grup') renderOpsGrup();
   else if(t==='transfer') renderOpsTransfer();
+  else if(t==='birlestir') renderGrupBirlestir();
   else if(t==='mutabakat') renderOpsMutabakat();
   else if(t==='tanim') renderOpsTanim();
 }
@@ -12520,6 +12523,88 @@ function _ogSetRehber(gid,v){ gid=_ogMaterialize(gid); const S=getOpsGrup(); if(
 function _ogNotSet(gid,v){ gid=_ogMaterialize(gid); const S=getOpsGrup(); if(S.gruplar[gid]){ S.gruplar[gid].not=v; setOpsGrup(S); } }
 function _ogSelToggle(gid,on){ on?_ogSel.add(gid):_ogSel.delete(gid); renderOpsGrup(); }
 function _ogCoz(gid){ if(gid.startsWith('auto:')) return; const S=getOpsGrup(); delete S.gruplar[gid]; setOpsGrup(S); renderOpsGrup(); showToast('Grup çözüldü (varsayılana döndü)'); }
+// ═══ GRUP BİRLEŞTİRME (ayrı ekran) — farklı günler birleştirilebilir (ardışık gruplar) ═══
+let _gbSec=new Set(), _gbBas='', _gbSon='';
+function _gbSeferUyeleri(pkgId,kalkis){
+  const out=[];
+  const ekle=v=>{ v=String(v||'').trim(); if(!v) return; if(out.some(u=>_vEsit(u.resno,v))) return; out.push({pkgId,kalkis,resno:v}); };
+  const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+  if(g) (g.rows||[]).filter(_isim).forEach(y=>ekle(y.resno));
+  (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis&&r.durum!=='iptal') ekle(r.voucher); });
+  return out;
+}
+function _gbSeferler(bas,son){
+  const out=[];
+  getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&!p.opsDisAcente).forEach(pkg=>{
+    (_opsTarihler(pkg)||[]).forEach(k=>{
+      if(k<bas||k>son) return;
+      const pax=_opsPax(pkg.id,k); if(!pax) return;
+      out.push({pkgId:pkg.id,kalkis:k,kod:pkg.paketKodu||pkg.paketAdi||'',op:_opsOperatorAd(pkg,k),pax,gece:parseInt(pkg.gece)||0,reh:(_opsRehGet(pkg.id,k,'01')||{}).rehberAd||''});
+    });
+  });
+  const map={};
+  try{ _ogResolve().forEach(g=>{ const sef=[...new Set((g.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis))]; if(sef.length>1) sef.forEach(x=>{ map[x]={id:g.id,no:g.no||'',n:sef.length}; }); }); }catch(e){}
+  out.forEach(r=>{ r.grup=map[r.pkgId+'|'+r.kalkis]||null; });
+  out.sort((a,b)=>a.kalkis.localeCompare(b.kalkis)||a.kod.localeCompare(b.kod,'tr'));
+  return out;
+}
+function gbSecTog(key,on){ on?_gbSec.add(key):_gbSec.delete(key); renderGrupBirlestir(); }
+function gbBirlestir(){
+  const secler=[..._gbSec]; if(secler.length<2){ showToast('Birleştirmek için en az 2 sefer seç','error'); return; }
+  const uyeler=[];
+  secler.forEach(k=>{ const p=k.split('|'); _gbSeferUyeleri(p[0],p[1]).forEach(u=>uyeler.push(u)); });
+  if(!uyeler.length){ showToast('Seçili seferlerde yolcu bulunamadı','error'); return; }
+  const tarihler=secler.map(k=>k.split('|')[1]).sort();
+  const S=getOpsGrup(); S.gruplar=S.gruplar||{};
+  const nid='og'+R_GID().slice(1);
+  S.gruplar[nid]={id:nid,no:_ogNoVer(S,tarihler[0]),ad:'Birleşik '+_fmtDateTR(tarihler[0]),rehberId:'',not:'',uyeler,tahsisler:[]};
+  setOpsGrup(S); _gbSec.clear(); renderGrupBirlestir();
+  showToast(secler.length+' sefer TEK TUR olarak birleştirildi — '+uyeler.length+' rezervasyon. Rehber takviminde tek şerit görünür.','success',6000);
+}
+function gbDagit(gid){
+  showConfirm('✂️','Grubu Dağıt','Birleşik grup dağıtılacak; seferler yeniden ayrı turlar olur. (Rehber atamaları sefer kayıtlarında durur.)','Dağıt',()=>{
+    const S=getOpsGrup(); if(S.gruplar) delete S.gruplar[gid];
+    setOpsGrup(S); renderGrupBirlestir(); showToast('Grup dağıtıldı','success');
+  });
+}
+function gbDosya(gid){ opsTab('grup'); opsTdAc(gid); }
+function renderGrupBirlestir(){
+  const box=document.getElementById('opsPane_birlestir'); if(!box) return;
+  if(!_gbBas){ _gbBas=_opsToday(); _gbSon=_isoAdd(_gbBas,45); }
+  const L=_gbSeferler(_gbBas,_gbSon);
+  const inp='padding:4px 7px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.76rem';
+  const th='background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left;white-space:nowrap';
+  const td='padding:4px 9px;font-size:.78rem;border-bottom:1px solid var(--border)';
+  const secPax=[..._gbSec].reduce((t,k)=>{ const r=L.find(x=>x.pkgId+'|'+x.kalkis===k); return t+(r?r.pax:0); },0);
+  let h=`<div style="margin-bottom:8px"><button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')">← Ana Sayfa</button></div>
+    <div class="card"><div class="card-title"><svg class="ic"><use href="#i-users"/></svg> Grup Birleştirme <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Farklı günlerin seferleri tek tur olur — takvim, rehber dosyası, atamalar tek panelden</span></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <input type="date" value="${_gbBas}" onchange="_gbBas=this.value;renderGrupBirlestir()" style="${inp}"> ~
+      <input type="date" value="${_gbSon}" onchange="_gbSon=this.value;renderGrupBirlestir()" style="${inp}">
+      <span style="color:var(--muted);font-size:.74rem">· ${L.length} sefer</span>
+      ${_gbSec.size?`<span style="margin-left:auto;background:var(--primary-soft);color:var(--primary);font-weight:800;font-size:.74rem;padding:4px 12px;border-radius:9px">${_gbSec.size} sefer · ${secPax} pax seçili</span>
+      <button class="btn btn-primary btn-sm" onclick="gbBirlestir()">🔗 Birleştir — TEK TUR yap</button>
+      <button class="btn btn-outline btn-sm" onclick="_gbSec.clear();renderGrupBirlestir()">Vazgeç</button>`:''}
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <tr><th style="${th}"></th><th style="${th}">Giriş</th><th style="${th}">Ürün</th><th style="${th}">Operatör</th><th style="${th}">Gece</th><th style="${th}">Pax</th><th style="${th}">Rehber</th><th style="${th}">Birleşik Grup</th><th style="${th}"></th></tr>
+      ${L.map(r=>{ const key=r.pkgId+'|'+r.kalkis;
+        return `<tr${r.grup?' style="background:var(--primary-soft)"':''}>
+        <td style="${td}">${r.grup?'':`<input type="checkbox" ${_gbSec.has(key)?'checked':''} onchange="gbSecTog('${key}',this.checked)">`}</td>
+        <td style="${td}"><b>${_fmtDateTR(r.kalkis)}</b></td>
+        <td style="${td}"><b>${esc(r.kod)}</b></td>
+        <td style="${td}">${esc(r.op||'—')}</td>
+        <td style="${td}">${r.gece}</td>
+        <td style="${td}"><b>${r.pax}</b></td>
+        <td style="${td}">${esc(r.reh||'—')}</td>
+        <td style="${td}">${r.grup?`<span style="background:var(--primary);color:#fff;font-weight:800;font-size:.64rem;padding:2px 9px;border-radius:9px">🔗 ${esc(r.grup.no||'birleşik')} · ${r.grup.n} sefer</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+        <td style="${td};white-space:nowrap">${r.grup?`<button class="btn btn-outline btn-sm" onclick="gbDosya('${r.grup.id}')">📂 Dosya</button> <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="gbDagit('${r.grup.id}')">✂ Dağıt</button>`:''}</td></tr>`; }).join('')}
+    </table>
+    ${L.length?'':'<p style="color:var(--muted);font-size:.85rem;padding:10px 2px">Bu aralıkta pax\'lı sefer yok.</p>'}
+    <div style="font-size:.7rem;color:var(--muted);margin-top:8px">Seç → Birleştir: seçilen seferlerin tüm rezervasyonları tek grupta toplanır. Rehber takviminde tek şerit (CAP7×2), rehber ataması tüm seferlere işler, rehber dosyası tektir. ✂ Dağıt geri alır.</div>
+    </div>`;
+  box.innerHTML=h;
+}
 function _ogMerge(){
   const gids=[..._ogSel]; if(gids.length<2){ showToast('Birleştirmek için en az 2 grup seç','error'); return; }
   const resolved=_ogResolve(); const groups=gids.map(id=>resolved.find(x=>x.id===id)).filter(Boolean);
