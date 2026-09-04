@@ -676,7 +676,13 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
   .dash-stats{grid-template-columns:1fr}
   .container{padding:.7rem .55rem}
   .save-status{display:none}
-  /* ── telefon paketi (v321) ── */
+  /* ── telefon paketi (v321/v323) ── */
+  body{overflow-x:hidden}
+  .navbar{flex-wrap:nowrap;overflow:visible}
+  .navbar .theme-toggle{display:none}
+  #sbToggleBtn{display:inline-flex !important}
+  #userChip .chip-btn{display:none}
+  #userChip{font-size:.72rem}
   .card{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:.8rem .7rem}
   #appVerBadge{display:none}
   .nav-undo-btn{display:none}
@@ -882,7 +888,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   <span class="save-status" id="cloudStatus" title="Bulut bağlantısı — tıkla: hata günlüğü" onclick="hataGunluguAc()" style="cursor:pointer"><span class="dot"></span><span id="cloudStatusTxt">Bulut: —</span></span>
   <span id="userChip" style="display:none;align-items:center;gap:6px;font-size:.78rem;color:var(--text);white-space:nowrap"></span>
   <button class="theme-toggle" onclick="navGeri()" title="Önceki görünüme dön — nereden geldiysen oraya">←</button>
-  <button class="theme-toggle" id="sbToggleBtn" onclick="sbToggle()" title="Menüyü aç/kapat — çalışma alanını genişletir">☰</button>
+  <button class="theme-toggle" id="sbToggleBtn" onclick="_mobMenuToggle(event)" title="Menü">☰</button>
   <button class="theme-toggle" id="themeToggle" onclick="toggleDark()" title="Koyu temaya geç"><svg class="ic"><use href="#i-moon"/></svg></button>
   <button class="nav-undo-btn" id="navUndoBtn" onclick="undoLast()" title="Geri alınacak işlem yok" disabled style="opacity:.4"><svg class="ic"><use href="#i-undo"/></svg> Geri Al</button>
   <button class="nav-save-btn" id="navSaveBtn" onclick="saveCurrentPackage()"><svg class="ic"><use href="#i-save"/></svg> <span id="navSaveTxt">Kaydet</span></button>
@@ -1951,7 +1957,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v322 · 04.09.2026';
+const APP_VER='v323 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12206,6 +12212,23 @@ function renderMagazaOps(){
      +'</div></div>';
   }
   box.innerHTML=h;
+}
+function _mobMenuToggle(ev){
+  if(ev&&ev.stopPropagation) ev.stopPropagation();
+  if(window.innerWidth>640){ sbToggle(); return; }
+  const eski=document.getElementById('mobMenu');
+  if(eski){ eski.remove(); return; }
+  const m=document.createElement('div'); m.id='mobMenu';
+  m.style.cssText='position:fixed;top:54px;right:8px;z-index:99999;background:var(--card,#fff);border:1px solid var(--border);border-radius:14px;box-shadow:0 14px 44px rgba(16,24,40,.22);padding:6px;min-width:200px';
+  const it=(txt,fn)=>'<div onclick="var m=document.getElementById(\'mobMenu\');if(m)m.remove();'+fn+'" style="padding:12px 14px;font-size:.9rem;font-weight:600;cursor:pointer;border-radius:9px;color:var(--text)">'+txt+'</div>';
+  let h=it('← Geri','navGeri()')+it('↩️ Geri Al','undoLast()')+it('🌙 Açık / koyu tema','toggleDark()');
+  if(sbUser) h+=it('🔑 Şifremi değiştir','openPwModal()');
+  if(sbRol==='yonetici') h+=it('👥 Ekip','showPage(&quot;ekip&quot;)');
+  h+=it('☰ Kenar menüyü aç/kapat','sbToggle()');
+  if(sbUser) h+=it('🚪 Çıkış yap','doLogout()');
+  m.innerHTML=h;
+  document.body.appendChild(m);
+  setTimeout(()=>{ document.addEventListener('click',function kapat(e){ const mm=document.getElementById('mobMenu'); if(mm&&!mm.contains(e.target)){ mm.remove(); } document.removeEventListener('click',kapat); },{once:false}); },10);
 }
 function sbToggle(){
   const kapali=document.body.classList.toggle('sb-kapali');
