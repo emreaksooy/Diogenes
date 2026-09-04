@@ -938,9 +938,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <div class="sidebar-header"><h3><svg class="ic"><use href="#i-calendar"/></svg> Operasyon</h3></div>
       <div class="sidebar-list">
         <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa</div>
-        <div class="pkg-section-item ops-navitem" data-ot="gunluk" onclick="opsTab('gunluk')"><svg class="ic"><use href="#i-list"/></svg> Günlük Liste</div>
         <div class="pkg-section-item ops-navitem" data-ot="rehtak" onclick="opsTab('rehtak')"><svg class="ic"><use href="#i-calendar"/></svg> Rehber Takvimi</div>
-        <div class="pkg-section-item ops-navitem" data-ot="grup" onclick="opsTab('grup')"><svg class="ic"><use href="#i-users"/></svg> Gruplar</div>
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> Transfer</div>
         <div class="pkg-section-item ops-navitem" data-ot="mutabakat" onclick="opsTab('mutabakat')"><svg class="ic"><use href="#i-coins"/></svg> Araç Mutabakatı</div>
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> Tanımlamalar</div>
@@ -1911,7 +1909,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v303 · 02.09.2026';
+const APP_VER='v304 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11322,9 +11320,20 @@ function _rtTurlar(bas,son){
       const b=String(m.grupBolum||rb);
       (bolumMap[kk]=bolumMap[kk]||{})[b]=((bolumMap[kk]||{})[b]||0)+1; }); } }); }catch(e){}
   const out=[];
+  // BİRLEŞİK GRUPLAR (birden çok seferin üyeleri tek grupta): takvimde TEK tur
+  const birlesik=[]; const kapsanan=new Set();
+  try{
+    _ogResolve().forEach(g=>{
+      const sefSet=[...new Set((g.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis))];
+      if(sefSet.length<2) return;
+      birlesik.push({g,sefler:sefSet.map(x=>{const p=x.split('|');return {pkgId:p[0],kalkis:p[1]};})});
+      sefSet.forEach(x=>kapsanan.add(x));
+    });
+  }catch(e){}
   getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&!p.opsDisAcente&&!p.rehbersiz).forEach(pkg=>{
     const gece=parseInt(pkg.gece)||0;
     (_opsTarihler(pkg)||[]).forEach(k=>{
+      if(kapsanan.has(pkg.id+'|'+k)) return;
       const end=_isoAdd(k,gece);
       if(end<bas||k>son) return;
       const rec=_opsGet(pkg.id,k);
@@ -11341,6 +11350,23 @@ function _rtTurlar(bas,son){
       if(!pax&&!(rec.rehberAd||'').trim()) return;
       out.push({pkgId:pkg.id,kalkis:k,end,bolum:'01',kod:pkg.paketKodu||pkg.paketAdi||'—',op:_opsOperatorAd(pkg,k),pax,rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()});
     });
+  });
+  const _pkgs2=getPackages();
+  birlesik.forEach(b=>{
+    const sefBilgi=b.sefler.map(sf=>{ const pk=_pkgs2.find(p=>p.id===sf.pkgId)||{}; return {sf,pk,end:_isoAdd(sf.kalkis,parseInt(pk.gece)||0)}; })
+      .filter(x=>x.pk.id&&pkgDurum(x.pk)!=='arsiv'&&!x.pk.opsDisAcente&&!x.pk.rehbersiz);
+    if(!sefBilgi.length) return;
+    sefBilgi.sort((a,b2)=>String(a.sf.kalkis).localeCompare(String(b2.sf.kalkis)));
+    const kalkis=sefBilgi[0].sf.kalkis;
+    const end=sefBilgi.reduce((m,x)=>x.end>m?x.end:m,'');
+    if(end<bas||kalkis>son) return;
+    const kodSay={}; sefBilgi.forEach(x=>{ const kd=x.pk.paketKodu||'?'; kodSay[kd]=(kodSay[kd]||0)+1; });
+    const kod=Object.entries(kodSay).map(([kd,n])=>n>1?kd+'×'+n:kd).join('+');
+    const pax=sefBilgi.reduce((t,x)=>t+_opsPax(x.sf.pkgId,x.sf.kalkis),0);
+    if(!pax) return;
+    const rec=_opsGet(sefBilgi[0].sf.pkgId,sefBilgi[0].sf.kalkis);
+    const ops2=[...new Set(sefBilgi.map(x=>_opsOperatorAd(x.pk,x.sf.kalkis)).filter(Boolean))].join(' + ');
+    out.push({pkgId:sefBilgi[0].sf.pkgId,kalkis,end,bolum:'01',kod,op:ops2,pax,rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim(),uyeSeferler:sefBilgi.map(x=>x.sf),birlesikGrupId:b.g.id});
   });
   out.sort((a,b)=>a.kalkis.localeCompare(b.kalkis)||a.kod.localeCompare(b.kod,'tr'));
   return out;
@@ -11388,11 +11414,14 @@ function rtAta(rehId){
   const yap=()=>{
     const all=getOperasyon();
     secTurlar.forEach(st=>{
-      let r=all.find(x=>x.pkgId===st.pkgId&&x.kalkis===st.kalkis);
-      if(!r){ r={pkgId:st.pkgId,kalkis:st.kalkis,magazalar:[],oteller:[]}; all.push(r); }
-      const veri={rehberId:reh.id,rehberAd:reh.ad||'',rehberTel:reh.tel||'',rehberDil:Array.isArray(reh.diller)?reh.diller.join(', '):(reh.dil||'')};
-      if(st.bolum&&st.bolum!=='01'){ r.bolumReh=r.bolumReh||{}; r.bolumReh[st.bolum]=veri; }
-      else Object.assign(r,veri);
+      const hedefler=(st.uyeSeferler&&st.uyeSeferler.length)?st.uyeSeferler:[{pkgId:st.pkgId,kalkis:st.kalkis}];
+      hedefler.forEach(hs=>{
+        let r=all.find(x=>x.pkgId===hs.pkgId&&x.kalkis===hs.kalkis);
+        if(!r){ r={pkgId:hs.pkgId,kalkis:hs.kalkis,magazalar:[],oteller:[]}; all.push(r); }
+        const veri={rehberId:reh.id,rehberAd:reh.ad||'',rehberTel:reh.tel||'',rehberDil:Array.isArray(reh.diller)?reh.diller.join(', '):(reh.dil||'')};
+        if(st.bolum&&st.bolum!=='01'&&!(st.uyeSeferler&&st.uyeSeferler.length)){ r.bolumReh=r.bolumReh||{}; r.bolumReh[st.bolum]=veri; }
+        else Object.assign(r,veri);
+      });
     });
     setOperasyon(all); window._rtSecSet.clear(); renderRehberTakvim();
     showToast(secTurlar.map(t=>t.kod).join(' + ')+' → '+reh.ad+(secTurlar.length>1?' (birleşik grup)':'')+' atandı','success');
