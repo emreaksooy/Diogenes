@@ -1929,7 +1929,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v319 · 04.09.2026';
+const APP_VER='v320 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7813,7 +7813,7 @@ function _showLogin(show){
 }
 function _skipLogin(){ _showLogin(false); _setCloud('err','Çevrimdışı (eşitleme kapalı)'); showToast('Çevrimdışı moddasın — değişiklikler buluta yazılmayacak','error',5000); }
 
-const REH_DOMAIN='@diogenes.sistem';
+const REH_DOMAIN='@diogenestravel.com';
 async function doLogin(){
   let em=(document.getElementById('loginEmail')?.value||'').trim().toLowerCase();
   if(em&&!em.includes('@')) em+=REH_DOMAIN; // kullanıcı adı girildi → sistem alanı tamamlanır
@@ -10878,14 +10878,8 @@ function _onRemote(kind,p){
 // ═══ REHBER PANELİ ═══
 const _rehbNrm=x=>String(x||'').replace(/İ/g,'i').replace(/I/g,'i').toLocaleLowerCase('tr').trim();
 function _rehbEsle(em){
-  // 1) tam adres eşleşmesi; 2) kullanıcı adı (@ öncesi) eşleşmesi — yalnız TEK aday varsa
-  const L=(getTanimlar().rehberler||[]).filter(r=>(r.email||'').trim());
-  let rh=L.find(r=>_rehbNrm(r.email)===_rehbNrm(em));
-  if(!rh){
-    const kul=_rehbNrm(String(em).split('@')[0]);
-    if(kul){ const adaylar=L.filter(r=>_rehbNrm(String(r.email).split('@')[0])===kul); if(adaylar.length===1) rh=adaylar[0]; }
-  }
-  return rh||null;
+  // YALNIZ tam adres eşleşmesi — tanımdaki adres, Supabase'deki adresle birebir aynı olmalı
+  return (getTanimlar().rehberler||[]).find(r=>(r.email||'').trim()&&_rehbNrm(r.email)===_rehbNrm(em))||null;
 }
 function _rehbBen(){
   const em=(sbUser&&sbUser.email)||'';
