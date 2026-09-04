@@ -1914,7 +1914,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v310 · 04.09.2026';
+const APP_VER='v311 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2200,6 +2200,7 @@ function _navPush(){
   if(_navGeriModu) return;
   try{
     const s=_navSnap();
+    if(s.page==='operasyon'&&s.ops==='grup'&&!s.tdGid) return; // grup listesi görünümü kaldırıldı — geçmişe girmez
     const son=_navGecmis[_navGecmis.length-1];
     if(son&&JSON.stringify(son)===JSON.stringify(s)) return;
     _navGecmis.push(s);
@@ -2207,13 +2208,14 @@ function _navPush(){
   }catch(e){}
 }
 function navGeri(){
-  const s=_navGecmis.pop();
+  let s=null;
+  while(_navGecmis.length){ s=_navGecmis.pop(); if(!(s.page==='operasyon'&&s.ops==='grup'&&!s.tdGid)) break; s=null; }
   if(!s){ showToast('Geri gidilecek görünüm yok',null,2000); return; }
   _navGeriModu=true;
   try{
     showPage(s.page);
     if(s.page==='operasyon'){
-      if(s.tdGid){ opsTab('grup'); _tdGid=s.tdGid; _tdTab=_tdTab||'yolcu'; renderOpsGrup(); }
+      if(s.tdGid){ _tdGid=s.tdGid; _tdTab=_tdTab||'yolcu'; opsTab('grup',true); renderOpsGrup(); }
       else if(s.ops) opsTab(s.ops);
     }
     if(s.page==='magmuh') mmTab(s.mm||'muh');
@@ -11117,8 +11119,8 @@ function opsOpen(pkgId,kalkis){
   let gruplar=[];
   try{ gruplar=_ogResolve().filter(g=>(g.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)); }catch(e){}
   _opsView(false); // eski detay ekranı kullanım dışı
-  if(gruplar.length===1){ opsTab('grup'); _ogDate=kalkis; opsTdAc(gruplar[0].id); return; }
-  if(gruplar.length>1){ opsTab('grup'); _ogDate=kalkis; _tdGid=null; _ogSel.clear(); renderOpsGrup(); showToast('Bu kalkış '+gruplar.length+' gruba bölünmüş — dosyasını açacağın grubu seç',null,4000); return; }
+  if(gruplar.length===1){ _ogDate=kalkis; opsTdAc(gruplar[0].id); opsTab('grup',true); return; }
+  if(gruplar.length>1){ _ogDate=kalkis; opsTdAc(gruplar[0].id); opsTab('grup',true); showToast('Bu kalkış '+gruplar.length+' gruba bölünmüş — ilk grubun dosyası açıldı',null,4000); return; }
   // yolcu girilmemiş sefer: sefer bazlı kalıcı grup aç → Tur Dosyası yine açılır
   const S=getOpsGrup(); S.gruplar=S.gruplar||{};
   let sg=Object.values(S.gruplar).find(g=>g.sefer&&g.sefer.pkgId===pkgId&&g.sefer.kalkis===kalkis);
@@ -11128,7 +11130,7 @@ function opsOpen(pkgId,kalkis){
     sg={id:nid,no:_ogNoVer(S,kalkis),ad:(pk.paketKodu?pk.paketKodu+' ':'')+_fmtDateTR(kalkis),rehberId:'',not:'',uyeler:[],tahsisler:[],sefer:{pkgId:pkgId,kalkis:kalkis}};
     S.gruplar[nid]=sg; setOpsGrup(S);
   }
-  opsTab('grup'); _ogDate=kalkis; opsTdAc(sg.id);
+  _ogDate=kalkis; opsTdAc(sg.id); opsTab('grup',true);
 }
 function _opsGrupReh(pkgId,kalkis){
   try{
@@ -11962,8 +11964,8 @@ function sbToggle(){
   try{ localStorage.setItem('dmc_sbKapali',kapali?'1':'0'); }catch(e){}
 }
 try{ if(localStorage.getItem('dmc_sbKapali')==='1') document.body.classList.add('sb-kapali'); }catch(e){}
-function opsTab(t){
-  if(typeof _opsTab!=='undefined'&&t!==_opsTab) _navPush();
+function opsTab(t,noPush){
+  if(!noPush&&typeof _opsTab!=='undefined'&&t!==_opsTab) _navPush();
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
   ['anasayfa','gunluk','rehtak','grup','transfer','tanim','mutabakat','birlestir','turlar'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
@@ -12613,7 +12615,7 @@ function gbDagit(gid){
     setOpsGrup(S); renderGrupBirlestir(); showToast('Grup dağıtıldı','success');
   });
 }
-function gbDosya(gid){ window._tdDonus='birlestir'; opsTab('grup'); opsTdAc(gid); }
+function gbDosya(gid){ window._tdDonus='birlestir'; opsTdAc(gid); opsTab('grup',true); }
 // ═══ TURLAR — tüm turlar tek listede (birleşikler TEK satır) ═══
 let _otBas='', _otSon='', _otAra='';
 function renderOpsTurlar(){
@@ -12761,6 +12763,7 @@ function _ogSplitApply(){
 function opsGrupNav(d){ _ogDate=_isoAdd(_ogDate||_opsToday(),d); _ogSel.clear(); _ogSplitGid=null; renderOpsGrup(); }
 function opsGrupSet(v){ _ogDate=v||_opsToday(); _ogSel.clear(); _ogSplitGid=null; renderOpsGrup(); }
 function renderOpsGrup(){
+  if(typeof _tdGid!=='undefined'&&!_tdGid){ try{ opsTab('turlar'); }catch(e){} return; }
   const box=document.getElementById('opsPane_grup'); if(!box) return;
   if(_tdGid){ renderTurDosyasi(box); return; }
   if(!_ogDate) _ogDate=_opsDate||_opsToday();
