@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v350 · 04.09.2026';
+const APP_VER='v351 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13111,7 +13111,7 @@ function _renderSatisPaketYon(box){
         <b style="font-size:.76rem;color:#166534">KUR TAX:</b>
         <input value="${esc(kt.deger!=null?kt.deger:'')}" inputmode="decimal" placeholder="€" onchange="spKurTax('${p.id}','deger',this.value)" style="${inp};width:70px;text-align:right">
         <select onchange="spKurTax('${p.id}','tip',this.value)" style="${inp}">
-          <option value="gece" ${(kt.tip||'gece')==='gece'?'selected':''}>€ / kişi / gece (× ${parseInt(p.gece)||0} gece = ${(Math.round(_tdN(kt.deger)*(parseInt(p.gece)||0)*100)/100)||0} €)</option>
+          <option value="gece" ${(kt.tip||'gece')==='gece'?'selected':''}>€ / kişi / gece — müşterinin kendi konaklama gecesiyle çarpılır (açılım yoksa ${parseInt(p.gece)||0} gece)</option>
           <option value="sabit" ${kt.tip==='sabit'?'selected':''}>€ / kişi (paket sabit)</option>
         </select>
         <span style="font-size:.66rem;color:var(--muted)">Rehber dosyasındaki yolcu listesinde kişi başı otomatik yazılır</span>
@@ -13139,8 +13139,14 @@ function spSet(id,i,f,v){ const p=_spPkg(id); if(!p||!(p.aktiviteler||[])[i])ret
 function spDel(id,i){ const p=_spPkg(id); if(!p||!p.aktiviteler)return; p.aktiviteler.splice(i,1); setPackages(getPackages()); renderOpsTanim(); }
 function spKurTax(id,f,v){ const p=_spPkg(id); if(!p)return; p.kurTax=p.kurTax||{tip:'gece',deger:''}; p.kurTax[f]=String(v).trim(); setPackages(getPackages()); if(f==='tip') renderOpsTanim(); }
 function _tdKurTaxKisi(k){
-  try{ const pk=getPackages().find(p=>p.id===k.pkgId); const kt=pk&&pk.kurTax; if(!kt||!_tdN(kt.deger)) return 0;
-    return (kt.tip==='sabit')?_tdN(kt.deger):_tdN(kt.deger)*(parseInt(pk.gece)||0);
+  try{
+    const pk=getPackages().find(p=>p.id===k.pkgId); const kt=pk&&pk.kurTax; if(!kt||!_tdN(kt.deger)) return 0;
+    if(kt.tip==='sabit') return _tdN(kt.deger);
+    // gecelik: kişinin GERÇEK konaklaması (rezervasyon kartlarındaki gece toplamı); açılım yoksa tur gecesi
+    let gece=0;
+    try{ const rz=_tdRezv(k.resno); if(rz) gece=(rz.kartlar||[]).filter(x=>x&&x.tip!=='ulasim').reduce((t,x)=>t+(+x.gece||0),0); }catch(e){}
+    if(!gece) gece=parseInt(pk.gece)||0;
+    return _tdN(kt.deger)*gece;
   }catch(e){ return 0; }
 }
 function _tdMxKey(k){ return String(k.resno||'')+'|'+String((k.soyad||'')+'_'+(k.ad||'')).replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü_]/g,''); }
