@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v345 · 04.09.2026';
+const APP_VER='v346 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13529,7 +13529,8 @@ function _tdYevToplam(g){ const t=_tdN(g.yevmiye.tutar), gn=+g.gunSay||0;
 }
 function _tdAktList(E){
   const out=[]; const seen=new Set();
-  (E.uyeler||[]).forEach(u=>{ const pk=getPackages().find(p=>p.id===u.pkgId); if(!pk) return;
+  const uyeler=(E.uyeler||[]).length?E.uyeler:((E.sefer&&E.sefer.pkgId)?[{pkgId:E.sefer.pkgId}]:[]);
+  uyeler.forEach(u=>{ const pk=getPackages().find(p=>p.id===u.pkgId); if(!pk) return;
     (pk.aktiviteler||[]).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:_aktFiyatNum(a.fiyat),dahil:!!a.dahilMi,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:'')}); });
   });
   return out;
@@ -13623,6 +13624,25 @@ function tdAracSet(i,f,v){ const g=_tdG(); if(!g||!g.araclar[i])return; g.aracla
   if(rerender) renderOpsGrup(); else _tdAracDom(i);
 }
 function tdAracDel(i){ const g=_tdG(); if(!g)return; g.araclar.splice(i,1); _tdSave(); renderOpsGrup(); }
+function tdSatisPaketleriGetir(sessiz){
+  const g=_tdG(), E=_tdE(); if(!g||!E) return 0;
+  if(g.hesapKapali){ if(!sessiz) showToast('Hesaplaşma kapalı — önce yeniden aç','error'); return 0; }
+  g.satislar=g.satislar||[];
+  const mev=new Set(g.satislar.map(x=>String(x.ad||'').trim().toLocaleUpperCase('tr')));
+  let n=0;
+  _tdAktList(E).forEach(a=>{
+    if(a.dahil) return;
+    if(mev.has(String(a.ad).trim().toLocaleUpperCase('tr'))) return;
+    g.satislar.push({id:R_GID(),ad:a.ad,alis:'',satis:String(a.fiyat||''),pax:'',odeme:'',komTip:a.komTip||'%',komDeg:(a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'',rez:'',ozel:false,not:'',ekleyen:''});
+    n++;
+  });
+  if(n) _tdSave();
+  if(!sessiz){
+    if(n){ renderOpsGrup(); showToast(n+' satılacak paket eklendi','success'); }
+    else showToast('Eklenecek yeni paket yok — paketler ürünün Aktiviteler bölümünde tanımlanır','error',5500);
+  }
+  return n;
+}
 function tdSatisAdd(ozel){
   const g=_tdG(); if(!g)return;
   if(ozel&&_cloudOn&&sbRol&&sbRol!=='yonetici'){ showToast('Gruba özel paketi yalnız yönetici (operasyon müdürü) açabilir','error'); return; }
@@ -13768,9 +13788,11 @@ function renderTurDosyasi(box){
   }
   // ═ TUR SATIŞLARI ═
   if(_tdTab==='satis'){
+    if(!(g.satislar||[]).length&&!g.hesapKapali){ try{ tdSatisPaketleriGetir(true); }catch(e){} }
     const aktL=_tdAktList(E);
     const kilit=g.hesapKapali?' disabled':'';
     h+=`<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="tdSatisPaketleriGetir()"${kilit}>⟳ Paketleri Getir</button>
       <button class="btn btn-outline btn-sm" onclick="tdSatisAdd(false)"${kilit}>+ Paket satırı</button>
       <button class="btn btn-outline btn-sm" style="border-color:#a855f7;color:#7e22ce" onclick="tdSatisAdd(true)"${kilit}>+ Gruba özel paket (müdür)</button>
       <span style="font-size:.68rem;color:var(--muted);align-self:center">Paket adında ürün aktiviteleri önerilir · adet bazlı · komisyon: % ya da kişi başı €</span>
