@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v354 · 04.09.2026';
+const APP_VER='v355 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13754,17 +13754,26 @@ function tdSatisPaketleriGetir(sessiz){
   if(g.hesapKapali){ if(!sessiz) showToast('Hesaplaşma kapalı — önce yeniden aç','error'); return 0; }
   g.satislar=g.satislar||[];
   const mev=new Set(g.satislar.map(x=>String(x.ad||'').trim().toLocaleUpperCase('tr')));
-  let n=0;
+  let n=0, guncel=0;
   _tdAktList(E).forEach(a=>{
     if(a.dahil) return;
-    if(mev.has(String(a.ad).trim().toLocaleUpperCase('tr'))) return;
+    const anah=String(a.ad).trim().toLocaleUpperCase('tr');
+    if(mev.has(anah)){
+      // mevcut satırın fiyat/komisyonunu tanımla eşitle (pax/ödeme korunur)
+      const st=g.satislar.find(x=>!x.ozel&&String(x.ad||'').trim().toLocaleUpperCase('tr')===anah);
+      if(st){
+        const yeniSatis=String(a.fiyat||''), yeniTip=a.komTip||st.komTip||'%', yeniDeg=(a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'';
+        if(st.satis!==yeniSatis||st.komTip!==yeniTip||st.komDeg!==yeniDeg){ st.satis=yeniSatis; st.komTip=yeniTip; st.komDeg=yeniDeg; guncel++; }
+      }
+      return;
+    }
     g.satislar.push({id:R_GID(),ad:a.ad,alis:'',satis:String(a.fiyat||''),pax:'',odeme:'',komTip:a.komTip||'%',komDeg:(a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'',rez:'',ozel:false,not:'',ekleyen:''});
     n++;
   });
-  if(n) _tdSave();
+  if(n||guncel) _tdSave();
   if(!sessiz){
-    if(n){ renderOpsGrup(); showToast(n+' satılacak paket eklendi','success'); }
-    else showToast('Eklenecek yeni paket yok — paketler ürünün Aktiviteler bölümünde tanımlanır','error',5500);
+    if(n||guncel){ renderOpsGrup(); showToast((n?n+' paket eklendi':'')+(n&&guncel?' · ':'')+(guncel?guncel+' paketin fiyat/komisyonu güncellendi':''),'success'); }
+    else showToast('Yeni/değişen paket yok — paketler Satış Paketleri tanımından gelir','error',5500);
   }
   return n;
 }
@@ -13776,6 +13785,9 @@ function tdSatisAdd(ozel){
 }
 function tdSatisSet(i,f,v){
   const g=_tdG(); if(!g||!g.satislar[i])return;
+  const x0=g.satislar[i];
+  if(sbRol==='rehber'&&!['pax','odeme','rez'].includes(f)){ showToast('Fiyat ve komisyon tanımdan gelir — yalnız adet/ödeme girebilirsin','error'); return; }
+  if(['ad','alis','satis','komTip','komDeg'].includes(f)&&!x0.ozel&&_cloudOn&&sbRol&&sbRol!=='yonetici'){ showToast('Fiyat/komisyon Satış Paketleri tanımından yönetilir','error'); return; }
   g.satislar[i][f]=String(v).trim();
   if(f==='ad'){ const E=_tdE(); const a=E?_tdAktList(E).find(x=>x.ad.toLocaleLowerCase('tr')===String(v).trim().toLocaleLowerCase('tr')):null; if(a){ if(!_tdN(g.satislar[i].satis)) g.satislar[i].satis=String(a.fiyat||''); if(a.komTip&&!g.satislar[i].komTip){ g.satislar[i].komTip=a.komTip; if((a.komDeg!==''&&a.komDeg!=null)&&!_tdN(g.satislar[i].komDeg)) g.satislar[i].komDeg=String(a.komDeg); } } }
   _tdSave(); _tdSatisDom();
@@ -13918,7 +13930,7 @@ function renderTurDosyasi(box){
     const kilit=g.hesapKapali?' disabled':'';
     h+=`<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
       <button class="btn btn-outline btn-sm" onclick="tdSatisPaketleriGetir()"${kilit}>⟳ Paketleri Getir</button>
-      <button class="btn btn-outline btn-sm" onclick="tdSatisAdd(false)"${kilit}>+ Paket satırı</button>
+      ${sbRol==='rehber'?'':`<button class="btn btn-outline btn-sm" onclick="tdSatisAdd(false)"${kilit}>+ Paket satırı</button>`}
       <button class="btn btn-outline btn-sm" style="border-color:#a855f7;color:#7e22ce" onclick="tdSatisAdd(true)"${kilit}>+ Gruba özel paket (müdür)</button>
       <span style="font-size:.68rem;color:var(--muted);align-self:center">Paket adında ürün aktiviteleri önerilir · adet bazlı · komisyon: % ya da kişi başı €</span>
     </div>
@@ -13950,15 +13962,15 @@ function renderTurDosyasi(box){
     <div style="overflow-x:auto"><table class="rzmg" style="min-width:900px">
     <tr><th style="min-width:190px">Paket</th><th style="width:80px">Alış</th><th style="width:80px">Satış</th><th style="width:60px">Pax</th><th style="width:95px">Toplam</th><th style="width:85px">Ödemeler</th><th style="width:78px">Kom. tipi</th><th style="width:66px">Değer</th><th style="width:90px">Rehber Kom.</th><th style="width:104px">Op. Rez.</th><th style="width:30px"></th></tr>
     ${g.satislar.map((x,i)=>`<tr${x.ozel?' style="background:#fdf4ff"':''}>
-      <td><div style="display:flex;align-items:center;gap:5px"><input value="${esc(x.ad)}" list="tdAktL" style="flex:1" onchange="tdSatisSet(${i},'ad',this.value)"${kilit}>${x.ozel?`<span title="${esc(x.ekleyen||'')}" style="background:#f3e8ff;color:#7e22ce;padding:1px 6px;border-radius:8px;font-size:.56rem;font-weight:800">ÖZEL</span>`:''}</div>
+      <td><div style="display:flex;align-items:center;gap:5px"><input value="${esc(x.ad)}" list="tdAktL" style="flex:1" onchange="tdSatisSet(${i},'ad',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}>${x.ozel?`<span title="${esc(x.ekleyen||'')}" style="background:#f3e8ff;color:#7e22ce;padding:1px 6px;border-radius:8px;font-size:.56rem;font-weight:800">ÖZEL</span>`:''}</div>
         ${x.ozel?`<input value="${esc(x.not)}" placeholder="not — ör. ilk gece yemek yok" style="margin-top:3px;font-size:.66rem" onchange="tdSatisSet(${i},'not',this.value)"${kilit}>`:''}</td>
-      <td><input inputmode="decimal" value="${esc(x.alis)}" style="text-align:right" onchange="tdSatisSet(${i},'alis',this.value)"${kilit}></td>
-      <td><input inputmode="decimal" value="${esc(x.satis)}" style="text-align:right" onchange="tdSatisSet(${i},'satis',this.value)"${kilit}></td>
+      <td><input inputmode="decimal" value="${esc(x.alis)}" style="text-align:right" onchange="tdSatisSet(${i},'alis',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}></td>
+      <td><input inputmode="decimal" value="${esc(x.satis)}" style="text-align:right" onchange="tdSatisSet(${i},'satis',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}></td>
       <td><input inputmode="numeric" value="${esc(x.pax)}" style="text-align:right" onchange="tdSatisSet(${i},'pax',this.value)"${kilit}></td>
       <td class="ro" style="text-align:right;font-weight:700" id="tdTut_${i}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td>
       <td><input inputmode="decimal" value="${esc(x.odeme)}" style="text-align:right" onchange="tdSatisSet(${i},'odeme',this.value)"${kilit}></td>
-      <td><select onchange="tdSatisSet(${i},'komTip',this.value)"${kilit}><option value="%"${x.komTip==='%'?' selected':''}>%</option><option value="pax"${x.komTip==='pax'?' selected':''}>€/pax</option><option value=""${!x.komTip?' selected':''}>yok</option></select></td>
-      <td><input inputmode="decimal" value="${esc(x.komDeg)}" style="text-align:right" onchange="tdSatisSet(${i},'komDeg',this.value)"${kilit}></td>
+      <td><select onchange="tdSatisSet(${i},'komTip',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}><option value="%"${x.komTip==='%'?' selected':''}>%</option><option value="pax"${x.komTip==='pax'?' selected':''}>€/pax</option><option value=""${!x.komTip?' selected':''}>yok</option></select></td>
+      <td><input inputmode="decimal" value="${esc(x.komDeg)}" style="text-align:right" onchange="tdSatisSet(${i},'komDeg',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}></td>
       <td class="ro" style="text-align:right" id="tdKom_${i}">${_tdEur(_tdKom(x))}</td>
       <td><select onchange="tdSatisSet(${i},'rez',this.value)"${kilit}><option value=""${!x.rez?' selected':''}>—</option><option value="bekliyor"${x.rez==='bekliyor'?' selected':''}>rez. bekliyor</option><option value="yapildi"${x.rez==='yapildi'?' selected':''}>rez. yapıldı ✓</option></select></td>
       <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="tdSatisDel(${i})"${kilit}>✕</button></td></tr>`).join('')}
