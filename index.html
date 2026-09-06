@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v343 · 04.09.2026';
+const APP_VER='v344 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11020,8 +11020,9 @@ function renderRehberim(){
       <input type="date" id="rbTarih" value="${bugun}" style="${inp}">
       <select id="rbTur" style="${inp}"><option value="">Tur…</option>${L.map(t=>`<option value="${esc(t.kod)}">${esc(t.kod)} ${_fmtDateTR(t.kalkis)}</option>`).join('')}</select>
       ${(()=>{ const M=_rehbMagazalar(); window._rbMagList=M;
-        if(!M.length) return `<input id="rbMagaza" placeholder="Mağaza" style="${inp};width:130px">`;
-        return `<select id="rbMagazaSec" onchange="rehbMagSec(this)" style="${inp};max-width:250px"><option value="">Mağaza seç…</option>${M.map((x,i)=>`<option value="${i}">${_fmtDateTR(x.tarih)} · ${esc(x.kod)} — ${esc(x.mag)}</option>`).join('')}<option value="__d">Diğer (elle yaz)…</option></select><input id="rbMagaza" placeholder="Mağaza adı" style="${inp};width:130px;display:none">`;
+        const T=_rehbTumMagazalar(); window._rbTumList=T;
+        if(!M.length&&!T.length) return `<input id="rbMagaza" placeholder="Mağaza" style="${inp};width:130px">`;
+        return `<select id="rbMagazaSec" onchange="rehbMagSec(this)" style="${inp};max-width:270px"><option value="">Mağaza seç…</option>${M.map((x,i)=>`<option value="${i}">📅 ${_fmtDateTR(x.tarih)} · ${esc(x.kod)} — ${esc(x.mag)}</option>`).join('')}${T.length?`<option value="" disabled>— Tüm mağazalar —</option>${T.map((x,i)=>`<option value="t${i}">🏬 ${esc(x.mag)}</option>`).join('')}`:''}<option value="__d">Diğer (elle yaz)…</option></select><input id="rbMagaza" placeholder="Mağaza adı" style="${inp};width:130px;display:none">`;
       })()}
       <input id="rbPax" placeholder="Pax" inputmode="numeric" style="${inp};width:56px">
       <input id="rbTutar" placeholder="Ciro" inputmode="decimal" style="${inp};width:90px">
@@ -11057,11 +11058,25 @@ function _rehbMagazalar(){
   out.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
   return out;
 }
+function _rehbTumMagazalar(){
+  const out=[];
+  try{ _moFirmalar().forEach(f=>{
+    if((f.subeler||[]).length) f.subeler.forEach(sb2=>out.push({mag:f.ad+' · '+(sb2.ad||sb2.sehir||'')}));
+    else out.push({mag:f.ad});
+  }); }catch(e){}
+  out.sort((a,b)=>a.mag.localeCompare(b.mag,'tr'));
+  return out;
+}
 function rehbMagSec(sel){
   const v=sel.value;
   const inp=document.getElementById('rbMagaza');
   if(v==='__d'){ if(inp){ inp.style.display=''; inp.value=''; inp.focus(); } return; }
   if(inp) inp.style.display='none';
+  if(v.startsWith('t')){
+    const x=(window._rbTumList||[])[parseInt(v.slice(1),10)];
+    if(inp) inp.value=x?x.mag:'';
+    return;
+  }
   const x=(window._rbMagList||[])[parseInt(v,10)];
   if(!x){ if(inp) inp.value=''; return; }
   if(inp) inp.value=x.mag;
