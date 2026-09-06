@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v355 · 04.09.2026';
+const APP_VER='v356 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13171,6 +13171,11 @@ function _tdKurTaxKisi(k){
   }catch(e){ return 0; }
 }
 function _tdMxKey(k){ return String(k.resno||'')+'|'+String((k.soyad||'')+'_'+(k.ad||'')).replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü_]/g,''); }
+function tdMxTog(key,sid){
+  const g=_tdG(); if(!g||g.hesapKapali) return;
+  const cur=(((g.satisMx||{})[key])||{})[sid];
+  tdMxSet(key,sid,cur?'':'1');
+}
 function tdMxSet(key,sid,v){
   const g=_tdG(); if(!g||g.hesapKapali) return;
   g.satisMx=g.satisMx||{};
@@ -13944,11 +13949,11 @@ function renderTurDosyasi(box){
         const kt=_tdKurTaxKisi(k); ktTop+=kt;
         return `<tr><td style="white-space:nowrap"><b>${esc(k.soyad)}</b> ${esc(k.ad)}</td><td>${esc(k.resno)}</td>
           <td class="ro" style="text-align:right;font-weight:700;background:#f0fdf4">${kt?(Math.round(kt*100)/100):'—'}</td>
-          ${g.satislar.map(x=>`<td style="padding:0"><input inputmode="numeric" value="${esc(row[x.id]||'')}" onchange="tdMxSet('${key}','${x.id}',this.value)"${kilit} style="width:100%;min-width:52px;text-align:center;border:none;background:${row[x.id]?'#fef9c3':'transparent'};padding:6px 4px;font-family:inherit;font-size:.8rem"></td>`).join('')}</tr>`;
+          ${g.satislar.map(x=>`<td ${g.hesapKapali?'':`onclick="tdMxTog('${key}','${x.id}')"`} style="cursor:${g.hesapKapali?'default':'pointer'};text-align:center;font-weight:800;font-size:.95rem;color:#166534;background:${row[x.id]?'#dcfce7':'transparent'};user-select:none;min-width:52px;padding:7px 4px">${row[x.id]?'✓':''}</td>`).join('')}</tr>`;
       }).join('');
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <b style="font-size:.84rem">👥 Yolcu Bazlı Satış</b>
-        <span style="font-size:.66rem;color:var(--muted)">hücreye adet yaz (1 kişi = 1) — paket toplamları alttaki tabloya otomatik işler</span>
+        <span style="font-size:.66rem;color:var(--muted)">hücreye tıkla = ✓ işaretle, tekrar tıkla = kaldır — paket toplamları alttaki tabloya otomatik işler</span>
         <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="tdMxExcel()">📥 Excel</button>
       </div>
       <div style="overflow-x:auto;margin-bottom:14px"><table class="rzmg" style="min-width:700px">
