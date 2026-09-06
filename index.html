@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v360 · 04.09.2026';
+const APP_VER='v361 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13371,6 +13371,19 @@ function otGrupAc(gid){ window._tdDonus='turlar'; opsTdAc(gid); opsTab('grup',tr
 function otSecTog(key,on){ on?_gbSec.add(key):_gbSec.delete(key); renderOpsTurlar(); }
 // ═══ TURLAR — tüm turlar tek listede (birleşikler TEK satır) ═══
 let _otBas='', _otSon='', _otAra='';
+function otMagProg(gid,val){
+  let g=null; try{ g=_ogResolve().find(x=>x.id===gid); }catch(e){}
+  if(!g){ showToast('Grup bulunamadı','error'); return; }
+  const sef=[...new Set((g.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis))];
+  const all=getOperasyon();
+  sef.forEach(k=>{ const p=k.split('|');
+    let rec=all.find(x=>x.pkgId===p[0]&&x.kalkis===p[1]);
+    if(!rec){ rec={pkgId:p[0],kalkis:p[1],magazalar:[],oteller:[]}; all.push(rec); }
+    if(val) rec.magazaProgram=val; else delete rec.magazaProgram;
+  });
+  setOperasyon(all); renderOpsTurlar();
+  showToast('Mağaza ziyaretleri seçilen turun programına göre yapılacak','success');
+}
 function renderOpsTurlar(){
   const box=document.getElementById('opsPane_turlar'); if(!box) return;
   if(!_otBas){ _otBas=_opsToday(); _otSon=_isoAdd(_otBas,60); }
@@ -13413,7 +13426,13 @@ function renderOpsTurlar(){
         <td style="${td}">${secOk?`<input type="checkbox" ${_gbSec.has(key)?'checked':''} onchange="otSecTog('${key}',this.checked)" title="Birleştirmek için seç">`:''}</td>
         <td style="${td}"><b>${_fmtDateTR(t.kalkis)}</b></td>
         <td style="${td}">${_fmtDateTR(t.end)}</td>
-        <td style="${td}"><b>${esc(t.kod)}</b>${t.bolum&&t.bolum!=='01'?' <span style="color:var(--muted);font-size:.64rem">G'+esc(t.bolum)+'</span>':''}${bl}${(t.uyeSeferler&&t.uyeSeferler.length)?`<div style="font-size:.62rem;color:var(--muted);margin-top:2px;line-height:1.5">${t.uyeSeferler.map(sf=>{const pk=getPackages().find(p=>p.id===sf.pkgId)||{};return esc(pk.paketKodu||'?')+' '+_fmtDateTR(sf.kalkis)+' ('+_opsPax(sf.pkgId,sf.kalkis)+' pax)';}).join(' + ')}</div>`:''}</td>
+        <td style="${td}"><b>${esc(t.kod)}</b>${t.bolum&&t.bolum!=='01'?' <span style="color:var(--muted);font-size:.64rem">G'+esc(t.bolum)+'</span>':''}${bl}${(t.uyeSeferler&&t.uyeSeferler.length)?`<div style="font-size:.62rem;color:var(--muted);margin-top:2px;line-height:1.5">${t.uyeSeferler.map(sf=>{const pk=getPackages().find(p=>p.id===sf.pkgId)||{};return esc(pk.paketKodu||'?')+' '+_fmtDateTR(sf.kalkis)+' ('+_opsPax(sf.pkgId,sf.kalkis)+' pax)';}).join(' + ')}</div>
+        <div style="font-size:.62rem;margin-top:3px" onclick="event.stopPropagation()">🏬 Mağaza programı:
+          <select onchange="otMagProg('${t.birlesikGrupId}',this.value)" style="padding:2px 5px;border:1px solid var(--border);border-radius:6px;font-size:.64rem;font-family:inherit">
+            ${(()=>{ let mev=''; try{ const sf0=t.uyeSeferler[0]; mev=(_opsGet(sf0.pkgId,sf0.kalkis)||{}).magazaProgram||''; }catch(e){}
+              return t.uyeSeferler.map(sf=>{ const pk=getPackages().find(p=>p.id===sf.pkgId)||{}; const v2=sf.pkgId+'|'+sf.kalkis;
+                return `<option value="${v2}" ${mev===v2?'selected':''}>${esc(pk.paketKodu||'?')} programı (${_fmtDateTR(sf.kalkis)})</option>`; }).join(''); })()}
+          </select></div>`:''}</td>
         <td style="${td}">${esc(t.op||'—')}</td>
         <td style="${td}"><b>${t.pax}</b></td>
         <td style="${td}">${reh}</td>
