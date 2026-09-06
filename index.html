@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v358 · 04.09.2026';
+const APP_VER='v359 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13792,8 +13792,9 @@ function tdSatisAdd(ozel){
 function tdSatisSet(i,f,v){
   const g=_tdG(); if(!g||!g.satislar[i])return;
   const x0=g.satislar[i];
-  if(sbRol==='rehber'&&!['pax','odeme','rez'].includes(f)){ showToast('Fiyat ve komisyon tanımdan gelir — yalnız adet/ödeme girebilirsin','error'); return; }
-  if(['ad','alis','satis','komTip','komDeg'].includes(f)&&!x0.ozel&&_cloudOn&&sbRol&&sbRol!=='yonetici'){ showToast('Fiyat/komisyon Satış Paketleri tanımından yönetilir','error'); return; }
+  if(sbRol==='rehber'&&!['pax','odeme','rez','alis','satis'].includes(f)){ showToast('Komisyon ve paket adı tanımdan gelir','error'); return; }
+  if(sbRol==='rehber'&&f==='satis'&&x0.fiyatGizli){ showToast('Bu paketin fiyatı gizli','error'); return; }
+  if(['ad','komTip','komDeg'].includes(f)&&!x0.ozel&&_cloudOn&&sbRol&&sbRol!=='yonetici'){ showToast('Komisyon ve paket adı Satış Paketleri tanımından yönetilir','error'); return; }
   g.satislar[i][f]=String(v).trim();
   if(f==='ad'){ const E=_tdE(); const a=E?_tdAktList(E).find(x=>x.ad.toLocaleLowerCase('tr')===String(v).trim().toLocaleLowerCase('tr')):null; if(a){ if(!_tdN(g.satislar[i].satis)) g.satislar[i].satis=String(a.fiyat||''); if(a.komTip&&!g.satislar[i].komTip){ g.satislar[i].komTip=a.komTip; if((a.komDeg!==''&&a.komDeg!=null)&&!_tdN(g.satislar[i].komDeg)) g.satislar[i].komDeg=String(a.komDeg); } } }
   _tdSave(); _tdSatisDom();
@@ -13975,8 +13976,8 @@ function renderTurDosyasi(box){
     ${g.satislar.map((x,i)=>`<tr${x.ozel?' style="background:#fdf4ff"':''}>
       <td><div style="display:flex;align-items:center;gap:5px"><input value="${esc(x.ad)}" list="tdAktL" style="flex:1" onchange="tdSatisSet(${i},'ad',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}>${x.ozel?`<span title="${esc(x.ekleyen||'')}" style="background:#f3e8ff;color:#7e22ce;padding:1px 6px;border-radius:8px;font-size:.56rem;font-weight:800">ÖZEL</span>`:''}</div>
         ${x.ozel?`<input value="${esc(x.not)}" placeholder="not — ör. ilk gece yemek yok" style="margin-top:3px;font-size:.66rem" onchange="tdSatisSet(${i},'not',this.value)"${kilit}>`:''}</td>
-      <td><input inputmode="decimal" value="${esc(x.alis)}" style="text-align:right" onchange="tdSatisSet(${i},'alis',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}></td>
-      <td>${(x.fiyatGizli&&sbRol==='rehber')?'<span style="color:var(--muted)">•••</span>':`<input inputmode="decimal" value="${esc(x.satis)}" style="text-align:right" onchange="tdSatisSet(${i},'satis',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}>`}</td>
+      <td><input inputmode="decimal" value="${esc(x.alis)}" style="text-align:right" onchange="tdSatisSet(${i},'alis',this.value)"${kilit}></td>
+      <td>${(x.fiyatGizli&&sbRol==='rehber')?'<span style="color:var(--muted)">•••</span>':`<input inputmode="decimal" value="${esc(x.satis)}" style="text-align:right" onchange="tdSatisSet(${i},'satis',this.value)"${kilit}>`}</td>
       <td><input inputmode="numeric" value="${esc(x.pax)}" style="text-align:right" onchange="tdSatisSet(${i},'pax',this.value)"${kilit}></td>
       <td class="ro" style="text-align:right;font-weight:700" id="tdTut_${i}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td>
       <td><input inputmode="decimal" value="${esc(x.odeme)}" style="text-align:right" onchange="tdSatisSet(${i},'odeme',this.value)"${kilit}></td>
