@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v344 · 04.09.2026';
+const APP_VER='v345 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2329,7 +2329,7 @@ function showPage(id, tabEl) {
   if(id==='maliyet') updateCalc();
   if(id==='paketlerim') renderDashboard();
   if(id==='yonetim') renderYonetim();
-  if(id==='magmuh') mmTab(window._mmTab||'firmalar');
+  if(id==='magmuh'){ let mt=window._mmTab; if(!mt){ try{ mt=localStorage.getItem('dmc_mmTab'); }catch(e){} } mmTab(mt||'firmalar'); }
   if(id==='ekip') renderEkipPanel();
   if(id==='rehberim') renderRehberim();
   if(id==='paket') refreshSidebarPkgSwitch();
@@ -14536,6 +14536,7 @@ let _mmAy='', _mmFirmaF='', _mmDurumF='', _mmAcik=new Set();
 function mmTab(t){
   if(window._mmTab&&t!==window._mmTab) _navPush();
   window._mmTab=t;
+  try{ localStorage.setItem('dmc_mmTab',t); }catch(e){}
   const b=document.getElementById('magmuhBody'), p=document.getElementById('magmuhPlanWrap'), fw=document.getElementById('magmuhFirmaWrap');
   const bm=document.getElementById('mmTabMuhBtn'), bp=document.getElementById('mmTabPlanBtn'), bf=document.getElementById('mmTabFirmaBtn');
   if(fw) fw.style.display=(t==='firmalar')?'':'none';
