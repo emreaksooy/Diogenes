@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v346 · 04.09.2026';
+const APP_VER='v347 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13078,6 +13078,44 @@ function _renderAracFirmaYon(box){
   </div>
   <div style="font-size:.7rem;color:var(--muted);margin-top:8px">Satıra tıklayınca firma detayı ve filosu açılır. Tüm ekiple bulutta ortaktır.</div>`;
 }
+function _renderSatisPaketYon(box){
+  const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv').sort((a,b)=>String(a.paketKodu||a.paketAdi||'').localeCompare(String(b.paketKodu||b.paketAdi||''),'tr'));
+  const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:.78rem;font-family:inherit';
+  const th='background:var(--navy);color:#fff;padding:4px 8px;font-size:.6rem;text-align:left;white-space:nowrap';
+  let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="_opsTanimCat=null;try{localStorage.removeItem('dmc_opsTanimCat')}catch(e){};renderOpsTanim()">← Tanımlamalar</button><b>🎟 Satış Paketleri</b><span style="color:var(--muted);font-size:.72rem">Tur başına satılacak paketleri gir — tur dosyalarının Satış sekmesine otomatik gelir</span></div>`;
+  pkgs.forEach(p=>{
+    const acik=(window._spAcik===p.id); const akt=(p.aktiviteler||[]);
+    let op=''; try{ op=_resOpAd(p)||''; }catch(e){}
+    const satilir=akt.filter(a=>!a.dahilMi&&(a.ad||'').trim()).length;
+    h+=`<div class="card" style="margin-bottom:8px;padding:.7rem 1rem">
+      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;flex-wrap:wrap" onclick="window._spAcik=window._spAcik==='${p.id}'?null:'${p.id}';renderOpsTanim()">
+        <b style="font-size:.9rem">${esc(p.paketKodu||p.paketAdi||'—')}</b>
+        <span style="color:var(--muted);font-size:.74rem">${esc(op)}</span>
+        <span style="margin-left:auto;font-size:.72rem;font-weight:700;color:${satilir?'var(--primary)':'#b45309'}">${satilir?satilir+' satılacak paket':'paket girilmedi'}</span>
+        <span>${acik?'▲':'▼'}</span>
+      </div>`;
+    if(acik){
+      h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:8px">
+        <tr><th style="${th}">Paket / Aktivite</th><th style="${th}">Fiyat €</th><th style="${th}">Kom. Tipi</th><th style="${th}">Kom.</th><th style="${th}" title="Pakete dahil — satış listesine gelmez">Dahil</th><th style="${th}"></th></tr>
+        ${akt.map((a,i)=>`<tr>
+          <td style="padding:3px 4px"><input value="${esc(a.ad||'')}" placeholder="ör. Kapadokya Balon" onchange="spSet('${p.id}',${i},'ad',this.value)" style="${inp};width:100%;min-width:160px"></td>
+          <td style="padding:3px 4px"><input value="${esc(a.fiyat!=null?a.fiyat:'')}" inputmode="decimal" onchange="spSet('${p.id}',${i},'fiyat',this.value)" style="${inp};width:72px;text-align:right"></td>
+          <td style="padding:3px 4px"><select onchange="spSet('${p.id}',${i},'komTip',this.value)" style="${inp}"><option value="%" ${(a.komTip||'%')==='%'?'selected':''}>% (yüzde)</option><option value="€" ${a.komTip==='€'?'selected':''}>€ (kişi başı)</option></select></td>
+          <td style="padding:3px 4px"><input value="${esc(a.komDeg!=null?a.komDeg:'')}" inputmode="decimal" onchange="spSet('${p.id}',${i},'komDeg',this.value)" style="${inp};width:56px;text-align:right"></td>
+          <td style="padding:3px 4px;text-align:center"><input type="checkbox" ${a.dahilMi?'checked':''} onchange="spSet('${p.id}',${i},'dahilMi',this.checked)"></td>
+          <td style="padding:3px 4px"><button onclick="spDel('${p.id}',${i})" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button></td></tr>`).join('')}
+      </table></div>
+      <button class="btn btn-primary btn-sm" onclick="spAdd('${p.id}')" style="margin-top:7px">+ Paket ekle</button>`;
+    }
+    h+='</div>';
+  });
+  if(!pkgs.length) h+='<p class="section-tip">Aktif ürün yok.</p>';
+  box.innerHTML=h;
+}
+function _spPkg(id){ return getPackages().find(p=>p.id===id)||null; }
+function spAdd(id){ const p=_spPkg(id); if(!p)return; (p.aktiviteler=p.aktiviteler||[]).push({ad:'',fiyat:'',komTip:'%',komDeg:''}); setPackages(getPackages()); renderOpsTanim(); }
+function spSet(id,i,f,v){ const p=_spPkg(id); if(!p||!(p.aktiviteler||[])[i])return; p.aktiviteler[i][f]=(f==='dahilMi')?!!v:String(v).trim(); setPackages(getPackages()); }
+function spDel(id,i){ const p=_spPkg(id); if(!p||!p.aktiviteler)return; p.aktiviteler.splice(i,1); setPackages(getPackages()); renderOpsTanim(); }
 function renderOpsTanim(){
   const box=document.getElementById('opsPane_tanim'); if(!box) return;
   const t=getTanimlar();
@@ -13085,6 +13123,7 @@ function renderOpsTanim(){
     const card=(cat,ad,ic,n,desc)=>`<div class="tanim-card" onclick="opsTanimCat('${cat}')"><div class="tc-ic"><svg class="ic"><use href="#i-${ic}"/></svg></div><div><div class="tc-ad">${ad}</div><div class="tc-sub">${n} kayıt · ${desc}</div></div></div>`;
     box.innerHTML=`<button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')" style="margin-bottom:10px">← Ana Sayfa</button><p class="section-tip">Bir kez tanımla, seferlerde listeden seç. Bir kartı aç.</p>
       <div class="tanim-cards">
+        ${card('satispaket','Satış Paketleri','ticket',getPackages().filter(p=>pkgDurum(p)!=='arsiv').reduce((n,p)=>n+((p.aktiviteler||[]).length),0),'tur başına satılacak paketler · fiyat · komisyon')}
         ${card('rehberler','Rehberler','users',(t.rehberler||[]).length,'ad · telefon · dil')}
         ${card('aracFirmalari','Araç Firmaları','bus',(t.aracFirmalari||[]).length,'firma kartı · yetkili · filo')}
         ${card('saglayicilar','Sağlayıcılar','building',(t.saglayicilar||[]).length,'mağaza/otel · tür · telefon')}
@@ -13093,6 +13132,7 @@ function renderOpsTanim(){
       </div>`;
     return;
   }
+  if(_opsTanimCat==='satispaket'){ return _renderSatisPaketYon(box); }
   if(_opsTanimCat==='rehberler'){ return _renderRehberYon(box); }
   if(_opsTanimCat==='aracFirmalari'){ return _renderAracFirmaYon(box); }
   const meta={rehberler:{ad:'Rehberler',cols:['ad','tel','dil'],hd:['Ad Soyad','Telefon','Dil']},
