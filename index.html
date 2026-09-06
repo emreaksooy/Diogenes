@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v342 · 04.09.2026';
+const APP_VER='v343 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7916,7 +7916,9 @@ async function _cloudStart(session){
     _dailyBackup();
   }catch(e){
     console.warn('cloud start',e);
-    _setCloud('err','Bulut hatası — yerel mod');
+    try{ window._sonBulutHata=(e&&(e.message||String(e)))||'?'; }catch(e2){}
+    try{ if(typeof _hataYaz==='function') _hataYaz('CLOUD-START',(e&&e.message)||String(e)); }catch(e2){}
+    _setCloud('err','Bulut hatası — yerel mod: '+((e&&e.message)||''));
   }
 }
 function _renderUserChip(){
@@ -10994,7 +10996,13 @@ function rehbGeri(){ _tdGid=null; renderRehberim(); }
 function renderRehberim(){
   const box=document.getElementById('rehberimBox'); if(!box) return;
   const ad=_rehbBen();
-  if(!ad){ box.innerHTML='<div class="card"><div class="card-title">🎤 Rehber Panelim</div><p class="section-tip">Hesabın bir rehber tanımıyla eşleştirilmemiş. Yöneticinden Ekip panelinde seni rehber tanımıyla eşleştirmesini iste.</p></div>'; return; }
+  if(!ad){
+    const veriYok=!((getTanimlar().rehberler||[]).length);
+    box.innerHTML='<div class="card"><div class="card-title">🎤 Rehber Panelim</div><p class="section-tip">'+(veriYok
+      ?'Veriler buluttan yükleniyor ya da bağlantı kurulamadı. Birkaç saniye bekleyip <b>sayfayı yenile</b>. Sorun sürerse yöneticine haber ver.'
+      :'Hesabın bir rehber tanımıyla eşleştirilmemiş. Yöneticinden rehber tanımındaki e-posta adresini kontrol etmesini iste.')+'</p>'
+      +(veriYok?'<button class="btn btn-primary btn-sm" onclick="location.reload()">↻ Yenile</button>':'')+'</div>';
+    return; }
   if(_tdGid){ box.innerHTML='<div id="rehberimTur"></div>'; renderTurDosyasi(document.getElementById('rehberimTur')); return; }
   const bugun=_opsToday();
   const L=_rehbTurlar();
