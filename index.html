@@ -1065,6 +1065,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
     <div class="card">
       <div class="card-title"><svg class="ic"><use href="#i-gear"/></svg> Yönetim Paneli <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetici</span></div>
       <div id="ynOzet" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px"></div>
+      <div style="margin:4px 0 10px"><button class="btn btn-outline btn-sm" onclick="ynBosUrunTemizle()">🧹 Boş ürün kayıtlarını temizle</button></div>
     </div>
     <div class="card">
       <div class="card-title"><svg class="ic"><use href="#i-file"/></svg> Yedekleme</div>
@@ -1976,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v348 · 04.09.2026';
+const APP_VER='v349 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7772,6 +7773,16 @@ function hataGunluguAc(){
   const L=window._hataLog||[];
   const metin=L.length?L.map(x=>x.t+' ['+x.kaynak+'] '+x.msg).join('\n\n'):'Hata kaydı yok — her şey yolunda görünüyor.';
   showConfirm('🩺','Sistem Hata Günlüğü (son '+L.length+')',metin+'\n\nBu pencerenin ekran görüntüsünü destek için paylaşabilirsiniz.','Tamam',()=>{});
+}
+function ynBosUrunTemizle(){
+  const bos=getPackages().filter(p=>!String((p.paketKodu||'')+(p.paketAdi||'')).trim()
+    &&!((p.gunler||[]).length)&&!((p.aktiviteler||[]).length)&&!((p.fiyatlandirma||[]).length)&&!((p.oteller||[]).length));
+  if(!bos.length){ showToast('Boş ürün kaydı yok — temiz ✓','success'); return; }
+  showConfirm('🧹','Boş Ürünleri Temizle',bos.length+' adet adsız ve içeriksiz ürün kaydı kalıcı olarak silinecek (buluttan da).','Temizle',()=>{
+    const ids=new Set(bos.map(p=>p.id));
+    setPackages(getPackages().filter(p=>!ids.has(p.id)));
+    renderYonetim(); showToast(bos.length+' boş kayıt silindi','success');
+  });
 }
 function renderYonetim(){
   const oz=document.getElementById('ynOzet'); if(!oz) return;
