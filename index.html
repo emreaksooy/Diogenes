@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v352 · 04.09.2026';
+const APP_VER='v353 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13090,10 +13090,23 @@ function _renderAracFirmaYon(box){
   <div style="font-size:.7rem;color:var(--muted);margin-top:8px">Satıra tıklayınca firma detayı ve filosu açılır. Tüm ekiple bulutta ortaktır.</div>`;
 }
 function _renderSatisPaketYon(box){
-  const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&String((p.paketKodu||'')+(p.paketAdi||'')).trim()).sort((a,b)=>String(a.paketKodu||a.paketAdi||'').localeCompare(String(b.paketKodu||b.paketAdi||''),'tr'));
+  const bugun=_opsToday();
+  const flt=window._spFlt||'gelecek';
+  const ara=String(window._spAra||'').toLocaleLowerCase('tr').trim();
+  let pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&String((p.paketKodu||'')+(p.paketAdi||'')).trim());
+  if(flt==='gelecek') pkgs=pkgs.filter(p=>{ try{ return (_opsTarihler(p)||[]).some(t2=>t2>=bugun); }catch(e){ return false; } });
+  if(ara){ let opAd=p=>{ try{ return _resOpAd(p)||''; }catch(e){ return ''; } };
+    pkgs=pkgs.filter(p=>((p.paketKodu||'')+' '+(p.paketAdi||'')+' '+opAd(p)).toLocaleLowerCase('tr').includes(ara)); }
+  pkgs.sort((a,b)=>String(a.paketKodu||a.paketAdi||'').localeCompare(String(b.paketKodu||b.paketAdi||''),'tr'));
   const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:.78rem;font-family:inherit';
   const th='background:var(--navy);color:#fff;padding:4px 8px;font-size:.6rem;text-align:left;white-space:nowrap';
-  let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="_opsTanimCat=null;try{localStorage.removeItem('dmc_opsTanimCat')}catch(e){};renderOpsTanim()">← Tanımlamalar</button><b>🎟 Satış Paketleri</b><span style="color:var(--muted);font-size:.72rem">Tur başına satılacak paketleri gir — tur dosyalarının Satış sekmesine otomatik gelir</span></div>`;
+  let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="_opsTanimCat=null;try{localStorage.removeItem('dmc_opsTanimCat')}catch(e){};renderOpsTanim()">← Tanımlamalar</button><b>🎟 Satış Paketleri</b>
+    <select onchange="window._spFlt=this.value;renderOpsTanim()" style="${inp}">
+      <option value="gelecek" ${flt==='gelecek'?'selected':''}>Gelecek kalkışı olanlar</option>
+      <option value="tum" ${flt==='tum'?'selected':''}>Tümü (eski kayıtlar dahil)</option>
+    </select>
+    <input value="${esc(window._spAra||'')}" oninput="window._spAra=this.value;renderOpsTanim()" placeholder="Ara: kod / operatör…" style="${inp};min-width:170px">
+    <span style="color:var(--muted);font-size:.72rem">· ${pkgs.length} tur</span></div>`;
   pkgs.forEach(p=>{
     const acik=(window._spAcik===p.id); const akt=(p.aktiviteler||[]);
     let op=''; try{ op=_resOpAd(p)||''; }catch(e){}
@@ -13132,7 +13145,7 @@ function _renderSatisPaketYon(box){
     }
     h+='</div>';
   });
-  if(!pkgs.length) h+='<p class="section-tip">Aktif ürün yok.</p>';
+  if(!pkgs.length) h+='<p class="section-tip">'+(flt==='gelecek'?'Gelecek kalkışı olan tur yok — "Tümü" filtresini dene.':'Aktif ürün yok.')+'</p>';
   box.innerHTML=h;
 }
 function _spPkg(id){ return getPackages().find(p=>p.id===id)||null; }
