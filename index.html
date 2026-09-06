@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v359 · 04.09.2026';
+const APP_VER='v360 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11645,7 +11645,7 @@ function renderOpsAnasayfa(){
 async function _opsRenderMap(){
   const el=document.getElementById('opsMap'); if(!el) return;
   const _dISO=_opsMapDate||_opsToday(); const _dLbl=(_dISO===_opsToday())?'bugün':_fmtDateTR(_dISO);
-  const aktif=_opsActiveOn(_dISO);
+  const aktif=_opsActiveOn(_dISO).filter(it=>{ try{ return _opsPax(it.pkg.id,it.kalkis)>0; }catch(e){ return true; } });
   const info=document.getElementById('opsMapInfo');
   if(typeof L==='undefined'){ el.innerHTML='<div style="padding:20px;color:var(--muted)">Harita yüklenemedi (internet gerekebilir).</div>'; if(info)info.textContent=''; return; }
   if(_opsMap){ try{_opsMap.remove();}catch(e){} _opsMap=null; }
