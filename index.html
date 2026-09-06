@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v349 · 04.09.2026';
+const APP_VER='v350 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13106,7 +13106,17 @@ function _renderSatisPaketYon(box){
         <span>${acik?'▲':'▼'}</span>
       </div>`;
     if(acik){
-      h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:8px">
+      const kt=p.kurTax||{};
+      h+=`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:7px 10px">
+        <b style="font-size:.76rem;color:#166534">KUR TAX:</b>
+        <input value="${esc(kt.deger!=null?kt.deger:'')}" inputmode="decimal" placeholder="€" onchange="spKurTax('${p.id}','deger',this.value)" style="${inp};width:70px;text-align:right">
+        <select onchange="spKurTax('${p.id}','tip',this.value)" style="${inp}">
+          <option value="gece" ${(kt.tip||'gece')==='gece'?'selected':''}>€ / kişi / gece (× ${parseInt(p.gece)||0} gece = ${(Math.round(_tdN(kt.deger)*(parseInt(p.gece)||0)*100)/100)||0} €)</option>
+          <option value="sabit" ${kt.tip==='sabit'?'selected':''}>€ / kişi (paket sabit)</option>
+        </select>
+        <span style="font-size:.66rem;color:var(--muted)">Rehber dosyasındaki yolcu listesinde kişi başı otomatik yazılır</span>
+      </div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:8px">
         <tr><th style="${th}">Paket / Aktivite</th><th style="${th}">Fiyat €</th><th style="${th}">Kom. Tipi</th><th style="${th}">Kom.</th><th style="${th}" title="Pakete dahil — satış listesine gelmez">Dahil</th><th style="${th}"></th></tr>
         ${akt.map((a,i)=>`<tr>
           <td style="padding:3px 4px"><input value="${esc(a.ad||'')}" placeholder="ör. Kapadokya Balon" onchange="spSet('${p.id}',${i},'ad',this.value)" style="${inp};width:100%;min-width:160px"></td>
@@ -13127,6 +13137,43 @@ function _spPkg(id){ return getPackages().find(p=>p.id===id)||null; }
 function spAdd(id){ const p=_spPkg(id); if(!p)return; (p.aktiviteler=p.aktiviteler||[]).push({ad:'',fiyat:'',komTip:'%',komDeg:''}); setPackages(getPackages()); renderOpsTanim(); }
 function spSet(id,i,f,v){ const p=_spPkg(id); if(!p||!(p.aktiviteler||[])[i])return; p.aktiviteler[i][f]=(f==='dahilMi')?!!v:String(v).trim(); setPackages(getPackages()); }
 function spDel(id,i){ const p=_spPkg(id); if(!p||!p.aktiviteler)return; p.aktiviteler.splice(i,1); setPackages(getPackages()); renderOpsTanim(); }
+function spKurTax(id,f,v){ const p=_spPkg(id); if(!p)return; p.kurTax=p.kurTax||{tip:'gece',deger:''}; p.kurTax[f]=String(v).trim(); setPackages(getPackages()); if(f==='tip') renderOpsTanim(); }
+function _tdKurTaxKisi(k){
+  try{ const pk=getPackages().find(p=>p.id===k.pkgId); const kt=pk&&pk.kurTax; if(!kt||!_tdN(kt.deger)) return 0;
+    return (kt.tip==='sabit')?_tdN(kt.deger):_tdN(kt.deger)*(parseInt(pk.gece)||0);
+  }catch(e){ return 0; }
+}
+function _tdMxKey(k){ return String(k.resno||'')+'|'+String((k.soyad||'')+'_'+(k.ad||'')).replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü_]/g,''); }
+function tdMxSet(key,sid,v){
+  const g=_tdG(); if(!g||g.hesapKapali) return;
+  g.satisMx=g.satisMx||{};
+  const val=String(v||'').trim();
+  if(val) (g.satisMx[key]=g.satisMx[key]||{})[sid]=val;
+  else if(g.satisMx[key]){ delete g.satisMx[key][sid]; if(!Object.keys(g.satisMx[key]).length) delete g.satisMx[key]; }
+  const st=(g.satislar||[]).find(x=>x.id===sid);
+  if(st){ let top=0; Object.values(g.satisMx).forEach(row=>{ top+=_tdN(row[sid]); }); st.pax=top?String(top):''; }
+  _tdSave(); renderOpsGrup();
+}
+function tdMxExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  const g=_tdG(), E=_tdE(); if(!g||!E) return;
+  const kisiler=_tdKisiler(E); const satislar=(g.satislar||[]);
+  const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  const aoa=[[(reh?reh.ad:'')||'', _fmtDateTR(E.tarih), (E.ops||[]).join(', '), (E.urunler||[]).join(', ')],
+    ['GASTNAMEN','Voucher No','KUR TAX'].concat(satislar.map(x=>x.ad+(_tdN(x.satis)?(' ('+_tdN(x.satis)+' €)'):'')))];
+  let ktTop=0;
+  kisiler.forEach(k=>{
+    const key=_tdMxKey(k); const row=(g.satisMx||{})[key]||{};
+    const kt=_tdKurTaxKisi(k); ktTop+=kt;
+    aoa.push([((k.soyad||'')+' '+(k.ad||'')).trim(), k.resno||'', kt||''].concat(satislar.map(x=>row[x.id]||'')));
+  });
+  aoa.push(['TOPLAM','',Math.round(ktTop*100)/100].concat(satislar.map(x=>{ let t=0; Object.values(g.satisMx||{}).forEach(r2=>{t+=_tdN(r2[x.id]);}); return t||''; })));
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:28},{wch:12},{wch:9}].concat(satislar.map(()=>({wch:13})));
+  try{ _xsSusle(ws,aoa,{baslikR:0,altR:0,hdrR:1,veriBas:2,veriSon:1+kisiler.length,toplamR:aoa.length-1,nC:aoa[1].length,tipC:null,durumC:null}); }catch(e){}
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Satış');
+  XLSX.writeFile(wb,'satis_'+((E.urunler||[])[0]||'tur')+'_'+(E.tarih||'')+'.xlsx');
+}
 function renderOpsTanim(){
   const box=document.getElementById('opsPane_tanim'); if(!box) return;
   const t=getTanimlar();
@@ -13543,7 +13590,7 @@ function _tdKisiler(E){
     const satirlar=(grid.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===u.resno);
     if(satirlar.length) vGorunen.add(String(u.resno||'').trim());
     satirlar.forEach(r=>{
-      out.push({resno:u.resno,ad:r.ad||'',soyad:r.soyad||'',oda:r.oda||'',
+      out.push({resno:u.resno,pkgId:u.pkgId,ad:r.ad||'',soyad:r.soyad||'',oda:r.oda||'',
         gelis:[(r.g_hy||''),(r.g_u1||'')&&((r.g_u1||'')+'→'+(r.g_v2||r.g_v1||'')),(r.g_ks1||'')].filter(Boolean).join(' · '),
         donus:[(r.d_hy||''),(r.d_u1||'')&&((r.d_u1||'')+'→'+(r.d_v2||r.d_v1||'')),(r.d_ks1||'')].filter(Boolean).join(' · ')});
     });
@@ -13849,6 +13896,30 @@ function renderTurDosyasi(box){
       <span style="font-size:.68rem;color:var(--muted);align-self:center">Paket adında ürün aktiviteleri önerilir · adet bazlı · komisyon: % ya da kişi başı €</span>
     </div>
     <datalist id="tdAktL">${aktL.map(a=>`<option value="${esc(a.ad)}">${a.fiyat?('€'+a.fiyat):''}${a.dahil?' · dahil':''}</option>`).join('')}</datalist>
+    ${(()=>{
+      const kisiler=_tdKisiler(E); if(!kisiler.length||!(g.satislar||[]).length) return '';
+      g.satisMx=g.satisMx||{};
+      let ktTop=0;
+      const satirlar=kisiler.map(k=>{
+        const key=_tdMxKey(k); const row=g.satisMx[key]||{};
+        const kt=_tdKurTaxKisi(k); ktTop+=kt;
+        return `<tr><td style="white-space:nowrap"><b>${esc(k.soyad)}</b> ${esc(k.ad)}</td><td>${esc(k.resno)}</td>
+          <td class="ro" style="text-align:right;font-weight:700;background:#f0fdf4">${kt?(Math.round(kt*100)/100):'—'}</td>
+          ${g.satislar.map(x=>`<td style="padding:0"><input inputmode="numeric" value="${esc(row[x.id]||'')}" onchange="tdMxSet('${key}','${x.id}',this.value)"${kilit} style="width:100%;min-width:52px;text-align:center;border:none;background:${row[x.id]?'#fef9c3':'transparent'};padding:6px 4px;font-family:inherit;font-size:.8rem"></td>`).join('')}</tr>`;
+      }).join('');
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <b style="font-size:.84rem">👥 Yolcu Bazlı Satış</b>
+        <span style="font-size:.66rem;color:var(--muted)">hücreye adet yaz (1 kişi = 1) — paket toplamları alttaki tabloya otomatik işler</span>
+        <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="tdMxExcel()">📥 Excel</button>
+      </div>
+      <div style="overflow-x:auto;margin-bottom:14px"><table class="rzmg" style="min-width:700px">
+        <tr><th style="min-width:170px">GASTNAMEN</th><th style="width:90px">Voucher</th><th style="width:76px" title="Üründe tanımlı kur tax — kişi başı">KUR TAX</th>
+        ${g.satislar.map(x=>`<th style="min-width:80px;text-align:center">${esc(x.ad)}${_tdN(x.satis)?`<div style="font-weight:500;font-size:.6rem">${_tdN(x.satis)} €</div>`:''}</th>`).join('')}</tr>
+        ${satirlar}
+        <tr style="background:var(--light);font-weight:800"><td>TOPLAM</td><td>${kisiler.length} kişi</td><td style="text-align:right">${Math.round(ktTop*100)/100||'—'}</td>
+        ${g.satislar.map(x=>{ let t=0; Object.values(g.satisMx).forEach(r2=>{t+=_tdN(r2[x.id]);}); return `<td style="text-align:center">${t||''}</td>`; }).join('')}</tr>
+      </table></div>`;
+    })()}
     <div style="overflow-x:auto"><table class="rzmg" style="min-width:900px">
     <tr><th style="min-width:190px">Paket</th><th style="width:80px">Alış</th><th style="width:80px">Satış</th><th style="width:60px">Pax</th><th style="width:95px">Toplam</th><th style="width:85px">Ödemeler</th><th style="width:78px">Kom. tipi</th><th style="width:66px">Değer</th><th style="width:90px">Rehber Kom.</th><th style="width:104px">Op. Rez.</th><th style="width:30px"></th></tr>
     ${g.satislar.map((x,i)=>`<tr${x.ozel?' style="background:#fdf4ff"':''}>
