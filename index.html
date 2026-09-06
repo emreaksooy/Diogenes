@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v347 · 04.09.2026';
+const APP_VER='v348 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13079,7 +13079,7 @@ function _renderAracFirmaYon(box){
   <div style="font-size:.7rem;color:var(--muted);margin-top:8px">Satıra tıklayınca firma detayı ve filosu açılır. Tüm ekiple bulutta ortaktır.</div>`;
 }
 function _renderSatisPaketYon(box){
-  const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv').sort((a,b)=>String(a.paketKodu||a.paketAdi||'').localeCompare(String(b.paketKodu||b.paketAdi||''),'tr'));
+  const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&String((p.paketKodu||'')+(p.paketAdi||'')).trim()).sort((a,b)=>String(a.paketKodu||a.paketAdi||'').localeCompare(String(b.paketKodu||b.paketAdi||''),'tr'));
   const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:.78rem;font-family:inherit';
   const th='background:var(--navy);color:#fff;padding:4px 8px;font-size:.6rem;text-align:left;white-space:nowrap';
   let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="_opsTanimCat=null;try{localStorage.removeItem('dmc_opsTanimCat')}catch(e){};renderOpsTanim()">← Tanımlamalar</button><b>🎟 Satış Paketleri</b><span style="color:var(--muted);font-size:.72rem">Tur başına satılacak paketleri gir — tur dosyalarının Satış sekmesine otomatik gelir</span></div>`;
@@ -13123,7 +13123,7 @@ function renderOpsTanim(){
     const card=(cat,ad,ic,n,desc)=>`<div class="tanim-card" onclick="opsTanimCat('${cat}')"><div class="tc-ic"><svg class="ic"><use href="#i-${ic}"/></svg></div><div><div class="tc-ad">${ad}</div><div class="tc-sub">${n} kayıt · ${desc}</div></div></div>`;
     box.innerHTML=`<button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')" style="margin-bottom:10px">← Ana Sayfa</button><p class="section-tip">Bir kez tanımla, seferlerde listeden seç. Bir kartı aç.</p>
       <div class="tanim-cards">
-        ${card('satispaket','Satış Paketleri','ticket',getPackages().filter(p=>pkgDurum(p)!=='arsiv').reduce((n,p)=>n+((p.aktiviteler||[]).length),0),'tur başına satılacak paketler · fiyat · komisyon')}
+        ${card('satispaket','Satış Paketleri','ticket',getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&String((p.paketKodu||'')+(p.paketAdi||'')).trim()).reduce((n,p)=>n+((p.aktiviteler||[]).length),0),'tur başına satılacak paketler · fiyat · komisyon')}
         ${card('rehberler','Rehberler','users',(t.rehberler||[]).length,'ad · telefon · dil')}
         ${card('aracFirmalari','Araç Firmaları','bus',(t.aracFirmalari||[]).length,'firma kartı · yetkili · filo')}
         ${card('saglayicilar','Sağlayıcılar','building',(t.saglayicilar||[]).length,'mağaza/otel · tür · telefon')}
