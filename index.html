@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v351 · 04.09.2026';
+const APP_VER='v352 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13102,6 +13102,8 @@ function _renderSatisPaketYon(box){
       <div style="display:flex;align-items:center;gap:10px;cursor:pointer;flex-wrap:wrap" onclick="window._spAcik=window._spAcik==='${p.id}'?null:'${p.id}';renderOpsTanim()">
         <b style="font-size:.9rem">${esc(p.paketKodu||p.paketAdi||'—')}</b>
         <span style="color:var(--muted);font-size:.74rem">${esc(op)}</span>
+        ${(()=>{ try{ const T=_opsTarihler(p)||[]; if(T.length){ const t2=T.slice().sort(); return `<span style="background:var(--light);color:var(--navy);font-weight:700;font-size:.66rem;padding:2px 9px;border-radius:8px">📅 ${_fmtDateTR(t2[0])}${t2.length>1?' – '+_fmtDateTR(t2[t2.length-1]):''} · ${t2.length} kalkış</span>`; } }catch(e){} return '<span style="background:#fef3c7;color:#92400e;font-weight:700;font-size:.66rem;padding:2px 9px;border-radius:8px">kalkış tarihi yok</span>'; })()}
+        ${(p.paketAdi&&p.paketKodu&&p.paketAdi!==p.paketKodu)?`<span style="color:var(--muted);font-size:.7rem">${esc(p.paketAdi)}</span>`:''}
         <span style="margin-left:auto;font-size:.72rem;font-weight:700;color:${satilir?'var(--primary)':'#b45309'}">${satilir?satilir+' satılacak paket':'paket girilmedi'}</span>
         <span>${acik?'▲':'▼'}</span>
       </div>`;
