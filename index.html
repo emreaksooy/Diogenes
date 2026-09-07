@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v377 · 04.09.2026';
+const APP_VER='v378 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14275,6 +14275,7 @@ function renderTurDosyasi(box){
       yl.forEach(l=>{ const k=[l.sira,l.tarih,l.hy,l.ucus,l.rota,l.saat].join('|'); (gr[k]=gr[k]||[]).push(l); });
       // transfer görev eşleşmesi
       let trRows=[]; try{ trRows=_trGenRows().filter(r=>r.tip!=='TUR'&&(E.uyeler||[]).some(u=>u.pkgId===r.pkgId&&u.kalkis===r.kalkis)); }catch(e){}
+      const _blk=[];
       Object.values(gr).sort((a,b)=>{ const t=x=>((_pdate(x[0].tarih))||'9999')+'T'+(x[0].saat||'99'); return t(a)<t(b)?-1:1; }).forEach(grp=>{
         const f=grp[0];
         const tekil=[]; const seen=new Set();
@@ -14282,7 +14283,7 @@ function renderTurDosyasi(box){
         tekil.sort((a,b)=>(a.soyad+a.ad).localeCompare(b.soyad+b.ad,'tr'));
         const tr=trRows.find(r=>String(r.ucus||'').trim()===String(f.ucus||'').trim()&&r.tarih===_pdate(f.tarih));
         const gr2=tr&&tr.grup?_trGrupOf(tr):null;
-        h+=`<div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">
+        _blk.push({gid:(tr&&tr.grup)||null,kisi:tekil.length,gr2:gr2||{},html:`<div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">
           <div style="background:var(--primary-soft);padding:6px 12px;font-size:.8rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <b>✈ ${[_fmtDateTR(f.tarih),f.hy,f.ucus,f.rota,f.saat].filter(Boolean).map(esc).join(' · ')}</b>
             <span style="color:var(--muted)">· ${tekil.length} kişi</span>
@@ -14294,8 +14295,19 @@ function renderTurDosyasi(box){
             <td style="padding:3px 10px;font-size:.74rem;border-bottom:1px solid var(--border);width:120px">${esc(x.resno)}</td>
             <td style="padding:3px 10px;font-size:.76rem;border-bottom:1px solid var(--border)"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td>
           </tr>`).join('')}</table>
-        </div>`;
+        </div>`});
       });
+      // AYNI GÖREVE atanan uçuşlar DIŞ ÇERÇEVEDE toplanır (tek transfer)
+      { const gruplu=new Map(); const sira=[];
+        _blk.forEach((b,bi)=>{ const k=b.gid||('__tek'+bi); if(!gruplu.has(k)){ gruplu.set(k,[]); sira.push(k); } gruplu.get(k).push(b); });
+        sira.forEach(k=>{ const L2=gruplu.get(k);
+          if(L2.length>1&&L2[0].gid){
+            const g2=L2[0].gr2||{}; const topK=L2.reduce((t,b)=>t+b.kisi,0);
+            h+=`<div style="border:2px solid #f26522;border-radius:14px;margin-bottom:12px;padding:8px 8px 0;background:#fff7ed">
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.78rem;font-weight:800;color:#9a3412;padding:2px 6px 8px">🚌 ${esc(_trKodOf(L2[0].gid))} — TEK TRANSFER · ${esc([g2.arac,g2.arac2].filter(Boolean).join(' + ')||'')}${g2.plaka?' · '+esc(g2.plaka):''}${g2.soforAd?' · 👨‍✈️ '+esc(g2.soforAd):''}${g2.soforTel?` · <a href="tel:${esc(g2.soforTel)}" style="color:inherit">${esc(g2.soforTel)}</a>`:''} · ${topK} kişi</div>${L2.map(b=>b.html).join('')}</div>`;
+          } else h+=L2[0].html;
+        });
+      }
     }
   }
   // ═ OTELLER ═
