@@ -1983,7 +1983,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v371 · 04.09.2026';
+const APP_VER='v372 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7793,14 +7793,21 @@ const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita
 const _ACL={
   yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e',rehberim:'e'},
   rehber:      {home:'-',urun:'-',rezervasyon:'-',ucak:'-',operasyon:'-',rapor:'-',yonetim:'-',rehberim:'e'},
-  rezervasyon: {home:'e',urun:'v',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-'},
-  ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-'},
-  operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v'},
-  goruntuleme: {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v'},
-  urun:        {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v'}
+  rezervasyon: {home:'e',urun:'v',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-',yonetim:'-',rehberim:'-'},
+  ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-',yonetim:'-',rehberim:'-'},
+  operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v',yonetim:'-',rehberim:'-'},
+  goruntuleme: {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v',yonetim:'-',rehberim:'-'},
+  urun:        {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v',yonetim:'-',rehberim:'-'}
 };
 function _acl(pageId){ if(!sbRol) return 'e'; const grp=_PAGEGRP[pageId]||'home'; const m=_ACL[sbRol]||_ACL.goruntuleme; return m[grp]||'-'; }
-function _applyRoleNav(){ document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=(sbRol==='rehber')?'none':''; return; } t.style.display=(_acl(pg)==='-')?'none':''; }); }
+function _applyRoleNav(){
+  document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=(sbRol==='rehber')?'none':''; return; } t.style.display=(_acl(pg)==='-')?'none':''; });
+  document.querySelectorAll('.side-nav .nav-group').forEach(function(g2){
+    let el=g2.nextElementSibling, vis=false;
+    while(el&&!el.classList.contains('nav-group')){ if(el.classList&&el.classList.contains('nav-tab')&&el.style.display!=='none') vis=true; el=el.nextElementSibling; }
+    g2.style.display=vis?'':'none';
+  });
+}
 function _roBanner(show){ let b=document.getElementById('roBar'); if(show){ if(!b){ b=document.createElement('div'); b.id='roBar'; b.textContent='Salt-okunur — bu bölümde yalnızca görüntüleme yetkiniz var'; document.body.appendChild(b); } b.style.display=''; } else if(b){ b.style.display='none'; } }
 // ═══ ROL ÖNİZLEME (yönetici başka rolün gözünden bakar) ═══
 const _ROLAD={yonetici:'Yönetici',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',urun:'Ürün (eski)',rehber:'Rehber'};
