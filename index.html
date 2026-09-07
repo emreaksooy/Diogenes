@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v393 · 04.09.2026';
+const APP_VER='v394 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13618,13 +13618,16 @@ function renderOpsTurlar(){
   const trMap={};
   try{ _trGenRows().forEach(r=>{ if(r.tip==='TUR') return; const k=r.pkgId+'|'+r.kalkis; const o=trMap[k]=trMap[k]||{n:0,atasiz:0}; o.n++; if(!r.grup) o.atasiz++; }); }catch(e){}
   const tahsisDurum=t=>{
-    let g2=null;
-    try{ const S=getOpsGrup().gruplar||{};
-      g2=Object.values(S).find(x=>(t.birlesikGrupId&&x.id===t.birlesikGrupId)
-        ||(x.uyeler||[]).some(u=>u.pkgId===t.pkgId&&u.kalkis===t.kalkis)
-        ||(x.sefer&&x.sefer.pkgId===t.pkgId&&x.sefer.kalkis===t.kalkis)); }catch(e){}
+    let grps=[];
+    try{
+      const S=getOpsGrup().gruplar||{};
+      const sefler=(t.uyeSeferler&&t.uyeSeferler.length)?t.uyeSeferler:[{pkgId:t.pkgId,kalkis:t.kalkis}];
+      grps=Object.values(S).filter(x=>(t.birlesikGrupId&&x.id===t.birlesikGrupId)
+        ||sefler.some(sf=>(x.uyeler||[]).some(u=>u.pkgId===sf.pkgId&&u.kalkis===sf.kalkis))
+        ||sefler.some(sf=>x.sefer&&x.sefer.pkgId===sf.pkgId&&x.sefer.kalkis===sf.kalkis));
+    }catch(e){}
     const pk2=getPackages().find(p=>p.id===t.pkgId)||{};
-    const th2=g2?(g2.araclar||[]).filter(a=>a.tip==='tahsis'):[];
+    const th2=grps.flatMap(x=>(x.araclar||[]).filter(a=>a.tip==='tahsis'));
     if(!th2.length){
       return pk2.turTransferYok
         ?'<div style="margin-top:3px"><span style="background:var(--light);color:var(--muted);font-weight:700;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚫 tahsis gerekmez</span></div>'
