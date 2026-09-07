@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v394 · 04.09.2026';
+const APP_VER='v395 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14831,6 +14831,18 @@ function _trGenRows(){
       if(i>0&&city&&prevCity&&city!==prevCity){ out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+i,tip:'TUR',tarih:_trGunEkle(g.kalkis,i),op,urun,grupKod:'',nereden:prevCity,nereye:city,bolge:'',ucus:'',saat:'08:00',pax:real.length,yet:real.length,coc:0,beb:0},[...new Set(real.map(x=>String(x.resno||'').trim()).filter(Boolean))])); }
       if(city)prevCity=city; });
   });
+  // TUR görevleri: tarihi kapsayan TAHSİS aracı varsa satıra işlenir (araç/firma monitörde görünür)
+  try{
+    const Sg=getOpsGrup().gruplar||{};
+    const bul=(pkgId,kalkis)=>Object.values(Sg).filter(x=>(x.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)||(x.sefer&&x.sefer.pkgId===pkgId&&x.sefer.kalkis===kalkis));
+    out.forEach(r=>{
+      if(r.tip!=='TUR'||r.grup) return;
+      for(const g2 of bul(r.pkgId,r.kalkis)){
+        const a=(g2.araclar||[]).find(a2=>a2.tip==='tahsis'&&_pdate(a2.bas)&&_pdate(a2.bas)<=r.tarih&&(_pdate(a2.bit)||_pdate(a2.bas))>=r.tarih);
+        if(a){ r.tahsis={firma:a.firma||'',arac:[a.ad,a.arTip].filter(Boolean).join(' · '),plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||''}; break; }
+      }
+    });
+  }catch(e){}
   return out;
 }
 function _trSatKaydet(id,patch){
@@ -15389,7 +15401,7 @@ function renderOpsTransfer(){
   const tam=_trGorunur();
   let list=tam.filter(_trUygun);
   if(_trSort.col){ const c=_trCols().find(x=>x[0]===_trSort.col); if(c) list.sort((p,q)=>{ let a=c[2](p),b=c[2](q); if(c[0]==='saat'||c[0]==='depar'){a=_dk(a)??9999;b=_dk(b)??9999;} if(typeof a==='number'&&typeof b==='number') return (a-b)*_trSort.dir; return String(a).localeCompare(String(b),'tr')*_trSort.dir; }); }
-  const atasiz=tam.filter(x=>!x.r.grup).length; const pax=tam.reduce((t,x)=>t+(+x.r.pax||0),0); const gruplar=new Set(tam.filter(x=>x.r.grup).map(x=>x.r.grup));
+  const atasiz=tam.filter(x=>!x.r.grup&&!x.r.tahsis).length; const pax=tam.reduce((t,x)=>t+(+x.r.pax||0),0); const gruplar=new Set(tam.filter(x=>x.r.grup).map(x=>x.r.grup));
   const cb=(id,lbl,col)=>`<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;font-weight:600;color:var(--muted);font-size:.75rem"><input type="checkbox" ${_trTipF[id]?'checked':''} onchange="_trChk('${id}')">${col?`<span class="lej"><i style="background:${col}"></i>${lbl}</span>`:lbl}</label>`;
   let h=`<div style="margin-bottom:8px"><button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')">← Ana Sayfa</button></div>
     <div class="ops-datebar">
@@ -15504,10 +15516,10 @@ function renderOpsTransfer(){
     h+=`<td>${esc(r.bolge||'—')}</td>`;
     h+=`<td>${r.grup?`<span class="grupb">${_trKodOf(r.grup)}</span>`:'<span style="color:#b91c1c;font-weight:700">—</span>'}</td>`;
     h+=`<td>${(function(){ const ri=_trRehInfo(r); if(!ri.ad) return '<span style="color:var(--muted)">—</span>'; const t=ri.tel?` title="${esc(ri.tel)}"`:''; return ri.kaynak==='görev'?`<span${t}>${esc(ri.ad)}</span>`:`<span style="color:var(--muted);font-style:italic"${t}>${esc(ri.ad)} <span style="font-size:.58rem">(grup)</span></span>`; })()}</td>`;
-    h+=`<td>${gr&&(gr.arac||gr.arac2)?esc([gr.arac,gr.arac2].filter(Boolean).join(' + ')):'<span style="color:var(--muted)">—</span>'}${gr&&gr.plaka?`<div style="font-size:.64rem;font-weight:700">${esc(gr.plaka)}</div>`:''}${gr&&(gr.soforAd||gr.soforTel)?`<div style="font-size:.62rem;color:var(--muted)">${esc(gr.soforAd||'')} ${esc(gr.soforTel||'')}</div>`:''}${r.grup?` <button class="rowbtn" onclick="trGorevBilgiAc('${r.grup}')" title="Araç bilgisi: plaka + şoför">🚌</button>`:''}</td>`;
-    h+=`<td>${gr&&gr.firma?esc(gr.firma):'<span style="color:var(--muted)">—</span>'}</td>`;
+    h+=`<td>${gr&&(gr.arac||gr.arac2)?esc([gr.arac,gr.arac2].filter(Boolean).join(' + ')):(r.tahsis&&r.tahsis.arac?`<span style="color:#0369a1;font-weight:700">🚙 ${esc(r.tahsis.arac)}</span>`:'<span style="color:var(--muted)">—</span>')}${gr&&gr.plaka?`<div style="font-size:.64rem;font-weight:700">${esc(gr.plaka)}</div>`:(r.tahsis&&r.tahsis.plaka?`<div style="font-size:.64rem;font-weight:700">${esc(r.tahsis.plaka)}</div>`:'')}${gr&&(gr.soforAd||gr.soforTel)?`<div style="font-size:.62rem;color:var(--muted)">${esc(gr.soforAd||'')} ${esc(gr.soforTel||'')}</div>`:(r.tahsis&&(r.tahsis.sofor||r.tahsis.stel)?`<div style="font-size:.62rem;color:var(--muted)">${esc(r.tahsis.sofor||'')} ${esc(r.tahsis.stel||'')}</div>`:'')}${r.grup?` <button class="rowbtn" onclick="trGorevBilgiAc('${r.grup}')" title="Araç bilgisi: plaka + şoför">🚌</button>`:''}</td>`;
+    h+=`<td>${gr&&gr.firma?esc(gr.firma):(r.tahsis&&r.tahsis.firma?`<span style="color:#0369a1;font-weight:700">${esc(r.tahsis.firma)}</span>`:'<span style="color:var(--muted)">—</span>')}</td>`;
     h+=`<td><input class="notin" value="${esc(r.not||'')}" onchange="_trNotElle('${r.id}',this.value)" placeholder="—"></td>`;
-    h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):'<span class="trchip c-yok">atanmadı</span>'}${_yeniMi(r)?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
+    h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):(r.tahsis?'<span class="trchip" style="background:#e0f2fe;color:#0369a1">tahsis aracı</span>':'<span class="trchip c-yok">atanmadı</span>')}${_yeniMi(r)?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
     h+=`<td>${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button>`:''}</td></tr>`;
   });
   h+='</table></div>';
