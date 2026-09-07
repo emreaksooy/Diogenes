@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v404 · 04.09.2026';
+const APP_VER='v405 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11129,10 +11129,6 @@ function renderRehberim(){
       <div style="min-width:0;flex:1"><b style="font-size:.9rem">${esc(t.kod)}</b> ${durum(t)}<div style="font-size:.72rem;color:var(--muted)">${_fmtDateTR(t.kalkis)} – ${_fmtDateTR(t.end)} · ${t.pax} pax · ${esc(t.op||'')}</div></div>
       <button class="btn btn-primary btn-sm" onclick="rehbTurAc('${t.pkgId}','${t.kalkis}','${t.birlesikGrupId||''}')">📂 Tur Dosyam</button>
     </div>`).join(''):'<p class="section-tip">Şu an erişime açık turun yok. Turlar başlangıçtan 15 gün önce burada görünür.</p>'}
-  </div>`;
-  const B=getRehBildirim().filter(b=>_rehbNrm(b.rehberAd)===_rehbNrm(ad)).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
-  h+=`<div class="card"><div class="card-title">🏬 Mağaza Bildirimlerim <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Bildirim, Tur Dosyası › 🏬 Mağazalar sekmesindeki 📢 Bildir ile yapılır</span></div>
-    ${B.length?`<table style="width:100%;border-collapse:collapse">${B.slice(0,30).map(b=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 8px;font-size:.76rem"><b>${_fmtDateTR(b.tarih)}</b></td><td style="padding:5px 8px;font-size:.76rem">${esc(b.tur||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.magaza||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.pax||'')} pax</td><td style="padding:5px 8px;font-size:.78rem;text-align:right"><b>${esc(b.tutar)}</b> ${esc(b.para||'EUR')}</td><td style="padding:5px 8px;font-size:.72rem;color:var(--muted)">${esc(b.not||'')}</td></tr>`).join('')}</table>`:'<p class="section-tip">Henüz bildirim yok.</p>'}
   </div>`;
   box.innerHTML=h;
 }
