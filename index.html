@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v407 · 04.09.2026';
+const APP_VER='v408 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15598,7 +15598,12 @@ function _trTahsisBolumHTML(){
           if(abit&&abit<bugun) return; // bitmiş tahsisler listelenmez
           if(_trUst.firma&&String(a.firma||'').trim()!==_trUst.firma) return;
           let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
-          L.push({gid:E2.id,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',gorev:a.gorev||'',pax:E2.pax||'',firma:a.firma||'',
+          let gonDurum='';
+          if((a.firma||'').trim()){
+            const son=_trSonGonderim(String(a.firma).trim());
+            gonDurum=(son&&(son.ids||[]).includes('TAH|'+E2.id+'|'+ab))?('✓|'+son.ts):'YENI';
+          }
+          L.push({gid:E2.id,bas:ab,bit:abit,key:'TAH|'+E2.id+'|'+ab,gon:gonDurum,tur:(E2.urunler||[]).join('+')||'',gorev:a.gorev||'',pax:E2.pax||'',firma:a.firma||'',
             arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',reh:rehAd,not:[a.program,a.not].filter(Boolean).join(' · ')});
         });
       });
@@ -15609,10 +15614,12 @@ function _trTahsisBolumHTML(){
     const td2='padding:4px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
     h+=`<div class="card" style="margin-top:12px"><div class="card-title">🚙 Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} tahsis araç · ${_trUst.firma?esc(_trUst.firma)+' filtresi':'tüm firmalar'} — tur dosyalarından atananlar (bugün ve sonrası)</span></div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
-      <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Tur</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Not</th><th style="${th2}"></th></tr>
+      <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Tur</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Gönderim</th><th style="${th2}">Not</th><th style="${th2}"></th></tr>
       ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b></td><td style="${td2}">${_fmtDateTR(t.bit)}</td><td style="${td2}"><b>${esc(t.tur)}</b>${t.gorev?`<div style="font-size:.66rem;color:#0369a1;font-weight:700">${esc(t.gorev)}</div>`:''}</td><td style="${td2}">${esc(t.firma)||'<span style="color:#b45309;font-weight:700">firma yok</span>'}</td><td style="${td2}">${esc(t.arac)}</td>
         <td style="${td2}">${t.plaka?`<b>${esc(t.plaka)}</b>`:'<span style="color:#b45309;font-size:.68rem">plaka bekliyor</span>'}${t.sofor?` · ${esc(t.sofor)}`:''}${t.stel?` <span style="color:var(--muted);font-size:.68rem">${esc(t.stel)}</span>`:''}</td>
-        <td style="${td2}"><b>${esc(String(t.pax||''))}</b></td><td style="${td2}">${esc(t.reh)||'—'}</td><td style="${td2};font-size:.7rem;color:var(--muted)">${esc(t.not)}</td>
+        <td style="${td2}"><b>${esc(String(t.pax||''))}</b></td><td style="${td2}">${esc(t.reh)||'—'}</td>
+        <td style="${td2};white-space:nowrap">${t.gon?(t.gon==='YENI'?'<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.6rem;padding:1px 7px;border-radius:7px">YENİ — gönderilmedi</span>':`<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.6rem;padding:1px 7px;border-radius:7px">✓ gönderildi</span><div style="font-size:.58rem;color:var(--muted)">${new Date(+t.gon.split('|')[1]).toLocaleDateString('tr-TR')}</div>`):'<span style="color:var(--muted);font-size:.66rem">—</span>'}</td>
+        <td style="${td2};font-size:.7rem;color:var(--muted)">${esc(t.not)}</td>
         <td style="${td2};white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="trTahsisDosya('${t.gid}')" title="Tur dosyasının Araçlar sekmesini açar — tahsisi orada düzeltirsin">🔧 Tahsisi düzelt</button></td></tr>`).join('')}
       </table></div></div>`;
   })();
@@ -15716,6 +15723,7 @@ function trGonderimDoldur(){
     ${V?`<div style="background:var(--primary-soft);border:1px solid #fcd9c4;border-radius:12px;padding:10px 13px;margin-bottom:12px;font-size:.8rem">
       <b>${esc(V.firma)}</b> · ${esc(V.donem)}<br>
       🚌 <b>${V.trN}</b> transfer · <b>${V.trPax}</b> pax${V.tahsisler.length?` · 🚙 <b>${V.tahsisler.length}</b> tahsis araç`:''}
+      ${V.tahsisler.length?`<div style="margin-top:6px;border-top:1px dashed #fcd9c4;padding-top:5px">${V.tahsisler.map(t=>`<div style="font-size:.7rem">🚙 ${_fmtDateTR(t.bas)}–${_fmtDateTR(t.bit)} · <b>${esc(t.tur)}</b> · ${esc(t.arac)}${t.plaka?' · '+esc(t.plaka):''}</div>`).join('')}</div>`:''}
       ${son?`<div style="margin-top:5px;font-size:.7rem;color:var(--muted)">Son gönderim: ${new Date(son.ts).toLocaleString('tr-TR')} · ${(son.ids||[]).length} iş${yeniN?` — <b style="color:#b91c1c">${yeniN} YENİ/gönderilmemiş iş</b>`:' — değişiklik yok ✓'}</div>`:'<div style="margin-top:5px;font-size:.7rem;color:var(--muted)">Bu firmaya daha önce gönderim yapılmadı.</div>'}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
