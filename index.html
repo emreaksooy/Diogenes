@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v382 · 04.09.2026';
+const APP_VER='v383 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13547,7 +13547,18 @@ function otRehAta(pkgId,kalkis,bolum,gid,rehId){
       if(bolum&&bolum!=='01'&&!(t.uyeSeferler&&t.uyeSeferler.length)){ r.bolumReh=r.bolumReh||{}; r.bolumReh[bolum]=veri; }
       else Object.assign(r,veri);
     });
-    setOperasyon(all); renderOpsTurlar();
+    setOperasyon(all);
+    // tur DOSYASININ rehberi de aynı olsun (kalıcı gruplar)
+    try{
+      const S=getOpsGrup(); let degisti=false;
+      Object.values(S.gruplar||{}).forEach(g2=>{
+        const eslesir=(g2.uyeler||[]).some(u=>hedefler.some(hs=>hs.pkgId===u.pkgId&&hs.kalkis===u.kalkis))
+          ||(g2.sefer&&hedefler.some(hs=>hs.pkgId===g2.sefer.pkgId&&hs.kalkis===g2.sefer.kalkis));
+        if(eslesir&&g2.rehberId!==(veri.rehberId||'')){ g2.rehberId=veri.rehberId||''; degisti=true; }
+      });
+      if(degisti) setOpsGrup(S);
+    }catch(e){}
+    renderOpsTurlar();
   };
   if(!rehId){ yaz({rehberId:'',rehberAd:'',rehberTel:'',rehberDil:''}); showToast('Rehber ataması kaldırıldı'); return; }
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
@@ -13884,7 +13895,20 @@ function _tdAktList(E){
 // ── setter'lar ──
 function tdYev(f,v){ const g=_tdG(); if(!g)return; g.yevmiye[f]=String(v).trim(); _tdSave(); if(f==='donem') renderOpsGrup(); }
 function tdSet(f,v){ const g=_tdG(); if(!g)return; g[f]=String(v).trim(); _tdSave(); if(f==='kurTL'||f==='kurUSD'||f==='teslimAlinan'||f==='gunSay') _tdHesapDom(); }
-function tdRehberSec(v){ const g=_tdG(); if(!g)return; g.rehberId=v; _tdSave(); renderOpsGrup(); }
+function tdRehberSec(v){ const g=_tdG(); if(!g)return; g.rehberId=v; _tdSave();
+  try{
+    const reh=(getTanimlar().rehberler||[]).find(r=>r.id===v);
+    const veri=reh?{rehberId:reh.id,rehberAd:reh.ad||'',rehberTel:reh.tel||'',rehberDil:Array.isArray(reh.diller)?reh.diller.join(', '):(reh.dil||'')}:{rehberId:'',rehberAd:'',rehberTel:'',rehberDil:''};
+    const hedefler=(g.uyeler&&g.uyeler.length)?[...new Set(g.uyeler.map(u=>u.pkgId+'|'+u.kalkis))].map(k=>{const p=k.split('|');return {pkgId:p[0],kalkis:p[1]};}):(g.sefer&&g.sefer.pkgId?[{pkgId:g.sefer.pkgId,kalkis:g.sefer.kalkis}]:[]);
+    if(hedefler.length){
+      const all=getOperasyon();
+      hedefler.forEach(hs=>{ let r=all.find(x=>x.pkgId===hs.pkgId&&x.kalkis===hs.kalkis);
+        if(!r){ r={pkgId:hs.pkgId,kalkis:hs.kalkis,magazalar:[],oteller:[]}; all.push(r); }
+        Object.assign(r,veri); });
+      setOperasyon(all);
+    }
+  }catch(e){}
+  renderOpsGrup(); }
 function _afFirmaBul(ad){ const n=t2=>String(t2||'').toLocaleLowerCase('tr-TR').trim(); if(!n(ad))return null; return (getTanimlar().aracFirmalari||[]).find(x=>n(x.ad)===n(ad))||null; }
 function _afDonemBul(f,tarih){ if(!tarih)return null; return (f.kDonem||[]).find(d=>d.bas&&d.bit&&d.bas<=tarih&&tarih<=d.bit)||null; }
 function _tdAracHesap(a){
