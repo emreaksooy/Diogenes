@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v367 · 04.09.2026';
+const APP_VER='v368 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12259,6 +12259,10 @@ function moAtaCoklu(idx,firmaId){
   });
   setOperasyon(all); renderMagazaOps();
 }
+function _moDosyaAd(x){
+  const map={'ç':'c','Ç':'C','ğ':'g','Ğ':'G','ı':'i','İ':'I','ö':'o','Ö':'O','ş':'s','Ş':'S','ü':'u','Ü':'U'};
+  return String(x||'').replace(/[çÇğĞıİöÖşŞüÜ]/g,c=>map[c]).replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
 function moExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const rows=(window._moRows||[]);
@@ -12275,7 +12279,10 @@ function moExcel(){
   ws['!cols']=[{wch:12},{wch:16},{wch:14},{wch:12},{wch:10},{wch:6},{wch:16},{wch:14},{wch:26}];
   try{ _xsSusle(ws,aoa,{baslikR:0,altR:1,hdrR:3,veriBas:4,veriSon:3+rows.length,toplamR:aoa.length-1,nC:9,tipC:null,durumC:null}); }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Mağaza Operasyonu');
-  XLSX.writeFile(wb,'magaza-operasyonu'+(fg?'_'+String(fg.ad).replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü]/g,'_'):'')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  let dosyaOn='magaza-operasyonu';
+  if(_moFltMag){ const czM=_moAtaCoz(_moFltMag); if(czM.sube&&(czM.sube.ad||czM.sube.sehir)) dosyaOn=_moDosyaAd(czM.sube.ad||czM.sube.sehir); else if(fg) dosyaOn=_moDosyaAd(fg.ad); }
+  else if(fg) dosyaOn=_moDosyaAd(fg.ad);
+  XLSX.writeFile(wb,dosyaOn+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
   showToast('Excel indirildi ('+rows.length+' ziyaret — ekrandaki filtreye göre)','success');
 }
 function renderMagFirmalar(){
@@ -12431,7 +12438,7 @@ function mgGrupExcel(fid){
   ws['!cols']=[{wch:13},{wch:16},{wch:7},{wch:22},{wch:18},{wch:15}];
   try{ _xsSusle(ws,aoa,{baslikR:0,altR:1,hdrR:3,veriBas:4,veriSon:3+rows.length,toplamR:aoa.length-1,nC:6,tipC:null,durumC:null}); }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Ziyaretler');
-  XLSX.writeFile(wb,'magaza_'+String(f.ad||'grup').replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü]/g,'_')+'_'+_opsToday()+'.xlsx');
+  XLSX.writeFile(wb,_moDosyaAd(f.ad||'grup')+'_'+_opsToday()+'.xlsx');
   showToast('Excel indirildi: '+f.ad,'success');
 }
 function mgGrupSil(id){
