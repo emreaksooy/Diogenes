@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v365 · 04.09.2026';
+const APP_VER='v366 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12132,7 +12132,7 @@ function renderRehberTakvim(){
   _rtScrollKur((bugun>=bas&&bugun<=son)?bugunPx:0);
 }
 /* ══ MAĞAZA OPERASYONU ══ */
-let _moFltSehir='', _moFltTur='', _moSadeceAcik=false, _moFirmaAcik=false;
+let _moFltSehir='', _moFltTur='', _moSadeceAcik=false, _moFirmaAcik=false, _moFltGrup='', _moFltMag='';
 let _moGorunum=(()=>{try{return localStorage.getItem('dmc_moGorunum')||'tarih';}catch(e){return 'tarih';}})();
 function moGorunumSec(v){ _moGorunum=v; try{localStorage.setItem('dmc_moGorunum',v);}catch(e){} renderMagazaOps(); }
 function _moFirmalar(){ const t=getTanimlar(); return Array.isArray(t.magazaFirmalari)?t.magazaFirmalari:[]; }
@@ -12261,13 +12261,22 @@ function moAtaCoklu(idx,firmaId){
 }
 function moExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
-  const firmalar=_moFirmalar();
   const rows=(window._moRows||[]);
-  const aoa=[['Tarih','Tur','Operatör','Şehir','Mağaza Türü','Pax','Rehber','Atanan Mağaza']];
-  rows.forEach(r=>{ const f=firmalar.find(x=>x.id===r.firmaId); aoa.push([_fmtDateTR(r.tarih),r.kod,r.op,r.sehir,r.tur,r.pax,r.rehber||'',f?f.ad:'']); });
-  const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=aoa[0].map(h=>({wch:Math.max(12,String(h).length+4)}));
+  if(!rows.length){ showToast('Filtreye uyan ziyaret yok','error'); return; }
+  const fg=_moFltGrup?_moFirmalar().find(x=>x.id===_moFltGrup):null;
+  const baslik=(fg?fg.ad+' — ':'')+'MAĞAZA ZİYARET LİSTESİ'+(_moFltSehir?' · '+_moFltSehir:'')+(_moFltTur?' · '+_moFltTur:'');
+  const aoa=[[baslik],['Diogenes Travel · '+_fmtDateTR(_opsToday())],[],['Tarih','Grup','Operatör','Şehir','Tür','Pax','Rehber','Rehber Tel','Atanan Mağaza']];
+  rows.forEach(r=>{ const cz=_moAtaCoz(r.firmaId); const magAd=cz.f?(cz.f.ad+(cz.sube?' · '+(cz.sube.ad||cz.sube.sehir||''):'')):'';
+    aoa.push([_fmtDateTR(r.tarih),r.kod,r.op,r.sehir,r.tur,+r.pax||'',r.rehber||'',r.rehber?_rehTelBul(r.rehber):'',magAd]); });
+  aoa.push([]);
+  aoa.push(['TOPLAM',rows.length+' ziyaret','','','',rows.reduce((t,r)=>t+(+r.pax||0),0),'','','']);
+  try{ const ws0=null; }catch(e){}
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:12},{wch:16},{wch:14},{wch:12},{wch:10},{wch:6},{wch:16},{wch:14},{wch:26}];
+  try{ _xsSusle(ws,aoa,{baslikR:0,altR:1,hdrR:3,veriBas:4,veriSon:3+rows.length,toplamR:aoa.length-1,nC:9,tipC:null,durumC:null}); }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Mağaza Operasyonu');
-  XLSX.writeFile(wb,'magaza-operasyonu_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  XLSX.writeFile(wb,'magaza-operasyonu'+(fg?'_'+String(fg.ad).replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü]/g,'_'):'')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Excel indirildi ('+rows.length+' ziyaret — ekrandaki filtreye göre)','success');
 }
 function renderMagFirmalar(){
   const box=document.getElementById('magFirmaBox'); if(!box) return;
@@ -12460,7 +12469,9 @@ function renderMagazaOps(){
   const turler=[...new Set(tum.map(r=>r.tur).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   if(_moFltSehir&&!sehirler.includes(_moFltSehir)) _moFltSehir='';
   if(_moFltTur&&!turler.includes(_moFltTur)) _moFltTur='';
-  const rows=tum.filter(r=>(!_moFltSehir||r.sehir===_moFltSehir)&&(!_moFltTur||r.tur===_moFltTur)&&(!_moSadeceAcik||!r.firmaId));
+  const rows=tum.filter(r=>(!_moFltSehir||r.sehir===_moFltSehir)&&(!_moFltTur||r.tur===_moFltTur)&&(!_moSadeceAcik||!r.firmaId)
+    &&(!_moFltGrup||String(r.firmaId||'').split('|')[0]===_moFltGrup)
+    &&(!_moFltMag||r.firmaId===_moFltMag));
   const acikN=tum.filter(r=>!r.firmaId).length;
   let h='<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
    +'<b style="font-size:.95rem;color:#1a3c5e">🏬 Mağaza Operasyonu</b>'
@@ -12468,6 +12479,9 @@ function renderMagazaOps(){
    +'<select onchange="_moFltSehir=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltSehir?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm şehirler</option>'+sehirler.map(x=>'<option'+(x===_moFltSehir?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
    +'<select onchange="_moFltTur=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltTur?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm türler</option>'+turler.map(x=>'<option'+(x===_moFltTur?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
    +'<label style="display:inline-flex;align-items:center;gap:5px;font-size:.78rem;cursor:pointer"><input type="checkbox" '+(_moSadeceAcik?'checked':'')+' onchange="_moSadeceAcik=this.checked;renderMagazaOps()"> Sadece atanmamış</label>'
+   +'<select onchange="_moFltGrup=this.value;_moFltMag=\'\';renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltGrup?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm mağaza grupları</option>'+firmalar.map(f=>'<option value="'+f.id+'"'+(_moFltGrup===f.id?' selected':'')+'>'+esc(f.ad)+'</option>').join('')+'</select>'
+   +(_moFltGrup?(()=>{ const fg=firmalar.find(x=>x.id===_moFltGrup); const subeler=(fg&&fg.subeler)||[];
+      return subeler.length?'<select onchange="_moFltMag=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltMag?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Grubun tüm mağazaları</option>'+subeler.map(sb2=>'<option value="'+_moFltGrup+'|'+sb2.id+'"'+(_moFltMag===_moFltGrup+'|'+sb2.id?' selected':'')+'>'+esc(sb2.ad||sb2.sehir||'')+'</option>').join('')+'</select>':''; })():'')
    +'<select onchange="moGorunumSec(this.value)" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.78rem;font-family:inherit"><option value="tarih"'+(_moGorunum==='tarih'?' selected':'')+'>📅 Tarih sırası</option><option value="grup"'+(_moGorunum==='grup'?' selected':'')+'>👥 Grup bazlı</option></select>'
    +'<button class="btn btn-outline btn-sm" onclick="moExcel()">⬇ Excel İndir</button>'
    +'<button class="btn btn-outline btn-sm" onclick="mmTab(\'firmalar\')">🏬 Mağazalar ('+firmalar.length+')</button>'
