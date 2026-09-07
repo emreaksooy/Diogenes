@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v399 · 04.09.2026';
+const APP_VER='v400 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11517,7 +11517,7 @@ function _opsSet(f,v){ const r=_opsRec(true); r[f]=v; setOperasyon(getOperasyon(
 // Operasyon tarihleri: ürünün kalkış takvimi + REZERVASYONLARDAN gelen kalkışlar (takvimde olmayan tarihli rezervasyonlar da tur oluşturur)
 function _opsTarihler(pkg){
   const set=new Set(_resDepartureDates(pkg)||[]);
-  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkg.id&&r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) set.add(r.kalkis); }); }catch(e){}
+  try{ (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&r.durum!=='iptal'&&r.pkgId===pkg.id&&r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) set.add(r.kalkis); }); }catch(e){}
   return [...set].sort();
 }
 // operasyon sayılarına yalnız AÇILIMI YAPILMIŞ (konaklama kartları oluşturulmuş) rezervasyonlar girer
@@ -11853,6 +11853,11 @@ function rtKaydir(n){ const sc=document.getElementById('rtScroll'); if(sc) sc.sc
 function _rtTurlar(bas,son){
   // sefer başına bölüm pax'ları (rezv.grupBolum; boş='01')
   const bolumMap={};
+  const hamMap={}; // açılımı yapılmamış (kartsız) rezervasyonların yolcu sayısı
+  try{ (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&r.durum!=='iptal'&&!((r.kartlar||[]).length)&&r.pkgId&&r.kalkis){
+    const kk=r.pkgId+'|'+r.kalkis;
+    hamMap[kk]=(hamMap[kk]||0)+(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length;
+  } }); }catch(e){}
   try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId&&r.kalkis){
     const kk=r.pkgId+'|'+r.kalkis; const rb=String(r.grupBolum||'01');
     (r.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
@@ -11886,8 +11891,9 @@ function _rtTurlar(bas,son){
         });
         return;
       }
-      if(!pax&&!(rec.rehberAd||'').trim()) return;
-      out.push({pkgId:pkg.id,kalkis:k,end,bolum:'01',kod:pkg.paketKodu||pkg.paketAdi||'—',op:_opsOperatorAd(pkg,k),pax,rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()});
+      const ham=hamMap[pkg.id+'|'+k]||0;
+      if(!pax&&!ham&&!(rec.rehberAd||'').trim()) return;
+      out.push({pkgId:pkg.id,kalkis:k,end,bolum:'01',kod:pkg.paketKodu||pkg.paketAdi||'—',op:_opsOperatorAd(pkg,k),pax:pax||ham,acilimsiz:(!pax&&ham>0),rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()});
     });
   });
   const _pkgs2=getPackages();
@@ -13710,7 +13716,7 @@ function renderOpsTurlar(){
                 return `<option value="${v2}" ${mev===v2?'selected':''}>${esc(pk.paketKodu||'?')} programı (${_fmtDateTR(sf.kalkis)})</option>`; }).join(''); })()}
           </select></div>`:''}</td>
         <td style="${td}">${esc(t.op||'—')}</td>
-        <td style="${td}"><b>${t.pax}</b></td>
+        <td style="${td}"><b>${t.pax}</b>${t.acilimsiz?'<div style="font-size:.56rem;color:#b45309;font-weight:800;white-space:nowrap">⏳ açılım bekliyor</div>':''}</td>
         <td style="${td}">${reh}</td>
         <td style="${td}">${trDurum(t)}${tahsisDurum(t)}</td>
         <td style="${td};white-space:nowrap">${t.birlesikGrupId?`<button class="btn btn-outline btn-sm" onclick="otGrupAc('${t.birlesikGrupId}')">📂 Dosya</button> <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button>`:`<button class="btn btn-outline btn-sm" onclick="opsOpen('${t.pkgId}','${t.kalkis}')">📂 Dosya</button>`}</td></tr>`;
