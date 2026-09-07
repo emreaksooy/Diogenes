@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v369 · 04.09.2026';
+const APP_VER='v370 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6621,6 +6621,18 @@ function _uylOlustur(){
   else showToast(varMi?'Mevcut liste açıldı':'Liste açıldı','success');
   ucakOpen(pkgId,iso);
 }
+function _ucakIptalUyariHTML(){
+  let U=[]; try{ U=(_mutIssues()||[]).filter(x=>x.tip==='iptalBilet'); }catch(e){}
+  if(!U.length) return '';
+  return `<div class="card" style="border:1.5px solid #fca5a5;background:#fef2f2;margin-bottom:12px">
+    <div style="font-weight:800;font-size:.84rem;color:#b91c1c;margin-bottom:7px">⚡ BİLET İPTALİ GEREKLİ (${U.length})</div>
+    ${U.map(u=>`<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dashed #fecaca;font-size:.78rem;flex-wrap:wrap">
+      <b>${_fmtDateTR(u.kalkis)}</b><span><b>${esc(u.kod)}</b> · ${esc(u.voucher)}</span>
+      <span style="color:var(--muted)">${esc(u.detay)}</span>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="ucakOpen('${u.pkgId}','${u.kalkis}')">📋 Listeye git</button>
+    </div>`).join('')}
+  </div>`;
+}
 function renderUcakGenel(){
   const box=document.getElementById('ucakGenel'); if(!box) return;
   _migrateResData();
@@ -6745,7 +6757,7 @@ function renderUcakGenel(){
       inner=arr.length?`<div class="ucak-deps">`+arr.map(depRow).join('')+`</div>`:`<p style="color:var(--muted);font-size:.86rem;margin-top:10px">Bu ayda kalkış yok.</p>`;
     }
   }
-  box.innerHTML=`<div class="card">
+  box.innerHTML=_ucakIptalUyariHTML()+`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">
       <div class="card-title" style="margin:0"><svg class="ic"><use href="#i-plane"/></svg> Kalkışlar</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
