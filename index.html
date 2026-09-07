@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v373 · 04.09.2026';
+const APP_VER='v374 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2067,6 +2067,7 @@ const getRehBildirim = () => Array.isArray(_rbCache)?_rbCache:[];
 const setRehBildirim = a => { _rbCache=a; clearTimeout(_rbSaveT); _rbSaveT=setTimeout(()=>idbSet('rehbildirim',_rbCache),250); _cloudQueue('rehbildirim'); return true; };
 const setEkipEk = o => { _ekipEkCache=o; clearTimeout(_ekeSaveT); _ekeSaveT=setTimeout(()=>idbSet('ekipek',_ekipEkCache),250); _cloudQueue('ekipek'); return true; };
 const getMagMuh = () => Array.isArray(_mmCache)?_mmCache:[];
+const getMagMuhAktif = () => getMagMuh().filter(k=>!k.silindi);
 const setMagMuh = a => { _mmCache=a; clearTimeout(_mmSaveT); _mmSaveT=setTimeout(()=>idbSet('magmuh',_mmCache),250); _cloudQueue('magmuh'); return true; };
 const getPnrLedger    = () => _pnrCache;
 const setPnrLedger    = a => { _pnrCache=a; clearTimeout(_pnrSaveT); _pnrSaveT=setTimeout(()=>idbSet('pnrLedger', _pnrCache),250); _cloudQueue('pnrLedger'); return true; };
@@ -15001,7 +15002,7 @@ function mmYeni(){
 function mmSet(id,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k[f]=v;
   if(f==='firmaId'){ const fm=_moFirmalar().find(x=>x.id===v); if(fm&&!(k.magKalemler||[]).length){ const sube=_moSubeBul(fm,''); const sablon=(sube&&(sube.kalemler||[]).length)?sube.kalemler:(fm.kalemler||[]); if(sablon.length) k.magKalemler=sablon.map(x=>({ad:x.ad,oran:x.oran,ciro:''})); } }
   setMagMuh(getMagMuh()); renderMagMuh(); }
-function mmSil(id){ showConfirm('🗑️','Kaydı Sil','Bildirim kaydı silinecek.','Sil',()=>{ setMagMuh(getMagMuh().filter(x=>x.id!==id)); renderMagMuh(); }); }
+function mmSil(id){ showConfirm('🗑️','Kaydı Sil','Bildirim kaydı silinecek (otomatik ziyaret senkronu geri getirmez).','Sil',()=>{ const k=getMagMuh().find(x=>x.id===id); if(k){ k.silindi=true; setMagMuh(getMagMuh()); } renderMagMuh(); showToast('Kayıt silindi','success'); }); }
 function mmKalemAdd(id){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; (k.magKalemler=k.magKalemler||[]).push({ad:'',ciro:'',oran:''}); setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmKalemSet(id,i,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.magKalemler[i]) return; k.magKalemler[i][f]=String(v).trim(); setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmKalemDel(id,i){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k.magKalemler.splice(i,1); setMagMuh(getMagMuh()); renderMagMuh(); }
@@ -15014,7 +15015,7 @@ function _mmBildirimKart(){
   const bugun=_opsToday();
   const B=getRehBildirim().filter(b=>String(b.tarih||'')>=_isoAdd(bugun,-14)).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
   if(!B.length) return '';
-  const L=getMagMuh();
+  const L=getMagMuhAktif();
   const esik=b=>L.find(k=>_pdate(k.tarih)===_pdate(b.tarih)&&_rehbNrm(k.rehberAd)===_rehbNrm(b.rehberAd)&&(!b.magaza||!k.magaza||_rehbNrm(k.magaza)===_rehbNrm(b.magaza)));
   const td='padding:4px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
   return `<div class="card" style="margin-bottom:12px"><div class="card-title">📲 Rehber Bildirimleri <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">son 14 gün · ${B.length} bildirim — WhatsApp yerine buradan takip</span></div>
@@ -15031,7 +15032,7 @@ function renderMagMuh(){
   _mmZiyaretSenk();
   if(!_mmAy) _mmAy=_opsToday().slice(0,7);
   const firmalar=_moFirmalar();
-  let L=getMagMuh().filter(k=>String(_pdate(k.tarih)||'').slice(0,7)===_mmAy);
+  let L=getMagMuhAktif().filter(k=>String(_pdate(k.tarih)||'').slice(0,7)===_mmAy);
   if(_mmFirmaF) L=L.filter(k=>k.firmaId===_mmFirmaF);
   if(_mmDurumF) L=L.filter(k=>(k.durum||'bekliyor')===_mmDurumF);
   window._mmBildKartHTML=_mmBildirimKart();
@@ -15049,7 +15050,7 @@ function renderMagMuh(){
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mmYeni()">+ Bildirim Kaydı</button>
       <button class="btn btn-outline btn-sm" onclick="mmExcel()">📥 Excel</button>
     </div>`;
-  { const bekTum=getMagMuh().filter(k=>{const c=_mmHesap(k); return (k.durum||'bekliyor')==='bekliyor'&&c.mag===0;});
+  { const bekTum=getMagMuhAktif().filter(k=>{const c=_mmHesap(k); return (k.durum||'bekliyor')==='bekliyor'&&c.mag===0;});
     if(bekTum.length) h+=`<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:7px 12px;margin-bottom:10px;font-size:.78rem;color:#92400e"><b>⚠ ${bekTum.length} ziyaretin mağaza bildirimi bekleniyor</b>${bekTum.some(k=>String(_pdate(k.tarih)||'').slice(0,7)!==_mmAy)?' (bazıları başka aylarda — ay filtresini değiştir)':''}</div>`; }
   if(!L.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt yok — \'+ Bildirim Kaydı\' ile başla.</p></div>'; return; }
   h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
@@ -15106,7 +15107,7 @@ function renderMagMuh(){
 function mmExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const firmalar=_moFirmalar();
-  const L=getMagMuh().filter(k=>String(_pdate(k.tarih)||'').slice(0,7)===_mmAy);
+  const L=getMagMuhAktif().filter(k=>String(_pdate(k.tarih)||'').slice(0,7)===_mmAy);
   if(!L.length){ showToast('Bu ayda kayıt yok','error'); return; }
   const DAD={bekliyor:'Bekliyor',mutabik:'Mutabık',tahsil:'Tahsil edildi'};
   const aoa=[['MAĞAZA MUHASEBESİ — '+_mmAy],[],['Tarih','Mağaza','Tur','Rehber','Pax','Kalemler','Mağaza Ciro','Rehber Ciro','Fark','Komisyon','Para','Durum','Not']];
