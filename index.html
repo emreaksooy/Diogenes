@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v397 · 04.09.2026';
+const APP_VER='v398 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11137,8 +11137,8 @@ function _rehbMagazalar(){
         let rec={}; try{ rec=_opsGet(sf.pkgId,sf.kalkis)||{}; }catch(e){}
         (pkg.gunler||[]).forEach((gn,gi)=>{
           if(!gn.magazaVar||!(gn.magazalar||[]).length) return;
-          const tarih=_isoAdd(sf.kalkis,gi);
           (gn.magazalar||[]).forEach((m,mi)=>{
+            const tarih=_magTarihGet(sf.pkgId,sf.kalkis,gi,mi);
             let fid=''; try{ const at=rec.magazaAtama||{}; const anah=Object.keys(at).find(kk=>kk.endsWith('_g'+gi+'_'+mi)); if(anah) fid=at[anah]; }catch(e){}
             const cz=_moAtaCoz(fid); const f=cz.f; const sube=cz.sube||(f?_moSubeBul(f,m.sehir):null);
             if(!f) return; // atanmamış ziyaret seçenek olmaz
@@ -11487,6 +11487,23 @@ function _isoAdd(iso,n){ const d=new Date((iso||_opsToday())+'T00:00:00'); if(is
 function _isoDiff(a,b){ return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000); }
 function _opsRec(create){ const all=getOperasyon(); let r=all.find(x=>x.pkgId===_opsPkgId&&x.kalkis===_opsKalkis); if(!r&&create){ r={pkgId:_opsPkgId,kalkis:_opsKalkis,magazalar:[],oteller:[]}; all.push(r); setOperasyon(all);} return r; }
 function _opsGet(pkgId,kalkis){ return getOperasyon().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis)||{}; }
+function _magTarihGet(pkgId,kalkis,gi,mi){
+  try{ const r=_opsGet(pkgId,kalkis); const v=(r.magazaTarih||{})['g'+gi+'_'+mi]; if(v) return v; }catch(e){}
+  return _isoAdd(kalkis,gi);
+}
+function tdMagTarihSet(zKey,val){
+  const p=String(zKey||'').split('|'); if(p.length<3) return;
+  const m=/^g(\d+)_(\d+)$/.exec(p[2]); if(!m) return;
+  const all=getOperasyon();
+  let rec=all.find(x=>x.pkgId===p[0]&&x.kalkis===p[1]);
+  if(!rec){ rec={pkgId:p[0],kalkis:p[1],magazalar:[],oteller:[]}; all.push(rec); }
+  rec.magazaTarih=rec.magazaTarih||{};
+  const k='g'+m[1]+'_'+m[2];
+  const oto=_isoAdd(p[1],+m[1]);
+  if(!val||val===oto) delete rec.magazaTarih[k]; else rec.magazaTarih[k]=val;
+  setOperasyon(all); renderOpsGrup();
+  showToast(val&&val!==oto?'Mağaza tarihi elle düzeltildi — plan ve rehber ekranı da bu tarihi kullanır':'Mağaza tarihi tur programına döndü','success');
+}
 function _opsSet(f,v){ const r=_opsRec(true); r[f]=v; setOperasyon(getOperasyon()); }
 // Operasyon tarihleri: ürünün kalkış takvimi + REZERVASYONLARDAN gelen kalkışlar (takvimde olmayan tarihli rezervasyonlar da tur oluşturur)
 function _opsTarihler(pkg){
@@ -12316,9 +12333,9 @@ function _moZiyaretUret(programTur,pax,rehber,kodEtiket,opEtiket,parts,birlesik,
   const pkg=getPackages().find(p=>p.id===programTur.pkgId); if(!pkg) return out;
   (pkg.gunler||[]).forEach((g,gi)=>{
     if(!g.magazaVar||!(g.magazalar||[]).length) return;
-    const tarih=_isoAdd(programTur.kalkis,gi);
-    if(tarih<bugun) return;
     (g.magazalar||[]).forEach((m,mi)=>{
+      const tarih=_magTarihGet(programTur.pkgId,programTur.kalkis,gi,mi);
+      if(tarih<bugun) return;
       const key='b'+(programTur.bolum||'01')+'_g'+gi+'_'+mi;
       const rec=_opsGet(programTur.pkgId,programTur.kalkis);
       out.push({tarih,kod:kodEtiket,op:opEtiket,sehir:m.sehir||'',tur:m.tip||'',pax,rehber,birlesik:!!birlesik,
@@ -14447,11 +14464,12 @@ function renderTurDosyasi(box){
       let rec={}; try{ rec=_opsGet(sf.pkgId,sf.kalkis)||{}; }catch(e){}
       (pkg.gunler||[]).forEach((gn,gi)=>{
         if(!gn.magazaVar||!(gn.magazalar||[]).length) return;
-        const tarih=_isoAdd(sf.kalkis,gi);
         (gn.magazalar||[]).forEach((m,mi)=>{
+          const tarih=_magTarihGet(sf.pkgId,sf.kalkis,gi,mi);
+          const elleMi=tarih!==_isoAdd(sf.kalkis,gi);
           let fid=''; try{ const at=rec.magazaAtama||{}; const anah=Object.keys(at).find(kk=>kk.endsWith('_g'+gi+'_'+mi)); if(anah) fid=at[anah]; }catch(e){}
           const cz=_moAtaCoz(fid); const f=cz.f; const sube=cz.sube||(f?_moSubeBul(f,m.sehir):null);
-          rows.push({tarih,gun:gi+1,sehir:m.sehir||'',tip:m.tip||'',firma:f?(f.ad||''):'',
+          rows.push({tarih,elleMi,gun:gi+1,sehir:m.sehir||'',tip:m.tip||'',firma:f?(f.ad||''):'',
             lok:sube?(sube.sehir||''):'',magAd:sube?(sube.ad||''):'',tel:sube?(sube.tel||''):'',yetkili:sube?(sube.yetkili||''):'',
             opsAd:sube?(sube.opsAd||''):'',opsTel:sube?(sube.opsTel||''):'',
             zKey:sf.pkgId+'|'+sf.kalkis+'|g'+gi+'_'+mi,
@@ -14464,7 +14482,7 @@ function renderTurDosyasi(box){
     const gRows=rehMod?rows.filter(r=>!_bildSet.has(r.zKey)):rows;
     window._tdMagRows=gRows;
     h+=gRows.length?`<table class="rzmg"><tr>${rehMod?'<th style="width:76px"></th>':''}<th style="width:96px">Tarih</th><th style="width:52px">Gün</th><th>Şehir</th><th>Mağaza Türü</th><th>Atanan Mağaza</th><th>İletişim</th></tr>
-      ${gRows.map((r,ri)=>`<tr>${rehMod?`<td>${(r.firma)?`<button class="btn btn-primary btn-sm" style="padding:4px 10px" onclick="rehbTdBildirAc(${ri})">📢 Bildir</button>`:''}</td>`:''}<td><b>${_fmtDateTR(r.tarih)}</b>${(!rehMod&&_bildSet.has(r.zKey))?' <span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.58rem;padding:1px 6px;border-radius:7px">📲 BİLDİRİLDİ</span>':''}</td><td>${r.gun}. gün</td><td>${esc(r.sehir)||'—'}</td><td>${esc(r.tip)||'—'}</td>
+      ${gRows.map((r,ri)=>`<tr>${rehMod?`<td>${(r.firma)?`<button class="btn btn-primary btn-sm" style="padding:4px 10px" onclick="rehbTdBildirAc(${ri})">📢 Bildir</button>`:''}</td>`:''}<td>${rehMod?`<b>${_fmtDateTR(r.tarih)}</b>`:`<input type="date" value="${esc(r.tarih)}" onchange="tdMagTarihSet('${r.zKey}',this.value)" title="Mağaza tarihini elle düzelt — boşaltırsan tur programına döner" style="padding:3px 5px;border:1.5px solid ${r.elleMi?'#f59e0b':'var(--border)'};border-radius:7px;font-family:inherit;font-size:.74rem;width:118px">${r.elleMi?'<div style="font-size:.56rem;color:#b45309;font-weight:800">elle düzeltildi</div>':''}`}${(!rehMod&&_bildSet.has(r.zKey))?' <span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.58rem;padding:1px 6px;border-radius:7px">📲 BİLDİRİLDİ</span>':''}</td><td>${r.gun}. gün</td><td>${esc(r.sehir)||'—'}</td><td>${esc(r.tip)||'—'}</td>
         <td>${r.firma?`<b>🏬 ${esc(r.firma)}</b>${r.magAd?' · '+esc(r.magAd):''}${r.lok?` <span style="color:var(--muted);font-size:.7rem">📍 ${esc(r.lok)}</span>`:''}`:'<span style="color:var(--muted)">atanmadı</span>'}</td>
         <td style="white-space:nowrap">${r.tel?`<a href="tel:${esc(r.tel)}" style="color:inherit;text-decoration:none">☎ ${esc(r.tel)}</a>`:''}${r.yetkili?` <span style="color:var(--muted);font-size:.7rem">👤 ${esc(r.yetkili)}</span>`:''}${(r.opsAd||r.opsTel)?`<div style="font-size:.68rem;color:var(--muted)">🧑‍💼 ${esc(r.opsAd||'')}${r.opsTel?` <a href="tel:${esc(r.opsTel)}" style="color:inherit">☎ ${esc(r.opsTel)}</a>`:''}</div>`:''}${(!r.tel&&!r.yetkili&&!r.opsAd&&!r.opsTel)?'—':''}</td></tr>`).join('')}
     </table>${rehMod?'<div style="font-size:.7rem;color:var(--muted);margin-top:8px">📢 Bildir: ziyaret sonrası pax + toplam ciroyu gir — bildirilen mağaza listeden düşer.</div>':'<div style="font-size:.7rem;color:var(--muted);margin-top:8px">Mağaza firması ataması Mağaza Muhasebesi › Ziyaret Planı ekranından yapılır.</div>'}`
