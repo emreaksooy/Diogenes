@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v384 · 04.09.2026';
+const APP_VER='v385 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14730,6 +14730,13 @@ function _trGroup(rows,p){ const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'
 function _trGenRows(){
   const T=getTransfer(); const sat=T.sat||{}; const pkgs=getPackages(); const out=[];
   const vsat=T.vsat||{};
+  // İPTAL rezervasyonların voucher'ları transfer ÜRETMEZ (uçak listesinde satırları dursa bile)
+  const _iptalV=new Set();
+  try{ (getRezv()||[]).forEach(r=>{ if(r&&r.durum==='iptal'){
+    const kk=r.pkgId+'|'+r.kalkis+'|';
+    if((r.voucher||'').trim()) _iptalV.add(kk+String(r.voucher).trim());
+    if((r.asilVoucher||'').trim()) _iptalV.add(kk+String(r.asilVoucher).trim());
+  } }); }catch(e){}
   const merge=(o,vlist)=>{ const p=(o.id||'').split('|'); o.pkgId=p[0]||''; o.kalkis=p[1]||''; o.opsGrupId=(p[0]||'')+'|'+(p[1]||'');
     o.vlist=vlist||[]; o.vseg=p[2]==='TUR'?('TUR:'+(p[3]||'')):p[2];
     let m=null;
@@ -14740,7 +14747,10 @@ function _trGenRows(){
     const pkg=pkgs.find(p=>p.id===g.pkgId)||{}; const op=_resOpAd(pkg)||''; const urun=pkg.paketKodu||pkg.paketAdi||'';
     if(pkg.opsDisAcente) return; // operasyon dış acentede — transferleri biz ayarlamıyoruz
     const hotel=_trHotel(g.pkgId,g.kalkis,pkg); const bolge=_trBolge(pkg);
-    const real=(g.rows||[]).filter(_isim); if(!real.length) return;
+    const real=(g.rows||[]).filter(x=>_isim(x)
+      &&_durumEff(x)!=='iptal'
+      &&!_iptalV.has(g.pkgId+'|'+g.kalkis+'|'+String(x.resno||'').trim()));
+    if(!real.length) return;
     _trGroup(real,'g').forEach(grp=>{ const y=grp.y;
       // GELİŞ uçuş kanıtı yoksa (uçuş no/rota/saat/tarih/PNR/havayolu hiçbiri girilmemiş) transfer üretme — hayalet geliş engeli
       if(!((y.g_u1||'').trim()||(y.g_v1||'').trim()||(y.g_vs1||'').trim()||(y.g_vs2||'').trim()||(y.g_tarih||'').toString().trim()||(y.g_pnr||'').trim()||(y.g_hy||'').trim())) return;
