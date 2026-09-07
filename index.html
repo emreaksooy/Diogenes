@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v388 · 04.09.2026';
+const APP_VER='v389 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13606,6 +13606,19 @@ function renderOpsTurlar(){
   // transfer durumu: tur bazında atanmamış uçuş transferi sayısı
   const trMap={};
   try{ _trGenRows().forEach(r=>{ if(r.tip==='TUR') return; const k=r.pkgId+'|'+r.kalkis; const o=trMap[k]=trMap[k]||{n:0,atasiz:0}; o.n++; if(!r.grup) o.atasiz++; }); }catch(e){}
+  const tahsisDurum=t=>{
+    let g2=null;
+    try{ const S=getOpsGrup().gruplar||{};
+      g2=Object.values(S).find(x=>(t.birlesikGrupId&&x.id===t.birlesikGrupId)
+        ||(x.uyeler||[]).some(u=>u.pkgId===t.pkgId&&u.kalkis===t.kalkis)
+        ||(x.sefer&&x.sefer.pkgId===t.pkgId&&x.sefer.kalkis===t.kalkis)); }catch(e){}
+    const th2=g2?(g2.araclar||[]).filter(a=>a.tip==='tahsis'):[];
+    if(!th2.length) return '';
+    const plakasiz=th2.some(a=>!(a.plaka||'').trim());
+    return plakasiz
+      ?'<div style="margin-top:3px"><span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚙 tahsis — plaka bekliyor</span></div>'
+      :'<div style="margin-top:3px"><span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚙 tahsis ayarlandı</span></div>';
+  };
   const trDurum=t=>{
     const sefler=(t.uyeSeferler&&t.uyeSeferler.length)?t.uyeSeferler:[{pkgId:t.pkgId,kalkis:t.kalkis}];
     let n=0,a=0; sefler.forEach(sf=>{ const o=trMap[sf.pkgId+'|'+sf.kalkis]; if(o){ n+=o.n; a+=o.atasiz; } });
@@ -13629,7 +13642,7 @@ function renderOpsTurlar(){
       <button class="btn btn-outline btn-sm" ${_gbSec.size?'':'style="margin-left:auto"'} onclick="opsTab('rehtak')">📅 Rehber Takvimi</button>
       <button class="btn btn-outline btn-sm" onclick="otExcel()">📥 Excel</button>
     </div>
-    <table style="width:100%;border-collapse:collapse">
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
       <tr><th style="${th}" title="Birleştirmek için seç"></th><th style="${th}">Giriş</th><th style="${th}">Çıkış</th><th style="${th}">Tur</th><th style="${th}">Operatör</th><th style="${th}">Pax</th><th style="${th}">Rehber</th><th style="${th}">Transferler</th><th style="${th}"></th></tr>
       ${L.map(t=>{
         const bl=(t.uyeSeferler&&t.uyeSeferler.length)?`<span style="background:var(--primary);color:#fff;font-weight:800;font-size:.58rem;padding:1px 7px;border-radius:8px;margin-left:5px">🔗 ${t.uyeSeferler.length}</span>`:'';
@@ -13654,10 +13667,10 @@ function renderOpsTurlar(){
         <td style="${td}">${esc(t.op||'—')}</td>
         <td style="${td}"><b>${t.pax}</b></td>
         <td style="${td}">${reh}</td>
-        <td style="${td}">${trDurum(t)}</td>
+        <td style="${td}">${trDurum(t)}${tahsisDurum(t)}</td>
         <td style="${td};white-space:nowrap">${t.birlesikGrupId?`<button class="btn btn-outline btn-sm" onclick="otGrupAc('${t.birlesikGrupId}')">📂 Dosya</button> <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button>`:`<button class="btn btn-outline btn-sm" onclick="opsOpen('${t.pkgId}','${t.kalkis}')">📂 Dosya</button>`}</td></tr>`;
       }).join('')}
-    </table>
+    </table></div>
     ${L.length?'':'<p style="color:var(--muted);font-size:.85rem;padding:10px 2px">Bu aralıkta tur yok.</p>'}
     <div style="font-size:.7rem;color:var(--muted);margin-top:8px">☑ Seç → Birleştir: seçilen seferler TEK TUR olur (takvimde tek şerit, tek dosya, atamalar tüm seferlere). ✂ Dağıt geri alır.</div>
     </div>`;
