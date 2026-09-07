@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v396 · 04.09.2026';
+const APP_VER='v397 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15557,7 +15557,7 @@ function _trTahsisBolumHTML(){
       ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b></td><td style="${td2}">${_fmtDateTR(t.bit)}</td><td style="${td2}"><b>${esc(t.tur)}</b>${t.gorev?`<div style="font-size:.66rem;color:#0369a1;font-weight:700">${esc(t.gorev)}</div>`:''}</td><td style="${td2}">${esc(t.firma)||'<span style="color:#b45309;font-weight:700">firma yok</span>'}</td><td style="${td2}">${esc(t.arac)}</td>
         <td style="${td2}">${t.plaka?`<b>${esc(t.plaka)}</b>`:'<span style="color:#b45309;font-size:.68rem">plaka bekliyor</span>'}${t.sofor?` · ${esc(t.sofor)}`:''}${t.stel?` <span style="color:var(--muted);font-size:.68rem">${esc(t.stel)}</span>`:''}</td>
         <td style="${td2}"><b>${esc(String(t.pax||''))}</b></td><td style="${td2}">${esc(t.reh)||'—'}</td><td style="${td2};font-size:.7rem;color:var(--muted)">${esc(t.not)}</td>
-        <td style="${td2};white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="trTahsisDosya('${t.gid}')">📂 Dosya</button></td></tr>`).join('')}
+        <td style="${td2};white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="trTahsisDosya('${t.gid}')" title="Tur dosyasının Araçlar sekmesini açar — tahsisi orada düzeltirsin">🔧 Tahsisi düzelt</button></td></tr>`).join('')}
       </table></div></div>`;
   })();
   return h;
