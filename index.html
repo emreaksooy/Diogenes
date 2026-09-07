@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v389 · 04.09.2026';
+const APP_VER='v390 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14019,6 +14019,19 @@ function tdAracSet(i,f,v){ const g=_tdG(); if(!g||!g.araclar[i])return; g.aracla
   _tdSave();
   if(rerender) renderOpsGrup(); else _tdAracDom(i);
 }
+function _tdTurRota(g){
+  let pkgId=null;
+  if((g.uyeler||[]).length) pkgId=g.uyeler[0].pkgId; else if(g.sefer&&g.sefer.pkgId) pkgId=g.sefer.pkgId;
+  const pkg=getPackages().find(p=>p.id===pkgId); if(!pkg) return '';
+  const sehirler=[]; let prev='';
+  (pkg.gunler||[]).forEach(gd=>{
+    const nk=(gd.noktalar||[]).filter(x=>x&&x.trim());
+    const c=(gd.konaklamaSehir||gd.konaklamaAd||gd.konaklamaBolge||(nk.length?nk[nk.length-1]:'')||'').trim();
+    if(c&&c!==prev){ sehirler.push(c); prev=c; }
+  });
+  return sehirler.join(' → ');
+}
+function tdAracRota(i){ const g=_tdG(); if(!g||!g.araclar[i])return; const r=_tdTurRota(g); if(!r){ showToast('Ürünün gün planında şehir bulunamadı','error'); return; } g.araclar[i].program=r; _tdSave(); renderOpsGrup(); }
 function tdAracDel(i){ const g=_tdG(); if(!g)return; g.araclar.splice(i,1); _tdSave(); renderOpsGrup(); }
 function tdSatisPaketleriGetir(sessiz){
   const g=_tdG(), E=_tdE(); if(!g||!E) return 0;
@@ -14193,6 +14206,7 @@ function renderTurDosyasi(box){
           :`<label class="otl-f"><span>Tarih</span><input type="date" value="${esc(a.tarih)}" onchange="tdAracSet(${i},'tarih',this.value)"></label>
             <label class="otl-f" style="width:80px"><span>Saat</span><input value="${esc(a.saat)}" placeholder="06:00" onchange="tdAracSet(${i},'saat',this.value)"></label>`}
         <label class="otl-f" style="width:118px"><span>Maliyet${a.fiyatPara?' ('+esc(a.fiyatPara)+')':''}</span><input id="tdAf_${i}" inputmode="decimal" value="${esc(a.fiyat!=null?a.fiyat:'')}" placeholder="oto" title="${esc(a.fiyatNot||'Kontrattan otomatik — elle ezebilirsin; boşaltırsan otomatiğe döner')}" style="text-align:right${a.fiyatMan?';border-color:var(--primary)':''}" onchange="tdAracFiyatElle(${i},this.value)"></label>
+        ${a.tip==='tahsis'?`<label class="otl-f" style="flex:1.4;min-width:170px"><span>Program / Güzergâh <a href="javascript:void(0)" onclick="tdAracRota(${i})" style="font-weight:700;color:var(--primary);text-decoration:none">⟳ turdan getir</a></span><input value="${esc(a.program||'')}" placeholder="Antalya → Kapadokya → …" onchange="tdAracSet(${i},'program',this.value)"></label>`:''}
         <label class="otl-f" style="flex:1;min-width:120px"><span>Not</span><input value="${esc(a.not)}" onchange="tdAracSet(${i},'not',this.value)"></label>
         <button style="background:none;border:none;color:var(--muted);cursor:pointer;padding-bottom:10px" onclick="tdAracDel(${i})">✕</button>
       </div>`;
@@ -15498,7 +15512,7 @@ function _trTahsisBolumHTML(){
           if(_trUst.firma&&String(a.firma||'').trim()!==_trUst.firma) return;
           let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
           L.push({gid:E2.id,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',pax:E2.pax||'',firma:a.firma||'',
-            arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',reh:rehAd,not:a.not||''});
+            arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',reh:rehAd,not:[a.program,a.not].filter(Boolean).join(' · ')});
         });
       });
     }catch(e){}
@@ -15890,7 +15904,7 @@ function _trTasimaciBloklar(sessiz){
         let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
         tahsisler.push({key:'TAH|'+E2.id+'|'+ab,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',pax:E2.pax||'',
           arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:a.not||''});
+          reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:[a.program,a.not].filter(Boolean).join(' · ')});
       });
     });
   }catch(e){}
