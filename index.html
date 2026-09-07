@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v376 · 04.09.2026';
+const APP_VER='v377 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14238,6 +14238,31 @@ function renderTurDosyasi(box){
     if(!window._tdUcakYon) window._tdUcakYon='G';
     if(window._tdUcakYon==='A'&&!araVar) window._tdUcakYon='G';
     const yonBtn=(y,ad)=>`<button class="btn btn-sm ${window._tdUcakYon===y?'btn-primary':'btn-outline'}" onclick="window._tdUcakYon='${y}';renderOpsGrup()">${ad}</button>`;
+    // ── TRANSFER GÖREVLERİ ÖZETİ: Taşımacı · Kaptan · Numara · Plaka ──
+    (function(){
+      let trTum=[]; try{ trTum=_trGenRows().filter(r=>r.tip!=='TUR'&&r.grup&&((E.uyeler||[]).some(u=>u.pkgId===r.pkgId&&u.kalkis===r.kalkis)||(E.sefer&&E.sefer.pkgId===r.pkgId&&E.sefer.kalkis===r.kalkis))); }catch(e){}
+      if(!trTum.length) return;
+      const m=new Map();
+      trTum.forEach(r=>{ if(!m.has(r.grup)) m.set(r.grup,[]); m.get(r.grup).push(r); });
+      const tipAd2={G:'Geliş',D:'Dönüş',ARAD:'Ara Depar',ARAG:'Ara Varış'};
+      const say={};
+      const satirlar=[...m.entries()].sort((a,b)=>String(a[1][0].tarih).localeCompare(String(b[1][0].tarih))||String(a[1][0].tip).localeCompare(String(b[1][0].tip))).map(([gid,rowsG])=>{
+        const r0=rowsG[0]; const gr3=_trGrupOf(r0); const t=tipAd2[r0.tip]||r0.tip;
+        say[t]=(say[t]||0)+1;
+        let dep=''; try{ dep=_trDeparHesap(r0).saat||''; }catch(e){}
+        return `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:4px 0;border-bottom:1px dashed #fcd9c4;font-size:.76rem">
+          <b>🚌 ${t} Transfer-${say[t]}</b>
+          <span>${esc(gr3.firma||'—')}</span>
+          ${gr3.arac||gr3.arac2?`<span style="color:var(--muted)">${esc([gr3.arac,gr3.arac2].filter(Boolean).join(' + '))}</span>`:''}
+          ${gr3.plaka?`<span style="font-weight:800">${esc(gr3.plaka)}</span>`:'<span style="color:#b45309;font-size:.68rem">plaka girilmedi</span>'}
+          ${gr3.soforAd?`<span>👨‍✈️ ${esc(gr3.soforAd)}</span>`:''}
+          ${gr3.soforTel?`<a href="tel:${esc(gr3.soforTel)}" style="color:inherit;font-weight:700">☎ ${esc(gr3.soforTel)}</a>`:''}
+          ${dep?`<span style="margin-left:auto;color:#166534;font-weight:800">Depar ${esc(dep)}</span>`:''}
+        </div>`;
+      }).join('');
+      h+=`<div style="background:var(--primary-soft);border:1px solid #fcd9c4;border-radius:12px;padding:8px 13px;margin-bottom:12px">
+        <div style="font-weight:800;font-size:.74rem;margin-bottom:3px">🚍 TRANSFER BİLGİLERİ</div>${satirlar}</div>`;
+    })();
     h+=`<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
       ${yonBtn('G','🛬 Geliş')}${yonBtn('D','🛫 Dönüş')}${araVar?yonBtn('A','✈ Ara Uçuş'):''}
       <span style="font-size:.68rem;color:var(--muted);margin-left:auto">Uçak listelerinden canlı · transfer görevleriyle eşleşik</span>
