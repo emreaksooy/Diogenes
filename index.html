@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v392 · 04.09.2026';
+const APP_VER='v393 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13627,8 +13627,8 @@ function renderOpsTurlar(){
     const th2=g2?(g2.araclar||[]).filter(a=>a.tip==='tahsis'):[];
     if(!th2.length){
       return pk2.turTransferYok
-        ?'<div style="margin-top:3px"><span onclick="otTurTrfTog(\''+t.pkgId+'\')" title="Tıkla — tur içi transferi tekrar aç" style="background:var(--light);color:var(--muted);font-weight:700;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap;cursor:pointer">🚫 tahsis gerekmez</span></div>'
-        :'<div style="margin-top:3px"><span onclick="otTurTrfTog(\''+t.pkgId+'\')" title="Bu üründe tur içi transfer/tahsis YOK olarak işaretle — monitörde TUR görevleri üretilmez" style="color:var(--muted);font-size:.6rem;cursor:pointer;text-decoration:underline dotted">tahsis gerekmez mi?</span></div>';
+        ?'<div style="margin-top:3px"><span style="background:var(--light);color:var(--muted);font-weight:700;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚫 tahsis gerekmez</span></div>'
+        :'<div style="margin-top:3px"><span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚙 tahsis atanmamış</span></div>';
     }
     const plakasiz=th2.some(a=>!(a.plaka||'').trim());
     return plakasiz
