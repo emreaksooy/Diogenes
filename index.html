@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v406 · 04.09.2026';
+const APP_VER='v407 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -16020,7 +16020,8 @@ function _trTasimaciBloklar(sessiz){
       blok={kod:_trKodOf(x.r.grup),tarih:x.r.tarih,gr:_trGrupOf(x.r),ilkR:x.r,ucuslar:[],pax:0,depar:null,hedef:'',yolcular:[]};
       gorevMap[key]=blok; bolumler[B].push(blok);
     }
-    blok.ucuslar.push({ucus:x.r.ucus||'',saat:x.r.saat||'',yer:x.r.tip==='D'?x.r.nereye:x.r.nereden});
+    blok.ucuslar.push({ucus:x.r.ucus||'',saat:x.r.saat||'',yer:x.r.tip==='D'?x.r.nereye:x.r.nereden,
+      rt:(x.r.rota&&x.r.rota.includes('→'))?x.r.rota:'',hat:_trHatTipi(x.r.rota)==='IC'?'İÇ HAT':(_trHatTipi(x.r.rota)==='DIS'?'DIŞ HAT':''),ak:x.r.akt||''});
     (blok.ops=blok.ops||new Set()).add(x.r.op||'');
     if((x.r.not||'').trim()) (blok.notlar=blok.notlar||new Set()).add(x.r.not.trim());
     blok.pax+=(+x.r.pax||0);
@@ -16045,7 +16046,7 @@ function _trTasimaciExcel(){
       const _ri=_trRehInfo(b.ilkR||{});
       const _rehAd=(b.gr.rehber||_ri.ad||'—');
       const reh=_rehAd+(_rehAd!=='—'&&_rehTelBul(_rehAd)?' '+_rehTelBul(_rehAd):'')+(b.gr.sofor?' · Şoför: '+b.gr.sofor:'')+(b.gr.stel?' ('+b.gr.stel+')':'');
-      const ucusOzet=[...new Set(b.ucuslar.map(u=>(u.ucus+(u.saat?' '+u.saat:'')).trim()).filter(Boolean))].join(' + ');
+      const ucusOzet=[...new Set(b.ucuslar.map(u=>(u.ucus+(u.saat?' '+u.saat:'')+(u.rt?'  ('+u.rt+(u.hat?' — '+u.hat:'')+(u.ak?' · aktarmalı, '+u.ak:'')+')':'')).trim()).filter(Boolean))].join('   +   ');
       const aracTxt=[b.gr.arac,b.gr.arac2].filter(Boolean).join(' + ')||'—';
       const rota=B==='DÖNÜŞ'?(b.hedef+'  →  '+b.ucuslar.map(u=>u.yer)[0]):(b.ucuslar.map(u=>u.yer)[0].split(' · ')[0]+'  →  '+b.hedef);
       bantlar.push(aoa.length);
@@ -16115,7 +16116,7 @@ function _trTasimaciPdf(){
     const L=V.bolumler[B]; if(!L.length) return;
     h+=`<div class="gorev"><h1>${esc(B)} TRANSFER LİSTESİ — ${esc(V.firma)}</h1><h2>${esc(V.donem)} · Diogenes Travel</h2>`;
     L.forEach((b,bi)=>{
-      const ucusOzet=[...new Set(b.ucuslar.map(u=>(u.ucus+(u.saat?' '+u.saat:'')).trim()).filter(Boolean))].join(' + ');
+      const ucusOzet=[...new Set(b.ucuslar.map(u=>(u.ucus+(u.saat?' '+u.saat:'')+(u.rt?' ('+u.rt+(u.hat?' — '+u.hat:'')+(u.ak?' · aktarmalı, '+u.ak:'')+')':'')).trim()).filter(Boolean))].join(' + ');
       const rota=B==='DÖNÜŞ'?(b.hedef+' → '+b.ucuslar.map(u=>u.yer)[0]):(b.ucuslar.map(u=>u.yer)[0].split(' · ')[0]+' → '+b.hedef);
       const aracTxt=[b.gr.arac,b.gr.arac2].filter(Boolean).join(' + ')||'—';
       const _ri=_trRehInfo(b.ilkR||{});
