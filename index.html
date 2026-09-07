@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v402 · 04.09.2026';
+const APP_VER='v403 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14817,6 +14817,17 @@ function _trBolgeOnce(ad){ const b=(getTanimlar().bolgeler||[]).find(x=>(x.ad||'
 function _trDeparHesap(r){ if(r.deparMan&&r.depar) return {saat:r.depar,onceki:false}; if(r.tip==='D'||r.tip==='ARAD'){ const u=_dk(r.saat),o=_trBolgeOnce(r.bolge); if(u===null||o===null) return {saat:r.depar||'',onceki:false}; const d=u-o; return {saat:_mmss(d),onceki:d<0}; } return {saat:r.saat||'',onceki:false}; }
 function _trGrupKey(y,p){ return p+':'+String(y[p+'_u1']||'').trim().toUpperCase()+'_'+String(y[p+'_k1']||'').trim().toUpperCase()+'_'+String(y[p+'_ks1']||'').trim(); }
 function _trGroup(rows,p){ const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={}; rows.forEach(y=>{ if(!has(y))return; const key=_trGrupKey(y,p); if(!map[key]) map[key]={key,pnrs:new Set(),vset:new Set(),y,n:0}; const pn=(y[p+'_pnr']||'').trim(); if(pn) map[key].pnrs.add(pn); const vc=String(y.resno||'').trim(); if(vc) map[key].vset.add(vc); map[key].n++; }); return Object.values(map).map(g=>{ const L=[...g.pnrs]; g.pnr=L.length===0?'—':(L.length===1?L[0]:L.length+' PNR'); g.vlist=[...g.vset]; return g; }); }
+const _TR_APS=new Set(['IST','SAW','AYT','ESB','ADB','ADA','ASR','NAV','KYA','DLM','BJV','GZT','TZX','VAN','ERZ','GNY','HTY','SZF','DNZ','EDO','CKZ','USQ','YEI','MZH','MSR','IGD','KSY','AJI','ERC','EZS','MLX','DIY','BAL','BTZ','SXZ','NOP','VAS','TJK','OGU','KFS','MQM','AOE','ISE','KCM','GZP','EYP','YKO','RZV','BGG','ONQ','TEQ','KZR','NKT','SIC']);
+function _trHatTipi(rota){
+  const p=String(rota||'').split('→').map(x=>x.trim().toUpperCase()).filter(Boolean);
+  if(p.length<2||p.some(x=>x.length!==3)) return '';
+  return p.every(x=>_TR_APS.has(x))?'IC':'DIS';
+}
+function _trHatRozet(rota){
+  const t=_trHatTipi(rota); if(!t) return '';
+  return t==='IC'?'<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.54rem;padding:1px 5px;border-radius:6px">İÇ HAT</span>'
+                 :'<span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.54rem;padding:1px 5px;border-radius:6px">DIŞ HAT</span>';
+}
 function _trGenRows(){
   const T=getTransfer(); const sat=T.sat||{}; const pkgs=getPackages(); const out=[];
   const vsat=T.vsat||{};
@@ -15525,7 +15536,7 @@ function renderOpsTransfer(){
       h+=`<td><span class="tipb tb-${r0.tip}">${tipAd[r0.tip]}</span> <span style="background:var(--primary);color:#fff;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">🔗 ${U.length}</span></td>`;
       h+=`<td>${u1(r=>r.op).map(esc).join(' + ')}</td><td><b>${u1(r=>r.urun).map(esc).join(' + ')}</b></td>`;
       h+=`<td>${u1(r=>r.nereden).map(esc).join(' / ')}</td><td>${u1(r=>r.nereye).map(esc).join(' / ')}</td>`;
-      h+=`<td colspan="2">${ucuslar.map(x=>`<div style="white-space:nowrap;font-size:.72rem">${esc(x.u||'—')} <b>${esc(x.s||'')}</b>${x.rt?` <span style="color:#0369a1;font-size:.62rem;font-weight:700">${esc(x.rt)}</span>`:''}</div>`).join('')||'—'}</td>`;
+      h+=`<td colspan="2">${ucuslar.map(x=>`<div style="white-space:nowrap;font-size:.72rem">${esc(x.u||'—')} <b>${esc(x.s||'')}</b>${x.rt?` <span style="color:#0369a1;font-size:.62rem;font-weight:700">${esc(x.rt)}</span> ${_trHatRozet(x.rt)}`:''}</div>`).join('')||'—'}</td>`;
       h+=`<td><input class="saatin${r0.deparMan?' man':''}" value="${esc(dh0.saat)}" onchange="_trDeparBirlesik('${_idsEnc}',this.value)" title="Depar — tüm birleşik işlere yazılır"></td>`;
       h+=`<td><b>${paxT}</b></td>`;
       h+=`<td>${u1(r=>r.bolge).map(esc).join(' / ')||'—'}</td>`;
@@ -15546,7 +15557,7 @@ function renderOpsTransfer(){
     if(_opsTrDate2) h+=`<td style="white-space:nowrap"><b>${_fmtDateTR(r.tarih)}</b></td>`;
     h+=`<td><span class="tipb tb-${r.tip}">${tipAd[r.tip]}</span>${gece?' <span class="gecechip">GECE</span>':''}</td>`;
     h+=`<td>${esc(r.op)}</td><td><b>${esc(r.urun)}</b></td>`;
-    h+=`<td>${esc(r.nereden)}</td><td>${esc(r.nereye)}</td><td>${esc(r.ucus||'—')}${r.rota&&r.rota.includes('→')?`<div style="font-size:.62rem;color:#0369a1;font-weight:700;white-space:nowrap">${esc(r.rota)}</div>`:''}</td><td>${esc(r.saat||'—')}</td>`;
+    h+=`<td>${esc(r.nereden)}</td><td>${esc(r.nereye)}</td><td>${esc(r.ucus||'—')}${r.rota&&r.rota.includes('→')?`<div style="font-size:.62rem;color:#0369a1;font-weight:700;white-space:nowrap">${esc(r.rota)} ${_trHatRozet(r.rota)}</div>`:''}</td><td>${esc(r.saat||'—')}</td>`;
     h+=`<td><input class="saatin${r.deparMan?' man':''}" value="${esc(dh.saat)}" onchange="_trDeparElle('${r.id}',this.value)" title="${r.deparMan?'Elle girildi':'Bölgeden otomatik'}"></td>`;
     h+=`<td><b>${r.pax}</b></td>`;
     h+=`<td>${esc(r.bolge||'—')}</td>`;
@@ -15618,7 +15629,7 @@ function _trDetayAc(id){
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="document.getElementById('trDetayModal').remove()">✕ Kapat</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px">
-      ${bilgi('Nereden',r.nereden)}${bilgi('Nereye',r.nereye)}${bilgi('Uçuş',(r.ucus||'')+(r.rota&&r.rota.includes('→')?' · '+r.rota:'')+(r.saat?' · '+r.saat:''))}${bilgi('Depar',dh.saat)}${bilgi('Pax',String(r.pax))}${bilgi('Bölge',r.bolge)}${bilgi('Operatör',r.op)}
+      ${bilgi('Nereden',r.nereden)}${bilgi('Nereye',r.nereye)}${bilgi('Uçuş',(r.ucus||'')+(r.rota&&r.rota.includes('→')?' · '+r.rota+(_trHatTipi(r.rota)==='IC'?' (İÇ HAT)':_trHatTipi(r.rota)==='DIS'?' (DIŞ HAT)':''):'')+(r.saat?' · '+r.saat:''))}${bilgi('Depar',dh.saat)}${bilgi('Pax',String(r.pax))}${bilgi('Bölge',r.bolge)}${bilgi('Operatör',r.op)}
       ${bilgi('Araç',[gr.arac,gr.arac2].filter(Boolean).join(' + '))}${bilgi('Firma',gr.firma)}${(function(){ const ri2=_trRehInfo(r); return bilgi('Rehber'+(ri2.kaynak==='grup'?' (grup)':''),ri2.ad?(ri2.ad+(ri2.tel?' · '+ri2.tel:'')):''); })()}${bilgi('Şoför',gr.sofor?(gr.sofor+(gr.stel?' '+gr.stel:'')):'')}${bilgi('Not',r.not)}
     </div>
     <div style="font-weight:800;font-size:.8rem;margin-bottom:5px">👥 Yolcular (${yolcular.length})</div>
