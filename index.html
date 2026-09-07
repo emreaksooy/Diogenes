@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v368 · 04.09.2026';
+const APP_VER='v369 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7998,7 +7998,7 @@ function _mutIssues(){
   // İPTAL rezervasyonun yolcuları uçak listesinde hâlâ duruyorsa → BİLET İPTALİ uyarısı (uçak departmanı)
   rezvler.filter(r=>r.durum==='iptal').forEach(r=>{
     const g=gridMap[r.pkgId+'|'+r.kalkis]; if(!g) return;
-    const rows=(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,r.voucher)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher))));
+    const rows=(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,r.voucher)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher)))&&_durumEff(x)!=='iptal');
     if(rows.length){
       const pk=pkgs.find(p=>p.id===r.pkgId)||{};
       out.push({tip:'iptalBilet',pkgId:r.pkgId,kalkis:r.kalkis,voucher:String(r.voucher).trim(),kod:pk.paketKodu||'',detay:'REZERVASYON İPTAL ama '+rows.length+' yolcu uçak listesinde duruyor — bileti iptal et / satırları kaldır'});
