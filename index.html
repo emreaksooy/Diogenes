@@ -1766,6 +1766,24 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   </div>
 </div>
 
+<div id="modalRehBildir" class="modal-overlay">
+  <div class="modal-box sm">
+    <div class="modal-header"><h2 id="rbTdBaslik">📢 Mağaza Bildirimi</h2><button class="modal-close" onclick="closeModal('modalRehBildir')">✕ Kapat</button></div>
+    <div class="modal-body">
+      <div id="rbTdInfo" style="font-size:.8rem;color:var(--muted);margin-bottom:10px"></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input id="rbTdPax" placeholder="Mağazaya giren pax *" inputmode="numeric" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:16px">
+        <div style="display:flex;gap:8px">
+          <input id="rbTdTutar" placeholder="Toplam tutar *" inputmode="decimal" style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:16px">
+          <select id="rbTdPara" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:16px"><option>EUR</option><option>USD</option><option>TL</option></select>
+        </div>
+        <input id="rbTdNot" placeholder="Not (ops.)" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:16px">
+      </div>
+      <button class="btn btn-primary" onclick="rehbTdBildirKaydet()" style="margin-top:12px;width:100%">Bildirim Yap</button>
+    </div>
+  </div>
+</div>
+
 <div id="modalUrunBilgi" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-header"><h2 id="ubBaslik">Ürün Bilgisi</h2><button class="modal-close" onclick="closeModal('modalUrunBilgi')">✕ Kapat</button></div>
@@ -1983,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v372 · 04.09.2026';
+const APP_VER='v373 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11087,23 +11105,8 @@ function renderRehberim(){
     </div>`).join(''):'<p class="section-tip">Şu an erişime açık turun yok. Turlar başlangıçtan 15 gün önce burada görünür.</p>'}
   </div>`;
   const B=getRehBildirim().filter(b=>_rehbNrm(b.rehberAd)===_rehbNrm(ad)).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
-  const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
-  h+=`<div class="card"><div class="card-title">🏬 Mağaza Bildirimlerim <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Mağaza ziyareti sonrası toplam ciroyu bildir</span></div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-      <input type="date" id="rbTarih" value="${bugun}" style="${inp}">
-      <select id="rbTur" style="${inp}"><option value="">Tur…</option>${L.map(t=>`<option value="${esc(t.kod)}">${esc(t.kod)} ${_fmtDateTR(t.kalkis)}</option>`).join('')}</select>
-      ${(()=>{ const M=_rehbMagazalar(); window._rbMagList=M;
-        const T=_rehbTumMagazalar(); window._rbTumList=T;
-        if(!M.length&&!T.length) return `<input id="rbMagaza" placeholder="Mağaza" style="${inp};width:130px">`;
-        return `<select id="rbMagazaSec" onchange="rehbMagSec(this)" style="${inp};max-width:270px"><option value="">Mağaza seç…</option>${M.map((x,i)=>`<option value="${i}">📅 ${_fmtDateTR(x.tarih)} · ${esc(x.kod)} — ${esc(x.mag)}</option>`).join('')}${T.length?`<option value="" disabled>— Tüm mağazalar —</option>${T.map((x,i)=>`<option value="t${i}">🏬 ${esc(x.mag)}</option>`).join('')}`:''}<option value="__d">Diğer (elle yaz)…</option></select><input id="rbMagaza" placeholder="Mağaza adı" style="${inp};width:130px;display:none">`;
-      })()}
-      <input id="rbPax" placeholder="Pax" inputmode="numeric" style="${inp};width:56px">
-      <input id="rbTutar" placeholder="Ciro" inputmode="decimal" style="${inp};width:90px">
-      <select id="rbPara" style="${inp}"><option>EUR</option><option>USD</option><option>TL</option></select>
-      <input id="rbNot" placeholder="Not" style="${inp};width:110px">
-      <button class="btn btn-primary btn-sm" onclick="rehbBildirimEkle()">+ Bildir</button>
-    </div>
-    ${B.length?`<table style="width:100%;border-collapse:collapse">${B.slice(0,30).map(b=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 8px;font-size:.76rem"><b>${_fmtDateTR(b.tarih)}</b></td><td style="padding:5px 8px;font-size:.76rem">${esc(b.tur||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.magaza||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.pax||'')}</td><td style="padding:5px 8px;font-size:.78rem;text-align:right"><b>${esc(b.tutar)}</b> ${esc(b.para||'EUR')}</td><td style="padding:5px 8px;font-size:.72rem;color:var(--muted)">${esc(b.not||'')}</td><td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="rehbBildirimSil('${b.id}')">✕</button></td></tr>`).join('')}</table>`:'<p class="section-tip">Henüz bildirim yok.</p>'}
+  h+=`<div class="card"><div class="card-title">🏬 Mağaza Bildirimlerim <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Bildirim, Tur Dosyası › 🏬 Mağazalar sekmesindeki 📢 Bildir ile yapılır</span></div>
+    ${B.length?`<table style="width:100%;border-collapse:collapse">${B.slice(0,30).map(b=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 8px;font-size:.76rem"><b>${_fmtDateTR(b.tarih)}</b></td><td style="padding:5px 8px;font-size:.76rem">${esc(b.tur||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.magaza||'—')}</td><td style="padding:5px 8px;font-size:.76rem">${esc(b.pax||'')} pax</td><td style="padding:5px 8px;font-size:.78rem;text-align:right"><b>${esc(b.tutar)}</b> ${esc(b.para||'EUR')}</td><td style="padding:5px 8px;font-size:.72rem;color:var(--muted)">${esc(b.not||'')}</td></tr>`).join('')}</table>`:'<p class="section-tip">Henüz bildirim yok.</p>'}
   </div>`;
   box.innerHTML=h;
 }
@@ -11155,6 +11158,34 @@ function rehbMagSec(sel){
   if(inp) inp.value=x.mag;
   const t=document.getElementById('rbTarih'); if(t) t.value=x.tarih;
   const tu=document.getElementById('rbTur'); if(tu){ [...tu.options].forEach(o=>{ if(o.value===x.kod) tu.value=x.kod; }); }
+}
+function rehbTdBildirAc(ri){
+  const r=(window._tdMagRows||[])[ri]; if(!r){ showToast('Ziyaret bulunamadı','error'); return; }
+  window._rbTdRow=r;
+  const info=document.getElementById('rbTdInfo');
+  if(info) info.innerHTML='<b>'+esc(r.magTam||r.firma)+'</b> · '+_fmtDateTR(r.tarih)+(r.tip?' · '+esc(r.tip):'');
+  ['rbTdPax','rbTdTutar','rbTdNot'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('modalRehBildir').classList.add('open');
+}
+function rehbTdBildirKaydet(){
+  const r=window._rbTdRow; if(!r) return;
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const pax=g('rbTdPax'), tutar=g('rbTdTutar');
+  if(!pax){ showToast('Pax gir','error'); return; }
+  if(!tutar){ showToast('Toplam tutarı gir','error'); return; }
+  const E=_tdE();
+  const L=getRehBildirim().slice();
+  L.push({id:R_GID(),tarih:r.tarih,rehberAd:_rehbBen()||((E&&E.uyeler&&'')||''),tur:(E&&(E.urunler||[]).join('+'))||'',magaza:r.magTam||r.firma,pax,tutar,para:g('rbTdPara')||'EUR',not:g('rbTdNot'),zKey:r.zKey,email:(sbUser&&sbUser.email)||'',ts:Date.now()});
+  setRehBildirim(L);
+  closeModal('modalRehBildir'); window._rbTdRow=null;
+  renderOpsGrup();
+  showToast('Bildirim yapıldı — mağaza listeden düştü','success');
+}
+function rehbBildirimYonSil(id){
+  showConfirm('🗑','Bildirimi Sil','Bildirim silinecek — mağaza, rehberin bildirilecekler listesine GERİ DÖNER.','Sil',()=>{
+    setRehBildirim(getRehBildirim().filter(b=>b.id!==id));
+    try{ renderMagMuh(); }catch(e){}
+  });
 }
 function rehbBildirimEkle(){
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
@@ -14285,17 +14316,22 @@ function renderTurDosyasi(box){
           const cz=_moAtaCoz(fid); const f=cz.f; const sube=cz.sube||(f?_moSubeBul(f,m.sehir):null);
           rows.push({tarih,gun:gi+1,sehir:m.sehir||'',tip:m.tip||'',firma:f?(f.ad||''):'',
             lok:sube?(sube.sehir||''):'',magAd:sube?(sube.ad||''):'',tel:sube?(sube.tel||''):'',yetkili:sube?(sube.yetkili||''):'',
-            opsAd:sube?(sube.opsAd||''):'',opsTel:sube?(sube.opsTel||''):''});
+            opsAd:sube?(sube.opsAd||''):'',opsTel:sube?(sube.opsTel||''):'',
+            zKey:sf.pkgId+'|'+sf.kalkis+'|g'+gi+'_'+mi,
+            magTam:f?(f.ad+((sube&&(sube.ad||sube.sehir))?(' · '+(sube.ad||sube.sehir)):'')):''});
         });
       });
     });
     rows.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
-    h+=rows.length?`<table class="rzmg"><tr><th style="width:96px">Tarih</th><th style="width:52px">Gün</th><th>Şehir</th><th>Mağaza Türü</th><th>Atanan Mağaza</th><th>İletişim</th></tr>
-      ${rows.map(r=>`<tr><td><b>${_fmtDateTR(r.tarih)}</b></td><td>${r.gun}. gün</td><td>${esc(r.sehir)||'—'}</td><td>${esc(r.tip)||'—'}</td>
+    const _bildSet=new Set(getRehBildirim().map(b=>b.zKey).filter(Boolean));
+    const gRows=rehMod?rows.filter(r=>!_bildSet.has(r.zKey)):rows;
+    window._tdMagRows=gRows;
+    h+=gRows.length?`<table class="rzmg"><tr>${rehMod?'<th style="width:76px"></th>':''}<th style="width:96px">Tarih</th><th style="width:52px">Gün</th><th>Şehir</th><th>Mağaza Türü</th><th>Atanan Mağaza</th><th>İletişim</th></tr>
+      ${gRows.map((r,ri)=>`<tr>${rehMod?`<td>${(r.firma)?`<button class="btn btn-primary btn-sm" style="padding:4px 10px" onclick="rehbTdBildirAc(${ri})">📢 Bildir</button>`:''}</td>`:''}<td><b>${_fmtDateTR(r.tarih)}</b>${(!rehMod&&_bildSet.has(r.zKey))?' <span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.58rem;padding:1px 6px;border-radius:7px">📲 BİLDİRİLDİ</span>':''}</td><td>${r.gun}. gün</td><td>${esc(r.sehir)||'—'}</td><td>${esc(r.tip)||'—'}</td>
         <td>${r.firma?`<b>🏬 ${esc(r.firma)}</b>${r.magAd?' · '+esc(r.magAd):''}${r.lok?` <span style="color:var(--muted);font-size:.7rem">📍 ${esc(r.lok)}</span>`:''}`:'<span style="color:var(--muted)">atanmadı</span>'}</td>
         <td style="white-space:nowrap">${r.tel?`<a href="tel:${esc(r.tel)}" style="color:inherit;text-decoration:none">☎ ${esc(r.tel)}</a>`:''}${r.yetkili?` <span style="color:var(--muted);font-size:.7rem">👤 ${esc(r.yetkili)}</span>`:''}${(r.opsAd||r.opsTel)?`<div style="font-size:.68rem;color:var(--muted)">🧑‍💼 ${esc(r.opsAd||'')}${r.opsTel?` <a href="tel:${esc(r.opsTel)}" style="color:inherit">☎ ${esc(r.opsTel)}</a>`:''}</div>`:''}${(!r.tel&&!r.yetkili&&!r.opsAd&&!r.opsTel)?'—':''}</td></tr>`).join('')}
-    </table>${rehMod?'':'<div style="font-size:.7rem;color:var(--muted);margin-top:8px">Mağaza firması ataması Mağaza Muhasebesi › Ziyaret Planı ekranından yapılır.</div>'}`
-    :'<p style="color:var(--muted);font-size:.82rem;padding:6px 2px">Bu turun programında mağaza günü tanımlı değil (ürünün gün planında "mağaza var" işaretli gün yok).</p>';
+    </table>${rehMod?'<div style="font-size:.7rem;color:var(--muted);margin-top:8px">📢 Bildir: ziyaret sonrası pax + toplam ciroyu gir — bildirilen mağaza listeden düşer.</div>':'<div style="font-size:.7rem;color:var(--muted);margin-top:8px">Mağaza firması ataması Mağaza Muhasebesi › Ziyaret Planı ekranından yapılır.</div>'}`
+    :(rehMod&&rows.length?'<p style="color:var(--muted);font-size:.82rem;padding:6px 2px">✓ Tüm mağaza ziyaretleri bildirildi.</p>':'<p style="color:var(--muted);font-size:.82rem;padding:6px 2px">Bu turun programında mağaza günü tanımlı değil (ürünün gün planında \'mağaza var\' işaretli gün yok).</p>');
   }
   if(_tdTab==='evrak'){
     const belgeler=[['program','Tur Programı','gün gün — rehbere verilir, fiyatsız'],
@@ -14986,7 +15022,7 @@ function _mmBildirimKart(){
     <tr><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Tarih</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Rehber</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Tur</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Mağaza</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:right">Pax</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:right">Bildirilen Ciro</th><th style="background:var(--navy);color:#fff;padding:4px 9px;font-size:.62rem;text-align:left">Durum</th></tr>
     ${B.map(b=>{ const k=esik(b);
       const durum=k?((k.rehCiro||'').trim()?'<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px">✓ İŞLENDİ</span>':`<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;cursor:pointer" title="Tıkla — rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">→ KAYDA YAZ</span>`):'<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px" title="Muhasebe kaydı ziyaret gününden sonra otomatik açılır">⏳ KAYIT BEKLİYOR</span>';
-      return `<tr><td style="${td}"><b>${_fmtDateTR(b.tarih)}</b></td><td style="${td}">${esc(b.rehberAd||'')}</td><td style="${td}">${esc(b.tur||'—')}</td><td style="${td}">${esc(b.magaza||'—')}</td><td style="${td};text-align:right">${esc(b.pax||'')}</td><td style="${td};text-align:right"><b>${esc(b.tutar)}</b> ${esc(b.para||'EUR')}</td><td style="${td}">${durum}</td></tr>`; }).join('')}
+      return `<tr><td style="${td}"><b>${_fmtDateTR(b.tarih)}</b></td><td style="${td}">${esc(b.rehberAd||'')}</td><td style="${td}">${esc(b.tur||'—')}</td><td style="${td}">${esc(b.magaza||'—')}</td><td style="${td};text-align:right">${esc(b.pax||'')}</td><td style="${td};text-align:right"><b>${esc(b.tutar)}</b> ${esc(b.para||'EUR')}</td><td style="${td}">${durum} <button title="Bildirimi sil — mağaza rehberin listesine geri döner" style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="rehbBildirimYonSil('${b.id}')">✕</button></td></tr>`; }).join('')}
     </table></div>`;
 }
 function renderMagMuh(){
