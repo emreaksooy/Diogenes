@@ -1766,6 +1766,13 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   </div>
 </div>
 
+<div id="modalUrunBilgi" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header"><h2 id="ubBaslik">Ürün Bilgisi</h2><button class="modal-close" onclick="closeModal('modalUrunBilgi')">✕ Kapat</button></div>
+    <div class="modal-body" id="ubBody" style="max-height:70vh;overflow:auto"></div>
+  </div>
+</div>
+
 <div id="modalPw" class="modal-overlay">
   <div class="modal-box sm">
     <div class="modal-header"><h2>🔑 Şifre Değiştir</h2><button class="modal-close" onclick="closeModal('modalPw')">✕ Kapat</button></div>
@@ -1976,7 +1983,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v370 · 04.09.2026';
+const APP_VER='v371 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2303,6 +2310,7 @@ function showPage(id, tabEl) {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   if(!document.getElementById('page-'+id)) id='paketlerim';
   if(_acl(id)==='-'){ if(sbRol&&_cloudOn) showToast('Bu bölüme erişim yetkiniz yok','error'); id=(sbRol==='rehber')?'rehberim':'paketlerim'; }
+  if(_cloudOn&&sbRol==='rezervasyon'&&['paket','maliyet','harita','cikti','sunum','opdetay'].includes(id)){ id='urun'; }
   document.getElementById('page-'+id).classList.add('active');
   _curPage=id;
   document.querySelectorAll('.page.ro-lock').forEach(function(p){p.classList.remove('ro-lock');});
@@ -2686,6 +2694,41 @@ function _opCardsHTML(){
         ${nextLabel?`<div style="font-size:.7rem;color:var(--success);margin-top:3px;font-weight:600"><svg class="ic"><use href="#i-calendar"/></svg> ${nextLabel}</div>`:''}
       </div>`;
   }).join('');
+}
+function urunBilgiAc(pkgId){
+  const p=getPackages().find(x=>x.id===pkgId); if(!p){ showToast('Ürün bulunamadı','error'); return; }
+  const bs=document.getElementById('ubBaslik'), bd=document.getElementById('ubBody'); if(!bs||!bd) return;
+  let op=''; try{ op=_resOpAd(p)||''; }catch(e){}
+  bs.textContent='📦 '+(p.paketKodu||'')+(p.paketAdi&&p.paketAdi!==p.paketKodu?' · '+p.paketAdi:'')+(op?' — '+op:'');
+  const gunler=p.gunler||[];
+  let h='<div style="font-weight:800;font-size:.86rem;margin-bottom:8px">🚶 Tur Yürüyüşü</div>';
+  if(gunler.length){
+    h+='<table class="rzmg" style="width:100%"><tr><th style="width:52px">Gün</th><th>Güzergâh</th><th style="width:220px">Konaklama</th></tr>'
+     +gunler.map((g2,i)=>{
+        const yol=[...(g2.noktalar||[])].filter(Boolean).join(' → ')||esc(g2.baslik||'—');
+        const kon=(g2.konaklamaAd||g2.konaklamaBolge)?(esc(g2.konaklamaAd||g2.konaklamaBolge)+(g2.konaklamaPansiyon?' · <b>'+esc(g2.konaklamaPansiyon)+'</b>':'')):'<span style="color:var(--muted)">—</span>';
+        return '<tr><td><b>'+(i+1)+'</b></td><td>'+esc(yol)+'</td><td>'+kon+'</td></tr>';
+      }).join('')+'</table>';
+  } else h+='<p class="section-tip">Gün planı girilmemiş.</p>';
+  // konaklama tipi + örnek oteller
+  let konaRows=[];
+  try{ konaRows=_konaklamaRows()||[]; }catch(e){}
+  const otl=(p.oteller||[]);
+  h+='<div style="font-weight:800;font-size:.86rem;margin:14px 0 8px">🏨 Konaklama Tipi'+((p.ornekOteller&&Object.keys(p.ornekOteller).length)?' & Örnek Oteller':'')+'</div>';
+  if(otl.length){
+    h+='<table class="rzmg" style="width:100%"><tr><th>Şehir / Bölge</th><th style="width:70px">Segment</th><th style="width:80px">Pansiyon</th><th style="width:56px">Gece</th><th>Örnek Otel</th></tr>'
+     +otl.map(o=>{
+        const key=(o.sehir||'')+'|||'+(o.segment||o.kalite||'')+'|||'+(o.pansiyon||'');
+        let ornek=(p.ornekOteller&&p.ornekOteller[key])||'';
+        if(!ornek&&p.ornekOteller){ const e2=Object.entries(p.ornekOteller).find(([k2,v2])=>String(v2||'').trim()&&k2.split('|||')[0]===(o.sehir||'')); if(e2) ornek=e2[1]; }
+        return '<tr><td><b>'+esc(o.sehir||'—')+'</b></td><td>'+esc(o.segment||o.kalite||'')+'</td><td>'+esc(o.pansiyon||'')+'</td><td>'+(o.gece||'')+'</td><td>'+(ornek?'<b>'+esc(ornek)+'</b>':'<span style="color:var(--muted)">—</span>')+'</td></tr>';
+      }).join('')+'</table>';
+  } else if(p.ornekOteller&&Object.keys(p.ornekOteller).length){
+    h+='<table class="rzmg" style="width:100%"><tr><th>Şehir · Segment · Pansiyon</th><th>Örnek Otel</th></tr>'
+     +Object.entries(p.ornekOteller).filter(([k,v])=>String(v||'').trim()).map(([k,v])=>'<tr><td>'+esc(k.split('|||').filter(Boolean).join(' · '))+'</td><td><b>'+esc(v)+'</b></td></tr>').join('')+'</table>';
+  } else h+='<p class="section-tip">Konaklama bilgisi girilmemiş.</p>';
+  bd.innerHTML=h;
+  document.getElementById('modalUrunBilgi').classList.add('open');
 }
 function renderUrunPage(){
   const ops=getOperators().slice().sort((a,b)=>(a.ad||'').localeCompare(b.ad||'','tr'));
@@ -3821,6 +3864,7 @@ function saveCurrentPackage(auto){
 }
 
 function loadPackage(id){
+  if(_cloudOn&&sbRol==='rezervasyon'){ urunBilgiAc(id); return; }
   if(isDirty&&currentId){ showConfirm('⚠️','Kaydedilmemiş Değişiklikler','Geçerli pakette kaydedilmemiş değişiklikler var. Yine de diğer paketi açmak istiyor musunuz?','Evet, Aç',()=>doLoad(id)); }
   else doLoad(id);
 }
@@ -7749,7 +7793,7 @@ const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita
 const _ACL={
   yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e',rehberim:'e'},
   rehber:      {home:'-',urun:'-',rezervasyon:'-',ucak:'-',operasyon:'-',rapor:'-',yonetim:'-',rehberim:'e'},
-  rezervasyon: {home:'e',urun:'-',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-'},
+  rezervasyon: {home:'e',urun:'v',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-'},
   ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-'},
   operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v'},
   goruntuleme: {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v'},
