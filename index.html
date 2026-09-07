@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v361 · 04.09.2026';
+const APP_VER='v362 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12184,20 +12184,9 @@ function _moSubeBul(f,sehir){
 }
 // ── birleşik kümeler: aynı rehberde tarihleri çakışan turlar (mağazaya birlikte girerler)
 function _moKumeler(turlar){
-  const rehGrup={};
-  turlar.filter(t=>t.rehberAd).forEach(t=>{ (rehGrup[_norm(t.rehberAd)]=rehGrup[_norm(t.rehberAd)]||[]).push(t); });
-  const kumeler=[]; const tek=turlar.filter(t=>!t.rehberAd).slice();
-  Object.values(rehGrup).forEach(list=>{
-    list.sort((a,b)=>a.kalkis.localeCompare(b.kalkis));
-    let cur=null;
-    list.forEach(t=>{
-      if(cur&&cur.son>=t.kalkis){ cur.uyeler.push(t); if(t.end>cur.son)cur.son=t.end; }
-      else { cur={uyeler:[t],son:t.end}; kumeler.push(cur); }
-    });
-  });
-  const cikan=[];
-  kumeler.forEach(km=>{ if(km.uyeler.length>1) cikan.push(km.uyeler); else tek.push(km.uyeler[0]); });
-  return {kumeler:cikan,tekler:tek};
+  // v362: OTOMATİK kümeleme kaldırıldı — yalnız Grup Birleştirme ile birleştirilen gruplar birleşiktir
+  // (_rtTurlar birleşikleri zaten TEK tur olarak döndürür; mağaza programı Turlar sayfasındaki seçimden okunur)
+  return {kumeler:[],tekler:turlar.slice()};
 }
 function _moSeferKey(t){ return t.pkgId+'|'+t.kalkis+'|'+(t.bolum||'01'); }
 function moProgramSec(ki,val){
@@ -12234,7 +12223,14 @@ function _moSatirlar(basT){
   const {kumeler,tekler}=_moKumeler(turlar);
   window._moKumeListe=kumeler;
   let out=[];
-  tekler.forEach(t=>{ out=out.concat(_moZiyaretUret(t,t.pax,t.rehberAd||'',t.kod,t.op,null,false,bugun)); });
+  tekler.forEach(t=>{
+    let prog=t; const birlesikMi=!!(t.uyeSeferler&&t.uyeSeferler.length);
+    if(birlesikMi){
+      let pv=''; t.uyeSeferler.forEach(sf=>{ try{ const r=_opsGet(sf.pkgId,sf.kalkis); if(!pv&&r.magazaProgram) pv=r.magazaProgram; }catch(e){} });
+      if(pv){ const pp=pv.split('|'); if(t.uyeSeferler.some(sf=>sf.pkgId===pp[0]&&sf.kalkis===pp[1])) prog=Object.assign({},t,{pkgId:pp[0],kalkis:pp[1]}); }
+    }
+    out=out.concat(_moZiyaretUret(prog,t.pax,t.rehberAd||'',t.kod,t.op,null,birlesikMi,bugun));
+  });
   kumeler.forEach((km,ki)=>{
     const toplam=km.reduce((s,x)=>s+(+x.pax||0),0);
     const kodlar=[...new Set(km.map(x=>x.kod))].join(' + ');
