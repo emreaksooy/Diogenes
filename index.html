@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v381 · 04.09.2026';
+const APP_VER='v382 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14080,17 +14080,15 @@ function renderTurDosyasi(box){
   <div class="card" style="border-radius:0 12px 12px 12px;padding:14px 16px">`;
   // ═ YOLCULAR ═
   if(_tdTab==='yolcu'){
-    let bekleyen=0;
-    h+=`<table class="rzmg"><tr><th style="width:34px">#</th><th style="width:90px">Voucher</th><th>Ad Soyad</th><th style="width:80px">Oda</th><th style="width:200px">Geliş</th><th style="width:200px">Dönüş</th><th style="width:110px">Durum</th></tr>`;
+    h+=`<table class="rzmg"><tr><th style="width:34px">#</th><th style="width:100px">Voucher</th><th>Ad Soyad</th><th style="width:80px">Oda</th><th>Önemli Not</th></tr>`;
     kisiler.forEach((k,i)=>{
-      const rz=_tdRezv(k.resno); const d=rz?((rz.kartlar||[]).length?'acildi':'bekliyor'):'';
-      if(d==='bekliyor') bekleyen++;
-      h+=`<tr><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td>${esc(k.oda)||'—'}</td><td style="font-size:.72rem">${esc(k.gelis)||'—'}</td><td style="font-size:.72rem">${esc(k.donus)||'—'}</td>
-      <td>${d==='acildi'?'<span class="rzchip rzc-ok">açıldı</span>':d==='bekliyor'?'<span class="rzchip rzc-bek">açılım bekliyor</span>':'<span style="color:var(--muted);font-size:.7rem">rezv. kaydı yok</span>'}</td></tr>`;
+      const rz=_tdRezv(k.resno);
+      const notlar=[...new Set([rz&&(rz.not||'').trim(), rz&&(rz.onemliNot||'').trim(), (k.not||'').trim()].filter(Boolean))].join(' · ');
+      h+=`<tr><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td>${esc(k.oda)||'—'}</td>
+      <td style="font-size:.74rem;${notlar?'color:#92400e;font-weight:700':''}">${notlar?('⚠ '+esc(notlar)):'<span style="color:var(--muted)">—</span>'}</td></tr>`;
     });
     h+=`</table>`;
     if(!kisiler.length) h+='<div style="font-size:.78rem;color:var(--muted);padding:10px 2px">Bu grubun rezervasyonlarında isim bulunamadı (uçak listesi veya rezervasyon modülünden gelir).</div>';
-    if(bekleyen) h+=`<div style="margin-top:10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:9px 12px;font-size:.76rem"><b>${bekleyen}</b> yolcunun otel açılımı yapılmamış — Sejour'daki gibi kaybolmaz, burada uyarır. Rezervasyon ekibine iletin.</div>`;
   }
   // ═ REHBER ═
   if(_tdTab==='rehber'){
