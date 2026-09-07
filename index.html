@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v385 · 04.09.2026';
+const APP_VER='v386 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6685,7 +6685,7 @@ function _uylOlustur(){
   ucakOpen(pkgId,iso);
 }
 function _ucakIptalUyariHTML(){
-  let U=[]; try{ U=(_mutIssues()||[]).filter(x=>x.tip==='iptalBilet'); }catch(e){}
+  let U=[]; try{ U=(_mutIssues()||[]).filter(x=>x.tip==='iptalBilet'||x.tip==='biletIptalRezvAktif'); }catch(e){}
   if(!U.length) return '';
   return `<div class="card" style="border:1.5px solid #fca5a5;background:#fef2f2;margin-bottom:12px">
     <div style="font-weight:800;font-size:.84rem;color:#b91c1c;margin-bottom:7px">⚡ BİLET İPTALİ GEREKLİ (${U.length})</div>
@@ -8086,6 +8086,17 @@ function _mutIssues(){
       out.push({tip:'iptalBilet',pkgId:r.pkgId,kalkis:r.kalkis,voucher:String(r.voucher).trim(),kod:pk.paketKodu||'',detay:'REZERVASYON İPTAL ama '+rows.length+' yolcu uçak listesinde duruyor — bileti iptal et / satırları kaldır'});
     }
   });
+  // TERS TUTARSIZLIK: uçakta voucher'ın TÜM biletleri iptal işaretli ama REZERVASYON AKTİF
+  rezvler.filter(r=>r.durum!=='iptal').forEach(r=>{
+    const g=gridMap[r.pkgId+'|'+r.kalkis]; if(!g) return;
+    const rows=(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,r.voucher)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher))));
+    if(!rows.length) return;
+    const ipt=rows.filter(x=>_durumEff(x)==='iptal');
+    if(ipt.length&&ipt.length===rows.length){
+      const pk=pkgs.find(p=>p.id===r.pkgId)||{};
+      out.push({tip:'biletIptalRezvAktif',pkgId:r.pkgId,kalkis:r.kalkis,voucher:String(r.voucher).trim(),kod:pk.paketKodu||'',detay:'Uçakta TÜM biletler İPTAL işaretli ama REZERVASYON AKTİF duruyor — rezervasyonu iptal et ya da bileti geri aç'});
+    }
+  });
   const rezvKalkis=new Set(rezvler.map(r=>r.pkgId+'|'+r.kalkis));
   grids.forEach(g=>{
     if(!rezvKalkis.has(g.pkgId+'|'+g.kalkis)) return;
@@ -8154,7 +8165,7 @@ function _mutRezvChip(r){
 }
 function _mutPanel(list,baslik,digerN){
   if(!list.length&&!digerN) return '';
-  const R={ucakYok:['#b45309','#fef3c7','UÇAK LİSTESİNDE YOK'],rezvYok:['#0369a1','#e0f2fe','REZV. KAYDI YOK'],ucFark:['#b91c1c','#fee2e2','UÇUŞ UÇLARI FARKLI'],seferUrunYok:['#7e22ce','#f3e8ff','ÜRÜNDE TARİH YOK'],iptalBilet:['#b91c1c','#fee2e2','İPTAL — BİLETİ İPTAL ET']};
+  const R={ucakYok:['#b45309','#fef3c7','UÇAK LİSTESİNDE YOK'],rezvYok:['#0369a1','#e0f2fe','REZV. KAYDI YOK'],ucFark:['#b91c1c','#fee2e2','UÇUŞ UÇLARI FARKLI'],seferUrunYok:['#7e22ce','#f3e8ff','ÜRÜNDE TARİH YOK'],iptalBilet:['#b91c1c','#fee2e2','İPTAL — BİLETİ İPTAL ET'],biletIptalRezvAktif:['#b45309','#fef3c7','BİLET İPTAL — REZV AKTİF']};
   let ic2=list.slice(0,20).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:.74rem;padding:3px 0;flex-wrap:wrap">
       <span style="background:${R[x.tip][1]};color:${R[x.tip][0]};font-weight:800;font-size:.58rem;padding:2px 7px;border-radius:9px;white-space:nowrap">${R[x.tip][2]}</span>
       <b>${esc(x.voucher)}</b><span style="color:#6b7280">${esc(x.kod)} · ${_fmtDateTR(x.kalkis)}</span><span>${esc(x.detay)}</span>${x.tip==='ucFark'?`<button class="btn btn-outline btn-sm" style="padding:1px 8px;font-size:.66rem;border-color:#86efac;color:#166534" title="Bilet listesindeki rota doğru kabul edilir; müşteri kayıtlarındaki geliş/dönüş alanları biletten güncellenir" onclick="_mutBiletiEsasAl('${x.pkgId}','${x.kalkis}','${esc(x.voucher)}')">✓ Bileti esas al</button>`:''}</div>`).join('');
@@ -11633,7 +11644,7 @@ function _opsUyarilar(gun){
     out.push({tarih:t.kalkis,ikon:'🧭',onem:1,pkgId:t.pkgId,kalkis:t.kalkis,mesaj:'Rehber atanmamış — '+t.kod+(t.op?' · '+t.op:'')+' · '+t.pax+' pax (uçak listesi: '+d.ucak+' · rezervasyon: '+d.rezvP+' yolcu / '+d.rezvSay+' kayıt)',git:"opsTab('rehtak')"}); }); }catch(e){}
   // uçak listesi ↔ rezervasyon ÇARPIŞMALARI (Rezervasyon Monitörü)
   try{ _mutIssues().filter(x=>x.kalkis>=bugun&&x.kalkis<=son).forEach(x=>{
-    const AD={ucakYok:'Rezervasyon var, UÇAK LİSTESİNDE YOK',rezvYok:'Uçak listesinde var, REZERVASYONDA YOK',ucFark:'Uçuş bilgisi UYUŞMUYOR',iptalBilet:'İPTAL rezervasyon — BİLET İPTALİ gerekli'};
+    const AD={ucakYok:'Rezervasyon var, UÇAK LİSTESİNDE YOK',rezvYok:'Uçak listesinde var, REZERVASYONDA YOK',ucFark:'Uçuş bilgisi UYUŞMUYOR',iptalBilet:'İPTAL rezervasyon — BİLET İPTALİ gerekli',biletIptalRezvAktif:'Bilet İPTAL işaretli — REZERVASYON AKTİF'};
     out.push({tarih:x.kalkis,ikon:'⚡',onem:3,pkgId:x.pkgId,kalkis:x.kalkis,mutTip:x.tip,voucher:x.voucher,mesaj:(AD[x.tip]||x.tip)+' — '+(x.kod||'')+' · '+(x.voucher||'')+(x.detay?' · '+x.detay:''),git:"showPage('ucak');setTimeout(()=>{try{ucakOpen('"+x.pkgId+"','"+x.kalkis+"')}catch(e){}},80)"}); }); }catch(e){}
   // UÇUŞ DEĞİŞİKLİKLERİ (import diff — son 3 günde tespit edilenler)
   try{ (window._ucusDegisim||[]).filter(d=>d.ts>Date.now()-3*86400000).forEach(d=>{
