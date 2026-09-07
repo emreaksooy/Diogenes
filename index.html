@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v401 · 04.09.2026';
+const APP_VER='v402 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15784,7 +15784,9 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
     <select id="trTarife" title="Fiyat kaynağı — Otomatik: güzergâh tarifesinden; ya da firmanın hizmet satırı / günlük tahsis yevmiyesi"><option value="">Tarife: Otomatik</option></select>
     <input id="trDepar" placeholder="Toplu depar (boş=oto)" style="width:150px">
     <input id="trGuzergah" placeholder="Güzergâh notu" style="width:150px">
+    <input id="trSecNot" placeholder="Not (iç hat, T1…)" style="width:140px">
     <button class="btn btn-s" onclick="_trAtama()">Birleştir & Ata</button>
+    <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trNotToplu()" title="Araç atamadan yalnız not yazar — satırın Not kolonuna işlenir">📝 Sadece Notu Kaydet</button>
     <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trSecTemizle()">Vazgeç</button>`;
   _trAracDoldur();
   try{ const ilk=rows[0]; if(ilk){ const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,'01'); const el=document.getElementById('trRehber');
@@ -15806,6 +15808,15 @@ function _trAtama(){ if(!_trSel.size) return; const firmaSec=(document.getElemen
     else Tr.sat[r.id]=Object.assign({},Tr.sat[r.id]||{},patch);
   });
   setTransfer(Tr); _trSel.clear(); window._trKod=null; renderOpsTransfer(); showToast(_trKodOf(kod)+' oluşturuldu — '+rows.length+' transfer, '+pax+' pax','success'); }
+function _trNotToplu(){
+  if(!_trSel.size) return;
+  const v=((document.getElementById('trSecNot')||{}).value||'').trim();
+  if(!v){ showToast('Önce not yaz — araç atamadan yalnız notu kaydeder','error'); return; }
+  const n=_trSel.size;
+  [..._trSel].forEach(id=>_trSatKaydet(id,{not:v}));
+  _trSel.clear(); renderOpsTransfer();
+  showToast('Not kaydedildi — '+n+' satır (araç ataması yapılmadı)','success');
+}
 function _trIdsCoz(enc){ return String(enc||'').split('~').map(x=>{ try{ return decodeURIComponent(x); }catch(e){ return x; } }).filter(Boolean); }
 function _trSecCoklu(enc,on){ _trIdsCoz(enc).forEach(id=>{ on?_trSel.add(id):_trSel.delete(id); }); renderOpsTransfer(); }
 function _trOnayCoklu(enc){ const all=_trGenRows(); const ids=_trIdsCoz(enc); const hedef=!ids.every(id=>{ const r=all.find(x=>x.id===id); return r&&r.onay; }); ids.forEach(id=>_trSatKaydet(id,{onay:hedef})); renderOpsTransfer(); }
