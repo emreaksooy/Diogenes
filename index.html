@@ -978,7 +978,6 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <div class="sidebar-list">
         <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa</div>
         <div class="pkg-section-item ops-navitem" data-ot="turlar" onclick="opsTab('turlar')"><svg class="ic"><use href="#i-map"/></svg> Turlar</div>
-        <div class="pkg-section-item ops-navitem" data-ot="rehtak" onclick="opsTab('rehtak')"><svg class="ic"><use href="#i-calendar"/></svg> Rehber Takvimi</div>
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> Transfer</div>
         <div class="pkg-section-item ops-navitem" data-ot="mutabakat" onclick="opsTab('mutabakat')"><svg class="ic"><use href="#i-coins"/></svg> Araç Mutabakatı</div>
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> Tanımlamalar</div>
@@ -1977,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v363 · 04.09.2026';
+const APP_VER='v364 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13388,6 +13387,34 @@ function otGrupAc(gid){ window._tdDonus='turlar'; opsTdAc(gid); opsTab('grup',tr
 function otSecTog(key,on){ on?_gbSec.add(key):_gbSec.delete(key); renderOpsTurlar(); }
 // ═══ TURLAR — tüm turlar tek listede (birleşikler TEK satır) ═══
 let _otBas='', _otSon='', _otAra='';
+function otRehAta(pkgId,kalkis,bolum,gid,rehId){
+  const turlar=_rtTurlar('1900-01-01','2999-12-31');
+  const t=turlar.find(x=>(gid&&x.birlesikGrupId===gid)||(x.pkgId===pkgId&&x.kalkis===kalkis&&(x.bolum||'01')===(bolum||'01')));
+  if(!t){ showToast('Tur bulunamadı','error'); return; }
+  const hedefler=(t.uyeSeferler&&t.uyeSeferler.length)?t.uyeSeferler:[{pkgId:t.pkgId,kalkis:t.kalkis}];
+  const yaz=veri=>{
+    const all=getOperasyon();
+    hedefler.forEach(hs=>{
+      let r=all.find(x=>x.pkgId===hs.pkgId&&x.kalkis===hs.kalkis);
+      if(!r){ r={pkgId:hs.pkgId,kalkis:hs.kalkis,magazalar:[],oteller:[]}; all.push(r); }
+      if(bolum&&bolum!=='01'&&!(t.uyeSeferler&&t.uyeSeferler.length)){ r.bolumReh=r.bolumReh||{}; r.bolumReh[bolum]=veri; }
+      else Object.assign(r,veri);
+    });
+    setOperasyon(all); renderOpsTurlar();
+  };
+  if(!rehId){ yaz({rehberId:'',rehberAd:'',rehberTel:'',rehberDil:''}); showToast('Rehber ataması kaldırıldı'); return; }
+  const reh=(getTanimlar().rehberler||[]).find(r=>r.id===rehId); if(!reh) return;
+  if(_rehIzinCakisir(reh,t.kalkis,t.end)){
+    showToast((reh.ad||'')+' bu tarihlerde MÜSAİT DEĞİL — atama yapılamadı','error',6000); renderOpsTurlar(); return;
+  }
+  const veri={rehberId:reh.id,rehberAd:reh.ad||'',rehberTel:reh.tel||'',rehberDil:Array.isArray(reh.diller)?reh.diller.join(', '):(reh.dil||'')};
+  const cak=turlar.filter(x=>x!==t&&_rehbNrm(x.rehberAd||'')===_rehbNrm(reh.ad||'')&&x.rehberAd&&_rtCakisir(x.kalkis,x.end,t.kalkis,t.end)).map(x=>x.kod+' ('+_fmtDateTR(x.kalkis)+')');
+  if(cak.length){
+    showConfirm('⚠️','Tarih Çakışması',(reh.ad||'')+' rehberinin bu tarihlerde başka turu var: '+cak.join(', ')+'. Yine de atansın mı?','Ata',()=>{ yaz(veri); showToast(t.kod+' → '+reh.ad+' atandı','success'); });
+    renderOpsTurlar(); return;
+  }
+  yaz(veri); showToast(t.kod+' → '+reh.ad+' atandı','success');
+}
 function otMagProg(gid,val){
   let g=null; try{ g=_ogResolve().find(x=>x.id===gid); }catch(e){}
   if(!g){ showToast('Grup bulunamadı','error'); return; }
@@ -13430,13 +13457,18 @@ function renderOpsTurlar(){
       ${_gbSec.size?`<span style="margin-left:auto;background:var(--primary-soft);color:var(--primary);font-weight:800;font-size:.74rem;padding:4px 12px;border-radius:9px">${_gbSec.size} sefer seçili</span>
       <button class="btn btn-primary btn-sm" onclick="gbBirlestir()">🔗 Birleştir — TEK TUR yap</button>
       <button class="btn btn-outline btn-sm" onclick="_gbSec.clear();renderOpsTurlar()">Vazgeç</button>`:''}
-      <button class="btn btn-outline btn-sm" ${_gbSec.size?'':'style="margin-left:auto"'} onclick="otExcel()">📥 Excel</button>
+      <button class="btn btn-outline btn-sm" ${_gbSec.size?'':'style="margin-left:auto"'} onclick="opsTab('rehtak')">📅 Rehber Takvimi</button>
+      <button class="btn btn-outline btn-sm" onclick="otExcel()">📥 Excel</button>
     </div>
     <table style="width:100%;border-collapse:collapse">
       <tr><th style="${th}" title="Birleştirmek için seç"></th><th style="${th}">Giriş</th><th style="${th}">Çıkış</th><th style="${th}">Tur</th><th style="${th}">Operatör</th><th style="${th}">Pax</th><th style="${th}">Rehber</th><th style="${th}">Transferler</th><th style="${th}"></th></tr>
       ${L.map(t=>{
         const bl=(t.uyeSeferler&&t.uyeSeferler.length)?`<span style="background:var(--primary);color:#fff;font-weight:800;font-size:.58rem;padding:1px 7px;border-radius:8px;margin-left:5px">🔗 ${t.uyeSeferler.length}</span>`:'';
-        const reh=t.rehberAd?`${esc(t.rehberAd)}${_rehTelBul(t.rehberAd)?` <span style="color:var(--muted);font-size:.66rem">${esc(_rehTelBul(t.rehberAd))}</span>`:''}`:'<span style="color:#b91c1c;font-weight:800">— atanmadı</span>';
+        const rehL=(getTanimlar().rehberler||[]).slice().sort((a,b)=>String(a.ad||'').localeCompare(String(b.ad||''),'tr'));
+        const reh=`<select onchange="otRehAta('${t.pkgId}','${t.kalkis}','${t.bolum||'01'}','${t.birlesikGrupId||''}',this.value)" style="padding:4px 7px;border:1.5px solid ${t.rehberAd?'#86efac':'#fcd34d'};border-radius:8px;font-size:.74rem;font-family:inherit;max-width:150px;background:${t.rehberAd?'#f0fdf4':'#fffbeb'}">
+          <option value="">— atanmadı —</option>
+          ${rehL.map(r=>`<option value="${r.id}" ${(t.rehberId&&t.rehberId===r.id)||(!t.rehberId&&t.rehberAd&&_rehbNrm(t.rehberAd)===_rehbNrm(r.ad||''))?'selected':''}>${esc(r.ad||'—')}</option>`).join('')}
+        </select>${t.rehberAd&&_rehTelBul(t.rehberAd)?`<div style="color:var(--muted);font-size:.64rem;margin-top:2px">${esc(_rehTelBul(t.rehberAd))}</div>`:''}`;
         const key=t.pkgId+'|'+t.kalkis;
         const secOk=!t.birlesikGrupId&&(!t.bolum||t.bolum==='01');
         return `<tr${t.birlesikGrupId?' style="background:var(--primary-soft)"':''}>
