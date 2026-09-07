@@ -1976,7 +1976,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v364 · 04.09.2026';
+const APP_VER='v365 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12282,6 +12282,7 @@ function renderMagFirmalar(){
      +'<b style="font-size:1rem">🏬 '+esc(g.ad)+'</b>'
      +(g.sehir?'<span style="color:var(--muted);font-size:.8rem">'+esc(g.sehir)+'</span>':'')
      +'<span style="flex:1"></span>'
+     +'<button class="btn btn-outline btn-sm" onclick="mgGrupExcel(\''+g.id+'\')">📥 Ziyaret Listesi</button>'
      +'<button class="btn btn-primary btn-sm" onclick="window._mgMagForm=!window._mgMagForm;if(!window._mgMagForm)window._mgMagEdit=null;renderMagFirmalar()">'+(window._mgMagForm?'✕ Vazgeç':'+ Mağaza Tanımla')+'</button>'
      +'</div>';
     if(window._mgMagForm){
@@ -12350,6 +12351,7 @@ function renderMagFirmalar(){
       +(gr.tel?'<div style="font-size:.72rem;color:var(--muted)">☎ '+esc(gr.tel)+(gr.yetkili?' · 👤 '+esc(gr.yetkili):'')+'</div>':'')
       +(gr.not?'<div style="font-size:.68rem;color:var(--muted)">'+esc(gr.not)+'</div>':'')
       +'</div>'
+      +'<button onclick="event.stopPropagation();mgGrupExcel(\''+gr.id+'\')" title="Ziyaret listesi (Excel)" style="border:none;background:none;cursor:pointer">📥</button>'
       +'<button onclick="event.stopPropagation();window._mgGrupEdit=\''+gr.id+'\';window._mgForm=true;renderMagFirmalar();window.scrollTo(0,0)" title="Düzenle" style="border:none;background:none;cursor:pointer">✏️</button>'
       +'<button onclick="event.stopPropagation();mgGrupSil(\''+gr.id+'\')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
       +'</div>'
@@ -12393,6 +12395,27 @@ function mgGrupKaydet(){
   t.magazaFirmalari.push(yeni);
   setTanimlar(t); window._mgForm=false; window._mgSayfa=yeni.id; renderMagFirmalar();
   showToast('Mağaza grubu eklendi: '+ad+' — şimdi mağazalarını tanımla','success',5000);
+}
+function mgGrupExcel(fid){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  const f=_moFirmalar().find(x=>x.id===fid); if(!f) return;
+  const rows=(_moSatirlar(_opsToday())||[]).filter(r=>String(r.firmaId||'').split('|')[0]===fid)
+    .sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
+  if(!rows.length){ showToast('Bu mağaza grubuna atanmış ziyaret yok','error'); return; }
+  const aoa=[[(f.ad||'')+' — MAĞAZA ZİYARET LİSTESİ'],['Diogenes Travel · '+_fmtDateTR(_opsToday())+' itibarıyla'],[],
+    ['Giriş Tarihi','Grup','Pax','Mağaza','Rehber','Rehber Tel']];
+  rows.forEach(r=>{
+    const cz=_moAtaCoz(r.firmaId); const sube=cz.sube;
+    aoa.push([_fmtDateTR(r.tarih),r.kod||'',+r.pax||'',sube?(sube.ad||sube.sehir||''):(r.sehir||''),r.rehber||'—',r.rehber?_rehTelBul(r.rehber):'']);
+  });
+  aoa.push([]);
+  aoa.push(['TOPLAM',rows.length+' ziyaret',rows.reduce((t,r)=>t+(+r.pax||0),0)+' pax','','','']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:13},{wch:16},{wch:7},{wch:22},{wch:18},{wch:15}];
+  try{ _xsSusle(ws,aoa,{baslikR:0,altR:1,hdrR:3,veriBas:4,veriSon:3+rows.length,toplamR:aoa.length-1,nC:6,tipC:null,durumC:null}); }catch(e){}
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Ziyaretler');
+  XLSX.writeFile(wb,'magaza_'+String(f.ad||'grup').replace(/[^A-Za-z0-9ÇĞİÖŞÜçğıöşü]/g,'_')+'_'+_opsToday()+'.xlsx');
+  showToast('Excel indirildi: '+f.ad,'success');
 }
 function mgGrupSil(id){
   const t=getTanimlar(); const gr=(t.magazaFirmalari||[]).find(x=>x.id===id);
