@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v383 · 04.09.2026';
+const APP_VER='v384 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15337,7 +15337,8 @@ function renderOpsTransfer(){
       ${_opsTrDate2?'<button class="btn btn-outline btn-sm" onclick="opsTrAralik(0)">Tek gün</button>':''}
       <span style="font-weight:700;margin-left:6px">${_opsTrDate2?esc(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):esc(_trGunAd(_opsTrDate))}</span>
       <span style="color:var(--muted);font-size:.76rem">· ${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</span>
-      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="_trTasimaciExcel()" title="Seçili firmaya özel, yolcu isimli GELİŞ/DÖNÜŞ transfer listesi — üst filtreden firma seç">🚌 Taşımacı Excel</button>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="trGonderimAc()" title="Firmaya toplu iş paketi: aralıktaki transferler + tahsisler">📤 Firmaya İş Gönder</button>
+      <button class="btn btn-outline btn-sm" onclick="_trTasimaciExcel()" title="Seçili firmaya özel, yolcu isimli GELİŞ/DÖNÜŞ transfer listesi — üst filtreden firma seç">🚌 Taşımacı Excel</button>
       <button class="btn btn-outline btn-sm" onclick="_trTasimaciPdf()" title="Aynı listenin yazdırılabilir hali">🚌 Taşımacı PDF</button>
       <button class="btn btn-outline btn-sm" onclick="_trWhatsapp()" title="Taşımacı Excel'ini indirir + firmanın WhatsApp sohbetini hazır mesajla açar — dosyayı sohbete sürüklemen yeterli">📲 WhatsApp</button>
       <button class="btn btn-outline btn-sm" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
@@ -15384,6 +15385,8 @@ function renderOpsTransfer(){
   h+=`<div class="gridwrap"><table class="tm tm-ince"><tr><th class="nosort" style="width:46px"></th>${COLS.map(c=>`<th onclick="_trSortBy('${c[0]}')">${c[1]}${ok(c[0])}</th>`).join('')}<th class="nosort" style="width:52px"></th></tr>`;
   h+=`<tr class="filtrow"><td style="text-align:center"><button class="rowbtn" onclick="_trFiltClear()" title="Temizle">✕</button></td>`+COLS.map(c=>{ const cur=_trFilt[c[0]]||''; if(c[3]==='sel'){ const vals=[...new Set(tam.map(x=>String(c[2](x))).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')); return `<td><select data-fk="${c[0]}" onchange="_trFiltSet('${c[0]}',this.value,true)"><option value="">Hepsi</option>${vals.map(v=>`<option ${v===cur?'selected':''}>${esc(v)}</option>`).join('')}</select></td>`; } return `<td><input data-fk="${c[0]}" value="${esc(cur)}" oninput="_trFiltSet('${c[0]}',this.value,false)" placeholder="süz…"></td>`; }).join('')+`<td></td></tr>`;
   const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR'};
+  const _gonSet=(()=>{ if(!_trUst.firma) return null; const son=_trSonGonderim(_trUst.firma); return son?new Set(son.ids||[]):new Set(); })();
+  const _yeniMi=r=>_gonSet!==null&&r.grup&&(_trGrupOf(r).firma||'')===_trUst.firma&&!_gonSet.has(r.id);
   // aynı göreve (grup) atanmış uçuş transferleri DIŞTAN TEK SATIR — uçuş saatleri içinde alt alta
   const _cizim=[]; const _grupIdx={};
   list.forEach(it=>{
@@ -15416,7 +15419,7 @@ function renderOpsTransfer(){
       h+=`<td>${[gr.arac,gr.arac2].filter(Boolean).map(esc).join(' + ')||'<span style="color:var(--muted)">—</span>'}${gr.plaka?`<div style="font-size:.64rem;font-weight:700">${esc(gr.plaka)}</div>`:''}${gr.soforAd||gr.soforTel?`<div style="font-size:.62rem;color:var(--muted)">${esc(gr.soforAd||'')} ${esc(gr.soforTel||'')}</div>`:''} <button class="rowbtn" onclick="trGorevBilgiAc('${r0.grup}')" title="Araç bilgisi: plaka + şoför">🚌</button></td>`;
       h+=`<td>${gr.firma?esc(gr.firma):'<span style="color:var(--muted)">—</span>'}</td>`;
       h+=`<td><input class="notin" value="${esc(r0.not||'')}" onchange="_trNotElle('${r0.id}',this.value)" placeholder="—"></td>`;
-      h+=`<td>${U.every(x=>x.r.onay)?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'}</td>`;
+      h+=`<td>${U.every(x=>x.r.onay)?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'}${U.some(x=>_yeniMi(x.r))?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
       h+=`<td><button class="rowbtn" onclick="_trOnayCoklu('${_idsEnc}')" title="Hepsini onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldirCoklu('${_idsEnc}')" title="Birleşiği dağıt — atamaları kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r0.grup}')" title="Görev listesi">🖨</button></td>`;
       h+='</tr>';
       return;
@@ -15437,7 +15440,7 @@ function renderOpsTransfer(){
     h+=`<td>${gr&&(gr.arac||gr.arac2)?esc([gr.arac,gr.arac2].filter(Boolean).join(' + ')):'<span style="color:var(--muted)">—</span>'}${gr&&gr.plaka?`<div style="font-size:.64rem;font-weight:700">${esc(gr.plaka)}</div>`:''}${gr&&(gr.soforAd||gr.soforTel)?`<div style="font-size:.62rem;color:var(--muted)">${esc(gr.soforAd||'')} ${esc(gr.soforTel||'')}</div>`:''}${r.grup?` <button class="rowbtn" onclick="trGorevBilgiAc('${r.grup}')" title="Araç bilgisi: plaka + şoför">🚌</button>`:''}</td>`;
     h+=`<td>${gr&&gr.firma?esc(gr.firma):'<span style="color:var(--muted)">—</span>'}</td>`;
     h+=`<td><input class="notin" value="${esc(r.not||'')}" onchange="_trNotElle('${r.id}',this.value)" placeholder="—"></td>`;
-    h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):'<span class="trchip c-yok">atanmadı</span>'}</td>`;
+    h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):'<span class="trchip c-yok">atanmadı</span>'}${_yeniMi(r)?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
     h+=`<td>${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button>`:''}</td></tr>`;
   });
   h+='</table></div>';
@@ -15506,6 +15509,65 @@ function trGorevBilgiKaydet(gid){
   renderOpsTransfer(); showToast('Araç bilgisi kaydedildi','success');
 }
 function _trDeparBirlesik(ids,v){ const sv=(typeof _saatNorm==='function')?_saatNorm(v):v; String(ids||'').split('~').filter(Boolean).forEach(id=>{ try{ _trSatKaydet(id,{depar:sv,deparMan:true}); }catch(e){} }); renderOpsTransfer(); }
+function _trSonGonderim(firma){
+  const G=(getTransfer().gonderimler||[]).filter(g2=>g2.firma===firma);
+  return G.length?G[G.length-1]:null;
+}
+function trGonderimAc(){
+  let box=document.getElementById('trGonderim');
+  if(box) box.remove();
+  box=document.createElement('div'); box.id='trGonderim';
+  box.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  box.onclick=e=>{ if(e.target===box) box.remove(); };
+  document.body.appendChild(box);
+  trGonderimDoldur();
+}
+function trGonderimDoldur(){
+  const box=document.getElementById('trGonderim'); if(!box) return;
+  const firmalar=[...new Set([...(getTanimlar().aracFirmalari||[]).map(f=>f.ad||''),...Object.values(getTransfer().gruplar||{}).map(g2=>g2.firma||'')].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const inp='padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.86rem';
+  const V=_trTasimaciBloklar(true);
+  const son=_trUst.firma?_trSonGonderim(_trUst.firma):null;
+  let yeniN=0;
+  if(V&&son){ const eski=new Set(son.ids||[]); yeniN=V.isIds.filter(id=>!eski.has(id)).length; }
+  box.innerHTML=`<div style="background:var(--card);border-radius:16px;max-width:480px;width:100%;max-height:84vh;overflow:auto;padding:18px" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><b style="font-size:.95rem">📤 Firmaya İş Gönderimi</b><button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="document.getElementById('trGonderim').remove()">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+      <select onchange="_trUst.firma=this.value;renderOpsTransfer();trGonderimDoldur()" style="${inp}">
+        <option value="">— Taşımacı firma seç —</option>
+        ${firmalar.map(f=>`<option value="${esc(f)}" ${_trUst.firma===f?'selected':''}>${esc(f)}</option>`).join('')}
+      </select>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="date" value="${esc(_opsTrDate)}" onchange="_opsTrDate=this.value;renderOpsTransfer();trGonderimDoldur()" style="${inp};flex:1">
+        <span style="color:var(--muted)">~</span>
+        <input type="date" value="${esc(_opsTrDate2||_opsTrDate)}" onchange="_opsTrDate2=(this.value&&this.value>=_opsTrDate)?this.value:'';renderOpsTransfer();trGonderimDoldur()" style="${inp};flex:1">
+      </div>
+    </div>
+    ${V?`<div style="background:var(--primary-soft);border:1px solid #fcd9c4;border-radius:12px;padding:10px 13px;margin-bottom:12px;font-size:.8rem">
+      <b>${esc(V.firma)}</b> · ${esc(V.donem)}<br>
+      🚌 <b>${V.trN}</b> transfer · <b>${V.trPax}</b> pax${V.tahsisler.length?` · 🚙 <b>${V.tahsisler.length}</b> tahsis araç`:''}
+      ${son?`<div style="margin-top:5px;font-size:.7rem;color:var(--muted)">Son gönderim: ${new Date(son.ts).toLocaleString('tr-TR')} · ${(son.ids||[]).length} iş${yeniN?` — <b style="color:#b91c1c">${yeniN} YENİ/gönderilmemiş iş</b>`:' — değişiklik yok ✓'}</div>`:'<div style="margin-top:5px;font-size:.7rem;color:var(--muted)">Bu firmaya daha önce gönderim yapılmadı.</div>'}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" style="flex:1" onclick="trGonderimYap('wa')">📲 WhatsApp + Excel</button>
+      <button class="btn btn-outline" onclick="trGonderimYap('excel')">📥 Excel</button>
+      <button class="btn btn-outline" onclick="trGonderimYap('pdf')">🖨 PDF</button>
+    </div>`:`<p class="section-tip">${_trUst.firma?'Bu aralıkta firmaya atanmış iş yok.':'Firma seç — aralıktaki transfer ve tahsisler paket halinde hazırlanır.'}</p>`}
+  </div>`;
+}
+function trGonderimYap(kanal){
+  const V=_trTasimaciBloklar(true); if(!V){ showToast('Gönderilecek iş yok','error'); return; }
+  if(kanal==='excel') _trTasimaciExcel();
+  else if(kanal==='pdf') _trTasimaciPdf();
+  else _trWhatsapp();
+  const T=getTransfer(); T.gonderimler=T.gonderimler||[];
+  T.gonderimler.push({id:genId(),firma:V.firma,bas:_opsTrDate,bit:_opsTrDate2||_opsTrDate,ts:Date.now(),ids:V.isIds,kanal});
+  if(T.gonderimler.length>200) T.gonderimler=T.gonderimler.slice(-200);
+  setTransfer(T);
+  const b=document.getElementById('trGonderim'); if(b) b.remove();
+  renderOpsTransfer();
+  showToast('Gönderim kaydedildi — bundan sonra eklenen işler YENİ rozetiyle görünür','success',6000);
+}
 function _trSecToggle(id,on){ on?_trSel.add(id):_trSel.delete(id); _trRenderAtabar(); }
 function _trSecTemizle(){ _trSel.clear(); renderOpsTransfer(); }
 // filo: araçlar firma tanımlarının içinde — atama listesi oradan beslenir
@@ -15743,9 +15805,9 @@ function _trYolcularDetay(r){
     return Object.assign({},y,{unvan,pans,konak,oda,yas:yasHesap(y.dogum)});
   });
 }
-function _trTasimaciBloklar(){
+function _trTasimaciBloklar(sessiz){
   const firma=_trUst.firma;
-  if(!firma){ showToast('Önce üst filtreden ARAÇ FİRMASI seç — liste o firmaya özel hazırlanır','error',5000); return null; }
+  if(!firma){ if(!sessiz) showToast('Önce üst filtreden ARAÇ FİRMASI seç — liste o firmaya özel hazırlanır','error',5000); return null; }
   const list=_trGorunur().filter(x=>x.r.grup&&(_trGrupOf(x.r).firma||'')===firma&&x.r.tip!=='TUR');
   // TAHSİS araçlar: tur dosyalarındaki tahsis satırları (firma eşleşen, görünür aralıkla kesişen)
   const _d1=_opsTrDate, _d2=_opsTrDate2||_opsTrDate;
@@ -15757,14 +15819,14 @@ function _trTasimaciBloklar(){
         const ab=_pdate(a.bas)||'', abit=_pdate(a.bit)||ab;
         if(!ab||ab>_d2||abit<_d1) return;
         let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
-        tahsisler.push({bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',pax:E2.pax||'',
+        tahsisler.push({key:'TAH|'+E2.id+'|'+ab,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',pax:E2.pax||'',
           arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
           reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:a.not||''});
       });
     });
   }catch(e){}
   tahsisler.sort((a,b)=>String(a.bas).localeCompare(String(b.bas)));
-  if(!list.length&&!tahsisler.length){ showToast('Bu firmaya atanmış transfer/tahsis yok','error'); return null; }
+  if(!list.length&&!tahsisler.length){ if(!sessiz) showToast('Bu firmaya atanmış transfer/tahsis yok','error'); return null; }
   window._trKod=_trKodMap();
   const bolum=x=>x.r.tip==='G'?'GELİŞ':(x.r.tip==='D'?'DÖNÜŞ':'ARA UÇUŞ');
   const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
@@ -15785,7 +15847,9 @@ function _trTasimaciBloklar(){
     blok.hedef=x.r.tip==='D'?x.r.nereden:x.r.nereye; // otel tarafı
     _trYolcularDetay(x.r).forEach(y=>blok.yolcular.push(Object.assign({},y,{ucus:x.r.ucus||'',usaat:x.r.saat||'',op:x.r.op||''})));
   });
-  return {firma,bolumler,tahsisler,donem:_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate)};
+  return {firma,bolumler,tahsisler,isIds:list.map(x=>x.r.id).concat(tahsisler.map(t=>t.key)),
+    trN:list.length,trPax:list.reduce((t,x)=>t+(+x.r.pax||0),0),
+    donem:_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate)};
 }
 function _trTasimaciExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
