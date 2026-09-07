@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v405 · 04.09.2026';
+const APP_VER='v406 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12720,7 +12720,9 @@ function renderMagazaOps(){
         h+='<tr><td colspan="8" style="background:#1a3c5e;color:#fff;padding:6px 10px;font-size:.76rem;font-weight:800">'
          +esc(r.kod)+(r.birlesik?' <span style="background:#ede9fe;color:#6d28d9;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 6px">BİRLEŞİK</span>':'')
          +' · '+esc(r.op||'')+(kalkisT?' · kalkış '+_fmtDateTR(kalkisT):'')
-         +' · '+(r.rehber?esc(r.rehber):'<span style="color:#fcd34d">rehber açıkta</span>')+' · '+r.pax+' pax</td></tr>';
+         +' · '+(r.rehber?esc(r.rehber):'<span style="color:#fcd34d">rehber açıkta</span>')+' · '+r.pax+' pax'
+         +(function(){ const p0=(r.parts||[])[0]; if(!p0) return ''; return ' <button class="btn btn-sm" style="float:right;background:#fff;color:#1a3c5e;font-weight:800;padding:2px 10px;border-radius:7px;border:none;cursor:pointer" onclick="moDosyaAc(\''+p0.pkgId+'\',\''+p0.kalkis+'\')" title="Tur dosyasının Mağazalar sekmesini açar — tarih düzeltme ve atamalar orada">📂 Dosya › Mağazalar</button>'; })()
+         +'</td></tr>';
       }
     }
     // seçenekler: her grubun MAĞAZALARI (value 'fid|sid'); mağazasız grup için grup kendisi (value 'fid')
@@ -13890,6 +13892,11 @@ function renderOpsGrup(){
 // ═══ TUR DOSYASI (grup kartı) ═══
 let _tdGid=null,_tdTab='yolcu';
 function opsTdAc(gid){ _navPush(); gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; renderOpsGrup(); }
+function moDosyaAc(pkgId,kalkis){
+  opsOpen(pkgId,kalkis);
+  _tdTab='magaza';
+  try{ renderOpsGrup(); }catch(e){}
+}
 function opsTdKapat(){
   _tdGid=null;
   if(_navGecmis.length){ navGeri(); return; }
