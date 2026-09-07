@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v387 · 04.09.2026';
+const APP_VER='v388 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15474,14 +15474,14 @@ function renderOpsTransfer(){
 function _trTahsisBolumHTML(){
   let h='';
   (function(){
-    const d1=_opsTrDate, d2=_opsTrDate2||_opsTrDate;
+    const bugun=_opsToday();
     const L=[];
     try{
       _ogResolve().forEach(E2=>{
         const g2=(getOpsGrup().gruplar||{})[E2.id]; if(!g2) return;
         (g2.araclar||[]).filter(a=>a.tip==='tahsis').forEach(a=>{
           const ab=_pdate(a.bas)||'', abit=_pdate(a.bit)||ab;
-          if(!ab||ab>d2||abit<d1) return;
+          if(abit&&abit<bugun) return; // bitmiş tahsisler listelenmez
           if(_trUst.firma&&String(a.firma||'').trim()!==_trUst.firma) return;
           let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
           L.push({gid:E2.id,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',pax:E2.pax||'',firma:a.firma||'',
@@ -15493,7 +15493,7 @@ function _trTahsisBolumHTML(){
     L.sort((a,b)=>String(a.bas).localeCompare(String(b.bas)));
     const th2='background:#0369a1;color:#fff;padding:4px 9px;font-size:.62rem;text-align:left;white-space:nowrap';
     const td2='padding:4px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
-    h+=`<div class="card" style="margin-top:12px"><div class="card-title">🚙 Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} tahsis araç · ${_trUst.firma?esc(_trUst.firma)+' filtresi':'tüm firmalar'} — bu aralıkta aktif</span></div>
+    h+=`<div class="card" style="margin-top:12px"><div class="card-title">🚙 Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} tahsis araç · ${_trUst.firma?esc(_trUst.firma)+' filtresi':'tüm firmalar'} — tur dosyalarından atananlar (bugün ve sonrası)</span></div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
       <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Tur</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Not</th><th style="${th2}"></th></tr>
       ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b></td><td style="${td2}">${_fmtDateTR(t.bit)}</td><td style="${td2}"><b>${esc(t.tur)}</b></td><td style="${td2}">${esc(t.firma)||'<span style="color:#b45309;font-weight:700">firma yok</span>'}</td><td style="${td2}">${esc(t.arac)}</td>
