@@ -1977,7 +1977,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v362 · 04.09.2026';
+const APP_VER='v363 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -12134,6 +12134,8 @@ function renderRehberTakvim(){
 }
 /* ══ MAĞAZA OPERASYONU ══ */
 let _moFltSehir='', _moFltTur='', _moSadeceAcik=false, _moFirmaAcik=false;
+let _moGorunum=(()=>{try{return localStorage.getItem('dmc_moGorunum')||'tarih';}catch(e){return 'tarih';}})();
+function moGorunumSec(v){ _moGorunum=v; try{localStorage.setItem('dmc_moGorunum',v);}catch(e){} renderMagazaOps(); }
 function _moFirmalar(){ const t=getTanimlar(); return Array.isArray(t.magazaFirmalari)?t.magazaFirmalari:[]; }
 function moFirmaEkle(){
   const ad=(document.getElementById('moFAd')||{}).value||'', sehir=(document.getElementById('moFSehir')||{}).value||'', tur=(document.getElementById('moFTur')||{}).value||'';
@@ -12444,6 +12446,7 @@ function renderMagazaOps(){
    +'<select onchange="_moFltSehir=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltSehir?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm şehirler</option>'+sehirler.map(x=>'<option'+(x===_moFltSehir?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
    +'<select onchange="_moFltTur=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltTur?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm türler</option>'+turler.map(x=>'<option'+(x===_moFltTur?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
    +'<label style="display:inline-flex;align-items:center;gap:5px;font-size:.78rem;cursor:pointer"><input type="checkbox" '+(_moSadeceAcik?'checked':'')+' onchange="_moSadeceAcik=this.checked;renderMagazaOps()"> Sadece atanmamış</label>'
+   +'<select onchange="moGorunumSec(this.value)" style="padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:.78rem;font-family:inherit"><option value="tarih"'+(_moGorunum==='tarih'?' selected':'')+'>📅 Tarih sırası</option><option value="grup"'+(_moGorunum==='grup'?' selected':'')+'>👥 Grup bazlı</option></select>'
    +'<button class="btn btn-outline btn-sm" onclick="moExcel()">⬇ Excel İndir</button>'
    +'<button class="btn btn-outline btn-sm" onclick="mmTab(\'firmalar\')">🏬 Mağazalar ('+firmalar.length+')</button>'
    +'</div>';
@@ -12510,8 +12513,26 @@ function renderMagazaOps(){
   h+='<div class="card" style="overflow-x:auto"><table style="border-collapse:collapse;width:100%">'
    +'<tr><th style="'+thS+'">Tarih</th><th style="'+thS+'">Tur</th><th style="'+thS+'">Operatör</th><th style="'+thS+'">Şehir</th><th style="'+thS+'">Tür</th><th style="'+thS+'">Pax</th><th style="'+thS+'">Rehber</th><th style="'+thS+'">Mağaza</th></tr>';
   if(!rows.length) h+='<tr><td colspan="8" style="'+tdS+';text-align:center;color:var(--muted);padding:16px">Kayıt yok — ürünlerin gün planlarına mağaza işaretleyin.</td></tr>';
-  window._moRows=rows;
-  rows.forEach((r,ri)=>{
+  let rowsG=rows;
+  if(_moGorunum==='grup'){
+    const gmap=new Map();
+    rows.forEach(r=>{ const k=r.progKey||('?|'+r.kod); if(!gmap.has(k)) gmap.set(k,[]); gmap.get(k).push(r); });
+    rowsG=[]; [...gmap.values()].sort((a,b)=>String(a[0].tarih).localeCompare(String(b[0].tarih))||a[0].kod.localeCompare(b[0].kod,'tr')).forEach(gr=>{ gr.forEach(r=>rowsG.push(r)); });
+  }
+  window._moRows=rowsG;
+  let oncekiGrup=null;
+  rowsG.forEach((r,ri)=>{
+    if(_moGorunum==='grup'){
+      const gk=r.progKey||('?|'+r.kod);
+      if(gk!==oncekiGrup){
+        oncekiGrup=gk;
+        const kalkisT=(r.progKey||'').split('|')[1]||'';
+        h+='<tr><td colspan="8" style="background:#1a3c5e;color:#fff;padding:6px 10px;font-size:.76rem;font-weight:800">'
+         +esc(r.kod)+(r.birlesik?' <span style="background:#ede9fe;color:#6d28d9;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 6px">BİRLEŞİK</span>':'')
+         +' · '+esc(r.op||'')+(kalkisT?' · kalkış '+_fmtDateTR(kalkisT):'')
+         +' · '+(r.rehber?esc(r.rehber):'<span style="color:#fcd34d">rehber açıkta</span>')+' · '+r.pax+' pax</td></tr>';
+      }
+    }
     // seçenekler: her grubun MAĞAZALARI (value 'fid|sid'); mağazasız grup için grup kendisi (value 'fid')
     const secenekler=[];
     firmalar.forEach(f=>{
