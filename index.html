@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v398 · 04.09.2026';
+const APP_VER='v399 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -4582,6 +4582,14 @@ function renderTransferler(){
 }
 
 function addGun(){const n=gunler.length+1;gunler.push({no:n,baslik:`Gün ${n}`,noktalar:[],mesafe:'',seyahatSuresi:'',program:'',opsiyonelTurlar:[],konaklamaAd:'',konaklamaBolge:'',konaklamaPansiyon:'BB'});renderGunler();renderKonaklamaOzet();syncGeceFromGunler();markDirty();}
+function copyGun(i){
+  const g=gunler[i]; if(!g) return;
+  let k; try{ k=JSON.parse(JSON.stringify(g)); }catch(e){ return; }
+  k.baslik=(k.baslik||'')+' (kopya)';
+  gunler.splice(i+1,0,k);
+  renderGunler(); renderKonaklamaOzet(); syncGeceFromGunler(); markDirty();
+  showToast('Gün kopyalandı — hemen altına eklendi','success');
+}
 function removeGun(i){
   const ad=(gunler[i]&&gunler[i].baslik)||('Gün '+(i+1));
   confirmRemove('Günü Sil', '"'+ad+'" ve içeriği silinecek. Emin misiniz?', 'gün silindi', ()=>{
@@ -4672,6 +4680,7 @@ function renderGunler(){
         <div class="field" style="flex:2"><label><svg class="ic"><use href="#i-calendar"/></svg> Gün Başlığı</label><input value="${esc(g.baslik)}" oninput="gunler[${i}].baslik=this.value;markDirty()" placeholder="Gün 1 – Varış"></div>
         <div class="field" style="flex:1;min-width:75px"><label><svg class="ic"><use href="#i-ruler"/></svg> Mesafe</label><input value="${esc(g.mesafe)}" oninput="gunler[${i}].mesafe=this.value;markDirty()" placeholder="740 km"></div>
         <div class="field" style="flex:1;min-width:75px"><label>⏱️ Süre</label><input value="${esc(g.seyahatSuresi)}" oninput="gunler[${i}].seyahatSuresi=this.value;markDirty()" placeholder="1.5 sa"></div>
+        <button onclick="copyGun(${i})" title="Günü kopyala — tekrar eden günler için" style="flex-shrink:0;background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:14px;margin-bottom:1px">📋</button>
         <button onclick="removeGun(${i})" style="flex-shrink:0;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:38px;cursor:pointer;font-size:15px;margin-bottom:1px">×</button>
       </div>
       <div style="margin-bottom:8px">
