@@ -1226,6 +1226,9 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <label style="display:flex;align-items:center;gap:9px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;margin-bottom:12px;cursor:pointer;font-size:.84rem;font-weight:600;color:#475569">
         <input type="checkbox" id="pkgRehbersiz" onchange="markDirty()" style="width:16px;height:16px;flex-shrink:0"> <span>🧭 <b>Rehbersiz ürün</b> <span style="font-weight:400">— 'rehber atanmamış' uyarısı verilmez</span></span>
       </label>
+      <label style="display:flex;align-items:center;gap:9px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;margin-bottom:12px;cursor:pointer;font-size:.84rem;font-weight:600;color:#475569">
+        <input type="checkbox" id="pkgTurTransferYok" onchange="markDirty()" style="width:16px;height:16px;flex-shrink:0"> <span>🚫 <b>Tahsis / tur içi transfer gerekmez</b> <span style="font-weight:400">— tur yürüyüşü (şehir geçişi) transferleri monitörde ÜRETİLMEZ; havalimanı geliş/dönüş transferleri normal devam eder</span></span>
+      </label>
       <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px">
         <div class="field" style="flex:1;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Varış Havalimanı (TR)</label><input id="varisHavalimani" value="" oninput="varisHavalimani=this.value.toUpperCase().trim();markDirty()" placeholder="SAW, IST, AYT..."></div>
         <div class="field" style="flex:1;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Dönüş Havalimanı (TR)</label><input id="donusHavalimani" value="" oninput="donusHavalimani=this.value.toUpperCase().trim();markDirty()" placeholder="AYT, IST, SAW..."></div>
@@ -2001,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v391 · 04.09.2026';
+const APP_VER='v392 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
