@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v375 · 04.09.2026';
+const APP_VER='v376 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15333,7 +15333,7 @@ function renderOpsTransfer(){
       h+=`<td><b>${paxT}</b></td>`;
       h+=`<td>${u1(r=>r.bolge).map(esc).join(' / ')||'—'}</td>`;
       h+=`<td><span class="grupb">${_trKodOf(r0.grup)}</span></td>`;
-      h+=`<td>${(function(){ const ri=_trRehInfo(r0); return ri.ad?esc(ri.ad):'<span style="color:var(--muted)">—</span>'; })()}</td>`;
+      h+=`<td>${(function(){ const adlar=[...new Set(U.map(x=>(_trRehInfo(x.r).ad||'').trim()).filter(Boolean))]; return adlar.length?adlar.map(esc).join(' + '):'<span style="color:var(--muted)">—</span>'; })()}</td>`;
       h+=`<td>${[gr.arac,gr.arac2].filter(Boolean).map(esc).join(' + ')||'<span style="color:var(--muted)">—</span>'}${gr.plaka?`<div style="font-size:.64rem;font-weight:700">${esc(gr.plaka)}</div>`:''}${gr.soforAd||gr.soforTel?`<div style="font-size:.62rem;color:var(--muted)">${esc(gr.soforAd||'')} ${esc(gr.soforTel||'')}</div>`:''} <button class="rowbtn" onclick="trGorevBilgiAc('${r0.grup}')" title="Araç bilgisi: plaka + şoför">🚌</button></td>`;
       h+=`<td>${gr.firma?esc(gr.firma):'<span style="color:var(--muted)">—</span>'}</td>`;
       h+=`<td><input class="notin" value="${esc(r0.not||'')}" onchange="_trNotElle('${r0.id}',this.value)" placeholder="—"></td>`;
