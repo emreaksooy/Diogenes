@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v409 · 04.09.2026';
+const APP_VER='v410 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13893,6 +13893,7 @@ function renderOpsGrup(){
 let _tdGid=null,_tdTab='yolcu';
 function opsTdAc(gid){ _navPush(); gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; renderOpsGrup(); }
 function moDosyaAc(pkgId,kalkis){
+  try{ showPage('operasyon',document.querySelector('.nav-tab[data-page="operasyon"]')); }catch(e){ try{ showPage('operasyon'); }catch(e2){} }
   opsOpen(pkgId,kalkis);
   _tdTab='magaza';
   try{ renderOpsGrup(); }catch(e){}
