@@ -2001,7 +2001,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v379 · 04.09.2026';
+const APP_VER='v380 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15360,13 +15360,14 @@ function renderOpsTransfer(){
       const u1=v=>[...new Set(U.map(x=>String(v(x.r)||'').trim()).filter(Boolean))];
       const ucuslar=U.map(x=>({u:x.r.ucus||'',s:x.r.saat||'',t:x.r.tip})).filter(x=>x.u||x.s);
       h+=`<tr class="t-${r0.tip}">`;
-      h+=`<td style="white-space:nowrap"><button onclick="_trDetayAc('${r0.id}')" title="Detay" style="background:none;border:none;cursor:pointer">🔍</button></td>`;
+      const _idsEnc=U.map(x=>encodeURIComponent(x.r.id)).join('~');
+      h+=`<td style="white-space:nowrap"><input type="checkbox" ${U.every(x=>_trSel.has(x.r.id))?'checked':''} onchange="_trSecCoklu('${_idsEnc}',this.checked)"><button onclick="_trDetayCoklu('${_idsEnc}')" title="Detay: tüm uçuşlar ve yolcular" style="background:none;border:none;cursor:pointer">🔍</button></td>`;
       if(_opsTrDate2) h+=`<td style="white-space:nowrap"><b>${_fmtDateTR(r0.tarih)}</b></td>`;
       h+=`<td><span class="tipb tb-${r0.tip}">${tipAd[r0.tip]}</span> <span style="background:var(--primary);color:#fff;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">🔗 ${U.length}</span></td>`;
       h+=`<td>${u1(r=>r.op).map(esc).join(' + ')}</td><td><b>${u1(r=>r.urun).map(esc).join(' + ')}</b></td>`;
       h+=`<td>${u1(r=>r.nereden).map(esc).join(' / ')}</td><td>${u1(r=>r.nereye).map(esc).join(' / ')}</td>`;
       h+=`<td colspan="2">${ucuslar.map(x=>`<div style="white-space:nowrap;font-size:.72rem">${esc(x.u||'—')} <b>${esc(x.s||'')}</b></div>`).join('')||'—'}</td>`;
-      h+=`<td><input class="saatin${r0.deparMan?' man':''}" value="${esc(dh0.saat)}" onchange="_trDeparBirlesik('${U.map(x=>x.r.id).join('~')}',this.value)" title="Depar — tüm birleşik işlere yazılır"></td>`;
+      h+=`<td><input class="saatin${r0.deparMan?' man':''}" value="${esc(dh0.saat)}" onchange="_trDeparBirlesik('${_idsEnc}',this.value)" title="Depar — tüm birleşik işlere yazılır"></td>`;
       h+=`<td><b>${paxT}</b></td>`;
       h+=`<td>${u1(r=>r.bolge).map(esc).join(' / ')||'—'}</td>`;
       h+=`<td><span class="grupb">${_trKodOf(r0.grup)}</span></td>`;
@@ -15375,7 +15376,7 @@ function renderOpsTransfer(){
       h+=`<td>${gr.firma?esc(gr.firma):'<span style="color:var(--muted)">—</span>'}</td>`;
       h+=`<td><input class="notin" value="${esc(r0.not||'')}" onchange="_trNotElle('${r0.id}',this.value)" placeholder="—"></td>`;
       h+=`<td>${U.every(x=>x.r.onay)?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'}</td>`;
-      h+=`<td><button class="rowbtn" onclick="${U.map(x=>`_trOnay('${x.r.id}')`).join(';')}" title="Hepsini onayla">✓</button><button class="rowbtn" onclick="${U.map(x=>`_trAtamaKaldir('${x.r.id}')`).join(';')}" title="Birleşiği dağıt — atamaları kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r0.grup}')" title="Görev listesi">🖨</button></td>`;
+      h+=`<td><button class="rowbtn" onclick="_trOnayCoklu('${_idsEnc}')" title="Hepsini onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldirCoklu('${_idsEnc}')" title="Birleşiği dağıt — atamaları kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r0.grup}')" title="Görev listesi">🖨</button></td>`;
       h+='</tr>';
       return;
     }
@@ -15552,6 +15553,46 @@ function _trAtama(){ if(!_trSel.size) return; const firmaSec=(document.getElemen
     else Tr.sat[r.id]=Object.assign({},Tr.sat[r.id]||{},patch);
   });
   setTransfer(Tr); _trSel.clear(); window._trKod=null; renderOpsTransfer(); showToast(_trKodOf(kod)+' oluşturuldu — '+rows.length+' transfer, '+pax+' pax','success'); }
+function _trIdsCoz(enc){ return String(enc||'').split('~').map(x=>{ try{ return decodeURIComponent(x); }catch(e){ return x; } }).filter(Boolean); }
+function _trSecCoklu(enc,on){ _trIdsCoz(enc).forEach(id=>{ on?_trSel.add(id):_trSel.delete(id); }); renderOpsTransfer(); }
+function _trOnayCoklu(enc){ const all=_trGenRows(); const ids=_trIdsCoz(enc); const hedef=!ids.every(id=>{ const r=all.find(x=>x.id===id); return r&&r.onay; }); ids.forEach(id=>_trSatKaydet(id,{onay:hedef})); renderOpsTransfer(); }
+function _trAtamaKaldirCoklu(enc){
+  const ids=_trIdsCoz(enc);
+  showConfirm('✂️','Birleşiği Dağıt',ids.length+' transferin araç ataması kaldırılacak — satırlar yeniden ayrı görünür.','Dağıt',()=>{
+    ids.forEach(id=>_trSatKaydet(id,{grup:null,onay:false}));
+    window._trKod=null; renderOpsTransfer(); showToast('Atamalar kaldırıldı — transferler ayrıldı','success');
+  });
+}
+function _trDetayCoklu(enc){
+  const ids=_trIdsCoz(enc); const all=_trGenRows();
+  const U=ids.map(id=>all.find(x=>x.id===id)).filter(Boolean);
+  if(U.length<=1){ if(U[0]) _trDetayAc(U[0].id); return; }
+  const gr=_trGrupOf(U[0]); const paxT=U.reduce((t,r)=>t+(+r.pax||0),0);
+  let box=document.getElementById('trDetayModal');
+  if(!box){ box=document.createElement('div'); box.id='trDetayModal';
+    box.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    box.onclick=e=>{ if(e.target===box) box.remove(); };
+    document.body.appendChild(box); }
+  const st='border:1px solid var(--border);padding:3px 8px;font-size:.72rem;text-align:left';
+  const bolum=U.map(r=>{
+    let yolcular=[]; try{ yolcular=_trYolcularDetay(r); }catch(e){}
+    let dep=''; try{ dep=_trDeparHesap(r).saat||''; }catch(e){}
+    return `<div style="background:var(--navy);color:#fff;border-radius:9px 9px 0 0;padding:5px 10px;font-size:.76rem;font-weight:700;margin-top:10px">✈ ${esc(r.ucus||'—')} ${esc(r.saat||'')} · ${esc(r.urun)} · ${r.pax} pax${dep?` · <span style="color:#fbbf24">Depar ${esc(dep)}</span>`:''}</div>
+    ${yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${st}">#</th><th style="${st}">Voucher</th><th style="${st}">Soyadı, Adı</th></tr>
+      ${yolcular.map((y,i)=>`<tr><td style="${st}">${i+1}</td><td style="${st}">${esc(y.voucher)}</td><td style="${st}"><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td></tr>`).join('')}</table>`:'<div style="font-size:.72rem;color:var(--muted);padding:4px 2px">Yolcu detayı bulunamadı.</div>'}`;
+  }).join('');
+  const bilgi=(l,v)=>v?`<div style="font-size:.74rem"><span style="color:var(--muted);font-weight:700;font-size:.6rem;text-transform:uppercase">${l}</span><br><b>${esc(v)}</b></div>`:'';
+  box.innerHTML=`<div style="background:var(--card);border-radius:16px;max-width:640px;width:100%;max-height:84vh;overflow:auto;padding:18px" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <b style="font-size:.92rem">🚌 ${esc(_trKodOf(U[0].grup)||'')} — TEK TRANSFER · ${_fmtDateTR(U[0].tarih)} · ${U.length} uçuş · ${paxT} pax</b>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="document.getElementById('trDetayModal').remove()">✕ Kapat</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:6px">
+      ${bilgi('Firma',gr.firma)}${bilgi('Araç',[gr.arac,gr.arac2].filter(Boolean).join(' + '))}${bilgi('Plaka',gr.plaka)}${bilgi('Şoför',[gr.soforAd,gr.soforTel].filter(Boolean).join(' · '))}
+    </div>
+    ${bolum}
+  </div>`;
+}
 function _trAtamaKaldir(id){ _trSatKaydet(id,{grup:null,onay:false}); window._trKod=null; renderOpsTransfer(); }
 function _trOnay(id){ const r=_trGenRows().find(x=>x.id===id); _trSatKaydet(id,{onay:!(r&&r.onay)}); renderOpsTransfer(); }
 function _trDeparElle(id,v){ v=_saatNorm((v||'').trim()); _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
