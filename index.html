@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v408 · 04.09.2026';
+const APP_VER='v409 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -16035,7 +16035,8 @@ function _trTasimaciBloklar(sessiz){
     blok.pax+=(+x.r.pax||0);
     const dk=_dk(x.dh.saat); if(dk!==null&&(blok.depar===null||dk<blok.depar)) blok.depar=x.dh.saat;
     blok.hedef=x.r.tip==='D'?x.r.nereden:x.r.nereye; // otel tarafı
-    _trYolcularDetay(x.r).forEach(y=>blok.yolcular.push(Object.assign({},y,{ucus:x.r.ucus||'',usaat:x.r.saat||'',op:x.r.op||''})));
+    _trYolcularDetay(x.r).forEach(y=>blok.yolcular.push(Object.assign({},y,{ucus:x.r.ucus||'',usaat:x.r.saat||'',op:x.r.op||'',
+      hat:_trHatTipi(x.r.rota)==='IC'?'İÇ HAT':(_trHatTipi(x.r.rota)==='DIS'?'DIŞ HAT':''),rt:(x.r.rota&&x.r.rota.includes('→'))?x.r.rota:''})));
   });
   return {firma,bolumler,tahsisler,isIds:list.map(x=>x.r.id).concat(tahsisler.map(t=>t.key)),
     trN:list.length,trPax:list.reduce((t,x)=>t+(+x.r.pax||0),0),
@@ -16064,8 +16065,8 @@ function _trTasimaciExcel(){
       detaylar.push(aoa.length); aoa.push(['Detay','Depar: '+(b.depar||'—')+'   ·   '+b.pax+' pax   ·   Araç: '+aracTxt+'   ·   Rehber: '+reh]);
       if(b.notlar&&b.notlar.size){ detaylar.push(aoa.length); aoa.push(['Not',[...b.notlar].join('  ·  ')]); }
       yolcuHdr.push(aoa.length);
-      aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Uçuş','Saat','Operatör','']);
-      b.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.ucus,y.usaat,y.op,'']));
+      aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Uçuş','Saat','Operatör','Hat / Terminal']);
+      b.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.ucus,y.usaat,y.op,y.hat?(y.hat+(y.rt?' ('+y.rt+')':'')):'']));
       aoa.push([]);
     });
     const topP=L.reduce((t,b)=>t+b.pax,0);
