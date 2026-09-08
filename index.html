@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v413 · 04.09.2026';
+const APP_VER='v414 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15616,8 +15616,19 @@ function thsFormAc(enc){ window._thsAcik=(window._thsAcik===enc)?'':enc; renderO
 function thsKaydet(enc){
   const p=enc.split('|'); const t={pkgId:p[0],kalkis:p[1],birlesikGrupId:p[2]||''};
   let gid=_thsGidBul(t);
-  if(!gid){ showToast('Turun grubu bulunamadı — önce tur dosyasını bir kez aç','error',5000); return; }
-  gid=_ogMaterialize(gid);
+  if(gid) gid=_ogMaterialize(gid);
+  if(!gid){
+    // uçak listesi girilmemiş sefer: sefer bazlı kalıcı grup oluştur (opsOpen fallback'i)
+    const S0=getOpsGrup(); S0.gruplar=S0.gruplar||{};
+    let sg=Object.values(S0.gruplar).find(g=>g.sefer&&g.sefer.pkgId===t.pkgId&&g.sefer.kalkis===t.kalkis);
+    if(!sg){
+      const pk=getPackages().find(p=>p.id===t.pkgId)||{};
+      const nid='og'+R_GID().slice(1);
+      sg={id:nid,no:_ogNoVer(S0,t.kalkis),ad:(pk.paketKodu?pk.paketKodu+' ':'')+_fmtDateTR(t.kalkis),rehberId:'',not:'',uyeler:[],tahsisler:[],sefer:{pkgId:t.pkgId,kalkis:t.kalkis}};
+      S0.gruplar[nid]=sg; setOpsGrup(S0);
+    }
+    gid=sg.id;
+  }
   const v=id2=>((document.getElementById('ths_'+id2)||{}).value||'').trim();
   const firma=v('firma');
   if(!firma){ showToast('Firma seç ya da yaz','error'); return; }
@@ -15637,6 +15648,42 @@ function thsSil(gid,aid){
     setOpsGrup(S); renderOpsTahsis(); showToast('Tahsis kaldırıldı','success');
   });
 }
+function _thsListe(bugun){
+  const L=[]; const T=getTanimlar();
+  try{
+    _ogResolve().forEach(E2=>{
+      const g2=(getOpsGrup().gruplar||{})[E2.id]; if(!g2) return;
+      (g2.araclar||[]).filter(a=>a.tip==='tahsis').forEach(a=>{
+        const ab=_pdate(a.bas)||'', abit=_pdate(a.bit)||ab;
+        if(bugun&&abit&&abit<bugun) return;
+        let rehAd=''; try{ const rh=(T.rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
+        let gon='';
+        if((a.firma||'').trim()){ const son=_trSonGonderim(String(a.firma).trim());
+          gon=(son&&(son.ids||[]).includes('TAH|'+E2.id+'|'+ab))?'✓':'YENI'; }
+        L.push({gid:E2.id,aid:a.id,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',gorev:a.gorev||'',pax:E2.pax||'',
+          firma:a.firma||'',arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
+          reh:rehAd,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||''});
+      });
+    });
+  }catch(e){}
+  L.sort((a,b)=>String(a.bas).localeCompare(String(b.bas)));
+  return L;
+}
+function thsExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const L=_thsListe(_opsToday());
+  if(!L.length){ showToast('Listelenecek tahsis yok','error'); return; }
+  const aoa=[['DIOGENES TRAVEL — TAHSİS LİSTESİ'],['Bugün ve sonrası · '+_fmtDateTR(_opsToday())],[],
+    ['Başlangıç','Bitiş','Tur','Görev','Program / Yapılacak İş','Firma','Araç','Plaka','Şoför','Şoför Tel','Pax','Rehber','Rehber Tel','Fiyat','Gönderim','Not']];
+  L.forEach(t=>aoa.push([_fmtDateTR(t.bas),_fmtDateTR(t.bit),t.tur,t.gorev,t.prog,t.firma,t.arac,t.plaka,t.sofor,t.stel,+t.pax||'',t.reh,t.reh?_rehTelBul(t.reh):'',t.fiyat,t.gon==='✓'?'gönderildi':(t.gon==='YENI'?'GÖNDERİLMEDİ':''),t.not]));
+  aoa.push([]); aoa.push(['TOPLAM','','','','','','','','','',L.length+' tahsis araç']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[11,11,14,16,30,14,16,11,14,13,6,16,13,9,13,18].map(w2=>({wch:w2}));
+  try{ ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:15}},{s:{r:1,c:0},e:{r:1,c:15}}]; }catch(e){}
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsisler');
+  XLSX.writeFile(wb,'Tahsisler_'+_opsToday()+'.xlsx');
+  showToast('Tahsis listesi indirildi','success');
+}
 function renderOpsTahsis(){
   const box=document.getElementById('opsPane_tahsis'); if(!box) return;
   const bugun=_opsToday();
@@ -15648,27 +15695,10 @@ function renderOpsTahsis(){
     <p class="section-tip">Alttaki tur listesinden ➕ ile tahsis ata — görev ve programı yaz, müşteri listesi gönderime otomatik eklenir.</p></div>`;
 
   // ── ATANMIŞ TAHSİSLER
-  const L=[];
-  try{
-    _ogResolve().forEach(E2=>{
-      const g2=(getOpsGrup().gruplar||{})[E2.id]; if(!g2) return;
-      (g2.araclar||[]).filter(a=>a.tip==='tahsis').forEach(a=>{
-        const ab=_pdate(a.bas)||'', abit=_pdate(a.bit)||ab;
-        if(abit&&abit<bugun) return;
-        let rehAd=''; try{ const rh=(T.rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
-        let gon='';
-        if((a.firma||'').trim()){ const son=_trSonGonderim(String(a.firma).trim());
-          gon=(son&&(son.ids||[]).includes('TAH|'+E2.id+'|'+ab))?'✓':'YENI'; }
-        L.push({gid:E2.id,aid:a.id,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',gorev:a.gorev||'',pax:E2.pax||'',
-          firma:a.firma||'',arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehAd,gon,prog:a.program||'',not:a.not||''});
-      });
-    });
-  }catch(e){}
-  L.sort((a,b)=>String(a.bas).localeCompare(String(b.bas)));
+  const L=_thsListe(bugun);
   const th2='background:#0369a1;color:#fff;padding:5px 9px;font-size:.62rem;text-align:left;white-space:nowrap';
   const td2='padding:5px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
-  h+=`<div class="card"><div class="card-title">Atanan Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} araç · bugün ve sonrası</span></div>`;
+  h+=`<div class="card"><div class="card-title">Atanan Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} araç · bugün ve sonrası</span> <button class="btn btn-outline btn-sm" onclick="thsExcel()" title="Bu listeyi Excel olarak indirir">📥 Excel</button></div>`;
   h+=L.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Tur / Görev</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Gönderim</th><th style="${th2}"></th></tr>
     ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b></td><td style="${td2}">${_fmtDateTR(t.bit)}</td>
