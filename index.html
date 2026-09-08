@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v415 · 04.09.2026';
+const APP_VER='v417 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14398,6 +14398,7 @@ function renderTurDosyasi(box){
         ${a.plaka?`<span style="font-weight:800">${esc(a.plaka)}</span>`:'<span style="color:#b45309;font-size:.68rem">plaka girilmedi</span>'}
         ${a.sofor?`<span>👨‍✈️ ${esc(a.sofor)}</span>`:''}
         ${a.stel?`<a href="tel:${esc(a.stel)}" style="color:inherit;font-weight:700">☎ ${esc(a.stel)}</a>`:''}
+        ${a.gorev||a.program?`<span style="color:#0369a1">${esc([a.gorev,a.program].filter(Boolean).join(' · '))}</span>`:''}
         ${a.bas?`<span style="margin-left:auto;color:#0369a1;font-weight:700">${_fmtDateTR(a.bas)}${a.bit?' – '+_fmtDateTR(a.bit):''}</span>`:''}
       </div>`).join('');
       h+=`<div style="background:var(--primary-soft);border:1px solid #fcd9c4;border-radius:12px;padding:8px 13px;margin-bottom:12px">
@@ -15641,6 +15642,18 @@ function thsKaydet(enc){
   renderOpsTahsis();
   showToast('Tahsis atandı — 📤 İş Gönderimi ile firmaya iletebilirsin','success',5000);
 }
+function thsEditAc(gid,aid){ const k=gid+'|'+aid; window._thsEdit=(window._thsEdit===k)?'':k; renderOpsTahsis(); }
+function thsGuncelle(gid,aid){
+  const S=getOpsGrup(); const g=(S.gruplar||{})[gid]; if(!g) return;
+  const a=(g.araclar||[]).find(x=>x.id===aid); if(!a) return;
+  const v=id2=>((document.getElementById('the_'+id2)||{}).value||'').trim();
+  a.firma=v('firma'); a.ad=v('arac'); a.arTip=v('tip').toUpperCase(); a.plaka=v('plaka').toUpperCase();
+  a.sofor=v('sofor'); a.stel=v('stel'); a.bas=v('bas')||a.bas; a.bit=v('bit')||a.bit;
+  a.gorev=v('gorev'); a.program=v('program'); a.not=v('not'); a.fiyat=v('fiyat');
+  setOpsGrup(S); window._thsEdit='';
+  renderOpsTahsis();
+  showToast('Tahsis güncellendi — rehberin ekranındaki bilgiler de yenilendi','success',5000);
+}
 function thsSil(gid,aid){
   showConfirm('🗑','Tahsisi Kaldır','Bu tahsis ataması silinecek.','Sil',()=>{
     const S=getOpsGrup(); const g=(S.gruplar||{})[gid]; if(!g) return;
@@ -15690,6 +15703,65 @@ function thsExcel(){
   XLSX.writeFile(wb,'Tahsisler_'+_opsToday()+'.xlsx');
   showToast('Tahsis listesi indirildi','success');
 }
+function _thsTek(gid,aid){
+  const g2=(getOpsGrup().gruplar||{})[gid]; if(!g2) return null;
+  const a=(g2.araclar||[]).find(x=>x.id===aid); if(!a) return null;
+  let E2=null; try{ E2=_ogResolve().find(x=>x.id===gid)||null; }catch(e){}
+  const uyeler=(E2&&E2.uyeler&&E2.uyeler.length)?E2.uyeler:(g2.uyeler||[]);
+  const yolcular=[]; const gorulen=new Set();
+  uyeler.forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz) return;
+    (rz.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
+      const k=u.resno+'|'+(m.soyad||'')+'|'+(m.ad||''); if(gorulen.has(k)) return; gorulen.add(k);
+      yolcular.push({voucher:u.resno,soyad:(m.soyad||'').trim(),ad:(m.ad||'').trim()}); }); });
+  if(!yolcular.length&&g2.sefer){ (getRezv()||[]).forEach(rz=>{ if(!_opsRezvSayilir(rz)||rz.pkgId!==g2.sefer.pkgId||rz.kalkis!==g2.sefer.kalkis) return;
+    (rz.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
+      yolcular.push({voucher:rz.voucher||'',soyad:(m.soyad||'').trim(),ad:(m.ad||'').trim()}); }); }); }
+  let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
+  return {a,tur:(E2&&(E2.urunler||[]).join('+'))||(g2.ad||''),pax:(E2&&E2.pax)||yolcular.length,
+    bas:_pdate(a.bas)||'',bit:_pdate(a.bit)||_pdate(a.bas)||'',reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',yolcular};
+}
+function thsPrint(gid,aid){
+  const D=_thsTek(gid,aid); if(!D){ showToast('Tahsis bulunamadı','error'); return; }
+  const a=D.a;
+  const bilgi=(l,v)=>v?`<div style="font-size:.78rem;margin:2px 14px 2px 0;display:inline-block"><span style="color:#666;font-weight:700;font-size:.6rem;text-transform:uppercase">${l}</span><br><b>${esc(v)}</b></div>`:'';
+  const h=`<div class="gorev"><h1>🚙 TAHSİS GÖREV EMRİ — ${esc(a.firma||'')}</h1>
+    <h2>${esc(D.tur)} · ${_fmtDateTR(D.bas)}${D.bit&&D.bit!==D.bas?' – '+_fmtDateTR(D.bit):''} · Diogenes Travel</h2>
+    <div style="margin:6px 0 10px">
+      ${bilgi('Araç',[a.ad,a.arTip].filter(Boolean).join(' · '))}${bilgi('Plaka',a.plaka)}${bilgi('Şoför',[a.sofor,a.stel].filter(Boolean).join(' · '))}
+      ${bilgi('Rehber',D.reh?(D.reh+(D.rehTel?' · '+D.rehTel:'')):'')}${bilgi('Pax',String(D.pax||''))}${bilgi('Fiyat',a.fiyat)}
+    </div>
+    <div style="border:2px solid #1F4E78;border-radius:8px;padding:8px 12px;margin-bottom:10px">
+      <div style="font-weight:800;font-size:.72rem;color:#1F4E78;text-transform:uppercase">Yapılacak İş</div>
+      ${a.gorev?`<div style="font-size:.9rem;font-weight:800">${esc(a.gorev)}</div>`:''}
+      ${a.program?`<div style="font-size:.8rem;margin-top:2px">${esc(a.program)}</div>`:''}
+      ${a.not?`<div style="font-size:.74rem;color:#555;margin-top:2px">Not: ${esc(a.not)}</div>`:''}
+      ${(!a.gorev&&!a.program&&!a.not)?'<div style="font-size:.76rem;color:#888">—</div>':''}
+    </div>
+    ${D.yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Voucher</th><th>Soyadı, Adı</th></tr>
+      ${D.yolcular.map((y,i)=>`<tr><td>${i+1}</td><td>${esc(y.voucher)}</td><td><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td></tr>`).join('')}</table>
+      <div style="margin-top:5px;font-weight:700;font-size:10pt">TOPLAM: ${D.yolcular.length} kişi</div>`:'<p style="font-size:.78rem;color:#888">İsim listesi bulunamadı — rezervasyon/uçak listesi girildikçe oluşur.</p>'}
+  </div>`;
+  _trPrint(h);
+}
+function thsTekExcel(gid,aid){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const D=_thsTek(gid,aid); if(!D){ showToast('Tahsis bulunamadı','error'); return; }
+  const a=D.a;
+  const aoa=[['DIOGENES TRAVEL — TAHSİS GÖREV EMRİ · '+(a.firma||'')],
+    [D.tur+' · '+_fmtDateTR(D.bas)+(D.bit&&D.bit!==D.bas?' – '+_fmtDateTR(D.bit):'')],[],
+    ['Araç',[a.ad,a.arTip].filter(Boolean).join(' · ')],['Plaka',a.plaka||''],['Şoför',[a.sofor,a.stel].filter(Boolean).join(' · ')],
+    ['Rehber',D.reh?(D.reh+(D.rehTel?' · '+D.rehTel:'')):''],['Pax',D.pax||''],
+    ['YAPILACAK İŞ',[a.gorev,a.program,a.not].filter(Boolean).join('  ·  ')||'—'],[],
+    ['#','Voucher','Soyadı, Adı']];
+  D.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.soyad+', '+y.ad]));
+  aoa.push([]); aoa.push(['TOPLAM','',D.yolcular.length+' kişi']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[14,16,40].map(w2=>({wch:w2}));
+  try{ ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}},{s:{r:1,c:0},e:{r:1,c:2}}]; }catch(e){}
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsis');
+  XLSX.writeFile(wb,'Tahsis_'+_moDosyaAd((a.firma||'')+'_'+D.tur)+'_'+(D.bas||'')+'.xlsx');
+  showToast('Tahsis görev emri indirildi','success');
+}
 function renderOpsTahsis(){
   const box=document.getElementById('opsPane_tahsis'); if(!box) return;
   const bugun=_opsToday();
@@ -15721,7 +15793,16 @@ function renderOpsTahsis(){
       <td style="${td2}">${t.plaka?`<b>${esc(t.plaka)}</b>`:'<span style="color:#b45309;font-size:.68rem">plaka bekliyor</span>'}${t.sofor?` · ${esc(t.sofor)}`:''}${t.stel?` <span style="color:var(--muted);font-size:.68rem">${esc(t.stel)}</span>`:''}</td>
       <td style="${td2}"><b>${esc(String(t.pax||''))}</b></td><td style="${td2}">${esc(t.reh)||'—'}</td>
       <td style="${td2};white-space:nowrap">${t.gon==='YENI'?'<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.6rem;padding:1px 7px;border-radius:7px">YENİ</span>':t.gon==='✓'?'<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.6rem;padding:1px 7px;border-radius:7px">✓ gönderildi</span>':'—'}</td>
-      <td style="${td2};white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="trTahsisDosya('${t.gid}')" title="Tur dosyasının Araçlar sekmesi">🔧</button> <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="thsSil('${t.gid}','${t.aid}')">🗑</button></td></tr>`).join('')}
+      <td style="${td2};white-space:nowrap"><button class="btn ${window._thsEdit===(t.gid+'|'+t.aid)?'btn-primary':'btn-outline'} btn-sm" onclick="thsEditAc('${t.gid}','${t.aid}')" title="Araç bilgilerini burada düzenle — rehberin ekranına düşer">✏️</button> <button class="btn btn-outline btn-sm" onclick="thsPrint('${t.gid}','${t.aid}')" title="Görev emri: isim listesi + yapılacak iş (yazdır/PDF)">🖨</button> <button class="btn btn-outline btn-sm" onclick="thsTekExcel('${t.gid}','${t.aid}')" title="Görev emri Excel">📥</button> <button class="btn btn-outline btn-sm" onclick="trTahsisDosya('${t.gid}')" title="Tur dosyasının Araçlar sekmesi">🔧</button> <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="thsSil('${t.gid}','${t.aid}')">🗑</button></td></tr>${window._thsEdit===(t.gid+'|'+t.aid)?(function(){
+        const a=((getOpsGrup().gruplar||{})[t.gid]||{araclar:[]}).araclar.find(x=>x.id===t.aid)||{};
+        const li=(lbl,id2,val,w2,ph)=>`<label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">${lbl}<input id="the_${id2}" value="${esc(val||'')}" ${ph?`placeholder="${ph}"`:''} style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:${w2}px"></label>`;
+        return `<tr><td colspan="10" style="background:#fffbeb;border-bottom:2px solid #fde68a;padding:10px 12px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          ${li('FİRMA','firma',a.firma,130)}${li('ARAÇ','arac',a.ad,110,'Travego 46+1')}${li('TİP','tip',a.arTip,70)}${li('PLAKA','plaka',a.plaka,100)}${li('ŞOFÖR','sofor',a.sofor,110)}${li('ŞOFÖR TEL','stel',a.stel,110)}
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ<input id="the_bas" type="date" value="${esc(_pdate(a.bas)||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem"></label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BİTİŞ<input id="the_bit" type="date" value="${esc(_pdate(a.bit)||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem"></label>
+          ${li('TUR / GÖREV','gorev',a.gorev,130)}${li('PROGRAM','program',a.program,180)}${li('FİYAT','fiyat',a.fiyat,70)}${li('NOT','not',a.not,110)}
+          <button class="btn btn-primary" onclick="thsGuncelle('${t.gid}','${t.aid}')">💾 Kaydet</button>
+        </div></td></tr>`;})():''}`).join('')}
   </table></div>`:'<p class="section-tip">Henüz tahsis atanmadı.</p>';
   h+='</div>';
 
