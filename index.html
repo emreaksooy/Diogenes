@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v414 · 04.09.2026';
+const APP_VER='v415 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15648,6 +15648,8 @@ function thsSil(gid,aid){
     setOpsGrup(S); renderOpsTahsis(); showToast('Tahsis kaldırıldı','success');
   });
 }
+let _thsFirmaF='', _thsBasF='', _thsBitF='';
+function thsFiltre(f,v){ if(f==='firma')_thsFirmaF=v; else if(f==='bas')_thsBasF=v; else _thsBitF=v; renderOpsTahsis(); }
 function _thsListe(bugun){
   const L=[]; const T=getTanimlar();
   try{
@@ -15656,6 +15658,9 @@ function _thsListe(bugun){
       (g2.araclar||[]).filter(a=>a.tip==='tahsis').forEach(a=>{
         const ab=_pdate(a.bas)||'', abit=_pdate(a.bit)||ab;
         if(bugun&&abit&&abit<bugun) return;
+        if(_thsFirmaF&&String(a.firma||'').trim()!==_thsFirmaF) return;
+        if(_thsBasF&&abit&&abit<_thsBasF) return;
+        if(_thsBitF&&ab&&ab>_thsBitF) return;
         let rehAd=''; try{ const rh=(T.rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
         let gon='';
         if((a.firma||'').trim()){ const son=_trSonGonderim(String(a.firma).trim());
@@ -15673,7 +15678,8 @@ function thsExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const L=_thsListe(_opsToday());
   if(!L.length){ showToast('Listelenecek tahsis yok','error'); return; }
-  const aoa=[['DIOGENES TRAVEL — TAHSİS LİSTESİ'],['Bugün ve sonrası · '+_fmtDateTR(_opsToday())],[],
+  const filtreTxt=[_thsFirmaF||'tüm firmalar',(_thsBasF||_thsBitF)?((_thsBasF?_fmtDateTR(_thsBasF):'…')+' – '+(_thsBitF?_fmtDateTR(_thsBitF):'…')):'bugün ve sonrası'].join(' · ');
+  const aoa=[['DIOGENES TRAVEL — TAHSİS LİSTESİ'],[filtreTxt],[],
     ['Başlangıç','Bitiş','Tur','Görev','Program / Yapılacak İş','Firma','Araç','Plaka','Şoför','Şoför Tel','Pax','Rehber','Rehber Tel','Fiyat','Gönderim','Not']];
   L.forEach(t=>aoa.push([_fmtDateTR(t.bas),_fmtDateTR(t.bit),t.tur,t.gorev,t.prog,t.firma,t.arac,t.plaka,t.sofor,t.stel,+t.pax||'',t.reh,t.reh?_rehTelBul(t.reh):'',t.fiyat,t.gon==='✓'?'gönderildi':(t.gon==='YENI'?'GÖNDERİLMEDİ':''),t.not]));
   aoa.push([]); aoa.push(['TOPLAM','','','','','','','','','',L.length+' tahsis araç']);
@@ -15698,7 +15704,15 @@ function renderOpsTahsis(){
   const L=_thsListe(bugun);
   const th2='background:#0369a1;color:#fff;padding:5px 9px;font-size:.62rem;text-align:left;white-space:nowrap';
   const td2='padding:5px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
-  h+=`<div class="card"><div class="card-title">Atanan Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} araç · bugün ve sonrası</span> <button class="btn btn-outline btn-sm" onclick="thsExcel()" title="Bu listeyi Excel olarak indirir">📥 Excel</button></div>`;
+  const tumFirmalar=[...new Set(firmalar.concat(L.map(x=>x.firma).filter(Boolean)))].sort((a,b)=>a.localeCompare(b,'tr'));
+  h+=`<div class="card"><div class="card-title">Atanan Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} araç</span> <button class="btn btn-outline btn-sm" onclick="thsExcel()" title="Filtreye göre Excel indirir">📥 Excel</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <select onchange="thsFiltre('firma',this.value)" style="${inp}"><option value="">— Tüm firmalar —</option>${tumFirmalar.map(f=>`<option ${_thsFirmaF===f?'selected':''}>${esc(f)}</option>`).join('')}</select>
+      <input type="date" value="${esc(_thsBasF)}" onchange="thsFiltre('bas',this.value)" style="${inp}" title="Aralık başı">
+      <span style="color:var(--muted)">~</span>
+      <input type="date" value="${esc(_thsBitF)}" onchange="thsFiltre('bit',this.value)" style="${inp}" title="Aralık sonu">
+      ${(_thsFirmaF||_thsBasF||_thsBitF)?`<button class="btn btn-outline btn-sm" onclick="_thsFirmaF='';_thsBasF='';_thsBitF='';renderOpsTahsis()">✕ Filtreyi temizle</button>`:''}
+    </div>`;
   h+=L.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Tur / Görev</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Gönderim</th><th style="${th2}"></th></tr>
     ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b></td><td style="${td2}">${_fmtDateTR(t.bit)}</td>
@@ -15728,7 +15742,7 @@ function renderOpsTahsis(){
       h+=`<tr><td style="${td2}"><b>${_fmtDateTR(t.kalkis)}</b></td><td style="${td2}">${_fmtDateTR(t.end)}</td>
         <td style="${td2}"><b>${esc(t.kod)}</b>${(t.uyeSeferler&&t.uyeSeferler.length)?' <span style="background:#ede9fe;color:#6d28d9;border-radius:5px;font-size:.58rem;font-weight:800;padding:1px 5px">BİRLEŞİK</span>':''} <span style="color:var(--muted);font-size:.68rem">${esc(t.op||'')}</span></td>
         <td style="${td2}"><b>${t.pax}</b></td><td style="${td2}">${esc(t.rehberAd)||'<span style="color:#b45309">—</span>'}</td>
-        <td style="${td2}">${mev.length?mev.map(a=>`<span style="background:#dcfce7;color:#166534;font-weight:700;font-size:.62rem;padding:1px 7px;border-radius:7px">${esc([a.ad,a.arTip].filter(Boolean).join(' ')||'araç')}${a.plaka?' · '+esc(a.plaka):''}</span>`).join(' '):'<span style="color:var(--muted);font-size:.68rem">yok</span>'}</td>
+        <td style="${td2}">${mev.length?mev.map(a=>{const ab=_pdate(a.bas)||'',abit=_pdate(a.bit)||ab;return `<div style="background:#dcfce7;color:#166534;font-weight:700;font-size:.62rem;padding:2px 8px;border-radius:7px;display:inline-block;margin:1px 2px 1px 0">✓ ${ab?_fmtDateTR(ab):'?'}${abit&&abit!==ab?'–'+_fmtDateTR(abit):''} tahsis atandı${a.firma?' · '+esc(a.firma):''}${(a.ad||a.arTip)?' · '+esc([a.ad,a.arTip].filter(Boolean).join(' ')):''}${a.plaka?' · '+esc(a.plaka):''}</div>`;}).join(''):'<span style="color:var(--muted);font-size:.68rem">yok</span>'}</td>
         <td style="${td2};white-space:nowrap"><button class="btn ${acik?'btn-outline':'btn-primary'} btn-sm" onclick="thsFormAc('${enc}')">${acik?'✕ Vazgeç':'➕ Tahsis Ata'}</button></td></tr>`;
       if(acik){
         h+=`<tr><td colspan="7" style="background:#f0f9ff;border-bottom:2px solid #bae6fd;padding:10px 12px">
