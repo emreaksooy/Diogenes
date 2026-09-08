@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v417 · 04.09.2026';
+const APP_VER='v418 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15759,7 +15759,9 @@ function thsTekExcel(gid,aid){
   ws['!cols']=[14,16,40].map(w2=>({wch:w2}));
   try{ ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}},{s:{r:1,c:0},e:{r:1,c:2}}]; }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsis');
-  XLSX.writeFile(wb,'Tahsis_'+_moDosyaAd((a.firma||'')+'_'+D.tur)+'_'+(D.bas||'')+'.xlsx');
+  const _gg=D.bas?_fmtDateTR(D.bas).slice(0,5):'';
+  const _fn=[_gg?_gg+'_cikisli':'','tahsis',_moDosyaAd(D.tur).toLowerCase(),_moDosyaAd((D.reh||'').split(' ')[0]).toLowerCase()].filter(Boolean).join('_');
+  XLSX.writeFile(wb,_fn+'.xlsx');
   showToast('Tahsis görev emri indirildi','success');
 }
 function renderOpsTahsis(){
