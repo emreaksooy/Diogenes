@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v420 · 04.09.2026';
+const APP_VER='v421 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14267,7 +14267,7 @@ function renderTurDosyasi(box){
           :`<label class="otl-f"><span>Tarih</span><input type="date" value="${esc(a.tarih)}" onchange="tdAracSet(${i},'tarih',this.value)"></label>
             <label class="otl-f" style="width:80px"><span>Saat</span><input value="${esc(a.saat)}" placeholder="06:00" onchange="tdAracSet(${i},'saat',this.value)"></label>`}
         <label class="otl-f" style="width:118px"><span>Maliyet${a.fiyatPara?' ('+esc(a.fiyatPara)+')':''}</span><input id="tdAf_${i}" inputmode="decimal" value="${esc(a.fiyat!=null?a.fiyat:'')}" placeholder="oto" title="${esc(a.fiyatNot||'Kontrattan otomatik — elle ezebilirsin; boşaltırsan otomatiğe döner')}" style="text-align:right${a.fiyatMan?';border-color:var(--primary)':''}" onchange="tdAracFiyatElle(${i},this.value)"></label>
-        ${a.tip==='tahsis'?`<label class="otl-f" style="min-width:150px"><span>Tur / Görev</span><input value="${esc(a.gorev||'')}" list="tdGorevL_${i}" placeholder="Kapadokya turu" onchange="tdAracSet(${i},'gorev',this.value)"><datalist id="tdGorevL_${i}"><option value="Tam gün tur"><option value="Yarım gün tur"><option value="Kapadokya turu"><option value="Şehir turu"><option value="İstanbul çıkışlı batı turu"><option value="Karşılama + tur"><option value="Tur boyunca tahsis"></datalist></label><label class="otl-f" style="flex:1.4;min-width:170px"><span>Program / Güzergâh <a href="javascript:void(0)" onclick="tdAracRota(${i})" style="font-weight:700;color:var(--primary);text-decoration:none">⟳ turdan getir</a></span><input value="${esc(a.program||'')}" placeholder="Antalya → Kapadokya → …" onchange="tdAracSet(${i},'program',this.value)"></label>`:''}
+        ${a.tip==='tahsis'?`<label class="otl-f" style="min-width:140px"><span>Başlangıç Yeri</span><input value="${esc(a.basYer||'')}" placeholder="AYT / otel adı" onchange="tdAracSet(${i},'basYer',this.value)"></label><label class="otl-f" style="min-width:150px"><span>Tur / Görev</span><input value="${esc(a.gorev||'')}" list="tdGorevL_${i}" placeholder="Kapadokya turu" onchange="tdAracSet(${i},'gorev',this.value)"><datalist id="tdGorevL_${i}"><option value="Tam gün tur"><option value="Yarım gün tur"><option value="Kapadokya turu"><option value="Şehir turu"><option value="İstanbul çıkışlı batı turu"><option value="Karşılama + tur"><option value="Tur boyunca tahsis"></datalist></label><label class="otl-f" style="flex:1.4;min-width:170px"><span>Program / Güzergâh <a href="javascript:void(0)" onclick="tdAracRota(${i})" style="font-weight:700;color:var(--primary);text-decoration:none">⟳ turdan getir</a></span><input value="${esc(a.program||'')}" placeholder="Antalya → Kapadokya → …" onchange="tdAracSet(${i},'program',this.value)"></label>`:''}
         <label class="otl-f" style="flex:1;min-width:120px"><span>Not</span><input value="${esc(a.not)}" onchange="tdAracSet(${i},'not',this.value)"></label>
         <button style="background:none;border:none;color:var(--muted);cursor:pointer;padding-bottom:10px" onclick="tdAracDel(${i})">✕</button>
       </div>`;
@@ -14398,6 +14398,7 @@ function renderTurDosyasi(box){
         ${a.plaka?`<span style="font-weight:800">${esc(a.plaka)}</span>`:'<span style="color:#b45309;font-size:.68rem">plaka girilmedi</span>'}
         ${a.sofor?`<span>👨‍✈️ ${esc(a.sofor)}</span>`:''}
         ${a.stel?`<a href="tel:${esc(a.stel)}" style="color:inherit;font-weight:700">☎ ${esc(a.stel)}</a>`:''}
+        ${a.basYer?`<span style="font-weight:700">📍 ${esc(a.basYer)}</span>`:''}
         ${a.gorev||a.program?`<span style="color:#0369a1">${esc([a.gorev,a.program].filter(Boolean).join(' · '))}</span>`:''}
         ${a.bas?`<span style="margin-left:auto;color:#0369a1;font-weight:700">${_fmtDateTR(a.bas)}${a.bit?' – '+_fmtDateTR(a.bit):''}</span>`:''}
       </div>`).join('');
@@ -15637,7 +15638,7 @@ function thsKaydet(enc){
   if(!g){ showToast('Grup kaydı bulunamadı','error'); return; }
   (g.araclar=g.araclar||[]).push({id:R_GID(),tip:'tahsis',firma,ad:v('arac'),arTip:v('tip').toUpperCase(),
     plaka:v('plaka').toUpperCase(),sofor:v('sofor'),stel:v('stel'),
-    bas:v('bas')||t.kalkis,bit:v('bit')||v('bas')||t.kalkis,gorev:v('gorev'),program:v('program'),not:v('not'),fiyat:v('fiyat')});
+    bas:v('bas')||t.kalkis,bit:v('bit')||v('bas')||t.kalkis,basYer:v('basyer'),gorev:v('gorev'),program:v('program'),not:v('not'),fiyat:v('fiyat')});
   setOpsGrup(S); window._thsAcik='';
   renderOpsTahsis();
   showToast('Tahsis atandı — 📤 İş Gönderimi ile firmaya iletebilirsin','success',5000);
@@ -15649,7 +15650,7 @@ function thsGuncelle(gid,aid){
   const v=id2=>((document.getElementById('the_'+id2)||{}).value||'').trim();
   a.firma=v('firma'); a.ad=v('arac'); a.arTip=v('tip').toUpperCase(); a.plaka=v('plaka').toUpperCase();
   a.sofor=v('sofor'); a.stel=v('stel'); a.bas=v('bas')||a.bas; a.bit=v('bit')||a.bit;
-  a.gorev=v('gorev'); a.program=v('program'); a.not=v('not'); a.fiyat=v('fiyat');
+  a.basYer=v('basyer'); a.gorev=v('gorev'); a.program=v('program'); a.not=v('not'); a.fiyat=v('fiyat');
   setOpsGrup(S); window._thsEdit='';
   renderOpsTahsis();
   showToast('Tahsis güncellendi — rehberin ekranındaki bilgiler de yenilendi','success',5000);
@@ -15680,7 +15681,7 @@ function _thsListe(bugun){
           gon=(son&&(son.ids||[]).includes('TAH|'+E2.id+'|'+ab))?'✓':'YENI'; }
         L.push({gid:E2.id,aid:a.id,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',gorev:a.gorev||'',pax:E2.pax||'',
           firma:a.firma||'',arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehAd,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||''});
+          reh:rehAd,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||'',basYer:a.basYer||''});
       });
     });
   }catch(e){}
@@ -15693,13 +15694,13 @@ function thsExcel(){
   if(!L.length){ showToast('Listelenecek tahsis yok','error'); return; }
   const filtreTxt=[_thsFirmaF||'tüm firmalar',(_thsBasF||_thsBitF)?((_thsBasF?_fmtDateTR(_thsBasF):'…')+' – '+(_thsBitF?_fmtDateTR(_thsBitF):'…')):'bugün ve sonrası'].join(' · ');
   const aoa=[['DIOGENES TRAVEL — TAHSİS LİSTESİ'],[filtreTxt],[],
-    ['Başlangıç','Bitiş','Tur','Görev','Program / Yapılacak İş','Firma','Araç','Plaka','Şoför','Şoför Tel','Pax','Rehber','Rehber Tel','Fiyat','Gönderim','Not']];
-  L.forEach(t=>aoa.push([_thsGun(t.bas),_thsGun(t.bit),t.tur,t.gorev,t.prog,t.firma,t.arac,t.plaka,t.sofor,t.stel,+t.pax||'',t.reh,t.reh?_rehTelBul(t.reh):'',t.fiyat,t.gon==='✓'?'gönderildi':(t.gon==='YENI'?'GÖNDERİLMEDİ':''),t.not]));
+    ['Başlangıç','Bitiş','Başlangıç Yeri','Tur','Görev','Program / Yapılacak İş','Firma','Araç','Plaka','Şoför','Şoför Tel','Pax','Rehber','Rehber Tel','Fiyat','Gönderim','Not']];
+  L.forEach(t=>aoa.push([_thsGun(t.bas),_thsGun(t.bit),t.basYer,t.tur,t.gorev,t.prog,t.firma,t.arac,t.plaka,t.sofor,t.stel,+t.pax||'',t.reh,t.reh?_rehTelBul(t.reh):'',t.fiyat,t.gon==='✓'?'gönderildi':(t.gon==='YENI'?'GÖNDERİLMEDİ':''),t.not]));
   aoa.push([]); aoa.push(['TOPLAM','','','','','','','','','',L.length+' tahsis araç']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[21,21,14,16,30,14,16,11,14,13,6,16,13,9,13,18].map(w2=>({wch:w2}));
+  ws['!cols']=[21,21,16,14,16,30,14,16,11,14,13,6,16,13,9,13,18].map(w2=>({wch:w2}));
   try{
-    const nC=16; ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
+    const nC=17; ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
     ws['!rows']=[{hpt:30},{hpt:16},null,{hpt:20}];
     _xsSatirStil(ws,0,nC,{fill:{fgColor:{rgb:_XSC.navy}}});
     _xsSet(ws,0,0,{font:{bold:true,sz:14,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'left',vertical:'center',indent:1}});
@@ -15751,7 +15752,7 @@ function thsPrint(gid,aid){
   const h=`<div class="gorev"><h1>🚙 TAHSİS GÖREV EMRİ — ${esc(a.firma||'')}</h1>
     <h2>${esc(D.tur)} · Diogenes Travel</h2>
     <div style="background:#1F4E78;color:#fff;border-radius:8px;padding:7px 12px;margin:6px 0;font-size:.86rem;font-weight:800;display:flex;gap:18px;flex-wrap:wrap">
-      <span>▶ BAŞLANGIÇ: ${esc(_thsGun(D.bas)||'—')}</span>
+      <span>▶ BAŞLANGIÇ: ${esc(_thsGun(D.bas)||'—')}${a.basYer?' · 📍 '+esc(a.basYer):''}</span>
       <span>■ BİTİŞ: ${esc(_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—')}</span>
       <span style="color:#fbbf24">${esc(_thsSure(D.bas,D.bit))}</span>
     </div>
@@ -15778,7 +15779,7 @@ function thsTekExcel(gid,aid){
   const a=D.a;
   const aoa=[['DIOGENES TRAVEL — TAHSİS GÖREV EMRİ · '+(a.firma||'')],
     [D.tur],[],
-    ['BAŞLANGIÇ',_thsGun(D.bas)||'—'],['BİTİŞ',_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—'],['SÜRE',_thsSure(D.bas,D.bit)],
+    ['BAŞLANGIÇ',_thsGun(D.bas)||'—'],['BAŞLANGIÇ YERİ',a.basYer||'—'],['BİTİŞ',_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—'],['SÜRE',_thsSure(D.bas,D.bit)],
     ['Araç',[a.ad,a.arTip].filter(Boolean).join(' · ')],['Plaka',a.plaka||''],['Şoför',[a.sofor,a.stel].filter(Boolean).join(' · ')],
     ['Rehber',D.reh?(D.reh+(D.rehTel?' · '+D.rehTel:'')):''],['Pax',D.pax||''],
     ['YAPILACAK İŞ',[a.gorev,a.program,a.not].filter(Boolean).join('  ·  ')||'—'],[],
@@ -15793,11 +15794,11 @@ function thsTekExcel(gid,aid){
     _xsSatirStil(ws,0,nC,{fill:{fgColor:{rgb:_XSC.navy}}});
     _xsSet(ws,0,0,{font:{bold:true,sz:14,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'left',vertical:'center',indent:1}});
     _xsSet(ws,1,0,{font:{sz:10,bold:true,color:{rgb:_XSC.gri}},alignment:{horizontal:'left',indent:1}});
-    for(let r2=3;r2<=5;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:10,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:11,bold:true,color:{rgb:_XSC.maviK}},fill:{fgColor:{rgb:_XSC.mavi}},alignment:{vertical:'center'}}); ws['!rows'][r2]={hpt:18}; }
-    for(let r2=6;r2<=10;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:10,bold:true},alignment:{vertical:'center'}}); }
-    _xsSatirStil(ws,11,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(_XSC.turuncu),alignment:{vertical:'center'}});
-    ws['!rows'][11]={hpt:22};
-    const hdrR=13;
+    for(let r2=3;r2<=6;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:10,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:11,bold:true,color:{rgb:_XSC.maviK}},fill:{fgColor:{rgb:_XSC.mavi}},alignment:{vertical:'center'}}); ws['!rows'][r2]={hpt:18}; }
+    for(let r2=7;r2<=11;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:10,bold:true},alignment:{vertical:'center'}}); }
+    _xsSatirStil(ws,12,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(_XSC.turuncu),alignment:{vertical:'center'}});
+    ws['!rows'][12]={hpt:22};
+    const hdrR=14;
     _xsSatirStil(ws,hdrR,nC,{font:{bold:true,sz:9,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},border:_xsB(_XSC.beyaz)});
     for(let r2=hdrR+1;r2<hdrR+1+D.yolcular.length;r2++) _xsSatirStil(ws,r2,nC,{font:{sz:10},border:_xsB(),fill:(r2-hdrR)%2===0?{fgColor:{rgb:_XSC.zebra}}:undefined});
     aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
@@ -15833,7 +15834,7 @@ function renderOpsTahsis(){
     </div>`;
   h+=L.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Tur / Görev</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Gönderim</th><th style="${th2}"></th></tr>
-    ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b><div style="font-size:.6rem;color:var(--muted)">${t.bas?new Date(t.bas+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div></td><td style="${td2}">${_fmtDateTR(t.bit)}<div style="font-size:.6rem;color:var(--muted)">${t.bit?new Date(t.bit+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div></td>
+    ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b><div style="font-size:.6rem;color:var(--muted)">${t.bas?new Date(t.bas+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div>${t.basYer?`<div style="font-size:.62rem;color:#0369a1;font-weight:700">📍 ${esc(t.basYer)}</div>`:''}</td><td style="${td2}">${_fmtDateTR(t.bit)}<div style="font-size:.6rem;color:var(--muted)">${t.bit?new Date(t.bit+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div></td>
       <td style="${td2}"><b>${esc(t.tur)}</b>${t.gorev?`<div style="font-size:.66rem;color:#0369a1;font-weight:700">${esc(t.gorev)}</div>`:''}${t.prog?`<div style="font-size:.62rem;color:var(--muted)">${esc(t.prog)}</div>`:''}</td>
       <td style="${td2}">${esc(t.firma)||'<span style="color:#b45309;font-weight:700">firma yok</span>'}</td><td style="${td2}">${esc(t.arac)}</td>
       <td style="${td2}">${t.plaka?`<b>${esc(t.plaka)}</b>`:'<span style="color:#b45309;font-size:.68rem">plaka bekliyor</span>'}${t.sofor?` · ${esc(t.sofor)}`:''}${t.stel?` <span style="color:var(--muted);font-size:.68rem">${esc(t.stel)}</span>`:''}</td>
@@ -15846,7 +15847,7 @@ function renderOpsTahsis(){
           ${li('FİRMA','firma',a.firma,130)}${li('ARAÇ','arac',a.ad,110,'Travego 46+1')}${li('TİP','tip',a.arTip,70)}${li('PLAKA','plaka',a.plaka,100)}${li('ŞOFÖR','sofor',a.sofor,110)}${li('ŞOFÖR TEL','stel',a.stel,110)}
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ<input id="the_bas" type="date" value="${esc(_pdate(a.bas)||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem"></label>
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BİTİŞ<input id="the_bit" type="date" value="${esc(_pdate(a.bit)||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem"></label>
-          ${li('TUR / GÖREV','gorev',a.gorev,130)}${li('PROGRAM','program',a.program,180)}${li('FİYAT','fiyat',a.fiyat,70)}${li('NOT','not',a.not,110)}
+          ${li('BAŞLANGIÇ YERİ','basyer',a.basYer,120,'AYT / otel adı')}${li('TUR / GÖREV','gorev',a.gorev,130)}${li('PROGRAM','program',a.program,180)}${li('FİYAT','fiyat',a.fiyat,70)}${li('NOT','not',a.not,110)}
           <button class="btn btn-primary" onclick="thsGuncelle('${t.gid}','${t.aid}')">💾 Kaydet</button>
         </div></td></tr>`;})():''}`).join('')}
   </table></div>`:'<p class="section-tip">Henüz tahsis atanmadı.</p>';
@@ -15882,6 +15883,7 @@ function renderOpsTahsis(){
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">ŞOFÖR TEL<input id="ths_stel" style="${inp};width:110px"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ<input id="ths_bas" type="date" value="${esc(t.kalkis)}" style="${inp}"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BİTİŞ<input id="ths_bit" type="date" value="${esc(t.end)}" style="${inp}"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ YERİ<input id="ths_basyer" placeholder="AYT / otel adı" style="${inp};min-width:120px"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">TUR / GÖREV<input id="ths_gorev" list="thsGorevL" placeholder="Kapadokya turu" style="${inp};min-width:140px"><datalist id="thsGorevL"><option value="Tam gün tur"><option value="Yarım gün tur"><option value="Kapadokya turu"><option value="Şehir turu"><option value="Karşılama + tur"><option value="Tur boyunca tahsis"></datalist></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted);flex:1;min-width:180px">YAPILACAK İŞ / PROGRAM<input id="ths_program" value="${esc(_thsRota(t.pkgId))}" style="${inp}"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">FİYAT<input id="ths_fiyat" placeholder="€" style="${inp};width:80px"></label>
@@ -16324,7 +16326,7 @@ function _trTasimaciBloklar(sessiz){
         let yolcular=[]; try{ yolcular=_thsYolcular(E2.uyeler||[]); }catch(e){}
         tahsisler.push({key:'TAH|'+E2.id+'|'+ab,bas:ab,bit:abit,tur:((E2.urunler||[]).join('+')||'')+(a.gorev?' — '+a.gorev:''),pax:E2.pax||'',
           arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:[a.program,a.not].filter(Boolean).join(' · '),yolcular});
+          reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:[a.basYer?'Başlangıç: '+a.basYer:'',a.program,a.not].filter(Boolean).join(' · '),yolcular});
       });
     });
   }catch(e){}
