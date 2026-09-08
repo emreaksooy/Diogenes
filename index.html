@@ -2004,7 +2004,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v410 · 04.09.2026';
+const APP_VER='v411 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -3442,6 +3442,8 @@ function _txProtectedTerms(){
   try{
     (oteller||[]).forEach(o=>{ if(o&&o.ad) t.add(String(o.ad).trim()); });
     Object.values(ornekOteller||{}).forEach(v=>{ if(v) t.add(String(v).trim()); });
+    try{ (typeof gunler!=='undefined'?(gunler||[]):[]).forEach(g=>{ if(g&&(g.konaklamaAd||'').trim()) t.add(String(g.konaklamaAd).trim()); }); }catch(e){}
+    try{ getPackages().forEach(p=>(p.gunler||[]).forEach(g=>{ if(g&&(g.konaklamaAd||'').trim()) t.add(String(g.konaklamaAd).trim()); })); }catch(e){}
     if(typeof getActiveOp==='function'){ const op=getActiveOp(); if(op&&op.ad) t.add(String(op.ad).trim()); }
     const kod=document.getElementById('paketKodu'); if(kod&&kod.value.trim()) t.add(kod.value.trim());
   }catch(e){}
@@ -3450,7 +3452,8 @@ function _txProtectedTerms(){
 function _txMask(text,terms){
   const map=[]; let out=text;
   for(const term of terms){
-    if(out.includes(term)){ map.push(term); out=out.split(term).join('⟦'+(map.length-1)+'⟧'); }
+    const re=new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+    if(re.test(out)) out=out.replace(re,m=>{ map.push(m); return '⟦'+(map.length-1)+'⟧'; });
   }
   return {text:out,map};
 }
