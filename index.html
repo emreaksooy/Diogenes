@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v419 · 04.09.2026';
+const APP_VER='v420 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15694,10 +15694,10 @@ function thsExcel(){
   const filtreTxt=[_thsFirmaF||'tüm firmalar',(_thsBasF||_thsBitF)?((_thsBasF?_fmtDateTR(_thsBasF):'…')+' – '+(_thsBitF?_fmtDateTR(_thsBitF):'…')):'bugün ve sonrası'].join(' · ');
   const aoa=[['DIOGENES TRAVEL — TAHSİS LİSTESİ'],[filtreTxt],[],
     ['Başlangıç','Bitiş','Tur','Görev','Program / Yapılacak İş','Firma','Araç','Plaka','Şoför','Şoför Tel','Pax','Rehber','Rehber Tel','Fiyat','Gönderim','Not']];
-  L.forEach(t=>aoa.push([_fmtDateTR(t.bas),_fmtDateTR(t.bit),t.tur,t.gorev,t.prog,t.firma,t.arac,t.plaka,t.sofor,t.stel,+t.pax||'',t.reh,t.reh?_rehTelBul(t.reh):'',t.fiyat,t.gon==='✓'?'gönderildi':(t.gon==='YENI'?'GÖNDERİLMEDİ':''),t.not]));
+  L.forEach(t=>aoa.push([_thsGun(t.bas),_thsGun(t.bit),t.tur,t.gorev,t.prog,t.firma,t.arac,t.plaka,t.sofor,t.stel,+t.pax||'',t.reh,t.reh?_rehTelBul(t.reh):'',t.fiyat,t.gon==='✓'?'gönderildi':(t.gon==='YENI'?'GÖNDERİLMEDİ':''),t.not]));
   aoa.push([]); aoa.push(['TOPLAM','','','','','','','','','',L.length+' tahsis araç']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[11,11,14,16,30,14,16,11,14,13,6,16,13,9,13,18].map(w2=>({wch:w2}));
+  ws['!cols']=[21,21,14,16,30,14,16,11,14,13,6,16,13,9,13,18].map(w2=>({wch:w2}));
   try{
     const nC=16; ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
     ws['!rows']=[{hpt:30},{hpt:16},null,{hpt:20}];
@@ -15712,6 +15712,8 @@ function thsExcel(){
   XLSX.writeFile(wb,'Tahsisler_'+_opsToday()+'.xlsx');
   showToast('Tahsis listesi indirildi','success');
 }
+const _thsGun=t=>{ if(!t) return ''; const d=new Date(t+'T12:00:00'); return isNaN(d)?_fmtDateTR(t):(_fmtDateTR(t)+' '+d.toLocaleDateString('tr-TR',{weekday:'long'})); };
+const _thsSure=(b,e)=>{ if(!b) return ''; const n=(e&&e>=b)?(_isoDiff(b,e)+1):1; return n+' gün'; };
 function _thsYolcular(uyeler){
   const out=[]; const gorulen=new Set();
   const ekle=(v,soyad,ad)=>{ const k=v+'|'+soyad+'|'+ad; if(gorulen.has(k)||!(soyad||ad)) return; gorulen.add(k); out.push({voucher:v,soyad,ad}); };
@@ -15747,7 +15749,12 @@ function thsPrint(gid,aid){
   const a=D.a;
   const bilgi=(l,v)=>v?`<div style="font-size:.78rem;margin:2px 14px 2px 0;display:inline-block"><span style="color:#666;font-weight:700;font-size:.6rem;text-transform:uppercase">${l}</span><br><b>${esc(v)}</b></div>`:'';
   const h=`<div class="gorev"><h1>🚙 TAHSİS GÖREV EMRİ — ${esc(a.firma||'')}</h1>
-    <h2>${esc(D.tur)} · ${_fmtDateTR(D.bas)}${D.bit&&D.bit!==D.bas?' – '+_fmtDateTR(D.bit):''} · Diogenes Travel</h2>
+    <h2>${esc(D.tur)} · Diogenes Travel</h2>
+    <div style="background:#1F4E78;color:#fff;border-radius:8px;padding:7px 12px;margin:6px 0;font-size:.86rem;font-weight:800;display:flex;gap:18px;flex-wrap:wrap">
+      <span>▶ BAŞLANGIÇ: ${esc(_thsGun(D.bas)||'—')}</span>
+      <span>■ BİTİŞ: ${esc(_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—')}</span>
+      <span style="color:#fbbf24">${esc(_thsSure(D.bas,D.bit))}</span>
+    </div>
     <div style="margin:6px 0 10px">
       ${bilgi('Araç',[a.ad,a.arTip].filter(Boolean).join(' · '))}${bilgi('Plaka',a.plaka)}${bilgi('Şoför',[a.sofor,a.stel].filter(Boolean).join(' · '))}
       ${bilgi('Rehber',D.reh?(D.reh+(D.rehTel?' · '+D.rehTel:'')):'')}${bilgi('Pax',String(D.pax||''))}${bilgi('Fiyat',a.fiyat)}
@@ -15770,7 +15777,8 @@ function thsTekExcel(gid,aid){
   const D=_thsTek(gid,aid); if(!D){ showToast('Tahsis bulunamadı','error'); return; }
   const a=D.a;
   const aoa=[['DIOGENES TRAVEL — TAHSİS GÖREV EMRİ · '+(a.firma||'')],
-    [D.tur+' · '+_fmtDateTR(D.bas)+(D.bit&&D.bit!==D.bas?' – '+_fmtDateTR(D.bit):'')],[],
+    [D.tur],[],
+    ['BAŞLANGIÇ',_thsGun(D.bas)||'—'],['BİTİŞ',_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—'],['SÜRE',_thsSure(D.bas,D.bit)],
     ['Araç',[a.ad,a.arTip].filter(Boolean).join(' · ')],['Plaka',a.plaka||''],['Şoför',[a.sofor,a.stel].filter(Boolean).join(' · ')],
     ['Rehber',D.reh?(D.reh+(D.rehTel?' · '+D.rehTel:'')):''],['Pax',D.pax||''],
     ['YAPILACAK İŞ',[a.gorev,a.program,a.not].filter(Boolean).join('  ·  ')||'—'],[],
@@ -15785,10 +15793,11 @@ function thsTekExcel(gid,aid){
     _xsSatirStil(ws,0,nC,{fill:{fgColor:{rgb:_XSC.navy}}});
     _xsSet(ws,0,0,{font:{bold:true,sz:14,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'left',vertical:'center',indent:1}});
     _xsSet(ws,1,0,{font:{sz:10,bold:true,color:{rgb:_XSC.gri}},alignment:{horizontal:'left',indent:1}});
-    for(let r2=3;r2<=7;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:10,bold:true},alignment:{vertical:'center'}}); }
-    _xsSatirStil(ws,8,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(_XSC.turuncu),alignment:{vertical:'center'}});
-    ws['!rows'][8]={hpt:22};
-    const hdrR=10;
+    for(let r2=3;r2<=5;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:10,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:11,bold:true,color:{rgb:_XSC.maviK}},fill:{fgColor:{rgb:_XSC.mavi}},alignment:{vertical:'center'}}); ws['!rows'][r2]={hpt:18}; }
+    for(let r2=6;r2<=10;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:10,bold:true},alignment:{vertical:'center'}}); }
+    _xsSatirStil(ws,11,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(_XSC.turuncu),alignment:{vertical:'center'}});
+    ws['!rows'][11]={hpt:22};
+    const hdrR=13;
     _xsSatirStil(ws,hdrR,nC,{font:{bold:true,sz:9,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},border:_xsB(_XSC.beyaz)});
     for(let r2=hdrR+1;r2<hdrR+1+D.yolcular.length;r2++) _xsSatirStil(ws,r2,nC,{font:{sz:10},border:_xsB(),fill:(r2-hdrR)%2===0?{fgColor:{rgb:_XSC.zebra}}:undefined});
     aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
@@ -15824,7 +15833,7 @@ function renderOpsTahsis(){
     </div>`;
   h+=L.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Tur / Görev</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Gönderim</th><th style="${th2}"></th></tr>
-    ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b></td><td style="${td2}">${_fmtDateTR(t.bit)}</td>
+    ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b><div style="font-size:.6rem;color:var(--muted)">${t.bas?new Date(t.bas+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div></td><td style="${td2}">${_fmtDateTR(t.bit)}<div style="font-size:.6rem;color:var(--muted)">${t.bit?new Date(t.bit+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div></td>
       <td style="${td2}"><b>${esc(t.tur)}</b>${t.gorev?`<div style="font-size:.66rem;color:#0369a1;font-weight:700">${esc(t.gorev)}</div>`:''}${t.prog?`<div style="font-size:.62rem;color:var(--muted)">${esc(t.prog)}</div>`:''}</td>
       <td style="${td2}">${esc(t.firma)||'<span style="color:#b45309;font-weight:700">firma yok</span>'}</td><td style="${td2}">${esc(t.arac)}</td>
       <td style="${td2}">${t.plaka?`<b>${esc(t.plaka)}</b>`:'<span style="color:#b45309;font-size:.68rem">plaka bekliyor</span>'}${t.sofor?` · ${esc(t.sofor)}`:''}${t.stel?` <span style="color:var(--muted);font-size:.68rem">${esc(t.stel)}</span>`:''}</td>
