@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v418 · 04.09.2026';
+const APP_VER='v419 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15698,21 +15698,43 @@ function thsExcel(){
   aoa.push([]); aoa.push(['TOPLAM','','','','','','','','','',L.length+' tahsis araç']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols']=[11,11,14,16,30,14,16,11,14,13,6,16,13,9,13,18].map(w2=>({wch:w2}));
-  try{ ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:15}},{s:{r:1,c:0},e:{r:1,c:15}}]; }catch(e){}
+  try{
+    const nC=16; ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
+    ws['!rows']=[{hpt:30},{hpt:16},null,{hpt:20}];
+    _xsSatirStil(ws,0,nC,{fill:{fgColor:{rgb:_XSC.navy}}});
+    _xsSet(ws,0,0,{font:{bold:true,sz:14,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'left',vertical:'center',indent:1}});
+    _xsSet(ws,1,0,{font:{sz:10,bold:true,color:{rgb:_XSC.gri}},alignment:{horizontal:'left',indent:1}});
+    _xsSatirStil(ws,3,nC,{font:{bold:true,sz:9,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},border:_xsB(_XSC.beyaz),alignment:{vertical:'center'}});
+    for(let r2=4;r2<4+L.length;r2++) _xsSatirStil(ws,r2,nC,{font:{sz:9},border:_xsB(),fill:(r2-3)%2===0?{fgColor:{rgb:_XSC.zebra}}:undefined});
+    aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
+  }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsisler');
   XLSX.writeFile(wb,'Tahsisler_'+_opsToday()+'.xlsx');
   showToast('Tahsis listesi indirildi','success');
+}
+function _thsYolcular(uyeler){
+  const out=[]; const gorulen=new Set();
+  const ekle=(v,soyad,ad)=>{ const k=v+'|'+soyad+'|'+ad; if(gorulen.has(k)||!(soyad||ad)) return; gorulen.add(k); out.push({voucher:v,soyad,ad}); };
+  (uyeler||[]).forEach(u=>{
+    const rz=_tdRezv(u.resno);
+    let n=0;
+    if(rz) (rz.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
+      ekle(u.resno,(m.soyad||'').trim(),(m.ad||'').trim()); n++; });
+    if(!n&&u.pkgId&&u.kalkis){
+      const gg=getReservations().find(x=>x.pkgId===u.pkgId&&x.kalkis===u.kalkis);
+      if(gg) (gg.rows||[]).forEach(r=>{ if(String(r.resno||'').trim()!==String(u.resno||'').trim()) return;
+        if(!((r.soyad||'').trim()||(r.ad||'').trim())) return;
+        ekle(u.resno,(r.soyad||'').trim(),(r.ad||'').trim()); });
+    }
+  });
+  return out;
 }
 function _thsTek(gid,aid){
   const g2=(getOpsGrup().gruplar||{})[gid]; if(!g2) return null;
   const a=(g2.araclar||[]).find(x=>x.id===aid); if(!a) return null;
   let E2=null; try{ E2=_ogResolve().find(x=>x.id===gid)||null; }catch(e){}
   const uyeler=(E2&&E2.uyeler&&E2.uyeler.length)?E2.uyeler:(g2.uyeler||[]);
-  const yolcular=[]; const gorulen=new Set();
-  uyeler.forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz) return;
-    (rz.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
-      const k=u.resno+'|'+(m.soyad||'')+'|'+(m.ad||''); if(gorulen.has(k)) return; gorulen.add(k);
-      yolcular.push({voucher:u.resno,soyad:(m.soyad||'').trim(),ad:(m.ad||'').trim()}); }); });
+  let yolcular=_thsYolcular(uyeler);
   if(!yolcular.length&&g2.sefer){ (getRezv()||[]).forEach(rz=>{ if(!_opsRezvSayilir(rz)||rz.pkgId!==g2.sefer.pkgId||rz.kalkis!==g2.sefer.kalkis) return;
     (rz.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
       yolcular.push({voucher:rz.voucher||'',soyad:(m.soyad||'').trim(),ad:(m.ad||'').trim()}); }); }); }
@@ -15756,8 +15778,21 @@ function thsTekExcel(gid,aid){
   D.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.soyad+', '+y.ad]));
   aoa.push([]); aoa.push(['TOPLAM','',D.yolcular.length+' kişi']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[14,16,40].map(w2=>({wch:w2}));
-  try{ ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}},{s:{r:1,c:0},e:{r:1,c:2}}]; }catch(e){}
+  ws['!cols']=[16,18,40].map(w2=>({wch:w2}));
+  try{
+    const nC=3; ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
+    ws['!rows']=[{hpt:30},{hpt:16}];
+    _xsSatirStil(ws,0,nC,{fill:{fgColor:{rgb:_XSC.navy}}});
+    _xsSet(ws,0,0,{font:{bold:true,sz:14,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'left',vertical:'center',indent:1}});
+    _xsSet(ws,1,0,{font:{sz:10,bold:true,color:{rgb:_XSC.gri}},alignment:{horizontal:'left',indent:1}});
+    for(let r2=3;r2<=7;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:10,bold:true},alignment:{vertical:'center'}}); }
+    _xsSatirStil(ws,8,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(_XSC.turuncu),alignment:{vertical:'center'}});
+    ws['!rows'][8]={hpt:22};
+    const hdrR=10;
+    _xsSatirStil(ws,hdrR,nC,{font:{bold:true,sz:9,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},border:_xsB(_XSC.beyaz)});
+    for(let r2=hdrR+1;r2<hdrR+1+D.yolcular.length;r2++) _xsSatirStil(ws,r2,nC,{font:{sz:10},border:_xsB(),fill:(r2-hdrR)%2===0?{fgColor:{rgb:_XSC.zebra}}:undefined});
+    aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
+  }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsis');
   const _gg=D.bas?_fmtDateTR(D.bas).slice(0,5):'';
   const _fn=[_gg?_gg+'_cikisli':'','tahsis',_moDosyaAd(D.tur).toLowerCase(),_moDosyaAd((D.reh||'').split(' ')[0]).toLowerCase()].filter(Boolean).join('_');
@@ -16277,10 +16312,7 @@ function _trTasimaciBloklar(sessiz){
         const ab=_pdate(a.bas)||'', abit=_pdate(a.bit)||ab;
         if(!ab||ab>_d2||abit<_d1) return;
         let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
-        const yolcular=[];
-        try{ (E2.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz) return;
-          (rz.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
-            yolcular.push({voucher:u.resno,soyad:(m.soyad||'').trim(),ad:(m.ad||'').trim()}); }); }); }catch(e){}
+        let yolcular=[]; try{ yolcular=_thsYolcular(E2.uyeler||[]); }catch(e){}
         tahsisler.push({key:'TAH|'+E2.id+'|'+ab,bas:ab,bit:abit,tur:((E2.urunler||[]).join('+')||'')+(a.gorev?' — '+a.gorev:''),pax:E2.pax||'',
           arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
           reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:[a.program,a.not].filter(Boolean).join(' · '),yolcular});
