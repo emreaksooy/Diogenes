@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v423 · 04.09.2026';
+const APP_VER='v424 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -5871,6 +5871,7 @@ function kaseYukle(inp){
       showToast('Kaşe kaydedildi — sözleşmelerin altına otomatik basılır','success',5000);
       try{ if(document.getElementById('modalSozlesme').classList.contains('open')) openSozlesme(); }catch(e){}
       try{ renderOpsGrup(); }catch(e){}
+      try{ renderOpsTanim(); }catch(e){}
     };
     img.src=rd.result;
   };
@@ -5878,7 +5879,8 @@ function kaseYukle(inp){
 }
 function kaseSil(){ const t=getTanimlar(); delete t.firmaKase; setTanimlar(t); showToast('Kaşe kaldırıldı','success');
   try{ if(document.getElementById('modalSozlesme').classList.contains('open')) openSozlesme(); }catch(e){}
-  try{ renderOpsGrup(); }catch(e){} }
+  try{ renderOpsGrup(); }catch(e){}
+  try{ renderOpsTanim(); }catch(e){} }
 function openSozlesme(){
   const d=collectData(); const calc=updateCalc(); const op=getActiveOp();
   const today=new Date().toLocaleDateString('tr-TR');
@@ -13450,12 +13452,27 @@ function tdMxExcel(){
 function renderOpsTanim(){
   const box=document.getElementById('opsPane_tanim'); if(!box) return;
   const t=getTanimlar();
+  if(_opsTanimCat==='kase'){
+    if(typeof sbRol==='undefined'||sbRol!=='yonetici'){ _opsTanimCat=null; }
+    else{
+      box.innerHTML=`<button class="btn btn-outline btn-sm" onclick="_opsTanimCat=null;renderOpsTanim()" style="margin-bottom:10px">← Tanımlamalar</button>
+        <div class="card"><div class="card-title">🖋 Firma Kaşesi</div>
+        <p class="section-tip">GLOBAL tanım — bir kez yüklenir; Rehber Sözleşmesi ve Operatör Sözleşmesi dahil tüm sözleşme çıktılarının imza bölümüne otomatik basılır. Yalnız yönetici görür ve değiştirir.</p>
+        ${_kaseGet()?`<div style="border:1.5px dashed var(--border);border-radius:12px;padding:14px;display:inline-block;margin-bottom:12px;background:#fff"><img src="${_kaseGet()}" alt="kaşe" style="max-width:280px;max-height:160px"></div><br>`:'<p style="color:var(--muted);font-size:.84rem">Henüz kaşe yüklenmedi.</p>'}
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <label class="btn btn-primary" style="cursor:pointer">🖋 ${_kaseGet()?'Kaşeyi Değiştir':'Kaşe Yükle (PNG/JPG)'}<input type="file" accept="image/*" style="display:none" onchange="kaseYukle(this)"></label>
+          ${_kaseGet()?'<button class="btn btn-outline" style="color:#dc2626" onclick="kaseSil()">🗑 Kaşeyi Kaldır</button>':''}
+        </div></div>`;
+      return;
+    }
+  }
   if(!_opsTanimCat){
     const card=(cat,ad,ic,n,desc)=>`<div class="tanim-card" onclick="opsTanimCat('${cat}')"><div class="tc-ic"><svg class="ic"><use href="#i-${ic}"/></svg></div><div><div class="tc-ad">${ad}</div><div class="tc-sub">${n} kayıt · ${desc}</div></div></div>`;
     box.innerHTML=`<button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')" style="margin-bottom:10px">← Ana Sayfa</button><p class="section-tip">Bir kez tanımla, seferlerde listeden seç. Bir kartı aç.</p>
       <div class="tanim-cards">
         ${card('satispaket','Satış Paketleri','ticket',getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&String((p.paketKodu||'')+(p.paketAdi||'')).trim()).reduce((n,p)=>n+((p.aktiviteler||[]).length),0),'tur başına satılacak paketler · fiyat · komisyon')}
         ${card('rehberler','Rehberler','users',(t.rehberler||[]).length,'ad · telefon · dil')}
+        ${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?card('kase','Firma Kaşesi','file',_kaseGet()?1:0,'sözleşmelere otomatik basılır — yalnız yönetici'):''}
         ${card('aracFirmalari','Araç Firmaları','bus',(t.aracFirmalari||[]).length,'firma kartı · yetkili · filo')}
         ${card('saglayicilar','Sağlayıcılar','building',(t.saglayicilar||[]).length,'mağaza/otel · tür · telefon')}
         ${card('bolgeler','Bölgeler','pin',(t.bolgeler||[]).length,'bölge · şehir')}
@@ -14556,8 +14573,7 @@ function renderTurDosyasi(box){
         <button class="btn btn-outline btn-sm" onclick="tdYazdir('${b[0]}')">Yazdır</button>
       </div>`).join('')}
     </div>
-    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (8 belge)</button>
-    ${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?`<label class="btn btn-outline" style="cursor:pointer">🖋 ${_kaseGet()?'Kaşeyi Değiştir':'Kaşe Yükle'}<input type="file" accept="image/*" style="display:none" onchange="kaseYukle(this)"></label>${_kaseGet()?'<button class="btn btn-outline" style="color:#dc2626" onclick="kaseSil()">Kaşeyi Kaldır</button><span style="font-size:.68rem;color:#166534;font-weight:700">✓ kaşe tanımlı — Rehber Sözleşmesi\'ne otomatik basılır</span>':'<span style="font-size:.68rem;color:var(--muted)">kaşe tanımlanırsa Rehber Sözleşmesi\'ne otomatik basılır</span>'}`:''}</div>`;
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (8 belge)</button>${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?(_kaseGet()?'<span style="font-size:.68rem;color:#166534;font-weight:700">✓ firma kaşesi tanımlı — sözleşmelere otomatik basılır (Tanımlamalar › Firma Kaşesi)</span>':'<span style="font-size:.68rem;color:var(--muted)">firma kaşesi: Tanımlamalar › Firma Kaşesi</span>'):''}</div>`;
   }
   // ═ HESAPLAŞMA ═
   if(_tdTab==='hesap'){
