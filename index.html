@@ -878,6 +878,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -2006,7 +2007,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v424 · 04.09.2026';
+const APP_VER='v425 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14571,9 +14572,12 @@ function renderTurDosyasi(box){
         <div style="width:36px;height:36px;border-radius:10px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;color:var(--primary)"><svg class="ic"><use href="#i-file"/></svg></div>
         <div style="flex:1"><b style="font-size:.76rem;display:block">${b[1]}</b><span style="font-size:.62rem;color:var(--muted)">${b[2]}</span></div>
         <button class="btn btn-outline btn-sm" onclick="tdYazdir('${b[0]}')">Yazdır</button>
+        <button class="btn btn-outline btn-sm" onclick="tdPdf('${b[0]}')" title="Doğrudan .pdf dosyası indirir">📄 PDF</button>
       </div>`).join('')}
     </div>
-    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (8 belge)</button>${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?(_kaseGet()?'<span style="font-size:.68rem;color:#166534;font-weight:700">✓ firma kaşesi tanımlı — sözleşmelere otomatik basılır (Tanımlamalar › Firma Kaşesi)</span>':'<span style="font-size:.68rem;color:var(--muted)">firma kaşesi: Tanımlamalar › Firma Kaşesi</span>'):''}</div>`;
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (8 belge)</button>
+    <button class="btn btn-outline" onclick="tdPdfHepsi()" title="8 belgeyi tek .pdf olarak indirir">📄 Tümünü PDF İndir</button>
+    <button class="btn btn-success" onclick="tdRehWhatsapp()" title="Dosyanın PDF'ini indirir + rehberin WhatsApp sohbetini hazır mesajla açar — PDF'i sohbete sürükle">📲 Rehbere WhatsApp</button>${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?(_kaseGet()?'<span style="font-size:.68rem;color:#166534;font-weight:700">✓ firma kaşesi tanımlı — sözleşmelere otomatik basılır (Tanımlamalar › Firma Kaşesi)</span>':'<span style="font-size:.68rem;color:var(--muted)">firma kaşesi: Tanımlamalar › Firma Kaşesi</span>'):''}</div>`;
   }
   // ═ HESAPLAŞMA ═
   if(_tdTab==='hesap'){
@@ -14831,6 +14835,44 @@ function tdYazdir(tip){
   if(!map[tip]) return;
   document.getElementById('rzPrintBox').innerHTML=map[tip](g,E);
   doPrint('rzPrintBox');
+}
+function _tdPdfIndir(html,dosyaAd,cb){
+  if(typeof html2pdf==='undefined'){ showToast('PDF kütüphanesi yüklenemedi (internet gerekli) — Yazdır ile PDF kaydedebilirsin','error',6000); return; }
+  const el=document.createElement('div');
+  el.style.cssText='width:190mm;background:#fff;color:#111;font-family:-apple-system,Segoe UI,sans-serif';
+  el.innerHTML=html;
+  showToast('PDF hazırlanıyor…',null,3000);
+  html2pdf().set({margin:8,filename:dosyaAd,image:{type:'jpeg',quality:.95},
+    html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:['css','legacy']}}).from(el).save().then(()=>{ showToast('PDF indirildi: '+dosyaAd,'success'); if(cb)cb(); })
+    .catch(e=>showToast('PDF oluşturulamadı: '+(e&&e.message||e),'error'));
+}
+function _tdDosyaKok(E){
+  const kod=_moDosyaAd((E.urunler||[]).join('+')||'tur').toLowerCase();
+  const gg=E.tarih?_fmtDateTR(E.tarih).slice(0,5):'';
+  return (gg?gg+'_':'')+kod;
+}
+function tdPdf(tip){
+  const g=_tdG(), E=_tdE(); if(!g||!E) return;
+  const map={program:_tdDocProgram,isim:_tdDocIsim,otel:_tdDocOtel,ucus:_tdDocUcus,cizelge:_tdDocCizelge,masraf:_tdDocMasraf,sozlesme:_tdDocSozlesme,acente:_tdDocAcente,hesap:_tdDocHesap};
+  if(!map[tip]) return;
+  _tdPdfIndir(map[tip](g,E),_tdDosyaKok(E)+'_'+tip+'.pdf');
+}
+function tdPdfHepsi(cb){
+  const g=_tdG(), E=_tdE(); if(!g||!E) return;
+  const parcalar=[_tdDocSozlesme,_tdDocProgram,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocAcente,_tdDocMasraf,_tdDocCizelge].map(f=>'<div style="page-break-after:always">'+f(g,E)+'</div>');
+  _tdPdfIndir(parcalar.join(''),'rehber_dosyasi_'+_tdDosyaKok(E)+'.pdf',cb);
+}
+function tdRehWhatsapp(){
+  const g=_tdG(), E=_tdE(); if(!g||!E) return;
+  const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  let tel=String((reh&&(reh.tel||reh.telefon))||'').replace(/\D/g,'');
+  if(tel.length===11&&tel.startsWith('0')) tel='9'+tel;
+  else if(tel.length===10&&tel.startsWith('5')) tel='90'+tel;
+  const msg='Merhaba'+(reh?' '+reh.ad:'')+', '+((E.urunler||[]).join('+')||'tur')+' ('+_fmtDateTR(E.tarih)+') rehber dosyan ektedir — sözleşme, program, isim listesi, otel ve uçuş bilgileri PDF içinde.\nDiogenes Travel';
+  const ac=()=>{ window.open('https://wa.me/'+(tel||'')+'?text='+encodeURIComponent(msg),'_blank');
+    showToast(tel?'WhatsApp açıldı — indirilen PDF dosyasını sohbete sürükle':'Rehberin telefonu tanımlı değil — kişi seçip PDF\'i sohbete sürükle',tel?'success':'error',8000); };
+  if(typeof html2pdf==='undefined'){ ac(); } else tdPdfHepsi(ac);
 }
 function tdYazdirHepsi(){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
