@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v422 · 04.09.2026';
+const APP_VER='v423 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -5869,13 +5869,16 @@ function kaseYukle(inp){
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
       const t=getTanimlar(); t.firmaKase=c.toDataURL('image/png'); setTanimlar(t);
       showToast('Kaşe kaydedildi — sözleşmelerin altına otomatik basılır','success',5000);
-      openSozlesme();
+      try{ if(document.getElementById('modalSozlesme').classList.contains('open')) openSozlesme(); }catch(e){}
+      try{ renderOpsGrup(); }catch(e){}
     };
     img.src=rd.result;
   };
   rd.readAsDataURL(f);
 }
-function kaseSil(){ const t=getTanimlar(); delete t.firmaKase; setTanimlar(t); showToast('Kaşe kaldırıldı','success'); openSozlesme(); }
+function kaseSil(){ const t=getTanimlar(); delete t.firmaKase; setTanimlar(t); showToast('Kaşe kaldırıldı','success');
+  try{ if(document.getElementById('modalSozlesme').classList.contains('open')) openSozlesme(); }catch(e){}
+  try{ renderOpsGrup(); }catch(e){} }
 function openSozlesme(){
   const d=collectData(); const calc=updateCalc(); const op=getActiveOp();
   const today=new Date().toLocaleDateString('tr-TR');
@@ -14553,7 +14556,8 @@ function renderTurDosyasi(box){
         <button class="btn btn-outline btn-sm" onclick="tdYazdir('${b[0]}')">Yazdır</button>
       </div>`).join('')}
     </div>
-    <div style="margin-top:14px"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (8 belge)</button></div>`;
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (8 belge)</button>
+    ${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?`<label class="btn btn-outline" style="cursor:pointer">🖋 ${_kaseGet()?'Kaşeyi Değiştir':'Kaşe Yükle'}<input type="file" accept="image/*" style="display:none" onchange="kaseYukle(this)"></label>${_kaseGet()?'<button class="btn btn-outline" style="color:#dc2626" onclick="kaseSil()">Kaşeyi Kaldır</button><span style="font-size:.68rem;color:#166534;font-weight:700">✓ kaşe tanımlı — Rehber Sözleşmesi\'ne otomatik basılır</span>':'<span style="font-size:.68rem;color:var(--muted)">kaşe tanımlanırsa Rehber Sözleşmesi\'ne otomatik basılır</span>'}`:''}</div>`;
   }
   // ═ HESAPLAŞMA ═
   if(_tdTab==='hesap'){
@@ -14778,7 +14782,7 @@ function _tdDocSozlesme(g,E){
     <div style="${S9}">Taraflar, rehberlik hizmetinin başlayacağı tarihten en az ..3.. gün önce yazılı olarak bildirmek ve "Acente-Rehber Hizmet Sözleşmesi Genel Hükümler"ine bağlı kalmak kaydı ile işbu sözleşmeyi tek taraflı olarak feshedebilirler.</div>
     <div style="${S9};margin-top:1.5mm"><b>7-</b> İşbu Acente-Rehber Hizmet Sözleşmesi 2 nüsha halinde ${_fmtDateTR(E.tarih)} tarihinde imzalanmış olup, damga vergisi Acente tarafından ödenecektir.</div>
     <table style="width:100%;margin-top:7mm;font-size:10pt"><tr>
-      <td style="width:50%;vertical-align:top"><b>ACENTE YETKİLİSİ</b><br>Adı Soyadı: Emre Aksoy<br>Unvan/Görevi: Operasyon Sorumlusu<br><br>Kaşe ve imza:</td>
+      <td style="width:50%;vertical-align:top"><b>ACENTE YETKİLİSİ</b><br>Adı Soyadı: Emre Aksoy<br>Unvan/Görevi: Operasyon Sorumlusu<br><br>Kaşe ve imza:${_kaseGet()?`<br><img src="${_kaseGet()}" alt="kaşe" style="max-width:170px;max-height:100px;margin-top:2mm">`:''}</td>
       <td style="width:50%;vertical-align:top"><b>REHBER</b><br>Adı Soyadı: ${esc(reh.ad||'')}<br><br><br>İmza:</td>
     </tr></table>
   </div>`;
