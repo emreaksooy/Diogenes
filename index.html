@@ -878,7 +878,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -2007,7 +2008,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v425 · 04.09.2026';
+const APP_VER='v426 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14836,16 +14837,40 @@ function tdYazdir(tip){
   document.getElementById('rzPrintBox').innerHTML=map[tip](g,E);
   doPrint('rzPrintBox');
 }
-function _tdPdfIndir(html,dosyaAd,cb){
-  if(typeof html2pdf==='undefined'){ showToast('PDF kütüphanesi yüklenemedi (internet gerekli) — Yazdır ile PDF kaydedebilirsin','error',6000); return; }
-  const el=document.createElement('div');
-  el.style.cssText='width:190mm;background:#fff;color:#111;font-family:-apple-system,Segoe UI,sans-serif';
-  el.innerHTML=html;
-  showToast('PDF hazırlanıyor…',null,3000);
-  html2pdf().set({margin:8,filename:dosyaAd,image:{type:'jpeg',quality:.95},
-    html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-    pagebreak:{mode:['css','legacy']}}).from(el).save().then(()=>{ showToast('PDF indirildi: '+dosyaAd,'success'); if(cb)cb(); })
-    .catch(e=>showToast('PDF oluşturulamadı: '+(e&&e.message||e),'error'));
+async function _tdPdfIndir(htmlListe,dosyaAd,cb){
+  if(!Array.isArray(htmlListe)) htmlListe=[htmlListe];
+  if(!window.html2canvas||!(window.jspdf&&window.jspdf.jsPDF)){ showToast('PDF kütüphanesi yüklenemedi (internet gerekli) — Yazdır ile PDF kaydedebilirsin','error',6000); return; }
+  showToast('PDF hazırlanıyor… '+htmlListe.length+' belge',null,4000);
+  const holder=document.createElement('div');
+  holder.style.cssText='position:fixed;left:-12000px;top:0;width:780px;background:#fff;color:#111;font-family:-apple-system,Segoe UI,sans-serif';
+  document.body.appendChild(holder);
+  try{
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+    const M=9, W=192, H=279; // mm
+    let ilk=true;
+    for(let bi=0;bi<htmlListe.length;bi++){
+      holder.innerHTML='<div style="padding:6px;background:#fff">'+htmlListe[bi]+'</div>';
+      await new Promise(r=>setTimeout(r,30));
+      const canvas=await window.html2canvas(holder,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false});
+      const pxmm=canvas.width/W;
+      const sayfaPx=Math.max(200,Math.floor(H*pxmm));
+      for(let y=0;y<canvas.height;y+=sayfaPx){
+        const ph=Math.min(sayfaPx,canvas.height-y);
+        if(ph<12*pxmm&&y>0) break; // son kırpıntı boşsa atla
+        const parca=document.createElement('canvas');
+        parca.width=canvas.width; parca.height=ph;
+        parca.getContext('2d').drawImage(canvas,0,y,canvas.width,ph,0,0,canvas.width,ph);
+        if(!ilk) pdf.addPage();
+        ilk=false;
+        pdf.addImage(parca.toDataURL('image/jpeg',.94),'JPEG',M,M,W,ph/pxmm);
+      }
+    }
+    pdf.save(dosyaAd);
+    showToast('PDF indirildi: '+dosyaAd,'success',5000);
+    if(cb)cb();
+  }catch(e){ showToast('PDF oluşturulamadı: '+(e&&e.message||e),'error',6000); }
+  finally{ holder.remove(); }
 }
 function _tdDosyaKok(E){
   const kod=_moDosyaAd((E.urunler||[]).join('+')||'tur').toLowerCase();
@@ -14860,8 +14885,8 @@ function tdPdf(tip){
 }
 function tdPdfHepsi(cb){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
-  const parcalar=[_tdDocSozlesme,_tdDocProgram,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocAcente,_tdDocMasraf,_tdDocCizelge].map(f=>'<div style="page-break-after:always">'+f(g,E)+'</div>');
-  _tdPdfIndir(parcalar.join(''),'rehber_dosyasi_'+_tdDosyaKok(E)+'.pdf',cb);
+  const parcalar=[_tdDocSozlesme,_tdDocProgram,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocAcente,_tdDocMasraf,_tdDocCizelge].map(f=>f(g,E));
+  _tdPdfIndir(parcalar,'rehber_dosyasi_'+_tdDosyaKok(E)+'.pdf',cb);
 }
 function tdRehWhatsapp(){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
@@ -14872,7 +14897,7 @@ function tdRehWhatsapp(){
   const msg='Merhaba'+(reh?' '+reh.ad:'')+', '+((E.urunler||[]).join('+')||'tur')+' ('+_fmtDateTR(E.tarih)+') rehber dosyan ektedir — sözleşme, program, isim listesi, otel ve uçuş bilgileri PDF içinde.\nDiogenes Travel';
   const ac=()=>{ window.open('https://wa.me/'+(tel||'')+'?text='+encodeURIComponent(msg),'_blank');
     showToast(tel?'WhatsApp açıldı — indirilen PDF dosyasını sohbete sürükle':'Rehberin telefonu tanımlı değil — kişi seçip PDF\'i sohbete sürükle',tel?'success':'error',8000); };
-  if(typeof html2pdf==='undefined'){ ac(); } else tdPdfHepsi(ac);
+  if(!window.html2canvas||!(window.jspdf&&window.jspdf.jsPDF)){ ac(); } else tdPdfHepsi(ac);
 }
 function tdYazdirHepsi(){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
