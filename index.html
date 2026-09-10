@@ -1853,7 +1853,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 <div id="modalSozlesme" class="modal-overlay">
   <div class="modal-box"><div class="modal-header"><h2><svg class="ic"><use href="#i-file"/></svg> Operatör Hizmet Sözleşmesi</h2><button class="modal-close" onclick="closeModal('modalSozlesme')">✕ Kapat</button></div>
   <div class="modal-body" id="sozlesmeContent"></div>
-  <div class="modal-actions"><button class="btn btn-accent" onclick="doPrint('sozlesmeContent')"><svg class="ic"><use href="#i-printer"/></svg> Yazdır / PDF</button><button class="btn btn-outline" onclick="closeModal('modalSozlesme')">Kapat</button></div></div>
+  <div class="modal-actions"><span id="kaseAlan" style="margin-right:auto"></span><button class="btn btn-accent" onclick="doPrint('sozlesmeContent')"><svg class="ic"><use href="#i-printer"/></svg> Yazdır / PDF</button><button class="btn btn-outline" onclick="closeModal('modalSozlesme')">Kapat</button></div></div>
 </div>
 <div id="modalMaliyet" class="modal-overlay">
   <div class="modal-box"><div class="modal-header"><h2><svg class="ic"><use href="#i-chart"/></svg> Dahili Maliyet Raporu</h2><button class="modal-close" onclick="closeModal('modalMaliyet')">✕ Kapat</button></div>
@@ -2006,7 +2006,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v421 · 04.09.2026';
+const APP_VER='v422 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -5856,6 +5856,26 @@ function openSunum(lang){
   document.getElementById('translateResetBtn').style.display='none';
 }
 
+function _kaseGet(){ try{ return (getTanimlar().firmaKase||'').startsWith('data:image')?getTanimlar().firmaKase:''; }catch(e){ return ''; } }
+function kaseYukle(inp){
+  const f=inp.files&&inp.files[0]; if(!f) return;
+  if(!/^image\/(png|jpeg|webp)/.test(f.type)){ showToast('PNG/JPG görsel seç','error'); return; }
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const mx=380, or2=Math.min(1,mx/Math.max(img.width,img.height));
+      const c=document.createElement('canvas'); c.width=Math.round(img.width*or2); c.height=Math.round(img.height*or2);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      const t=getTanimlar(); t.firmaKase=c.toDataURL('image/png'); setTanimlar(t);
+      showToast('Kaşe kaydedildi — sözleşmelerin altına otomatik basılır','success',5000);
+      openSozlesme();
+    };
+    img.src=rd.result;
+  };
+  rd.readAsDataURL(f);
+}
+function kaseSil(){ const t=getTanimlar(); delete t.firmaKase; setTanimlar(t); showToast('Kaşe kaldırıldı','success'); openSozlesme(); }
 function openSozlesme(){
   const d=collectData(); const calc=updateCalc(); const op=getActiveOp();
   const today=new Date().toLocaleDateString('tr-TR');
@@ -5959,11 +5979,13 @@ function openSozlesme(){
       <div class="clause"><span class="clause-num">Madde 6 – Uyuşmazlık:</span> Türk Hukuku uygulanır; yetkili mahkemeler Türkiye mahkemeleridir.</div>
       <div class="clause"><span class="clause-num">Madde 7 – Gizlilik:</span> Taraflar ticari bilgileri üçüncü şahıslarla paylaşmamayı kabul eder.</div>
       <div class="sign-row">
-        <div class="sign-box"><strong>HİZMET SAĞLAYICI (DMC)</strong><br><br><br>Ad Soyad: ____________________________<br>Ünvan: ____________________________<br>Tarih: ____________________________<br>İmza / Kaşe: ____________________________</div>
+        <div class="sign-box"><strong>HİZMET SAĞLAYICI (DMC)</strong><br><br><br>Ad Soyad: ____________________________<br>Ünvan: ____________________________<br>Tarih: ____________________________<br>İmza / Kaşe: ${_kaseGet()?`<br><img src="${_kaseGet()}" alt="kaşe" style="max-width:190px;max-height:110px;margin-top:6px">`:'____________________________'}</div>
         <div class="sign-box"><strong>OPERATÖR / ACENTA${op?' — '+esc(op.ad):''}</strong><br><br><br>Ad Soyad: ${op&&op.yetkili?esc(op.yetkili):'____________________________'}<br>Ünvan: ____________________________<br>Tarih: ____________________________<br>İmza / Kaşe: ____________________________</div>
       </div>
     </div>`;
   document.getElementById('modalSozlesme').classList.add('open');
+  const ka=document.getElementById('kaseAlan');
+  if(ka) ka.innerHTML=(typeof sbRol!=='undefined'&&sbRol==='yonetici')?`<label class="btn btn-outline" style="cursor:pointer">🖋 ${_kaseGet()?'Kaşeyi Değiştir':'Kaşe Yükle'}<input type="file" accept="image/*" style="display:none" onchange="kaseYukle(this)"></label> ${_kaseGet()?'<button class="btn btn-outline" style="color:#dc2626" onclick="kaseSil()">Kaşeyi Kaldır</button>':''}`:'';
 }
 
 function openMaliyetRaporu(){
