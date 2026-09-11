@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v449 · 04.09.2026';
+const APP_VER='v450 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9630,7 +9630,8 @@ function _rzSejourOku(f){
           iStat=H('Rez.Statüs'), iG5=H('Grup5'),
           iAsil=H('Asıl Voucher'),
           iGelUcNo=H('Geliş Ucuş No'), iGelFrom=H('Geliş From'), iGelTo=H('Geliş To'),
-          iDonUcNo=H('Dönüş Uçuş No'), iDonFrom=H('Dönüş From'), iDonTo=H('Dönüş To');
+          iDonUcNo=H('Dönüş Uçuş No'), iDonFrom=H('Dönüş From'), iDonTo=H('Dönüş To'),
+          iTrfNot=hdr.findIndex(h=>/transfer/i.test(String(h||''))&&/not/i.test(String(h||'')));
     const _sjTemiz=v=>{ v=String(v==null?'':v).trim(); return (v==='?'||v==='??')?'':v; };
     const _sjRotaFT=(rFrom,rTo,rEski,gw)=>{ const f=_sjTemiz(rFrom).toUpperCase(), t=_sjTemiz(rTo).toUpperCase();
       if(f&&t) return f+'-'+t; if(rEski) return _sjRota(rEski); return gw||''; };
@@ -9700,6 +9701,7 @@ function _rzSejourOku(f){
             if(iPas>=0&&!m.pasaport&&_sjTemiz(r[iPas])) m.pasaport=_sjTemiz(r[iPas]);
             if(iGelUcNo>=0&&_sjTemiz(r[iGelUcNo])) m.gelisUcus=_sjTemiz(r[iGelUcNo]);
             if(iDonUcNo>=0&&_sjTemiz(r[iDonUcNo])) m.donusUcus=_sjTemiz(r[iDonUcNo]);
+            if(iTrfNot>=0&&_sjTemiz(r[iTrfNot])) m.trfNot=_sjTemiz(r[iTrfNot]);
             if(iGelFrom>=0){ const rt=_sjRotaFT(r[iGelFrom],r[iGelTo],'',''); if(rt) m.gelis=rt; }
             if(iDonFrom>=0){ const rt=_sjRotaFT(r[iDonFrom],r[iDonTo],'',''); if(rt) m.donus=rt; }
             m.iptal=!!ipt; if(ipt&&!m.iptalTarihi) m.iptalTarihi='';
@@ -9754,6 +9756,7 @@ function _rzSejourOku(f){
             if(iPas>=0&&!m.pasaport&&_sjTemiz(r[iPas])) m.pasaport=_sjTemiz(r[iPas]);
             if(iGelUcNo>=0&&!m.gelisUcus&&_sjTemiz(r[iGelUcNo])) m.gelisUcus=_sjTemiz(r[iGelUcNo]);
             if(iDonUcNo>=0&&!m.donusUcus&&_sjTemiz(r[iDonUcNo])) m.donusUcus=_sjTemiz(r[iDonUcNo]);
+            if(iTrfNot>=0&&!m.trfNot&&_sjTemiz(r[iTrfNot])) m.trfNot=_sjTemiz(r[iTrfNot]);
             if(iGelFrom>=0&&(!m.gelis||m.gelis.length<=3)){ const rt=_sjRotaFT(r[iGelFrom],r[iGelTo],'',''); if(rt) m.gelis=rt; }
             else if(iGelis>=0&&r[iGelis]&&(!m.gelis||m.gelis.length<=3)) m.gelis=_sjRota(r[iGelis]);
             if(iDonFrom>=0&&(!m.donus||m.donus.length<=3)){ const rt=_sjRotaFT(r[iDonFrom],r[iDonTo],'',''); if(rt) m.donus=rt; }
@@ -9823,6 +9826,7 @@ function _rzSejourOku(f){
         m.donus=(iDonFrom>=0)?_sjRotaFT(r[iDonFrom],r[iDonTo],(iDonus>=0?r[iDonus]:''),gw):((iDonus>=0&&r[iDonus])?_sjRota(r[iDonus]):(gw||''));
         if(iGelUcNo>=0&&_sjTemiz(r[iGelUcNo])) m.gelisUcus=_sjTemiz(r[iGelUcNo]);
         if(iDonUcNo>=0&&_sjTemiz(r[iDonUcNo])) m.donusUcus=_sjTemiz(r[iDonUcNo]);
+        if(iTrfNot>=0&&_sjTemiz(r[iTrfNot])) m.trfNot=_sjTemiz(r[iTrfNot]);
         musteriler.push(m); });
       // Detay-2: kişi bazlı İPTAL satırları müşteri olarak eklenir (m.iptal) — fiyat/iptal hesabı için
       if(!tumIptal&&g.iptaller.length&&(iDogum>=0||iUnvan>=0)){
@@ -14161,6 +14165,12 @@ function _tdInit(g,E){
   if(!g.gunSay){ const pk=(E&&E.uyeler[0])?getPackages().find(p=>p.id===E.uyeler[0].pkgId):null; g.gunSay=pk?String((+pk.gece||0)+1):''; }
   if(typeof g.hesapKapali!=='boolean') g.hesapKapali=false;
 }
+function _tdKisiNot(k){
+  const rz=_tdRezv(k.resno);
+  let m=null;
+  try{ m=rz&&(rz.musteriler||[]).find(x=>!x.iptal&&_norm((x.soyad||'')+'|'+(x.ad||''))===_norm((k.soyad||'')+'|'+(k.ad||''))); }catch(e){}
+  return [...new Set([rz&&(rz.not||'').trim(), rz&&(rz.onemliNot||'').trim(), m&&(m.trfNot||'').trim(), (k.not||'').trim()].filter(Boolean))].join(' · ');
+}
 function _tdKisiler(E){
   const out=[]; const vGorunen=new Set();
   // İPTAL yolcular dosyada görünmez: satır durumu iptal VEYA rezervasyonu iptal olan voucherlar
@@ -14447,10 +14457,11 @@ function renderTurDosyasi(box){
   // ═ YOLCULAR ═
   if(_tdTab==='yolcu'){
     h+=`<table class="rzmg"><tr><th style="width:34px">#</th><th style="width:100px">Voucher</th><th>Ad Soyad</th><th style="width:80px">Oda</th><th>Önemli Not</th></tr>`;
+    let _pjTog=false,_pjV=null;
     kisiler.forEach((k,i)=>{
-      const rz=_tdRezv(k.resno);
-      const notlar=[...new Set([rz&&(rz.not||'').trim(), rz&&(rz.onemliNot||'').trim(), (k.not||'').trim()].filter(Boolean))].join(' · ');
-      h+=`<tr><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td>${esc(k.oda)||'—'}</td>
+      const v0=String(k.resno||'').trim(); if(v0!==_pjV){ _pjTog=!_pjTog; _pjV=v0; }
+      const notlar=_tdKisiNot(k);
+      h+=`<tr${_pjTog?' style="background:#D9E2F2"':''}><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td>${esc(k.oda)||'—'}</td>
       <td style="font-size:.74rem;${notlar?'color:#92400e;font-weight:700':''}">${notlar?('⚠ '+esc(notlar)):'<span style="color:var(--muted)">—</span>'}</td></tr>`;
     });
     h+=`</table>`;
@@ -14829,8 +14840,8 @@ function _tdDocIsim(g,E){ const K=_tdKisiler(E);
   // PİJAMA: voucher (oda grubu) değiştikçe bir dolgulu bir dolgusuz — aynı voucher'daki herkes aynı
   const vDolgu={}; let tog=false, sonV=null;
   K.forEach(k=>{ const v=String(k.resno||'').trim(); if(v!==sonV){ tog=!tog; sonV=v; } vDolgu[v+'#'+k.soyad+'#'+k.ad]=tog; });
-  const stil=k=>vDolgu[String(k.resno||'').trim()+'#'+k.soyad+'#'+k.ad]?'background:#E8EDF5;-webkit-print-color-adjust:exact;print-color-adjust:exact;':'';
-  return _tdDocBas('İsim Listesi',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">#</th><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Oda</th></tr>${K.map((k,i)=>`<tr><td style="${_tdTd};${stil(k)}">${i+1}</td><td style="${_tdTd};${stil(k)}">${esc(k.resno)}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.oda)}</b></td></tr>`).join('')}</table><p style="font-size:9pt;margin-top:4mm">Toplam: ${K.length} kişi · dolgu değişimi = ayrı voucher/oda</p></div>`; }
+  const stil=k=>vDolgu[String(k.resno||'').trim()+'#'+k.soyad+'#'+k.ad]?'background:#D9E2F2;-webkit-print-color-adjust:exact;print-color-adjust:exact;':'';
+  return _tdDocBas('İsim Listesi',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">#</th><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Oda</th><th style="${_tdTh}">Not</th></tr>${K.map((k,i)=>`<tr><td style="${_tdTd};${stil(k)}">${i+1}</td><td style="${_tdTd};${stil(k)}">${esc(k.resno)}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.oda)}</b></td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${esc(_tdKisiNot(k))}</td></tr>`).join('')}</table><p style="font-size:9pt;margin-top:4mm">Toplam: ${K.length} kişi · dolgu değişimi = ayrı voucher/oda</p></div>`; }
 function _tdDocOtel(g,E){
   const satir=[];
   (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
