@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v445 · 04.09.2026';
+const APP_VER='v446 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9764,11 +9764,22 @@ function _rzSejourOku(f){
         // konaklama kartları (ortak kurucu; kart no # öncelikli)
         mevcut.kartlar=mevcut.kartlar||[];
         let eklendi=0;
-        _sjKartlar(g.satirlar,{iOtel,iGir,iCik,iOda,iOdaT,iAd,iKartNo,iDogum},mevcut.musteriler||[],otelAdCoz,()=>{uyeYok++;}).forEach(k=>{
+        const yeniK=_sjKartlar(g.satirlar,{iOtel,iGir,iCik,iOda,iOdaT,iAd,iKartNo,iDogum},mevcut.musteriler||[],otelAdCoz,()=>{uyeYok++;});
+        // DOSYADA ARTIK OLMAYAN eski Sejour kartları silinir (otel değişimi vb.) — elle eklenen kartlara dokunulmaz
+        if(g.satirlar.length){
+          const yeniSet=new Set(yeniK.map(k=>_norm((k.otel||k.guzergah)||'')+'|'+String(k.baslangic||'')));
+          const once=mevcut.kartlar.length;
+          mevcut.kartlar=mevcut.kartlar.filter(x=>{
+            if(!/^Sejour açılımı/.test(String(x.not||''))) return true; // elle eklenen kart
+            return yeniSet.has(_norm((x.otel||x.guzergah)||'')+'|'+String(x.baslangic||''));
+          });
+          window._sjKartSil=(window._sjKartSil||0)+(once-mevcut.kartlar.length);
+        }
+        yeniK.forEach(k=>{
           if(mevcut.kartlar.some(x=>_norm((x.otel||x.guzergah)||'')===_norm((k.otel||k.guzergah)||'')&&String(x.baslangic||'')===String(k.baslangic||''))) return;
           mevcut.kartlar.push(k); eklendi++; kartN++;
         });
-        if(eklendi){ kartVoucher++; mevcut.kartlar.sort((a,b)=>String(a.baslangic||'').localeCompare(String(b.baslangic||''))); }
+        if(eklendi||window._sjKartSil){ kartVoucher++; mevcut.kartlar.sort((a,b)=>String(a.baslangic||'').localeCompare(String(b.baslangic||''))); }
         else atla++;
         return;
       }
@@ -9869,6 +9880,7 @@ function _rzSejourOku(f){
     if(atla) msg+=' · '+atla+' zaten vardı/boş (atlandı)';
     if(onarim) msg+=' · '+onarim+' açılım artığı kayıt temizlendi';
     if(window._sjSenkron){ msg+=' · '+window._sjSenkron+' voucher dosyayla eşitlendi'; if(window._sjIsimlendi) msg+=' ('+window._sjIsimlendi+' NO NAME koltuğa isim geldi)'; window._sjSenkron=0; window._sjIsimlendi=0; }
+    if(window._sjKartSil){ msg+=' · 🗑 '+window._sjKartSil+' eski otel kartı kaldırıldı (dosyada yok)'; window._sjKartSil=0; }
     if(iptalRez) msg+=' · '+iptalRez+' İPTAL rezervasyon (fatura/iptal şartı için) işaretlendi';
     else if(iptal) msg+=' · '+iptal+' iptal satırı not edildi';
     showToast(msg,'success');
