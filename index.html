@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v440 · 04.09.2026';
+const APP_VER='v441 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9580,6 +9580,33 @@ function _sjUkartlar(satirlar,iOda,iAd,iGir,iCik,musteriler,iSira,iDogum,iKartNo
 function rzSejourImport(evt){
   const f=evt.target.files[0]; evt.target.value=''; if(!f) return;
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  // eski Sejour kayıtları varsa: GÜNCELLE mi, TEMİZLE Vve GÜNCELLE mi? (oturumda bir kez sorulur)
+  if(!window._sjTemizSoruldu){
+    const sejN=(getRezv()||[]).filter(x=>x.opUcusNot==='Sejour aktarımı').length;
+    if(sejN){
+      let box=document.getElementById('sjSecim'); if(box) box.remove();
+      box=document.createElement('div'); box.id='sjSecim';
+      box.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+      box.innerHTML=`<div style="background:var(--card,#fff);border-radius:16px;max-width:460px;width:100%;padding:20px" onclick="event.stopPropagation()">
+        <div style="font-weight:800;font-size:1rem;margin-bottom:8px">📥 Sejour Aktarımı — ${sejN} mevcut kayıt</div>
+        <p style="font-size:.82rem;color:var(--muted);margin:0 0 14px">Daha önce Sejour'dan aktarılmış ${sejN} rezervasyon var. Nasıl devam edilsin?</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-primary" id="sjGuncelle">🔄 Güncelle (önerilen) — mevcutlar korunur, dosyayla eşitlenir</button>
+          <button class="btn btn-outline" id="sjTemizle" style="color:#dc2626;border-color:#fecaca">🗑 Temizle ve Güncelle — ${sejN} kayıt silinir, dosyadan baştan kurulur<br><span style="font-size:.68rem;font-weight:500">elle eklenen notlar / düzeltmeler kaybolur</span></button>
+          <button class="btn btn-outline" id="sjVazgec">✕ Vazgeç</button>
+        </div></div>`;
+      document.body.appendChild(box);
+      box.onclick=()=>box.remove();
+      document.getElementById('sjVazgec').onclick=()=>box.remove();
+      document.getElementById('sjGuncelle').onclick=()=>{ box.remove(); window._sjTemizSoruldu=true; window._sjTemizle=false; _rzSejourOku(f); };
+      document.getElementById('sjTemizle').onclick=()=>{ box.remove(); window._sjTemizSoruldu=true; window._sjTemizle=true; _rzSejourOku(f); };
+      return;
+    }
+    window._sjTemizSoruldu=true; window._sjTemizle=false;
+  }
+  _rzSejourOku(f);
+}
+function _rzSejourOku(f){
   const rd=new FileReader();
   rd.onload=e=>{ try{
     const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellStyles:true});
@@ -9638,12 +9665,12 @@ function rzSejourImport(evt){
     const vGrupSay={}; Object.values(grup).forEach(g=>{ const vk=_norm(g.opKod+'|'+g.voucher); vGrupSay[vk]=(vGrupSay[vk]||0)+1; });
     let rezv=getRezv();
     const sejN=rezv.filter(x=>x.opUcusNot==='Sejour aktarımı').length;
-    if(sejN&&!window._sjTemizSoruldu&&window.confirm('Daha önce Sejour\'dan aktarılmış '+sejN+' rezervasyon var.\n\n⚠️ TAMAM = TEMİZLE VE BAŞTAN KUR: hepsi silinir, dosyadan yeniden yüklenir (elle eklenen notlar, grup bölmeleri, düzeltmeler KAYBOLUR).\n\n✓ VAZGEÇ = GÜNCELLE (önerilen): mevcutlar korunur, her voucher dosyayla eşitlenir — yeni isimler, iptaller, asıl voucherlar işlenir.')){
+    if(sejN&&window._sjTemizle){
       rezv=rezv.filter(x=>x.opUcusNot!=='Sejour aktarımı');
       setRezv(rezv);
-      showToast(sejN+' eski Sejour kaydı temizlendi','success');
+      showToast(sejN+' eski Sejour kaydı temizlendi — dosyadan baştan kuruluyor','success');
+      window._sjTemizle=false; // temizlik bir kez
     }
-    window._sjTemizSoruldu=true; // oturumda bir kez sor (2. dosya eklemeli çalışır)
     let yeni=0, atla=0, kartN=0, kartVoucher=0, uyeYok=0, iptalRez=0; const kodYok=new Set(), opYok=new Set();
     const otelAdCoz=ad=>{ const t=getTanimlar()||{}; const o=(t.oteller||[]).find(x=>_norm(x.ad||'')===_norm(ad)); return o?o.ad:ad; };
     Object.values(grup).forEach(g=>{
