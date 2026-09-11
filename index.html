@@ -2010,7 +2010,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v430 · 04.09.2026';
+const APP_VER='v431 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7056,13 +7056,22 @@ function _ucakSablonAktar(rows,wb,sessiz){
     for(let c=0;c<Math.max(hdr.length,12);c++){ if(_kirmizi(_ws[XLSX.utils.encode_cell({r:sr,c})])) return true; }
     return false; };
   const _sifirVar=r=>Array.isArray(r)&&r.some(v=>v===0||String(v==null?'':v).trim()==='0');
-  // ön geçiş: kırmızı VE 0 olan satırların rezervasyon numaraları — aynı no'lu KIRMIZI devam satırları da iptaldir (ailede pax yalnız ilk satırda)
+  // NOT/Paket kolonunda CXX ya da iptal ibaresi → renkten bağımsız iptal (tek kişilik iptaller)
+  const _notIptal=r=>{
+    if(!Array.isArray(r)) return false;
+    if(r.some(v=>/\bCXX\b/i.test(String(v==null?'':v)))) return true; // CXX herhangi bir hücrede yeter
+    const notlar=[iPkt,iNot2].filter(i2=>i2>=0).map(i2=>String(r[i2]==null?'':r[i2]));
+    return notlar.some(t=>/iptal|storn|cancel/i.test(t)); };
+  // ön geçiş: DİREKT iptal satırlarının (kırmızı+0 VEYA notta iptal) rezervasyon noları —
+  // aynı no'lu KIRMIZI devam satırları da iptaldir (ailede pax yalnız ilk satırda);
+  // kırmızı OLMAYAN aynı no'lu satırlar etkilenmez (aynı voucherda tek kişi iptal olabilir)
   const _iptalResnoSet=new Set();
   try{ rows.slice(hIdx+1).forEach((r,ri)=>{
     if(!Array.isArray(r)) return;
-    if(_sifirVar(r)&&_satirKirmizi(ri)){ const v=iRes>=0?String(r[iRes]||'').trim():''; if(v) _iptalResnoSet.add(v); }
+    if((_sifirVar(r)&&_satirKirmizi(ri))||_notIptal(r)){ const v=iRes>=0?String(r[iRes]||'').trim():''; if(v) _iptalResnoSet.add(v); }
   }); }catch(e){}
   const _satirIptalMi=(r,ri)=>{
+    if(_notIptal(r)) return true;
     if(!_ws) return false;
     if(!_satirKirmizi(ri)) return false;
     if(_sifirVar(r)) return true;
