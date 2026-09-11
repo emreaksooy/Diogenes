@@ -2010,7 +2010,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v432 · 04.09.2026';
+const APP_VER='v433 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7145,6 +7145,7 @@ function _ucakSablonAktar(rows,wb,sessiz){
     const mevcutY=(g.rows||[]).find(x=>adTok(x.soyad,x.ad)===hedefTok&&(!resno||!String(x.resno||'').trim()||String(x.resno||'').trim()===resno));
     if(mevcutY){
       mevcutY.soyad=p.soyad; mevcutY.ad=p.ad; if(p.dogum) mevcutY.dogum=p.dogum; if(resno) mevcutY.resno=resno;
+      if(y.durum==='iptal'&&mevcutY.durum!=='iptal') mevcutY.durum='iptal'; // kırmızı/CXX işaretli — mevcut satır da iptale çekilir
       if(y.not&&!(mevcutY.not||'').includes(y.not)) mevcutY.not=((mevcutY.not?mevcutY.not+' · ':'')+y.not);
       if(y.oda&&!mevcutY.oda) mevcutY.oda=y.oda; if(y.bagaj&&!mevcutY.bagaj) mevcutY.bagaj=y.bagaj;
       ['op','kod','g_u1','g_u2','g_pnr','g_hy','g_ks1','g_vs1','g_ks2','g_vs2','g_tarih','g_k1','g_v1','g_k2','g_v2','d_u1','d_u2','d_pnr','d_hy','d_ks1','d_vs1','d_ks2','d_vs2','d_tarih','d_k1','d_v1','d_k2','d_v2','a_u1','a_k1','a_v1','a_ks1','a_vs1','a_tarih','a_hy','a_pnr'].forEach(f=>{
