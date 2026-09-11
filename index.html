@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v443 · 04.09.2026';
+const APP_VER='v444 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14984,16 +14984,22 @@ function _tdDocSozlesme(g,E){
     ** Rehber, turu gerçekleştiren acentenin sahibi/ortağı ise, ortaklık durumunu gösteren ticaret sicil gazetesinin fotokopisinin ibraz edilmesi halinde bu bölüm doldurulmayacaktır.</div>
     <div style="${S10};font-weight:700;margin-top:1.5mm">4- Ödeme Şekli</div>
     <div style="${S10}">${havale?'X':'□'} Banka Havalesi/EFT&nbsp;&nbsp;&nbsp;&nbsp;${havale?'□':'X'} Nakten</div>
+    ${_sozImza(reh)}
+    <div style="page-break-after:always"></div><!--SAYFA-->
+    <div style="font-weight:700;font-size:11pt;margin-bottom:2mm">ACENTE-REHBER HİZMET SÖZLEŞMESİ — Sayfa 2</div>
     <div style="${S10};font-weight:700;margin-top:1.5mm">5- Acente-Rehber Hizmet Sözleşmesi Genel Hükümleri</div>
     <div style="${S9}">İşbu Acente-Rehber Hizmet Sözleşmesi, 6326 sayılı Turist Rehberliği Meslek Kanunu'nun 6/3 maddesi ile Turist Rehberliği Meslek Yönetmeliği'nin 36/2 maddesi uyarınca, Rehberler Birliği tarafından resmi internet sitesinde (www.tureb.org.tr) halen yayımlanan "Acente-Rehber Hizmet Sözleşmesi Genel Hükümler"ine bağlı kalmak kaydı ile tanzim edilmiştir. Taraflar, işbu sözleşme ile birlikte "Acente-Rehber Hizmet Sözleşmesi Genel Hükümler"ine de uyacaklarını kabul ve taahhüt ederler.</div>
     <div style="${S10};font-weight:700;margin-top:1.5mm">6- Fesih/İhbar Süresi</div>
     <div style="${S9}">Taraflar, rehberlik hizmetinin başlayacağı tarihten en az ..3.. gün önce yazılı olarak bildirmek ve "Acente-Rehber Hizmet Sözleşmesi Genel Hükümler"ine bağlı kalmak kaydı ile işbu sözleşmeyi tek taraflı olarak feshedebilirler.</div>
     <div style="${S9};margin-top:1.5mm"><b>7-</b> İşbu Acente-Rehber Hizmet Sözleşmesi 2 nüsha halinde ${_fmtDateTR(E.tarih)} tarihinde imzalanmış olup, damga vergisi Acente tarafından ödenecektir.</div>
-    <table style="width:100%;margin-top:7mm;font-size:10pt"><tr>
-      <td style="width:50%;vertical-align:top"><b>ACENTE YETKİLİSİ</b><br>Adı Soyadı: Emre Aksoy<br>Unvan/Görevi: Operasyon Sorumlusu<br><br>Kaşe ve imza:${_kaseGet()?`<br><img src="${_kaseGet()}" alt="kaşe" style="max-width:170px;max-height:100px;margin-top:2mm">`:''}</td>
-      <td style="width:50%;vertical-align:top"><b>REHBER</b><br>Adı Soyadı: ${esc(reh.ad||'')}<br><br><br>İmza:</td>
-    </tr></table>
+    ${_sozImza(reh)}
   </div>`;
+}
+function _sozImza(reh){
+  return `<table style="width:100%;margin-top:5mm;font-size:10pt"><tr>
+      <td style="width:50%;vertical-align:top"><b>ACENTE YETKİLİSİ</b><br>Adı Soyadı: Emre Aksoy<br>Unvan/Görevi: Operasyon Sorumlusu<br>Kaşe ve imza:${_kaseGet()?`<br><img src="${_kaseGet()}" alt="kaşe" style="max-width:150px;max-height:80px;margin-top:1mm">`:'<br><br><br>'}</td>
+      <td style="width:50%;vertical-align:top"><b>REHBER</b><br>Adı Soyadı: ${esc((reh&&reh.ad)||'')}<br><br>İmza:</td>
+    </tr></table>`;
 }
 function _tdDocAcente(g,E){ const t=getTanimlar();
   const govde=t.sablonAcente?esc(t.sablonAcente).replace(/\n/g,'<br>'):'<i>Seyahat acente belgesi şablonu henüz yüklenmedi — Tanımlamalar bölümüne eklenecek. Bu sayfa yer tutucudur.</i>';
@@ -15026,6 +15032,7 @@ function tdYazdir(tip){
 }
 async function _tdPdfIndir(htmlListe,dosyaAd,cb){
   if(!Array.isArray(htmlListe)) htmlListe=[htmlListe];
+  htmlListe=htmlListe.flatMap(x=>String(x).split('<!--SAYFA-->'));
   if(!window.html2canvas||!(window.jspdf&&window.jspdf.jsPDF)){ showToast('PDF kütüphanesi yüklenemedi (internet gerekli) — Yazdır ile PDF kaydedebilirsin','error',6000); return; }
   showToast('PDF hazırlanıyor… '+htmlListe.length+' belge',null,4000);
   const holder=document.createElement('div');
