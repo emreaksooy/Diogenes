@@ -2010,7 +2010,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v428 · 04.09.2026';
+const APP_VER='v429 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7041,16 +7041,33 @@ function _ucakSablonAktar(rows,wb,sessiz){
     .replace(/\(?\b\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}\b\)?/g,' ').replace(/\b(herr|frau|ing|dr|mag|prof|dipl|med|mr|mrs|ms)\b\.?/g,' ')
     .replace(/[^a-zçğıöşüâ\s-]/g,' ').split(/\s+/).filter(Boolean).sort();
     return t.join('|'); };
+  // KIRMIZI + 0 = İPTAL yolcu (operatör listesindeki işaret) — stilden okunur
+  const _ws=(wb&&wb.Sheets)?wb.Sheets[wb.SheetNames[0]]:null;
+  let _rref=0; try{ _rref=XLSX.utils.decode_range(_ws['!ref']).s.r; }catch(e){}
+  const _kirmizi=c=>{ if(!c||!c.s) return false; const rgbs=[];
+    try{ if(c.s.font&&c.s.font.color&&c.s.font.color.rgb) rgbs.push(c.s.font.color.rgb); }catch(e){}
+    try{ const f=c.s.fill; if(f){ ['fgColor','bgColor'].forEach(k=>{ if(f[k]&&f[k].rgb) rgbs.push(f[k].rgb); }); } }catch(e){}
+    return rgbs.some(x=>{ x=String(x).replace(/[^0-9A-Fa-f]/g,'').slice(-6); if(x.length<6) return false;
+      const r2=parseInt(x.slice(0,2),16), g2=parseInt(x.slice(2,4),16), b2=parseInt(x.slice(4,6),16);
+      return r2>=150&&g2<=110&&b2<=110; }); };
+  const _satirIptalMi=(r,ri)=>{
+    if(!_ws) return false;
+    if(!r.some(v=>v===0||String(v==null?'':v).trim()==='0')) return false; // yanında 0 şartı
+    const sr=_rref+hIdx+1+ri;
+    for(let c=0;c<Math.max(hdr.length,12);c++){ if(_kirmizi(_ws[XLSX.utils.encode_cell({r:sr,c})])) return true; }
+    return false; };
+  let iptalYolcu=0;
   const g=_resGrid(true);
   const oncekiBos=(g.rows||[]).length;
   g.rows=(g.rows||[]).filter(x=>_isim(x));
   const bosTemiz=oncekiBos-g.rows.length;
   let n=0, atla=0; const degisimler=[]; let sonOda='';
-  rows.slice(hIdx+1).forEach(r=>{
+  rows.slice(hIdx+1).forEach((r,_ri)=>{
     if(!Array.isArray(r)) return;
     const p=_ucakSablonIsim(r[iAd]); if(!p) return;
     const resno=iRes>=0?String(r[iRes]||'').trim():'';
     const y={resno,soyad:p.soyad,ad:p.ad};
+    try{ if(_satirIptalMi(r,_ri)){ y.durum='iptal'; iptalYolcu++; } }catch(e){}
     if(p.dogum) y.dogum=p.dogum;
     if(iOda>=0){ const o=String(r[iOda]||'').trim(); if(o) sonOda=o; y.oda=o||sonOda; } // oda boşsa üstten taşınır (aile blokları)
     if(iOpK>=0){ const v2=String(r[iOpK]||'').trim(); if(v2) window._sonOpK=v2; y.op=v2||window._sonOpK||''; }
@@ -7149,8 +7166,8 @@ function _ucakSablonAktar(rows,wb,sessiz){
     try{_hataKaydet&&_hataKaydet('UÇUŞ-DEĞİŞİM',degisimOzet);}catch(_e){}
     if(!sessiz) showConfirm('🛎','Uçuş Değişikliği Tespit Edildi',degisimOzet+'\n\nSatırlar güncellendi. Transfer atamalarını gözden geçir!','Tamam',()=>{});
   }
-  if(!sessiz) showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
-  return {n,atla,degisim:degisimler.length,pnrN,degisimOzet};
+  if(!sessiz) showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(iptalYolcu?' · 🚫 '+iptalYolcu+' yolcu İPTALE çekildi (kırmızı+0)':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
+  return {n,atla,degisim:degisimler.length,pnrN,degisimOzet,iptalYolcu};
 }
 async function _aiSor(prompt,maxTok){
   try{ await _txEnsureCache(); }catch(e){} // anahtar diskten yüklenmemiş olabilir
@@ -7171,7 +7188,7 @@ function ucakExcelImport(evt){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const rd=new FileReader();
   rd.onload=async e=>{ try{
-    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellStyles:true});
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
     if(!rows.length){ showToast('Dosya boş','error'); return; }
     // ── ŞİRKET ŞABLONU (uçak departmanının kendi formatı): deterministik ayrıştırma, AI'a gerek yok
@@ -7344,7 +7361,7 @@ async function ucakTopluImport(evt){
     if(!adaylar.length){
       try{
         const bufE=await f.arrayBuffer();
-        erkenWb=XLSX.read(new Uint8Array(bufE),{type:'array'});
+        erkenWb=XLSX.read(new Uint8Array(bufE),{type:'array',cellStyles:true});
         erkenRows=XLSX.utils.sheet_to_json(erkenWb.Sheets[erkenWb.SheetNames[0]],{header:1,raw:true});
         const meta=_ucakDosyaMeta(erkenRows)||{};
         if(meta.prod) adaylar=_ucakUrunAday(meta.prod);
@@ -7356,7 +7373,7 @@ async function ucakTopluImport(evt){
       // eşleştirme paneli için beklet (dosyayı şimdi oku ki tekrar seçtirmeyelim)
       try{
         const buf0=await f.arrayBuffer();
-        const wb0=XLSX.read(new Uint8Array(buf0),{type:'array'});
+        const wb0=XLSX.read(new Uint8Array(buf0),{type:'array',cellStyles:true});
         const rows0=XLSX.utils.sheet_to_json(wb0.Sheets[wb0.SheetNames[0]],{header:1,raw:true});
         if(_ucakSablonDetect(rows0)){
           (window._ucakBekleyen=window._ucakBekleyen||[]).push({kod:coz.kod,kalkis,rows:rows0,wb:wb0,ad:f.name,cxx:_cxxMi});
@@ -7369,7 +7386,7 @@ async function ucakTopluImport(evt){
       let wb=erkenWb, rows=erkenRows;
       if(!rows){
         const buf=await f.arrayBuffer();
-        wb=XLSX.read(new Uint8Array(buf),{type:'array'});
+        wb=XLSX.read(new Uint8Array(buf),{type:'array',cellStyles:true});
         rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
       }
       if(!_ucakSablonDetect(rows)){ sablonDegil.push(f.name); continue; }
@@ -9471,7 +9488,7 @@ function rzSejourImport(evt){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const rd=new FileReader();
   rd.onload=e=>{ try{
-    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellStyles:true});
     const sh=wb.Sheets[wb.SheetNames[0]];
     let rows=XLSX.utils.sheet_to_json(sh,{header:1,raw:true});
     if(!rows.length){ showToast('Dosya boş','error'); return; }
