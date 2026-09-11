@@ -2031,7 +2031,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v437 · 04.09.2026';
+const APP_VER='v438 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6756,7 +6756,7 @@ function _uylOlustur(){
   ucakOpen(pkgId,iso);
 }
 function _ucakIptalUyariHTML(){
-  let U=[]; try{ U=(_mutIssues()||[]).filter(x=>x.tip==='iptalBilet'||x.tip==='biletIptalRezvAktif'); }catch(e){}
+  let U=[]; try{ U=(_mutIssues()||[]).filter(x=>x.tip==='iptalBilet'); }catch(e){}
   if(!U.length) return '';
   return `<div class="card" style="border:1.5px solid #fca5a5;background:#fef2f2;margin-bottom:12px">
     <div style="font-weight:800;font-size:.84rem;color:#b91c1c;margin-bottom:7px">⚡ BİLET İPTALİ GEREKLİ (${U.length})</div>
@@ -8513,6 +8513,19 @@ function rzMonGoster(){
   if(!list.length) h+='<tbody><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:18px">Henüz ürün rezervasyonu yok</td></tr></tbody>';
   document.getElementById('rzMonTbl').innerHTML=h;
 }
+function _rzIptalUyariHTML(){
+  let U=[]; try{ U=(_mutIssues()||[]).filter(x=>x.tip==='biletIptalRezvAktif'); }catch(e){}
+  if(!U.length) return '';
+  const rzBul=u=>{ const r=(getRezv()||[]).find(r2=>r2.tip==='urun'&&r2.pkgId===u.pkgId&&r2.kalkis===u.kalkis&&r2.durum!=='iptal'&&(String(r2.voucher||'').trim()===u.voucher||String(r2.asilVoucher||'').trim()===u.voucher)); return r?r.id:''; };
+  return `<div class="card" style="border:1.5px solid #fcd34d;background:#fffbeb;margin-bottom:12px">
+    <div style="font-weight:800;font-size:.84rem;color:#b45309;margin-bottom:7px">⚠️ BİLET İPTAL — REZERVASYON AKTİF (${U.length})</div>
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px">Uçak listesinde tüm biletleri iptal işaretli ama rezervasyonu açık duran kayıtlar — rezervasyonu iptal et ya da bileti geri aç.</div>
+    ${U.map(u=>{ const rid=rzBul(u); return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dashed #fde68a;font-size:.78rem;flex-wrap:wrap">
+      <b>${_fmtDateTR(u.kalkis)}</b><span><b>${esc(u.kod)}</b> · ${esc(u.voucher)}</span>
+      ${rid?`<button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="rzAc('${rid}')">📋 Rezervasyonu aç</button>`:''}
+    </div>`; }).join('')}
+  </div>`;
+}
 function rzListeGoster(){ _rzCur=null; try{localStorage.removeItem('dmc_lastRezv');}catch(e){} _rzViewShow('rzVListe'); renderRezvListe(); }
 function rzOtelGoster(){ _rzCur=null; _otlPopAcik=null; _rzViewShow('rzVOtel'); rzOtelRender(); }
 function rzOtelRender(){
@@ -9447,7 +9460,7 @@ function renderRezvListe(){
   });
   h+='</tbody>';
   if(!list.length) h+='<tbody><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
-  document.getElementById('rzLst').innerHTML=h;
+  document.getElementById('rzLst').innerHTML=_rzIptalUyariHTML()+h;
   rzTopluBarGuncel();
   const bugun=new Date().toISOString().slice(0,10);
   const filtreliMi=list.length!==rez.length;
