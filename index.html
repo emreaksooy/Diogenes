@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v441 · 04.09.2026';
+const APP_VER='v442 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13852,6 +13852,7 @@ function otMagProg(gid,val){
   setOperasyon(all); renderOpsTurlar();
   showToast('Mağaza ziyaretleri seçilen turun programına göre yapılacak','success');
 }
+function otAcTog(key){ window._otAcik=window._otAcik||new Set(); window._otAcik.has(key)?window._otAcik.delete(key):window._otAcik.add(key); renderOpsTurlar(); }
 function renderOpsTurlar(){
   const box=document.getElementById('opsPane_turlar'); if(!box) return;
   if(!_otBas){ _otBas=_opsToday(); _otSon=_isoAdd(_otBas,60); }
@@ -13861,7 +13862,7 @@ function renderOpsTurlar(){
   // transfer durumu: tur bazında atanmamış uçuş transferi sayısı
   const trMap={};
   try{ _trGenRows().forEach(r=>{ if(r.tip==='TUR') return; const k=r.pkgId+'|'+r.kalkis; const o=trMap[k]=trMap[k]||{n:0,atasiz:0}; o.n++; if(!r.grup) o.atasiz++; }); }catch(e){}
-  const tahsisDurum=t=>{
+  const tahsisTip=t=>{
     let grps=[];
     try{
       const S=getOpsGrup().gruplar||{};
@@ -13872,16 +13873,12 @@ function renderOpsTurlar(){
     }catch(e){}
     const pk2=getPackages().find(p=>p.id===t.pkgId)||{};
     const th2=grps.flatMap(x=>(x.araclar||[]).filter(a=>a.tip==='tahsis'));
-    if(!th2.length){
-      return pk2.turTransferYok
-        ?'<div style="margin-top:3px"><span style="background:var(--light);color:var(--muted);font-weight:700;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚫 tahsis gerekmez</span></div>'
-        :'<div style="margin-top:3px"><span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚙 tahsis atanmamış</span></div>';
-    }
-    const plakasiz=th2.some(a=>!(a.plaka||'').trim());
-    return plakasiz
-      ?'<div style="margin-top:3px"><span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚙 tahsis — plaka bekliyor</span></div>'
-      :'<div style="margin-top:3px"><span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">🚙 tahsis ayarlandı</span></div>';
+    if(!th2.length) return pk2.turTransferYok?'gerekmez':'yok';
+    return th2.some(a=>!(a.plaka||'').trim())?'plaka':'ok';
   };
+  const _TAHS={yok:['#fee2e2','#b91c1c','🚙 tahsis atanmamış'],gerekmez:['var(--light)','var(--muted)','🚫 tahsis gerekmez'],plaka:['#fef3c7','#92400e','🚙 tahsis — plaka bekliyor'],ok:['#dcfce7','#166534','🚙 tahsis ayarlandı']};
+  const tahsisDurum=t=>{ const d=_TAHS[tahsisTip(t)];
+    return '<div style="margin-top:3px"><span style="background:'+d[0]+';color:'+d[1]+';font-weight:800;font-size:.62rem;padding:2px 8px;border-radius:8px;white-space:nowrap">'+d[2]+'</span></div>'; };
   const trDurum=t=>{
     const sefler=(t.uyeSeferler&&t.uyeSeferler.length)?t.uyeSeferler:[{pkgId:t.pkgId,kalkis:t.kalkis}];
     let n=0,a=0; sefler.forEach(sf=>{ const o=trMap[sf.pkgId+'|'+sf.kalkis]; if(o){ n+=o.n; a+=o.atasiz; } });
@@ -13908,30 +13905,47 @@ function renderOpsTurlar(){
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
       <tr><th style="${th}" title="Birleştirmek için seç"></th><th style="${th}">Giriş</th><th style="${th}">Çıkış</th><th style="${th}">Tur</th><th style="${th}">Operatör</th><th style="${th}">Pax</th><th style="${th}">Rehber</th><th style="${th}">Transferler</th><th style="${th}"></th></tr>
       ${L.map(t=>{
+        const key=t.pkgId+'|'+t.kalkis;
+        const acik=window._otAcik&&window._otAcik.has(key);
         const bl=(t.uyeSeferler&&t.uyeSeferler.length)?`<span style="background:var(--primary);color:#fff;font-weight:800;font-size:.58rem;padding:1px 7px;border-radius:8px;margin-left:5px">🔗 ${t.uyeSeferler.length}</span>`:'';
+        const secOk=!t.birlesikGrupId&&(!t.bolum||t.bolum==='01');
+        // KOMPAKT durum: transfer + tahsis tek satırda kısa
+        const sefler=(t.uyeSeferler&&t.uyeSeferler.length)?t.uyeSeferler:[{pkgId:t.pkgId,kalkis:t.kalkis}];
+        let trN=0,trA=0; sefler.forEach(sf=>{ const o=trMap[sf.pkgId+'|'+sf.kalkis]; if(o){ trN+=o.n; trA+=o.atasiz; } });
+        const tTip=tahsisTip(t); const tD=_TAHS[tTip];
+        const kisa=`${trN?(trA?`<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.62rem;padding:1px 7px;border-radius:7px;white-space:nowrap">🚌 ${trA}/${trN}</span>`:'<span style="color:#166534;font-weight:800;font-size:.7rem">🚌 ✓</span>'):'<span style="color:var(--muted)">🚌 —</span>'}
+          <span title="${tD[2]}" style="background:${tD[0]};color:${tD[1]};font-weight:800;font-size:.62rem;padding:1px 7px;border-radius:7px;white-space:nowrap">${tTip==='ok'?'🚙 ✓':tTip==='plaka'?'🚙 plaka':tTip==='gerekmez'?'🚙 —':'🚙 yok'}</span>`;
+        const kompakt=`<tr${t.birlesikGrupId?' style="background:var(--primary-soft)"':''}>
+        <td style="${td};white-space:nowrap"><button onclick="otAcTog('${key}')" title="${acik?'Kapat':'Detay: rehber atama, transferler, mağaza programı'}" style="background:none;border:none;cursor:pointer;font-size:.9rem;padding:0 3px">${acik?'▾':'▸'}</button>${secOk?`<input type="checkbox" ${_gbSec.has(key)?'checked':''} onchange="otSecTog('${key}',this.checked)" title="Birleştirmek için seç">`:''}</td>
+        <td style="${td};cursor:pointer" onclick="otAcTog('${key}')"><b>${_fmtDateTR(t.kalkis)}</b></td>
+        <td style="${td};cursor:pointer" onclick="otAcTog('${key}')">${_fmtDateTR(t.end)}</td>
+        <td style="${td};cursor:pointer" onclick="otAcTog('${key}')"><b>${esc(t.kod)}</b>${t.bolum&&t.bolum!=='01'?' <span style="color:var(--muted);font-size:.64rem">G'+esc(t.bolum)+'</span>':''}${bl}</td>
+        <td style="${td}">${esc(t.op||'—')}</td>
+        <td style="${td}"><b>${t.pax}</b>${t.acilimsiz?'<div style="font-size:.56rem;color:#b45309;font-weight:800;white-space:nowrap">⏳ açılım</div>':''}</td>
+        <td style="${td};white-space:nowrap">${t.rehberAd?`<b style="font-size:.76rem">${esc(t.rehberAd)}</b>`:'<span style="background:#fffbeb;border:1px solid #fcd34d;color:#92400e;font-weight:700;font-size:.64rem;padding:1px 8px;border-radius:7px">rehber yok</span>'}</td>
+        <td style="${td};white-space:nowrap">${kisa}</td>
+        <td style="${td};white-space:nowrap">${t.birlesikGrupId?`<button class="btn btn-outline btn-sm" onclick="otGrupAc('${t.birlesikGrupId}')">📂</button>`:`<button class="btn btn-outline btn-sm" onclick="opsOpen('${t.pkgId}','${t.kalkis}')">📂</button>`}</td></tr>`;
+        if(!acik) return kompakt;
+        // DETAY
         const rehL=(getTanimlar().rehberler||[]).slice().sort((a,b)=>String(a.ad||'').localeCompare(String(b.ad||''),'tr'));
-        const reh=`<select onchange="otRehAta('${t.pkgId}','${t.kalkis}','${t.bolum||'01'}','${t.birlesikGrupId||''}',this.value)" style="padding:4px 7px;border:1.5px solid ${t.rehberAd?'#86efac':'#fcd34d'};border-radius:8px;font-size:.74rem;font-family:inherit;max-width:150px;background:${t.rehberAd?'#f0fdf4':'#fffbeb'}">
+        const reh=`<select onchange="otRehAta('${t.pkgId}','${t.kalkis}','${t.bolum||'01'}','${t.birlesikGrupId||''}',this.value)" style="padding:5px 8px;border:1.5px solid ${t.rehberAd?'#86efac':'#fcd34d'};border-radius:8px;font-size:.76rem;font-family:inherit;max-width:190px;background:${t.rehberAd?'#f0fdf4':'#fffbeb'}">
           <option value="">— atanmadı —</option>
           ${rehL.map(r=>`<option value="${r.id}" ${(t.rehberId&&t.rehberId===r.id)||(!t.rehberId&&t.rehberAd&&_rehbNrm(t.rehberAd)===_rehbNrm(r.ad||''))?'selected':''}>${esc(r.ad||'—')}</option>`).join('')}
-        </select>${t.rehberAd&&_rehTelBul(t.rehberAd)?`<div style="color:var(--muted);font-size:.64rem;margin-top:2px">${esc(_rehTelBul(t.rehberAd))}</div>`:''}`;
-        const key=t.pkgId+'|'+t.kalkis;
-        const secOk=!t.birlesikGrupId&&(!t.bolum||t.bolum==='01');
-        return `<tr${t.birlesikGrupId?' style="background:var(--primary-soft)"':''}>
-        <td style="${td}">${secOk?`<input type="checkbox" ${_gbSec.has(key)?'checked':''} onchange="otSecTog('${key}',this.checked)" title="Birleştirmek için seç">`:''}</td>
-        <td style="${td}"><b>${_fmtDateTR(t.kalkis)}</b></td>
-        <td style="${td}">${_fmtDateTR(t.end)}</td>
-        <td style="${td}"><b>${esc(t.kod)}</b>${t.bolum&&t.bolum!=='01'?' <span style="color:var(--muted);font-size:.64rem">G'+esc(t.bolum)+'</span>':''}${bl}${(t.uyeSeferler&&t.uyeSeferler.length)?`<div style="font-size:.62rem;color:var(--muted);margin-top:2px;line-height:1.5">${t.uyeSeferler.map(sf=>{const pk=getPackages().find(p=>p.id===sf.pkgId)||{};return esc(pk.paketKodu||'?')+' '+_fmtDateTR(sf.kalkis)+' ('+_opsPax(sf.pkgId,sf.kalkis)+' pax)';}).join(' + ')}</div>
-        <div style="font-size:.62rem;margin-top:3px" onclick="event.stopPropagation()">🏬 Mağaza programı:
-          <select onchange="otMagProg('${t.birlesikGrupId}',this.value)" style="padding:2px 5px;border:1px solid var(--border);border-radius:6px;font-size:.64rem;font-family:inherit">
+        </select>${t.rehberAd&&_rehTelBul(t.rehberAd)?` <span style="color:var(--muted);font-size:.7rem">☎ ${esc(_rehTelBul(t.rehberAd))}</span>`:''}`;
+        const birlesikH=(t.uyeSeferler&&t.uyeSeferler.length)?`<div style="font-size:.68rem;color:var(--muted)">${t.uyeSeferler.map(sf=>{const pk=getPackages().find(p=>p.id===sf.pkgId)||{};return esc(pk.paketKodu||'?')+' '+_fmtDateTR(sf.kalkis)+' ('+_opsPax(sf.pkgId,sf.kalkis)+' pax)';}).join(' + ')}</div>
+        <div style="font-size:.68rem;margin-top:4px">🏬 Mağaza programı:
+          <select onchange="otMagProg('${t.birlesikGrupId}',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-size:.68rem;font-family:inherit">
             ${(()=>{ let mev=''; try{ const sf0=t.uyeSeferler[0]; mev=(_opsGet(sf0.pkgId,sf0.kalkis)||{}).magazaProgram||''; }catch(e){}
               return t.uyeSeferler.map(sf=>{ const pk=getPackages().find(p=>p.id===sf.pkgId)||{}; const v2=sf.pkgId+'|'+sf.kalkis;
                 return `<option value="${v2}" ${mev===v2?'selected':''}>${esc(pk.paketKodu||'?')} programı (${_fmtDateTR(sf.kalkis)})</option>`; }).join(''); })()}
-          </select></div>`:''}</td>
-        <td style="${td}">${esc(t.op||'—')}</td>
-        <td style="${td}"><b>${t.pax}</b>${t.acilimsiz?'<div style="font-size:.56rem;color:#b45309;font-weight:800;white-space:nowrap">⏳ açılım bekliyor</div>':''}</td>
-        <td style="${td}">${reh}</td>
-        <td style="${td}">${trDurum(t)}${tahsisDurum(t)}</td>
-        <td style="${td};white-space:nowrap">${t.birlesikGrupId?`<button class="btn btn-outline btn-sm" onclick="otGrupAc('${t.birlesikGrupId}')">📂 Dosya</button> <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button>`:`<button class="btn btn-outline btn-sm" onclick="opsOpen('${t.pkgId}','${t.kalkis}')">📂 Dosya</button>`}</td></tr>`;
+          </select></div>`:'';
+        return kompakt+`<tr><td colspan="9" style="background:#f7f9fc;border-bottom:2px solid var(--border);padding:10px 14px">
+          <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start">
+            <div><div style="font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Rehber</div>${reh}</div>
+            <div><div style="font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Transferler</div>${trDurum(t)}${tahsisDurum(t)}</div>
+            ${birlesikH?`<div><div style="font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Birleşik Grup</div>${birlesikH}</div>`:''}
+            <div style="margin-left:auto;display:flex;gap:6px;align-items:center">${t.birlesikGrupId?`<button class="btn btn-outline btn-sm" onclick="otGrupAc('${t.birlesikGrupId}')">📂 Dosya</button><button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button>`:`<button class="btn btn-outline btn-sm" onclick="opsOpen('${t.pkgId}','${t.kalkis}')">📂 Dosya</button>`}</div>
+          </div></td></tr>`;
       }).join('')}
     </table></div>
     ${L.length?'':'<p style="color:var(--muted);font-size:.85rem;padding:10px 2px">Bu aralıkta tur yok.</p>'}
