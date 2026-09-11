@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v450 · 04.09.2026';
+const APP_VER='v451 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -11998,8 +11998,18 @@ async function _opsRenderMap(){
   const m=L.map('opsMap',{zoomControl:true,scrollWheelZoom:false}); _opsMap=m;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(m);
   m.setView([39,35],5); setTimeout(()=>{try{m.invalidateSize();}catch(e){}},120);
-  const need={}, groups={};
-  aktif.forEach(it=>{ const c=_opsCity(it.pkg,it.dayNo); if(!c)return; const co=_opsMapCountry(it.pkg); const k=(c+'|'+co).toLowerCase().trim(); need[k]={city:c,country:co}; const rec=_opsGet(it.pkg.id,it.kalkis); (groups[k]=groups[k]||[]).push({kod:it.pkg.paketKodu||it.pkg.paketAdi||'',opAd:_resOpAd(it.pkg)||'',reh:(rec.rehberAd||'').trim(),dayNo:it.dayNo,toplam:it.toplam,city:c}); });
+  // BİRLEŞİK gruplar haritada TEK grup: sefer → birleşik grup eşlemesi
+  const bgOf={};
+  try{ _ogResolve().forEach(g2=>{ const sef=[...new Set((g2.uyeler||[]).map(u=>u.pkgId+'|'+u.kalkis))];
+    if(sef.length>=2){ const kodlar=sef.map(x=>{ const p2=getPackages().find(p=>p.id===x.split('|')[0])||{}; return p2.paketKodu||'?'; });
+      const say={}; kodlar.forEach(k2=>say[k2]=(say[k2]||0)+1);
+      const etiket=Object.keys(say).map(k2=>say[k2]>1?(k2+'×'+say[k2]):k2).join('+');
+      sef.forEach(x=>bgOf[x]={id:g2.id,etiket}); } }); }catch(e){}
+  const need={}, groups={}; const bgSeen=new Set();
+  aktif.forEach(it=>{ const sk=it.pkg.id+'|'+it.kalkis; const bg=bgOf[sk];
+    if(bg){ if(bgSeen.has(bg.id)) return; bgSeen.add(bg.id); }
+    const c=_opsCity(it.pkg,it.dayNo); if(!c)return; const co=_opsMapCountry(it.pkg); const k=(c+'|'+co).toLowerCase().trim(); need[k]={city:c,country:co}; const rec=_opsGet(it.pkg.id,it.kalkis);
+    (groups[k]=groups[k]||[]).push({kod:bg?(bg.etiket+' 🔗'):(it.pkg.paketKodu||it.pkg.paketAdi||''),opAd:_resOpAd(it.pkg)||'',reh:((_opsGrupReh&&_opsGrupReh(it.pkg.id,it.kalkis))||rec.rehberAd||'').trim(),dayNo:it.dayNo,toplam:it.toplam,city:c}); });
   const coords={};
   for(const k in need){ const gn=_opsGeoName(need[k].city); const cache=getGeoCache(); const ck=(gn+'|'+(need[k].country||'')).toLowerCase().trim(); const was=!!cache[ck]; const r=await geocodePlace(gn,need[k].country); coords[k]=r; if(!was) await _sleep(1000); }
   const pts=[]; let gtot=0;
