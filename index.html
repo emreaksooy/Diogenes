@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v446 · 04.09.2026';
+const APP_VER='v447 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14699,7 +14699,7 @@ function renderTurDosyasi(box){
   // ═ OTELLER ═
   if(_tdTab==='otel'){
     const satir=[];
-    (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz) return;
+    (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
       (rz.kartlar||[]).filter(k=>k.tip!=='ulasim').forEach(k=>{
         const gece=+k.gece||0, bas=_pdate(k.baslangic)||'';
         satir.push({resno:u.resno,otel:(k.otel||'').trim()||('('+(k.sehir||'?')+' — otel seçilmedi)'),bas,bit:bas?_isoAdd(bas,gece):'',gece,oda:(k.oda||'')+(k.odaT?('/'+k.odaT):''),pans:k.pansiyon||'',pax:+u.pax||0});
@@ -14829,7 +14829,7 @@ function _tdDocIsim(g,E){ const K=_tdKisiler(E);
   return _tdDocBas('İsim Listesi',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">#</th><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Oda</th></tr>${K.map((k,i)=>`<tr><td style="${_tdTd}">${i+1}</td><td style="${_tdTd}">${esc(k.resno)}</td><td style="${_tdTd}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd}">${esc(k.oda)}</td></tr>`).join('')}</table><p style="font-size:9pt;margin-top:4mm">Toplam: ${K.length} kişi</p></div>`; }
 function _tdDocOtel(g,E){
   const satir=[];
-  (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz) return;
+  (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
     (rz.kartlar||[]).filter(k=>k.tip!=='ulasim').forEach(k=>{ satir.push({resno:u.resno,otel:k.otel||('('+(k.sehir||'?')+' — otel seçilmedi)'),bas:k.baslangic||'',gece:k.gece||'',pans:k.pansiyon||''}); });
   });
   // aynı otel+giriş+gece+pansiyonda TÜM voucherlar kalıyorsa tek satır (TÜM GRUP)
