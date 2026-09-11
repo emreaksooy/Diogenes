@@ -1519,7 +1519,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
     <div id="ucakListe">
       <div class="card" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <label class="btn btn-primary btn-sm" style="cursor:pointer;white-space:nowrap">📁 Klasörden Toplu Aktar<input type="file" webkitdirectory multiple style="display:none" onchange="ucakTopluImport(event)"></label>
-        <span style="font-size:.76rem;color:var(--muted)">OneDrive'daki ay klasörünü (veya tüm Uçak Listeleri klasörünü) seç — her dosya adından ürün + kalkış otomatik çözülür, --CXX iptaller atlanır.</span>
+        <span style="font-size:.76rem;color:var(--muted)">OneDrive'daki ay klasörünü (veya tüm Uçak Listeleri klasörünü) seç — her dosya adından ürün + kalkış otomatik çözülür; --CXX dosyalar da alınır, sefer CXX (kırmızı) işaretlenir.</span>
       </div>
       <div id="ucakGenel"></div>
     </div>
@@ -2010,7 +2010,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v429 · 04.09.2026';
+const APP_VER='v430 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7050,12 +7050,24 @@ function _ucakSablonAktar(rows,wb,sessiz){
     return rgbs.some(x=>{ x=String(x).replace(/[^0-9A-Fa-f]/g,'').slice(-6); if(x.length<6) return false;
       const r2=parseInt(x.slice(0,2),16), g2=parseInt(x.slice(2,4),16), b2=parseInt(x.slice(4,6),16);
       return r2>=150&&g2<=110&&b2<=110; }); };
-  const _satirIptalMi=(r,ri)=>{
+  const _satirKirmizi=ri=>{
     if(!_ws) return false;
-    if(!r.some(v=>v===0||String(v==null?'':v).trim()==='0')) return false; // yanında 0 şartı
     const sr=_rref+hIdx+1+ri;
     for(let c=0;c<Math.max(hdr.length,12);c++){ if(_kirmizi(_ws[XLSX.utils.encode_cell({r:sr,c})])) return true; }
     return false; };
+  const _sifirVar=r=>Array.isArray(r)&&r.some(v=>v===0||String(v==null?'':v).trim()==='0');
+  // ön geçiş: kırmızı VE 0 olan satırların rezervasyon numaraları — aynı no'lu KIRMIZI devam satırları da iptaldir (ailede pax yalnız ilk satırda)
+  const _iptalResnoSet=new Set();
+  try{ rows.slice(hIdx+1).forEach((r,ri)=>{
+    if(!Array.isArray(r)) return;
+    if(_sifirVar(r)&&_satirKirmizi(ri)){ const v=iRes>=0?String(r[iRes]||'').trim():''; if(v) _iptalResnoSet.add(v); }
+  }); }catch(e){}
+  const _satirIptalMi=(r,ri)=>{
+    if(!_ws) return false;
+    if(!_satirKirmizi(ri)) return false;
+    if(_sifirVar(r)) return true;
+    const v=iRes>=0?String(r[iRes]||'').trim():'';
+    return !!(v&&_iptalResnoSet.has(v)); };
   let iptalYolcu=0;
   const g=_resGrid(true);
   const oncekiBos=(g.rows||[]).length;
