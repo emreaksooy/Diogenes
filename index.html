@@ -666,7 +666,15 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
   .sidebar{width:100%;min-width:0;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border)}
   .side-nav{flex-direction:row;overflow-x:auto;border-bottom:1px solid var(--border)}
   .nav-tab{width:auto;white-space:nowrap}
-  .sidebar-ctx{display:none}
+  /* bölüm alt menüleri (Operasyon/Mağaza/Rezervasyon/Uçak) telefonda yatay chip şeridi */
+  .sidebar-ctx{display:block;width:100%}
+  .sidebar-ctx .sidebar-header{display:none}
+  .sidebar-ctx .sidebar-list{display:flex;flex-direction:row;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;padding:7px 8px;scrollbar-width:none}
+  .sidebar-ctx .sidebar-list::-webkit-scrollbar{display:none}
+  .sidebar-ctx .sidebar-list .pkg-section-item{flex-shrink:0;white-space:nowrap;border:1.5px solid var(--border);border-radius:999px;padding:9px 15px;font-size:.82rem;background:var(--card)}
+  .sidebar-ctx .sidebar-list .pkg-section-item.active-ops{background:var(--primary);color:#fff;border-color:var(--primary)}
+  #sidebarPkg .sidebar-list{flex-direction:column;overflow:visible}
+  #sidebarPkg .sidebar-list .pkg-section-item{border:none;border-radius:9px;white-space:normal}
   .current-pkg{display:none}
   .dash-stats{grid-template-columns:1fr 1fr}
   .dash-lower{grid-template-columns:1fr}
@@ -713,6 +721,19 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 }
 @media(max-width:640px){
   html{-webkit-text-size-adjust:100%}
+  /* iOS odak zoom'unu engelle: form alanları 16px (grid tabloları hariç) */
+  input,select,textarea{font-size:16px}
+  .gridwrap input,.gridwrap select,.rzmg input,.rzmg select,table .notin,table .saatin{font-size:.78rem}
+  .btn{min-height:42px}
+  .rowbtn{min-width:36px;min-height:36px;font-size:1rem}
+  /* transfer seçim barı: tam genişlik, sarmalı */
+  #trAtabar{left:0;right:0;bottom:0;border-radius:14px 14px 0 0;flex-wrap:wrap;max-height:60vh;overflow-y:auto;gap:6px;padding:10px}
+  #trAtabar select,#trAtabar input{min-height:40px}
+  .modal-actions{flex-wrap:wrap;gap:8px}
+  .modal-box{max-height:94vh}
+  .ucak-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .tanim-cards{grid-template-columns:1fr}
+  .otl-f{min-width:46% !important}
 }
 @media(min-width:641px){ .mm-tabbar{display:none !important} }
 
@@ -2010,7 +2031,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v434 · 04.09.2026';
+const APP_VER='v435 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
