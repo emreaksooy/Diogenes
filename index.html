@@ -2031,7 +2031,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v436 · 04.09.2026';
+const APP_VER='v437 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7065,12 +7065,19 @@ function _ucakSablonAktar(rows,wb,sessiz){
   // KIRMIZI + 0 = İPTAL yolcu (operatör listesindeki işaret) — stilden okunur
   const _ws=(wb&&wb.Sheets)?wb.Sheets[wb.SheetNames[0]]:null;
   let _rref=0; try{ _rref=XLSX.utils.decode_range(_ws['!ref']).s.r; }catch(e){}
-  const _kirmizi=c=>{ if(!c||!c.s) return false; const rgbs=[];
-    try{ if(c.s.font&&c.s.font.color&&c.s.font.color.rgb) rgbs.push(c.s.font.color.rgb); }catch(e){}
-    try{ const f=c.s.fill; if(f){ ['fgColor','bgColor'].forEach(k=>{ if(f[k]&&f[k].rgb) rgbs.push(f[k].rgb); }); } }catch(e){}
+  const _KIRMIZI_IDX=new Set([2,3,10,16,25,29,53,60]); // legacy indexed palette kırmızı tonları
+  const _kirmizi=c=>{ if(!c||!c.s) return false; const rgbs=[]; const idxs=[];
+    const topla=o=>{ if(!o) return; if(o.rgb) rgbs.push(o.rgb); if(o.indexed!=null) idxs.push(+o.indexed); };
+    try{ if(c.s.font&&c.s.font.color) topla(c.s.font.color); }catch(e){}
+    try{ const f=c.s.fill; if(f){ topla(f.fgColor); topla(f.bgColor); } }catch(e){}
+    try{ topla(c.s.fgColor); topla(c.s.bgColor); }catch(e){} // bazı sürümler fill'i s köküne yazar
+    if(idxs.some(i2=>_KIRMIZI_IDX.has(i2))) return true;
     return rgbs.some(x=>{ x=String(x).replace(/[^0-9A-Fa-f]/g,'').slice(-6); if(x.length<6) return false;
       const r2=parseInt(x.slice(0,2),16), g2=parseInt(x.slice(2,4),16), b2=parseInt(x.slice(4,6),16);
       return r2>=150&&g2<=110&&b2<=110; }); };
+  // teşhis: dosyada hiç stil verisi yoksa bildir (renk okunamıyor demektir)
+  try{ if(_ws){ let stilVar=false; for(const ad in _ws){ if(ad[0]!=='!'&&_ws[ad]&&_ws[ad].s){ stilVar=true; break; } }
+    if(!stilVar) console.warn('UYARI: Excel stil verisi okunamadı — kırmızı tespiti çalışmaz (dosya biçimi?)'); window._sonStilVar=stilVar; } }catch(e){}
   const _satirKirmizi=ri=>{
     if(!_ws) return false;
     const sr=_rref+hIdx+1+ri;
