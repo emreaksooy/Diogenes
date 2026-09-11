@@ -2010,7 +2010,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v431 · 04.09.2026';
+const APP_VER='v432 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7068,13 +7068,13 @@ function _ucakSablonAktar(rows,wb,sessiz){
   const _iptalResnoSet=new Set();
   try{ rows.slice(hIdx+1).forEach((r,ri)=>{
     if(!Array.isArray(r)) return;
-    if((_sifirVar(r)&&_satirKirmizi(ri))||_notIptal(r)){ const v=iRes>=0?String(r[iRes]||'').trim():''; if(v) _iptalResnoSet.add(v); }
+    if(_satirKirmizi(ri)&&(_sifirVar(r)||_notIptal(r))){ const v=iRes>=0?String(r[iRes]||'').trim():''; if(v) _iptalResnoSet.add(v); }
   }); }catch(e){}
+  // KIRMIZI ZORUNLU — kırmızı satırda: 0 VEYA notta CXX/iptal VEYA aynı no'lu kırmızı+işaretli blok
   const _satirIptalMi=(r,ri)=>{
-    if(_notIptal(r)) return true;
     if(!_ws) return false;
     if(!_satirKirmizi(ri)) return false;
-    if(_sifirVar(r)) return true;
+    if(_sifirVar(r)||_notIptal(r)) return true;
     const v=iRes>=0?String(r[iRes]||'').trim():'';
     return !!(v&&_iptalResnoSet.has(v)); };
   let iptalYolcu=0;
