@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v448 · 04.09.2026';
+const APP_VER='v449 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14826,12 +14826,11 @@ function _tdDocBas(baslik,E){ const g=_tdG()||{}; return `<div style="font-famil
 const _tdTh='border:1px solid #999;padding:3px 7px;text-align:left;font-size:9.5pt';
 const _tdTd='border:1px solid #999;padding:3px 7px;font-size:9.5pt';
 function _tdDocIsim(g,E){ const K=_tdKisiler(E);
-  // PİJAMA: aynı odayı paylaşanlar aynı renk bloğu — oda değerine göre dönüşümlü pastel
-  const ODA_PAL=['#FDE8D7','#DFF0FE','#DCFCE7','#FEF9C3','#EDE9FE','#FCE7F3','#E0F7F1','#F1F5D9'];
-  const odaRenk={}; let ri=0;
-  K.forEach(k=>{ const o=String(k.oda||'').trim(); if(o&&!(o in odaRenk)){ odaRenk[o]=ODA_PAL[ri%ODA_PAL.length]; ri++; } });
-  const stil=k=>{ const o=String(k.oda||'').trim(); return o?`background:${odaRenk[o]};-webkit-print-color-adjust:exact;print-color-adjust:exact;`:''; };
-  return _tdDocBas('İsim Listesi',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">#</th><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Oda</th></tr>${K.map((k,i)=>`<tr><td style="${_tdTd};${stil(k)}">${i+1}</td><td style="${_tdTd};${stil(k)}">${esc(k.resno)}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.oda)}</b></td></tr>`).join('')}</table><p style="font-size:9pt;margin-top:4mm">Toplam: ${K.length} kişi · aynı renk = aynı oda</p></div>`; }
+  // PİJAMA: voucher (oda grubu) değiştikçe bir dolgulu bir dolgusuz — aynı voucher'daki herkes aynı
+  const vDolgu={}; let tog=false, sonV=null;
+  K.forEach(k=>{ const v=String(k.resno||'').trim(); if(v!==sonV){ tog=!tog; sonV=v; } vDolgu[v+'#'+k.soyad+'#'+k.ad]=tog; });
+  const stil=k=>vDolgu[String(k.resno||'').trim()+'#'+k.soyad+'#'+k.ad]?'background:#E8EDF5;-webkit-print-color-adjust:exact;print-color-adjust:exact;':'';
+  return _tdDocBas('İsim Listesi',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">#</th><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Oda</th></tr>${K.map((k,i)=>`<tr><td style="${_tdTd};${stil(k)}">${i+1}</td><td style="${_tdTd};${stil(k)}">${esc(k.resno)}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.oda)}</b></td></tr>`).join('')}</table><p style="font-size:9pt;margin-top:4mm">Toplam: ${K.length} kişi · dolgu değişimi = ayrı voucher/oda</p></div>`; }
 function _tdDocOtel(g,E){
   const satir=[];
   (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
