@@ -2010,7 +2010,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v433 · 04.09.2026';
+const APP_VER='v434 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15555,7 +15555,7 @@ function renderOpsMutabakat(){
     <div style="font-size:.7rem;color:var(--muted);margin-bottom:8px">Transfer görevleri + tur araçları (tahsis / nokta görev) tek dökümde. Ücretler transfer görevlerinde buradan girilir; tur araçlarının fiyatı rehber dosyasından gelir. TUR ARACI'na yaptırılan transferler tahsise dahildir, ayrıca ücretlendirilmez.</div>`;
   if(!list.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt yok.</p>'; return; }
   let curF=null;
-  h+=`<div class="card" style="padding:.4rem .6rem"><table style="width:100%;border-collapse:collapse">
+  h+=`<div class="card" style="padding:.4rem .6rem;overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:900px">
     <tr><th style="${th}">Tarih</th><th style="${th}">Kaynak</th><th style="${th}">Görev/Tur</th><th style="${th}">Güzergâh</th><th style="${th}">Araç</th><th style="${th}">Pax</th><th style="${th}">Detay</th><th style="${th}">Gün</th><th style="${th}">Ücret</th></tr>`;
   const araToplam=F=>{
     const L=list.filter(x=>(x.firma||'—')===F);
