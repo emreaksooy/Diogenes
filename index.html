@@ -2031,7 +2031,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v435 · 04.09.2026';
+const APP_VER='v436 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7104,6 +7104,7 @@ function _ucakSablonAktar(rows,wb,sessiz){
   g.rows=(g.rows||[]).filter(x=>_isim(x));
   const bosTemiz=oncekiBos-g.rows.length;
   let n=0, atla=0; const degisimler=[]; let sonOda='';
+  const _dosyadaGorulen=new Set();
   rows.slice(hIdx+1).forEach((r,_ri)=>{
     if(!Array.isArray(r)) return;
     const p=_ucakSablonIsim(r[iAd]); if(!p) return;
@@ -7165,6 +7166,7 @@ function _ucakSablonAktar(rows,wb,sessiz){
     const hedefTok=adTok(p.soyad,p.ad);
     const mevcutY=(g.rows||[]).find(x=>adTok(x.soyad,x.ad)===hedefTok&&(!resno||!String(x.resno||'').trim()||String(x.resno||'').trim()===resno));
     if(mevcutY){
+      _dosyadaGorulen.add(mevcutY);
       mevcutY.soyad=p.soyad; mevcutY.ad=p.ad; if(p.dogum) mevcutY.dogum=p.dogum; if(resno) mevcutY.resno=resno;
       if(y.durum==='iptal'&&mevcutY.durum!=='iptal') mevcutY.durum='iptal'; // kırmızı/CXX işaretli — mevcut satır da iptale çekilir
       if(y.not&&!(mevcutY.not||'').includes(y.not)) mevcutY.not=((mevcutY.not?mevcutY.not+' · ':'')+y.not);
@@ -7177,8 +7179,26 @@ function _ucakSablonAktar(rows,wb,sessiz){
       if(y.dogum&&!mevcutY.dogum) mevcutY.dogum=y.dogum;
       atla++; return;
     }
+    _dosyadaGorulen.add(y);
     g.rows.push(y); n++;
   });
+  // YENİ LİSTEDE OLMAYAN eski satırlar: rezervasyonu İPTAL olanlar otomatik iptale çekilir
+  // (operatör iptal yolcuyu listeden tamamen çıkarır — uyarının kendiliğinden düşmesi için)
+  let listedenDusen=0, listedeYok=0;
+  try{
+    const iptV=new Set();
+    (getRezv()||[]).forEach(rz=>{ if(rz&&rz.durum==='iptal'&&rz.pkgId===_resPkgId&&rz.kalkis===_resKalkis){
+      if((rz.voucher||'').trim()) iptV.add(String(rz.voucher).trim());
+      if((rz.asilVoucher||'').trim()) iptV.add(String(rz.asilVoucher).trim());
+    } });
+    (g.rows||[]).forEach(x=>{
+      if(_dosyadaGorulen.has(x)||!_isim(x)) return;
+      if(_durumEff(x)==='iptal') return;
+      const v=String(x.resno||'').trim();
+      if(v&&[...iptV].some(iv=>_vEsit(v,iv))){ x.durum='iptal'; listedenDusen++; }
+      else listedeYok++;
+    });
+  }catch(e){}
   // Sayfa2: PNR maliyetleri → PNR defteri
   let pnrN=0;
   try{
@@ -7209,8 +7229,8 @@ function _ucakSablonAktar(rows,wb,sessiz){
     try{_hataKaydet&&_hataKaydet('UÇUŞ-DEĞİŞİM',degisimOzet);}catch(_e){}
     if(!sessiz) showConfirm('🛎','Uçuş Değişikliği Tespit Edildi',degisimOzet+'\n\nSatırlar güncellendi. Transfer atamalarını gözden geçir!','Tamam',()=>{});
   }
-  if(!sessiz) showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(iptalYolcu?' · 🚫 '+iptalYolcu+' yolcu İPTALE çekildi (kırmızı+0)':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
-  return {n,atla,degisim:degisimler.length,pnrN,degisimOzet,iptalYolcu};
+  if(!sessiz) showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(iptalYolcu?' · 🚫 '+iptalYolcu+' yolcu İPTALE çekildi (kırmızı+0)':'')+(listedenDusen?' · 🚫 '+listedenDusen+' yolcu İPTALE çekildi (iptal rezv, yeni listede yok)':'')+(listedeYok?' · ⚠ '+listedeYok+' eski satır yeni listede görünmüyor (kontrol et)':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
+  return {n,atla,degisim:degisimler.length,pnrN,degisimOzet,iptalYolcu,listedenDusen,listedeYok};
 }
 async function _aiSor(prompt,maxTok){
   try{ await _txEnsureCache(); }catch(e){} // anahtar diskten yüklenmemiş olabilir
