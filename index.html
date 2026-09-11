@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v444 · 04.09.2026';
+const APP_VER='v445 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14820,7 +14820,19 @@ function _tdDocOtel(g,E){
   (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz) return;
     (rz.kartlar||[]).filter(k=>k.tip!=='ulasim').forEach(k=>{ satir.push({resno:u.resno,otel:k.otel||('('+(k.sehir||'?')+' — otel seçilmedi)'),bas:k.baslangic||'',gece:k.gece||'',pans:k.pansiyon||''}); });
   });
-  return _tdDocBas('Otel Listesi',E)+(satir.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Otel</th><th style="${_tdTh}">Giriş</th><th style="${_tdTh}">Gece</th><th style="${_tdTh}">Pansiyon</th></tr>${satir.map(x=>`<tr><td style="${_tdTd}">${esc(x.resno)}</td><td style="${_tdTd}"><b>${esc(x.otel)}</b></td><td style="${_tdTd}">${_rzTrT(x.bas)}</td><td style="${_tdTd}">${esc(x.gece)}</td><td style="${_tdTd}">${esc(x.pans)}</td></tr>`).join('')}</table>`:'<p style="font-size:10pt">Açılım kaydı bulunamadı — rezervasyon modülünde açılım yapılmalı.</p>')+'</div>';
+  // aynı otel+giriş+gece+pansiyonda TÜM voucherlar kalıyorsa tek satır (TÜM GRUP)
+  const tumV=new Set(satir.map(x=>String(x.resno)));
+  const kmb=new Map();
+  satir.forEach(x=>{ const k=[x.otel,x.bas,x.gece,x.pans].join('|');
+    if(!kmb.has(k)) kmb.set(k,{otel:x.otel,bas:x.bas,gece:x.gece,pans:x.pans,vs:new Set()});
+    kmb.get(k).vs.add(String(x.resno)); });
+  const rows2=[];
+  [...kmb.values()].forEach(g2=>{
+    if(g2.vs.size>1&&g2.vs.size===tumV.size) rows2.push({resno:'TÜM GRUP ('+g2.vs.size+' voucher)',tum:true,otel:g2.otel,bas:g2.bas,gece:g2.gece,pans:g2.pans});
+    else [...g2.vs].forEach(v=>rows2.push({resno:v,otel:g2.otel,bas:g2.bas,gece:g2.gece,pans:g2.pans}));
+  });
+  rows2.sort((a,b)=>String(a.bas).localeCompare(String(b.bas))||String(a.otel).localeCompare(String(b.otel),'tr'));
+  return _tdDocBas('Otel Listesi',E)+(rows2.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Otel</th><th style="${_tdTh}">Giriş</th><th style="${_tdTh}">Gece</th><th style="${_tdTh}">Pansiyon</th></tr>${rows2.map(x=>`<tr><td style="${_tdTd}">${x.tum?'<b>'+esc(x.resno)+'</b>':esc(x.resno)}</td><td style="${_tdTd}"><b>${esc(x.otel)}</b></td><td style="${_tdTd}">${_rzTrT(x.bas)}</td><td style="${_tdTd}">${esc(x.gece)}</td><td style="${_tdTd}">${esc(x.pans)}</td></tr>`).join('')}</table>`:'<p style="font-size:10pt">Açılım kaydı bulunamadı — rezervasyon modülünde açılım yapılmalı.</p>')+'</div>';
 }
 function _tdUcusSatirlar(E){
   // her yolcunun uçuş bacaklarını yapılandırılmış topla (geliş 2 bacak, ara, dönüş 2 bacak)
