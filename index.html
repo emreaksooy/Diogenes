@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v442 · 04.09.2026';
+const APP_VER='v443 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14754,8 +14754,7 @@ function renderTurDosyasi(box){
       ['ucus','Uçuş Bilgileri','geliş/dönüş uçuşları'],
       ['cizelge','Paket Satış Çizelgesi','yolcu × paket boş tablo'],
       ['masraf','Masraf Formu','boş form — turda doldurulur'],
-      ['sozlesme','Rehber Sözleşmesi','şablon (Tanımlamalar > Şablonlar)'],
-      ['acente','Seyahat Acente Belgesi','şablon']];
+      ['sozlesme','Rehber Sözleşmesi','şablon (Tanımlamalar > Şablonlar)']];
     h+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:11px">
       ${belgeler.map(b=>`<div style="border:1.5px solid var(--border);border-radius:13px;padding:12px;display:flex;gap:10px;align-items:center">
         <div style="width:36px;height:36px;border-radius:10px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;color:var(--primary)"><svg class="ic"><use href="#i-file"/></svg></div>
@@ -14764,8 +14763,8 @@ function renderTurDosyasi(box){
         <button class="btn btn-outline btn-sm" onclick="tdPdf('${b[0]}')" title="Doğrudan .pdf dosyası indirir">📄 PDF</button>
       </div>`).join('')}
     </div>
-    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (8 belge)</button>
-    <button class="btn btn-outline" onclick="tdPdfHepsi()" title="8 belgeyi tek .pdf olarak indirir">📄 Tümünü PDF İndir</button>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (7 belge)</button>
+    <button class="btn btn-outline" onclick="tdPdfHepsi()" title="7 belgeyi tek .pdf olarak indirir">📄 Tümünü PDF İndir</button>
     <button class="btn btn-success" onclick="tdRehWhatsapp()" title="Dosyanın PDF'ini indirir + rehberin WhatsApp sohbetini hazır mesajla açar — PDF'i sohbete sürükle">📲 Rehbere WhatsApp</button>${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?(_kaseGet()?'<span style="font-size:.68rem;color:#166534;font-weight:700">✓ firma kaşesi tanımlı — sözleşmelere otomatik basılır (Tanımlamalar › Firma Kaşesi)</span>':'<span style="font-size:.68rem;color:var(--muted)">firma kaşesi: Tanımlamalar › Firma Kaşesi</span>'):''}</div>`;
   }
   // ═ HESAPLAŞMA ═
@@ -15073,7 +15072,7 @@ function tdPdf(tip){
 }
 function tdPdfHepsi(cb){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
-  const parcalar=[_tdDocSozlesme,_tdDocProgram,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocAcente,_tdDocMasraf,_tdDocCizelge].map(f=>f(g,E));
+  const parcalar=[_tdDocSozlesme,_tdDocProgram,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocMasraf,_tdDocCizelge].map(f=>f(g,E));
   _tdPdfIndir(parcalar,'rehber_dosyasi_'+_tdDosyaKok(E)+'.pdf',cb);
 }
 function tdRehWhatsapp(){
@@ -15089,10 +15088,10 @@ function tdRehWhatsapp(){
 }
 function tdYazdirHepsi(){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
-  const parcalar=[_tdDocSozlesme,_tdDocProgram,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocAcente,_tdDocMasraf,_tdDocCizelge].map(f=>'<div style="page-break-after:always">'+f(g,E)+'</div>');
+  const parcalar=[_tdDocSozlesme,_tdDocProgram,_tdDocIsim,_tdDocOtel,_tdDocUcus,_tdDocMasraf,_tdDocCizelge].map(f=>'<div style="page-break-after:always">'+f(g,E)+'</div>');
   document.getElementById('rzPrintBox').innerHTML=parcalar.join('');
   doPrint('rzPrintBox');
-  showToast('Rehber Dosyası hazırlandı — 8 belge','success');
+  showToast('Rehber Dosyası hazırlandı — 7 belge','success');
 }
 // ═══ Transfer Monitörü ═══
 let _trSel=new Set(), _trSort={col:null,dir:1}, _trFilt={};
