@@ -1563,6 +1563,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
   <div id="page-rezervasyon" class="page">
     <div id="rzVListe">
+      <div id="rzUyariBand"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap">
         <h2 style="font-size:1.05rem;margin-right:auto"><svg class="ic ic-lg"><use href="#i-users"/></svg> Rezervasyon</h2>
         <button class="btn btn-outline btn-sm" onclick="rzMailAc()"><svg class="ic"><use href="#i-download"/></svg> Mailden Aktar</button>
@@ -2031,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v438 · 04.09.2026';
+const APP_VER='v439 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9460,7 +9461,8 @@ function renderRezvListe(){
   });
   h+='</tbody>';
   if(!list.length) h+='<tbody><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
-  document.getElementById('rzLst').innerHTML=_rzIptalUyariHTML()+h;
+  document.getElementById('rzLst').innerHTML=h;
+  try{ const ub=document.getElementById('rzUyariBand'); if(ub) ub.innerHTML=_rzIptalUyariHTML(); }catch(e){}
   rzTopluBarGuncel();
   const bugun=new Date().toISOString().slice(0,10);
   const filtreliMi=list.length!==rez.length;
