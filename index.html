@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v456 · 04.09.2026';
+const APP_VER='v457 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -16736,48 +16736,65 @@ function _trTasimaciBloklar(sessiz){
 function _trKlasikRows(){
   const out=[];
   const _d1=_opsTrDate, _d2=_opsTrDate2||_opsTrDate;
-  // uçuş transferleri (görünür filtre/aralık) — AYNI GÖREVE atanmışlar monitördeki gibi TEK satır
+  const kisalt=t=>String(t||'').split('·')[0].trim();
+  // uçuş transferleri — aynı göreve atanmışlar TEK satır; operatörler/notlar birikir
   const birlesim=new Map(); let seq=0;
   (_trGorunur()||[]).forEach(x=>{
     const r=x.r, dh=x.dh||{};
-    const tip=r.tip==='G'?'ARR':(r.tip==='D'?'DEP':(r.tip==='TUR'?'TUR':'DOM'));
-    const saat=r.tip==='D'?(dh.saat||r.saat||''):(r.saat||'');
-    const yer=(r.not||'').trim()||String(r.nereden||'').split('·')[0].trim();
+    const tip=r.tip==='G'?'ARR':(r.tip==='D'?'DEP':((r.tip==='ARAD')?'DEP':(r.tip==='ARAG')?'ARR':'Günlük Tur'));
+    const depar=(dh&&dh.saat)||r.depar||r.saat||'';
     const ri=_trRehInfo(r);
     const gr=r.grup?_trGrupOf(r):{};
-    const kisi=ri.ad?(ri.ad+(ri.tel?' · '+ri.tel:'')):((gr.sofor||'')+(gr.stel?' · '+gr.stel:''));
-    const kayit={tarih:r.tarih,saat,yer,pax:+r.pax||0,arac:(gr.arac||'').split('(')[0].trim()||'',
-      tip,detay:tip==='TUR'?((r.nereden||'')+'-'+(r.nereye||'')):('APT-'+(String(r.bolge||'').toUpperCase()||String((r.rota||'').split('→').pop()||'').toUpperCase()||String(r.nereden||'').split('·')[0].trim())),kisi};
+    const kayit={tarih:r.tarih,depar,
+      yon:r.tip==='TUR'?((r.nereden||'')+' - '+(r.nereye||'')+' tur yürüyüşü'):(kisalt(r.nereden)+' - '+kisalt(r.nereye)),
+      pax:+r.pax||0,arac:(gr.arac||'').split('(')[0].trim()||'',tip,
+      kod:r.grup?(_trKodOf(r.grup)||''):'',
+      ops:(function(){ const S2=new Set([String(r.op||'').trim()].filter(Boolean));
+        try{ (r.vlist||[]).forEach(v=>{ const rz=(getRezv()||[]).find(z=>z.tip==='urun'&&z.pkgId===r.pkgId&&z.kalkis===r.kalkis&&(String(z.voucher||'').trim()===String(v).trim()||String(z.asilVoucher||'').trim()===String(v).trim()));
+          if(rz&&(rz.operator||'').trim()) S2.add(rz.operator.trim()); }); }catch(e){}
+        return S2; })(),
+      notlar:new Set([String(r.not||'').trim()].filter(Boolean)),
+      kaptan:[gr.sofor,gr.stel].filter(Boolean).join(' · '),
+      rehber:ri.ad?(ri.ad+(ri.tel?' · '+ri.tel:'')):''};
     const key=(r.grup&&r.tip!=='TUR')?(r.grup+'|'+r.tarih+'|'+tip):('tek'+(seq++));
     const m=birlesim.get(key);
-    if(m){ m.pax+=kayit.pax; if(kayit.saat&&(!m.saat||kayit.saat<m.saat)) m.saat=kayit.saat; if(!m.yer&&kayit.yer) m.yer=kayit.yer; }
+    if(m){ m.pax+=kayit.pax; if(kayit.depar&&(!m.depar||kayit.depar<m.depar)) m.depar=kayit.depar;
+      kayit.ops.forEach(o=>m.ops.add(o)); kayit.notlar.forEach(n=>m.notlar.add(n)); }
     else birlesim.set(key,kayit);
   });
   birlesim.forEach(v=>out.push(v));
-  // tahsisler: aralıkla kesişen HER GÜN bir RENT satırı
-  try{ _thsListe('1900-01-01').forEach(t=>{
-    const ab=t.bas, abit=t.bit||t.bas; if(!ab||ab>_d2||abit<_d1) return;
-    const gunT=(_isoDiff(ab,abit)||0)+1;
-    for(let d=ab; d<=abit; d=_isoAdd(d,1)){
-      if(d<_d1||d>_d2) continue;
-      const kisi=t.reh?(t.reh+(_rehTelBul(t.reh)?' · '+_rehTelBul(t.reh):'')):((t.sofor||'')+(t.stel?' · '+t.stel:''));
-      out.push({tarih:d,saat:'',yer:(d===ab?(t.basYer||''):'')||t.gorev||'',pax:+t.pax||0,
-        arac:t.arac.split('·')[0].trim(),tip:'RENT',detay:'RENT'+gunT,kisi});
-    }
-  }); }catch(e){}
-  out.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih))||String(a.saat).localeCompare(String(b.saat)));
+  // tahsisler: aralıkla kesişen her gün bir satır
+  try{
+    const Sg=getOpsGrup().gruplar||{};
+    _thsListe('1900-01-01').forEach(t=>{
+      const ab=t.bas, abit=t.bit||t.bas; if(!ab||ab>_d2||abit<_d1) return;
+      const grpNo=(Sg[t.gid]||{}).no||'';
+      for(let d=ab; d<=abit; d=_isoAdd(d,1)){
+        if(d<_d1||d>_d2) continue;
+        out.push({tarih:d,depar:'',
+          yon:[t.gorev,(d===ab?t.basYer:'' )].filter(Boolean).join(' · ')||t.prog||t.tur,
+          pax:+t.pax||0,arac:t.arac.split('·')[0].trim(),tip:'Tahsis',
+          kod:grpNo||t.tur,ops:new Set(),notlar:new Set([t.not].filter(Boolean)),
+          kaptan:[t.sofor,t.stel].filter(Boolean).join(' · '),
+          rehber:t.reh?(t.reh+(_rehTelBul(t.reh)?' · '+_rehTelBul(t.reh):'')):''});
+      }
+    });
+  }catch(e){}
+  out.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih))||String(a.depar).localeCompare(String(b.depar)));
   return out;
 }
 function _trKlasikExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const L=_trKlasikRows();
   if(!L.length){ showToast('Bu aralıkta iş yok','error'); return; }
-  const aoa=L.map((x,i)=>[i+1,_fmtDateTR(x.tarih),'OPERASYON','DIOGENES TRAVEL',x.saat,x.yer,x.pax||'',x.arac,x.tip,x.detay,'','','( )-  -  -',x.kisi||'']);
+  const aoa=[['İŞ','TARİH','DEPARTMAN','FİRMA','DEPAR','İŞİN YÖNÜ','KİŞİ','ARAÇ','TİP','İŞ KODU','OPERATÖRLER','NOTLAR','KAPTAN','REHBER']];
+  L.forEach((x,i)=>aoa.push([i+1,_fmtDateTR(x.tarih),'OPERASYON','DIOGENES TRAVEL',x.depar||'',x.yon||'',x.pax||'',x.arac||'',x.tip,x.kod||'',[...x.ops].join(' + '),[...x.notlar].join(' · '),x.kaptan||'',x.rehber||'']));
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[4,11,12,15,7,20,5,8,7,13,7,7,11,34].map(w2=>({wch:w2}));
+  ws['!cols']=[4,11,12,16,7,30,5,8,10,10,18,22,24,30].map(w2=>({wch:w2}));
   try{
     const nC=14;
-    for(let r2=0;r2<aoa.length;r2++) for(let c=0;c<nC;c++) _xsSet(ws,r2,c,{
+    _xsSatirStil(ws,0,nC,{font:{bold:true,sz:9,color:{rgb:'FFFFFFFF'}},fill:{fgColor:{rgb:'FF1E3A5F'}},border:_xsB('FFFFFFFF'),alignment:{vertical:'center',horizontal:'center'}});
+    for(let r2=1;r2<aoa.length;r2++) for(let c=0;c<nC;c++) _xsSet(ws,r2,c,{
       font:{sz:9,name:'Arial'},
       fill:{fgColor:{rgb:'FFAFEEEE'}},
       border:_xsB('FF555555'),
