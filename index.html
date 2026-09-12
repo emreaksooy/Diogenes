@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v452 · 04.09.2026';
+const APP_VER='v453 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -16482,7 +16482,8 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
     <input id="trDepar" placeholder="Toplu depar (boş=oto)" style="width:150px">
     <input id="trGuzergah" placeholder="Güzergâh notu" style="width:150px">
     <input id="trSecNot" placeholder="Not (iç hat, T1…)" style="width:140px">
-    <button class="btn btn-s" onclick="_trAtama()">Birleştir & Ata</button>
+    <button class="btn btn-s" onclick="_trAtama(true)" title="Seçilenler TEK görev olur — monitörde dıştan tek satır, tek araç">🔗 Birleştir & Ata</button>
+    ${_trSel.size>1?`<button class="btn btn-s" style="background:#0369a1" onclick="_trAtama(false)" title="Her seçili transfer AYRI görev olur — aynı araç bilgisi kopyalanır, satırlar birleşmez">⚟ Ayrı Ayrı Ata</button>`:''}
     <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trNotToplu()" title="Araç atamadan yalnız not yazar — satırın Not kolonuna işlenir">📝 Sadece Notu Kaydet</button>
     <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trSecTemizle()">Vazgeç</button>`;
   _trAracDoldur();
@@ -16490,21 +16491,32 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
     if(el&&!el.value&&(sr.rehberAd||'').trim()){ const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(sr.rehberAd)); if(o) el.value=o.value||o.text; } } }catch(e){}
 }
 function _trKapKontrol(){ const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const L=_trFiloList((document.getElementById('trFirma')||{}).value); const a=L.find(x=>x.id===(document.getElementById('trArac')||{}).value); const a2=L.find(x=>x.id===(document.getElementById('trArac2')||{}).value); const kap=(a?a.kap:0)+(a2?a2.kap:0); const el=document.getElementById('trSecPax'); if(el){ el.textContent=pax+' pax'+(a?(a.tahsis?' / tur aracı':' / '+kap+' koltuk'):''); el.classList.toggle('asim',!!a&&!a.tahsis&&pax>kap); } }
-function _trAtama(){ if(!_trSel.size) return; const firmaSec=(document.getElementById('trFirma')||{}).value; const L=_trFiloList(firmaSec); const a=L.find(x=>x.id===(document.getElementById('trArac')||{}).value); if(!a){ showToast('Araç seç','error'); return; } const a2=L.find(x=>x.id===(document.getElementById('trArac2')||{}).value); const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const kap=(a.kap||0)+(a2?a2.kap:0); if(!a.tahsis&&pax>kap&&!confirm(pax+' pax, '+kap+' koltuğa sığmıyor. Yine de atansın mı?')) return; const dep=_saatNorm((document.getElementById('trDepar')||{}).value.trim()); if(dep&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(dep)){ showToast('Depar SS:DD olmalı (ör. 06:30)','error'); return; }
-  const Tr=getTransfer(); const kod='A'+String(Tr.seq||1).padStart(2,'0'); Tr.seq=(Tr.seq||1)+1; Tr.gruplar=Tr.gruplar||{};
-  Tr.gruplar[kod]={tip:'nokta',rehber:(document.getElementById('trRehber')||{}).value,
-    arac:a.ad+(a.kap?' ('+a.kap+')':''),arac2:a2?(a2.ad+(a2.kap?' ('+a2.kap+')':'')):'',
-    firma:firmaSec||a.firma||'',sofor:[a.sofor,a2&&a2.sofor].filter(Boolean).join(' / '),stel:[a.stel,a2&&a2.stel].filter(Boolean).join(' / '),
-    guzergah:(document.getElementById('trGuzergah')||{}).value,ts:Date.now(),tahsis:!!a.tahsis,
-    tarifeSec:(document.getElementById('trTarife')||{}).value||'',
-    hizmetAd:(function(){ const el=document.getElementById('trTarife'); return (el&&el.selectedIndex>0)?el.options[el.selectedIndex].text:''; })()}; Tr.sat=Tr.sat||{};
-  Tr.vsat=Tr.vsat||{};
-  rows.forEach(r=>{
+function _trAtama(birlesik){ if(birlesik===undefined) birlesik=true;
+  if(!_trSel.size) return; const firmaSec=(document.getElementById('trFirma')||{}).value; const L=_trFiloList(firmaSec); const a=L.find(x=>x.id===(document.getElementById('trArac')||{}).value); if(!a){ showToast('Araç seç','error'); return; } const a2=L.find(x=>x.id===(document.getElementById('trArac2')||{}).value); const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const kap=(a.kap||0)+(a2?a2.kap:0);
+  if(!a.tahsis){
+    if(birlesik&&pax>kap&&!confirm(pax+' pax, '+kap+' koltuğa sığmıyor. Yine de atansın mı?')) return;
+    if(!birlesik){ const asan=rows.filter(r=>(+r.pax||0)>kap); if(asan.length&&!confirm(asan.length+' transferde pax '+kap+' koltuğu aşıyor. Yine de atansın mı?')) return; }
+  }
+  const dep=_saatNorm((document.getElementById('trDepar')||{}).value.trim()); if(dep&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(dep)){ showToast('Depar SS:DD olmalı (ör. 06:30)','error'); return; }
+  const Tr=getTransfer(); Tr.gruplar=Tr.gruplar||{}; Tr.sat=Tr.sat||{}; Tr.vsat=Tr.vsat||{};
+  const grupYap=()=>{ const kod='A'+String(Tr.seq||1).padStart(2,'0'); Tr.seq=(Tr.seq||1)+1;
+    Tr.gruplar[kod]={tip:'nokta',rehber:(document.getElementById('trRehber')||{}).value,
+      arac:a.ad+(a.kap?' ('+a.kap+')':''),arac2:a2?(a2.ad+(a2.kap?' ('+a2.kap+')':'')):'',
+      firma:firmaSec||a.firma||'',sofor:[a.sofor,a2&&a2.sofor].filter(Boolean).join(' / '),stel:[a.stel,a2&&a2.stel].filter(Boolean).join(' / '),
+      guzergah:(document.getElementById('trGuzergah')||{}).value,ts:Date.now(),tahsis:!!a.tahsis,
+      tarifeSec:(document.getElementById('trTarife')||{}).value||'',
+      hizmetAd:(function(){ const el=document.getElementById('trTarife'); return (el&&el.selectedIndex>0)?el.options[el.selectedIndex].text:''; })()};
+    return kod; };
+  const bagla=(r,kod)=>{
     const patch={grup:kod,onay:false}; if(dep){ patch.depar=dep; patch.deparMan=true; }
     if((r.vlist||[]).length){ r.vlist.forEach(v=>{ const k=r.pkgId+'|'+r.kalkis+'|'+r.vseg+'|'+v; Tr.vsat[k]=Object.assign({},Tr.vsat[k]||{},patch); }); delete Tr.sat[r.id]; }
     else Tr.sat[r.id]=Object.assign({},Tr.sat[r.id]||{},patch);
-  });
-  setTransfer(Tr); _trSel.clear(); window._trKod=null; renderOpsTransfer(); showToast(_trKodOf(kod)+' oluşturuldu — '+rows.length+' transfer, '+pax+' pax','success'); }
+  };
+  let ilkKod='';
+  if(birlesik){ const kod=grupYap(); ilkKod=kod; rows.forEach(r=>bagla(r,kod)); }
+  else rows.forEach(r=>{ const kod=grupYap(); if(!ilkKod) ilkKod=kod; bagla(r,kod); });
+  setTransfer(Tr); _trSel.clear(); window._trKod=null; renderOpsTransfer();
+  showToast(birlesik?(_trKodOf(ilkKod)+' oluşturuldu — '+rows.length+' transfer TEK görevde, '+pax+' pax'):(rows.length+' AYRI görev oluşturuldu — satırlar birleşmedi'),'success',6000); }
 function _trNotToplu(){
   if(!_trSel.size) return;
   const v=((document.getElementById('trSecNot')||{}).value||'').trim();
