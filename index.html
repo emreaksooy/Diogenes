@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v453 · 04.09.2026';
+const APP_VER='v454 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15205,8 +15205,9 @@ function _trGenRows(){
   } }); }catch(e){}
   const merge=(o,vlist)=>{ const p=(o.id||'').split('|'); o.pkgId=p[0]||''; o.kalkis=p[1]||''; o.opsGrupId=(p[0]||'')+'|'+(p[1]||'');
     o.vlist=vlist||[]; o.vseg=p[2]==='TUR'?('TUR:'+(p[3]||'')):p[2];
+    const uk='|u:'+String(o.ucus||''); // aynı voucher farklı uçuşlarda olabilir — kayıt uçuş bazında ayrışır
     let m=null;
-    for(const v of o.vlist){ const e=vsat[o.pkgId+'|'+o.kalkis+'|'+o.vseg+'|'+v]; if(e){ m=e; break; } }
+    for(const v of o.vlist){ const b=o.pkgId+'|'+o.kalkis+'|'+o.vseg+'|'+v; const e=vsat[b+uk]||vsat[b]; if(e){ m=e; break; } }
     if(!m) m=sat[o.id]||{};
     o.grup=m.grup||null; o.onay=!!m.onay; o.depar=m.depar||''; o.deparMan=!!m.deparMan; o.not=m.not!=null?m.not:''; return o; };
   getReservations().forEach(g=>{
@@ -15268,7 +15269,10 @@ function _trSatKaydet(id,patch){
   const T=getTransfer(); T.sat=T.sat||{}; T.vsat=T.vsat||{};
   const r=_trGenRows().find(x=>x.id===id);
   if(r&&(r.vlist||[]).length){
-    r.vlist.forEach(v=>{ const k=r.pkgId+'|'+r.kalkis+'|'+r.vseg+'|'+v; T.vsat[k]=Object.assign({},T.vsat[k]||{},patch); });
+    const uk='|u:'+String(r.ucus||'');
+    r.vlist.forEach(v=>{ const b=r.pkgId+'|'+r.kalkis+'|'+r.vseg+'|'+v;
+      T.vsat[b+uk]=Object.assign({},T.vsat[b]||{},T.vsat[b+uk]||{},patch);
+      delete T.vsat[b]; });
     delete T.sat[id];
   } else T.sat[id]=Object.assign({},T.sat[id]||{},patch);
   setTransfer(T);
@@ -16509,7 +16513,11 @@ function _trAtama(birlesik){ if(birlesik===undefined) birlesik=true;
     return kod; };
   const bagla=(r,kod)=>{
     const patch={grup:kod,onay:false}; if(dep){ patch.depar=dep; patch.deparMan=true; }
-    if((r.vlist||[]).length){ r.vlist.forEach(v=>{ const k=r.pkgId+'|'+r.kalkis+'|'+r.vseg+'|'+v; Tr.vsat[k]=Object.assign({},Tr.vsat[k]||{},patch); }); delete Tr.sat[r.id]; }
+    if((r.vlist||[]).length){ const uk='|u:'+String(r.ucus||'');
+      r.vlist.forEach(v=>{ const b=r.pkgId+'|'+r.kalkis+'|'+r.vseg+'|'+v;
+        Tr.vsat[b+uk]=Object.assign({},Tr.vsat[b]||{},Tr.vsat[b+uk]||{},patch);
+        delete Tr.vsat[b]; });
+      delete Tr.sat[r.id]; }
     else Tr.sat[r.id]=Object.assign({},Tr.sat[r.id]||{},patch);
   };
   let ilkKod='';
