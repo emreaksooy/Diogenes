@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v457 · 04.09.2026';
+const APP_VER='v458 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -16745,8 +16745,14 @@ function _trKlasikRows(){
     const depar=(dh&&dh.saat)||r.depar||r.saat||'';
     const ri=_trRehInfo(r);
     const gr=r.grup?_trGrupOf(r):{};
+    const _bolgeKod=(function(){
+      if(r.tip==='TUR'||!(r.bolge||'').trim()) return '';
+      const B=String(r.bolge).toUpperCase();
+      if(r.tip==='G'||r.tip==='ARAG'){ const ap=kisalt(r.nereden).toUpperCase(); return ap?(ap+'-'+B):''; }
+      const ap=kisalt(r.nereye).toUpperCase(); return ap?(B+'-'+ap):'';
+    })();
     const kayit={tarih:r.tarih,depar,
-      yon:r.tip==='TUR'?((r.nereden||'')+' - '+(r.nereye||'')+' tur yürüyüşü'):(kisalt(r.nereden)+' - '+kisalt(r.nereye)),
+      yon:(r.tip==='TUR'?((r.nereden||'')+' - '+(r.nereye||'')+' tur yürüyüşü'):(kisalt(r.nereden)+' - '+kisalt(r.nereye)))+(_bolgeKod?' ('+_bolgeKod+')':''),
       pax:+r.pax||0,arac:(gr.arac||'').split('(')[0].trim()||'',tip,
       kod:r.grup?(_trKodOf(r.grup)||''):'',
       ops:(function(){ const S2=new Set([String(r.op||'').trim()].filter(Boolean));
@@ -16769,10 +16775,13 @@ function _trKlasikRows(){
     _thsListe('1900-01-01').forEach(t=>{
       const ab=t.bas, abit=t.bit||t.bas; if(!ab||ab>_d2||abit<_d1) return;
       const grpNo=(Sg[t.gid]||{}).no||'';
+      const _gunT=(_isoDiff(ab,abit)||0)+1;
       for(let d=ab; d<=abit; d=_isoAdd(d,1)){
         if(d<_d1||d>_d2) continue;
+        const _gunNo=(_isoDiff(ab,d)||0)+1;
         out.push({tarih:d,depar:'',
-          yon:[t.gorev,(d===ab?t.basYer:'' )].filter(Boolean).join(' · ')||t.prog||t.tur,
+          yon:([t.gorev,(d===ab?t.basYer:'' )].filter(Boolean).join(' · ')||t.prog||t.tur)
+            +' · '+_fmtDateTR(ab).slice(0,5)+'–'+_fmtDateTR(abit).slice(0,5)+' · '+_gunNo+'/'+_gunT+'. gün',
           pax:+t.pax||0,arac:t.arac.split('·')[0].trim(),tip:'Tahsis',
           kod:grpNo||t.tur,ops:new Set(),notlar:new Set([t.not].filter(Boolean)),
           kaptan:[t.sofor,t.stel].filter(Boolean).join(' · '),
