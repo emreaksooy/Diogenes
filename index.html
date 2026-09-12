@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v454 · 04.09.2026';
+const APP_VER='v455 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15840,6 +15840,7 @@ function renderOpsTransfer(){
       <span style="font-weight:700;margin-left:6px">${_opsTrDate2?esc(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):esc(_trGunAd(_opsTrDate))}</span>
       <span style="color:var(--muted);font-size:.76rem">· ${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</span>
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="trGonderimAc()" title="Firmaya toplu iş paketi: aralıktaki transferler + tahsisler">📤 Firmaya İş Gönder</button>
+      <button class="btn btn-outline btn-sm" onclick="_trKlasikExcel()" title="Turkuaz satırlı klasik günlük iş listesi — aralıktaki transferler (ARR/DEP) + tahsis günleri (RENT)">📗 Klasik İş Listesi</button>
       <button class="btn btn-outline btn-sm" onclick="_trTasimaciExcel()" title="Seçili firmaya özel, yolcu isimli GELİŞ/DÖNÜŞ transfer listesi — üst filtreden firma seç">🚌 Taşımacı Excel</button>
       <button class="btn btn-outline btn-sm" onclick="_trTasimaciPdf()" title="Aynı listenin yazdırılabilir hali">🚌 Taşımacı PDF</button>
       <button class="btn btn-outline btn-sm" onclick="_trWhatsapp()" title="Taşımacı Excel'ini indirir + firmanın WhatsApp sohbetini hazır mesajla açar — dosyayı sohbete sürüklemen yeterli">📲 WhatsApp</button>
@@ -16731,6 +16732,55 @@ function _trTasimaciBloklar(sessiz){
   return {firma,bolumler,tahsisler,isIds:list.map(x=>x.r.id).concat(tahsisler.map(t=>t.key)),
     trN:list.length,trPax:list.reduce((t,x)=>t+(+x.r.pax||0),0),
     donem:_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate)};
+}
+function _trKlasikRows(){
+  const out=[];
+  const _d1=_opsTrDate, _d2=_opsTrDate2||_opsTrDate;
+  // uçuş transferleri (görünür filtre/aralık)
+  (_trGorunur()||[]).forEach(x=>{
+    const r=x.r, dh=x.dh||{};
+    const tip=r.tip==='G'?'ARR':(r.tip==='D'?'DEP':(r.tip==='TUR'?'TUR':'DOM'));
+    const saat=r.tip==='D'?(dh.saat||r.saat||''):(r.saat||'');
+    const yer=(r.not||'').trim()||String(r.tip==='G'?(r.nereden||''):(r.nereden||'')).split('·')[0].trim();
+    const ri=_trRehInfo(r);
+    const gr=r.grup?_trGrupOf(r):{};
+    const kisi=ri.ad?(ri.ad+(ri.tel?' · '+ri.tel:'')):((gr.sofor||'')+(gr.stel?' · '+gr.stel:''));
+    out.push({tarih:r.tarih,saat,yer,pax:+r.pax||0,arac:(gr.arac||'').split('(')[0].trim()||'',
+      tip,detay:tip==='TUR'?((r.nereden||'')+'-'+(r.nereye||'')):('APT-'+(String(r.bolge||'').toUpperCase()||String((r.rota||'').split('→').pop()||'').toUpperCase()||String(r.nereden||'').split('·')[0].trim())),kisi});
+  });
+  // tahsisler: aralıkla kesişen HER GÜN bir RENT satırı
+  try{ _thsListe('1900-01-01').forEach(t=>{
+    const ab=t.bas, abit=t.bit||t.bas; if(!ab||ab>_d2||abit<_d1) return;
+    const gunT=(_isoDiff(ab,abit)||0)+1;
+    for(let d=ab; d<=abit; d=_isoAdd(d,1)){
+      if(d<_d1||d>_d2) continue;
+      const kisi=t.reh?(t.reh+(_rehTelBul(t.reh)?' · '+_rehTelBul(t.reh):'')):((t.sofor||'')+(t.stel?' · '+t.stel:''));
+      out.push({tarih:d,saat:'',yer:(d===ab?(t.basYer||''):'')||t.gorev||'',pax:+t.pax||0,
+        arac:t.arac.split('·')[0].trim(),tip:'RENT',detay:'RENT'+gunT,kisi});
+    }
+  }); }catch(e){}
+  out.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih))||String(a.saat).localeCompare(String(b.saat)));
+  return out;
+}
+function _trKlasikExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const L=_trKlasikRows();
+  if(!L.length){ showToast('Bu aralıkta iş yok','error'); return; }
+  const aoa=L.map((x,i)=>[i+1,_fmtDateTR(x.tarih),'OPERASYON','DIOGENES TRAVEL',x.saat,x.yer,x.pax||'',x.arac,x.tip,x.detay,'','','( )-  -  -',x.kisi||'']);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[4,11,12,15,7,20,5,8,7,13,7,7,11,34].map(w2=>({wch:w2}));
+  try{
+    const nC=14;
+    for(let r2=0;r2<aoa.length;r2++) for(let c=0;c<nC;c++) _xsSet(ws,r2,c,{
+      font:{sz:9,name:'Arial'},
+      fill:{fgColor:{rgb:'FFAFEEEE'}},
+      border:_xsB('FF555555'),
+      alignment:{vertical:'center',horizontal:(c===0||c===4||c===6||c===8)?'center':'left'}});
+  }catch(e){}
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Is Listesi');
+  const ad='is_listesi_'+(_opsTrDate||'')+(_opsTrDate2?('_'+_opsTrDate2):'')+'.xlsx';
+  XLSX.writeFile(wb,ad);
+  showToast('Klasik iş listesi indirildi: '+L.length+' satır','success');
 }
 function _trTasimaciExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
