@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v458 · 04.09.2026';
+const APP_VER='v459 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15973,7 +15973,36 @@ function _thsRota(pkgId){
 function _thsTahsisleri(gid){
   try{ const g=(getOpsGrup().gruplar||{})[gid]; return g?(g.araclar||[]).filter(a=>a.tip==='tahsis'):[]; }catch(e){ return []; }
 }
-function thsFormAc(enc){ window._thsAcik=(window._thsAcik===enc)?'':enc; renderOpsTahsis(); }
+function thsFirmaDoldur(){
+  const fAd=((document.getElementById('ths_firma')||document.getElementById('the_firma')||{}).value||'').trim();
+  const fk=_afFirmaBul(fAd);
+  const firmalar=getTanimlar().aracFirmalari||[];
+  const tipler=(fk&&(fk.aracTipleri||[]).length)?fk.aracTipleri:_afTiplerAll();
+  const plakalar=fk?(fk.filo||[]):firmalar.flatMap(f2=>f2.filo||[]);
+  const araclar=plakalar.map(a2=>({ad:[a2.tip,a2.koltuk&&(a2.koltuk+' koltuk')].filter(Boolean).join(' · '),plaka:a2.plaka}));
+  const doldur=(id2,html)=>{ const el=document.getElementById(id2); if(el) el.innerHTML=html; };
+  doldur('thsTipL',tipler.map(t2=>`<option value="${esc(t2.kod||'')}">${esc(t2.ad||'')}${t2.koltuk?' · '+esc(String(t2.koltuk)):''}</option>`).join(''));
+  doldur('thsPlakaL',plakalar.map(a2=>`<option value="${esc(a2.plaka||'')}">${a2.tip?esc(a2.tip):''}${a2.koltuk?' · '+esc(String(a2.koltuk)):''}${a2.sofor?' · '+esc(a2.sofor):''}</option>`).join(''));
+  doldur('thsAracL',araclar.filter(x=>x.ad).map(x=>`<option value="${esc(x.ad)}">${esc(x.plaka||'')}</option>`).join(''));
+}
+function thsPlakaSecildi(){
+  const inp=document.getElementById('ths_plaka')||document.getElementById('the_plaka'); if(!inp) return;
+  const p=String(inp.value||'').trim().toUpperCase(); if(!p) return;
+  const fm=(getTanimlar().aracFirmalari||[]).find(x=>(x.filo||[]).some(a2=>String(a2.plaka||'').toUpperCase()===p));
+  if(!fm) return;
+  const a2=fm.filo.find(x=>String(x.plaka||'').toUpperCase()===p);
+  const set=(id2,v)=>{ const el=document.getElementById(id2); if(el&&!el.value) el.value=v; };
+  set('ths_firma',fm.ad||''); set('the_firma',fm.ad||'');
+  if(a2){
+    set('ths_arac',[a2.tip,a2.koltuk&&(a2.koltuk+' koltuk')].filter(Boolean).join(' · '));
+    set('the_arac',[a2.tip,a2.koltuk&&(a2.koltuk+' koltuk')].filter(Boolean).join(' · '));
+    set('ths_tip',String(a2.tip||'').toUpperCase()); set('the_tip',String(a2.tip||'').toUpperCase());
+    set('ths_sofor',a2.sofor||''); set('the_sofor',a2.sofor||'');
+    set('ths_stel',a2.stel||''); set('the_stel',a2.stel||'');
+  }
+  thsFirmaDoldur();
+}
+function thsFormAc(enc){ window._thsAcik=(window._thsAcik===enc)?'':enc; renderOpsTahsis(); try{ thsFirmaDoldur(); }catch(e){} }
 function thsKaydet(enc){
   const p=enc.split('|'); const t={pkgId:p[0],kalkis:p[1],birlesikGrupId:p[2]||''};
   let gid=_thsGidBul(t);
@@ -16002,7 +16031,7 @@ function thsKaydet(enc){
   renderOpsTahsis();
   showToast('Tahsis atandı — 📤 İş Gönderimi ile firmaya iletebilirsin','success',5000);
 }
-function thsEditAc(gid,aid){ const k=gid+'|'+aid; window._thsEdit=(window._thsEdit===k)?'':k; renderOpsTahsis(); }
+function thsEditAc(gid,aid){ const k=gid+'|'+aid; window._thsEdit=(window._thsEdit===k)?'':k; renderOpsTahsis(); try{ thsFirmaDoldur(); }catch(e){} }
 function thsGuncelle(gid,aid){
   const S=getOpsGrup(); const g=(S.gruplar||{})[gid]; if(!g) return;
   const a=(g.araclar||[]).find(x=>x.id===aid); if(!a) return;
@@ -16203,7 +16232,10 @@ function renderOpsTahsis(){
         const a=((getOpsGrup().gruplar||{})[t.gid]||{araclar:[]}).araclar.find(x=>x.id===t.aid)||{};
         const li=(lbl,id2,val,w2,ph)=>`<label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">${lbl}<input id="the_${id2}" value="${esc(val||'')}" ${ph?`placeholder="${ph}"`:''} style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:${w2}px"></label>`;
         return `<tr><td colspan="10" style="background:#fffbeb;border-bottom:2px solid #fde68a;padding:10px 12px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
-          ${li('FİRMA','firma',a.firma,130)}${li('ARAÇ','arac',a.ad,110,'Travego 46+1')}${li('TİP','tip',a.arTip,70)}${li('PLAKA','plaka',a.plaka,100)}${li('ŞOFÖR','sofor',a.sofor,110)}${li('ŞOFÖR TEL','stel',a.stel,110)}
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">FİRMA<input id="the_firma" value="${esc(a.firma||'')}" list="thsFirmaL2" onchange="thsFirmaDoldur()" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:130px"><datalist id="thsFirmaL2">${[...new Set((getTanimlar().aracFirmalari||[]).map(f2=>f2.ad||'').filter(Boolean))].map(f2=>`<option value="${esc(f2)}">`).join('')}</datalist></label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">ARAÇ<input id="the_arac" value="${esc(a.ad||'')}" list="thsAracL" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:110px"><datalist id="thsAracL"></datalist></label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">TİP<input id="the_tip" value="${esc(a.arTip||'')}" list="thsTipL" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:70px;text-transform:uppercase"><datalist id="thsTipL"></datalist></label>
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">PLAKA<input id="the_plaka" value="${esc(a.plaka||'')}" list="thsPlakaL" onchange="thsPlakaSecildi()" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:100px;text-transform:uppercase"><datalist id="thsPlakaL"></datalist></label>${li('ŞOFÖR','sofor',a.sofor,110)}${li('ŞOFÖR TEL','stel',a.stel,110)}
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ<input id="the_bas" type="date" value="${esc(_pdate(a.bas)||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem"></label>
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BİTİŞ<input id="the_bit" type="date" value="${esc(_pdate(a.bit)||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem"></label>
           ${li('BAŞLANGIÇ YERİ','basyer',a.basYer,120,'AYT / otel adı')}${li('TUR / GÖREV','gorev',a.gorev,130)}${li('PROGRAM','program',a.program,180)}${li('FİYAT','fiyat',a.fiyat,70)}${li('NOT','not',a.not,110)}
@@ -16234,10 +16266,10 @@ function renderOpsTahsis(){
       if(acik){
         h+=`<tr><td colspan="7" style="background:#f0f9ff;border-bottom:2px solid #bae6fd;padding:10px 12px">
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
-            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">FİRMA<input id="ths_firma" list="thsFirmaL" style="${inp};min-width:130px"><datalist id="thsFirmaL">${firmalar.map(f=>`<option value="${esc(f)}">`).join('')}</datalist></label>
-            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">ARAÇ<input id="ths_arac" placeholder="Travego 46+1" style="${inp};min-width:110px"></label>
-            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">TİP<input id="ths_tip" placeholder="MINI" style="${inp};width:76px;text-transform:uppercase"></label>
-            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">PLAKA<input id="ths_plaka" style="${inp};width:100px;text-transform:uppercase"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">FİRMA<input id="ths_firma" list="thsFirmaL" onchange="thsFirmaDoldur()" oninput="thsFirmaDoldur()" style="${inp};min-width:130px"><datalist id="thsFirmaL">${firmalar.map(f=>`<option value="${esc(f)}">`).join('')}</datalist></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">ARAÇ<input id="ths_arac" list="thsAracL" placeholder="Travego 46+1" style="${inp};min-width:110px"><datalist id="thsAracL"></datalist></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">TİP<input id="ths_tip" list="thsTipL" placeholder="MINI" style="${inp};width:76px;text-transform:uppercase"><datalist id="thsTipL"></datalist></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">PLAKA<input id="ths_plaka" list="thsPlakaL" onchange="thsPlakaSecildi()" style="${inp};width:100px;text-transform:uppercase"><datalist id="thsPlakaL"></datalist></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">ŞOFÖR<input id="ths_sofor" style="${inp};width:110px"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">ŞOFÖR TEL<input id="ths_stel" style="${inp};width:110px"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ<input id="ths_bas" type="date" value="${esc(t.kalkis)}" style="${inp}"></label>
