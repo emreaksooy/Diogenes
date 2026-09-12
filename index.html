@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v455 · 04.09.2026';
+const APP_VER='v456 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -16736,18 +16736,24 @@ function _trTasimaciBloklar(sessiz){
 function _trKlasikRows(){
   const out=[];
   const _d1=_opsTrDate, _d2=_opsTrDate2||_opsTrDate;
-  // uçuş transferleri (görünür filtre/aralık)
+  // uçuş transferleri (görünür filtre/aralık) — AYNI GÖREVE atanmışlar monitördeki gibi TEK satır
+  const birlesim=new Map(); let seq=0;
   (_trGorunur()||[]).forEach(x=>{
     const r=x.r, dh=x.dh||{};
     const tip=r.tip==='G'?'ARR':(r.tip==='D'?'DEP':(r.tip==='TUR'?'TUR':'DOM'));
     const saat=r.tip==='D'?(dh.saat||r.saat||''):(r.saat||'');
-    const yer=(r.not||'').trim()||String(r.tip==='G'?(r.nereden||''):(r.nereden||'')).split('·')[0].trim();
+    const yer=(r.not||'').trim()||String(r.nereden||'').split('·')[0].trim();
     const ri=_trRehInfo(r);
     const gr=r.grup?_trGrupOf(r):{};
     const kisi=ri.ad?(ri.ad+(ri.tel?' · '+ri.tel:'')):((gr.sofor||'')+(gr.stel?' · '+gr.stel:''));
-    out.push({tarih:r.tarih,saat,yer,pax:+r.pax||0,arac:(gr.arac||'').split('(')[0].trim()||'',
-      tip,detay:tip==='TUR'?((r.nereden||'')+'-'+(r.nereye||'')):('APT-'+(String(r.bolge||'').toUpperCase()||String((r.rota||'').split('→').pop()||'').toUpperCase()||String(r.nereden||'').split('·')[0].trim())),kisi});
+    const kayit={tarih:r.tarih,saat,yer,pax:+r.pax||0,arac:(gr.arac||'').split('(')[0].trim()||'',
+      tip,detay:tip==='TUR'?((r.nereden||'')+'-'+(r.nereye||'')):('APT-'+(String(r.bolge||'').toUpperCase()||String((r.rota||'').split('→').pop()||'').toUpperCase()||String(r.nereden||'').split('·')[0].trim())),kisi};
+    const key=(r.grup&&r.tip!=='TUR')?(r.grup+'|'+r.tarih+'|'+tip):('tek'+(seq++));
+    const m=birlesim.get(key);
+    if(m){ m.pax+=kayit.pax; if(kayit.saat&&(!m.saat||kayit.saat<m.saat)) m.saat=kayit.saat; if(!m.yer&&kayit.yer) m.yer=kayit.yer; }
+    else birlesim.set(key,kayit);
   });
+  birlesim.forEach(v=>out.push(v));
   // tahsisler: aralıkla kesişen HER GÜN bir RENT satırı
   try{ _thsListe('1900-01-01').forEach(t=>{
     const ab=t.bas, abit=t.bit||t.bas; if(!ab||ab>_d2||abit<_d1) return;
