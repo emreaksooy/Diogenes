@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v466 · 04.09.2026';
+const APP_VER='v467 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8254,7 +8254,9 @@ function _mutIssues(){
     gl.forEach(x=>{ farklar=farklar.concat(cmp(x,basG,sonG,'geliş')); });
     dl.forEach(x=>{ farklar=farklar.concat(cmp(x,basD,sonD,'dönüş')); });
     farklar=[...new Set(farklar)];
-    if(farklar.length) out.push({tip:'ucFark',pkgId:r.pkgId,kalkis:r.kalkis,voucher:v,kod,detay:farklar.join(' · ')});
+    // UÇUŞ FARKI uyarıları GEÇİCİ KAPALI (Emre 14.09.2026) — geri açmak için true yap
+    const _UCFARK_AKTIF=false;
+    if(_UCFARK_AKTIF&&farklar.length) out.push({tip:'ucFark',pkgId:r.pkgId,kalkis:r.kalkis,voucher:v,kod,detay:farklar.join(' · ')});
   });
   // uçakta var, rezervasyonda yok (yalnız o kalkış için rezv modülü kullanılıyorsa — gürültü olmasın)
   // İPTAL rezervasyonun yolcuları uçak listesinde hâlâ duruyorsa → BİLET İPTALİ uyarısı (uçak departmanı)
