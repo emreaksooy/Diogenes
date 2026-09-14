@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v465 · 04.09.2026';
+const APP_VER='v466 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -8282,9 +8282,16 @@ function _mutIssues(){
     if(!rezvKalkis.has(g.pkgId+'|'+g.kalkis)) return;
     const pk=pkgs.find(p=>p.id===g.pkgId)||{}; const kod=pk.paketKodu||'';
     const seferRezv=rezvler.filter(r=>r.pkgId===g.pkgId&&r.kalkis===g.kalkis);
-    [...new Set((g.rows||[]).filter(_isim).map(x=>String(x.resno||'').trim()).filter(Boolean))].forEach(rn=>{
+    const urunRezv=rezvler.filter(r=>r.pkgId===g.pkgId); // aynı ürün, TÜM tarihler (tarih değişmiş/iptal rezv tespiti)
+    [...new Set((g.rows||[]).filter(x=>_isim(x)&&_durumEff(x)!=='iptal').map(x=>String(x.resno||'').trim()).filter(Boolean))].forEach(rn=>{
       const var2=seferRezv.some(r=>_vEsit(rn,r.voucher)||(r.asilVoucher&&_vEsit(rn,r.asilVoucher)));
-      if(!var2)
+      if(var2) return;
+      const baska=urunRezv.find(r=>_vEsit(rn,r.voucher)||(r.asilVoucher&&_vEsit(rn,r.asilVoucher)));
+      if(baska&&baska.durum==='iptal')
+        out.push({tip:'iptalBilet',pkgId:g.pkgId,kalkis:g.kalkis,voucher:rn,kod,detay:'REZERVASYON İPTAL (kayıt '+_fmtDateTR(baska.kalkis)+' tarihinde) ama yolcu bu uçak listesinde duruyor — bileti iptal et / satırları kaldır'});
+      else if(baska)
+        out.push({tip:'rezvYok',pkgId:g.pkgId,kalkis:g.kalkis,voucher:rn,kod,detay:'rezervasyon kaydı '+_fmtDateTR(baska.kalkis)+' tarihinde — uçak listesi '+_fmtDateTR(g.kalkis)+' (tarih uyuşmazlığı, rezvi ya da listeyi düzelt)'});
+      else
         out.push({tip:'rezvYok',pkgId:g.pkgId,kalkis:g.kalkis,voucher:rn,kod,detay:'uçak listesinde var, rezervasyon modülünde kaydı yok'});
     });
   });
