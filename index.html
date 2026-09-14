@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v461 · 04.09.2026';
+const APP_VER='v462 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14882,9 +14882,17 @@ function _tdDocOtel(g,E){
 function _tdUcusSatirlar(E){
   // her yolcunun uçuş bacaklarını yapılandırılmış topla (geliş 2 bacak, ara, dönüş 2 bacak)
   const legs=[];
+  // İPTAL yolcular uçuş listesinde görünmez (satır durumu iptal VEYA rezervasyonu iptal voucher)
+  const _iptV=new Set();
+  try{ (getRezv()||[]).forEach(z=>{ if(z&&z.durum==='iptal'){
+    const kk=z.pkgId+'|'+z.kalkis+'|';
+    if((z.voucher||'').trim()) _iptV.add(kk+String(z.voucher).trim());
+    if((z.asilVoucher||'').trim()) _iptV.add(kk+String(z.asilVoucher).trim());
+  } }); }catch(e){}
   (E.uyeler||[]).forEach(u=>{
-    const grid=getReservations().find(x=>x.pkgId===u.pkgId&&x.kalkis===u.kalkis); if(!grid) return;
-    (grid.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===u.resno).forEach(r=>{
+    const grid=getReservations().find(x=>x.pkgId===u.pkgId&&x.kalkis===u.kalkis); if(!grid||grid.iptal) return;
+    if(_iptV.has(u.pkgId+'|'+u.kalkis+'|'+String(u.resno||'').trim())) return;
+    (grid.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===u.resno&&_durumEff(r)!=='iptal').forEach(r=>{
       const push=(yon,sira,tarih,hy,ucus,k,v,ks,vs,pnr)=>{
         if(!(String(ucus||'').trim()||String(k||'').trim()||String(ks||'').trim())) return;
         legs.push({yon,sira,tarih:String(tarih||'').trim(),hy:String(hy||'').trim(),ucus:String(ucus||'').trim(),
