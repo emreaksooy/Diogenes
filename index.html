@@ -1016,6 +1016,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <div class="pkg-section-item mm-navitem active-ops" data-mt="firmalar" onclick="mmTab('firmalar')">🏬 Mağazalar</div>
         <div class="pkg-section-item mm-navitem" data-mt="muh" onclick="mmTab('muh')">📒 Mağaza Muhasebesi</div>
         <div class="pkg-section-item mm-navitem" data-mt="plan" onclick="mmTab('plan')">📅 Mağaza Operasyonu</div>
+        <div class="pkg-section-item mm-navitem" data-mt="tahsilat" onclick="mmTab('tahsilat')">💰 Tahsilatlar</div>
+        <div class="pkg-section-item mm-navitem" data-mt="ekstre" onclick="mmTab('ekstre')">🧾 Mağaza Ekstresi</div>
       </div>
     </div>
     </div><!-- /sidebar-ctx -->
@@ -1083,6 +1085,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
     <div id="magmuhFirmaWrap" style="display:none"><div id="magFirmaBox"></div></div>
     <div id="magmuhBody"></div>
     <div id="magmuhPlanWrap" style="display:none"><div id="opsPane_magaza"></div></div>
+    <div id="magmuhTahsilatWrap" style="display:none"></div>
+    <div id="magmuhEkstreWrap" style="display:none"></div>
   </div>
   <div id="page-ekip" class="page"><div id="ekipBox"></div></div>
   <div id="page-rehberim" class="page"><div id="rehberimBox"></div></div>
@@ -2032,7 +2036,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v467 · 04.09.2026';
+const APP_VER='v468 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2098,7 +2102,8 @@ const getRehBildirim = () => Array.isArray(_rbCache)?_rbCache:[];
 const setRehBildirim = a => { _rbCache=a; clearTimeout(_rbSaveT); _rbSaveT=setTimeout(()=>idbSet('rehbildirim',_rbCache),250); _cloudQueue('rehbildirim'); return true; };
 const setEkipEk = o => { _ekipEkCache=o; clearTimeout(_ekeSaveT); _ekeSaveT=setTimeout(()=>idbSet('ekipek',_ekipEkCache),250); _cloudQueue('ekipek'); return true; };
 const getMagMuh = () => Array.isArray(_mmCache)?_mmCache:[];
-const getMagMuhAktif = () => getMagMuh().filter(k=>!k.silindi);
+const getMagMuhAktif = () => getMagMuh().filter(k=>!k.silindi&&k.tip!=='tahsilat');
+const getMagTahsilat = () => getMagMuh().filter(k=>!k.silindi&&k.tip==='tahsilat');
 const setMagMuh = a => { _mmCache=a; clearTimeout(_mmSaveT); _mmSaveT=setTimeout(()=>idbSet('magmuh',_mmCache),250); _cloudQueue('magmuh'); return true; };
 const getPnrLedger    = () => _pnrCache;
 const setPnrLedger    = a => { _pnrCache=a; clearTimeout(_pnrSaveT); _pnrSaveT=setTimeout(()=>idbSet('pnrLedger', _pnrCache),250); _cloudQueue('pnrLedger'); return true; };
@@ -15570,17 +15575,152 @@ function mmTab(t){
   window._mmTab=t;
   try{ localStorage.setItem('dmc_mmTab',t); }catch(e){}
   const b=document.getElementById('magmuhBody'), p=document.getElementById('magmuhPlanWrap'), fw=document.getElementById('magmuhFirmaWrap');
+  const tw=document.getElementById('magmuhTahsilatWrap'), ew=document.getElementById('magmuhEkstreWrap');
   const bm=document.getElementById('mmTabMuhBtn'), bp=document.getElementById('mmTabPlanBtn'), bf=document.getElementById('mmTabFirmaBtn');
   if(fw) fw.style.display=(t==='firmalar')?'':'none';
   if(b) b.style.display=(t==='muh')?'':'none';
   if(p) p.style.display=(t==='plan')?'':'none';
+  if(tw) tw.style.display=(t==='tahsilat')?'':'none';
+  if(ew) ew.style.display=(t==='ekstre')?'':'none';
   if(bf) bf.className='btn btn-sm '+(t==='firmalar'?'btn-primary':'btn-outline');
   try{ document.querySelectorAll('.mm-navitem').forEach(x=>x.classList.toggle('active-ops', x.getAttribute('data-mt')===t)); }catch(e){}
   if(bm) bm.className='btn btn-sm '+(t==='muh'?'btn-primary':'btn-outline');
   if(bp) bp.className='btn btn-sm '+(t==='plan'?'btn-primary':'btn-outline');
   if(t==='firmalar') renderMagFirmalar();
   else if(t==='muh') renderMagMuh();
+  else if(t==='tahsilat') renderMagTahsilat();
+  else if(t==='ekstre') renderMagEkstre();
   else renderMagazaOps();
+}
+// ═══ TAHSİLATLAR (mağazadan alınan ödemeler — hakedişten düşer) ═══
+let _mtFirmaF='', _mtYil='';
+function mtYeni(){
+  const L=getMagMuh();
+  L.unshift({id:genId(),tip:'tahsilat',tarih:_opsToday(),firmaId:_mtFirmaF||'',tutar:'',tur:'acente',aciklama:'Nakit',para:'EUR',ts:Date.now()});
+  setMagMuh(L); renderMagTahsilat();
+}
+function mtSet(id,f,v){ const k=getMagMuh().find(x=>x.id===id&&x.tip==='tahsilat'); if(!k) return; k[f]=v; setMagMuh(getMagMuh()); if(f==='firmaId'||f==='tur'||f==='tutar') renderMagTahsilat(); }
+function mtSil(id){ showConfirm('🗑','Tahsilatı Sil','Tahsilat kaydı silinecek — mağaza bakiyesi yeniden yükselir.','Sil',()=>{ const k=getMagMuh().find(x=>x.id===id); if(k){ k.silindi=true; setMagMuh(getMagMuh()); } renderMagTahsilat(); }); }
+const _MT_TUR={acente:['Acente Hakediş','#dcfce7','#166534'],ofis:['Ofis Hakediş','#e0f2fe','#0369a1'],avans:['Avans','#fef3c7','#92400e']};
+function renderMagTahsilat(){
+  const box=document.getElementById('magmuhTahsilatWrap'); if(!box) return;
+  if(_cloudOn&&sbRol&&sbRol!=='yonetici'){ box.innerHTML='<div class="card"><b>Bu bölüm yalnız yönetime açıktır.</b></div>'; return; }
+  const firmalar=_moFirmalar();
+  let L=getMagTahsilat();
+  if(_mtFirmaF) L=L.filter(k=>k.firmaId===_mtFirmaF);
+  if(_mtYil) L=L.filter(k=>String(_pdate(k.tarih)||'').slice(0,4)===_mtYil);
+  L.sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
+  const yillar=[...new Set(getMagTahsilat().map(k=>String(_pdate(k.tarih)||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  const th='background:var(--navy);color:#fff;padding:5px 9px;font-size:.62rem;text-align:left;white-space:nowrap';
+  const td='padding:4px 9px;font-size:.78rem;border-bottom:1px solid var(--border)';
+  const inp='padding:4px 7px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.76rem';
+  const top=L.reduce((t,k)=>t+_tdN(k.tutar),0);
+  let h=`<div class="card"><div class="card-title">💰 Tahsilatlar <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">mağazadan alınan ödemeler — ekstrede hakedişten düşer</span></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <select onchange="_mtFirmaF=this.value;renderMagTahsilat()" style="${inp}"><option value="">Tüm mağazalar</option>${firmalar.map(f=>`<option value="${f.id}" ${_mtFirmaF===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>
+      <select onchange="_mtYil=this.value;renderMagTahsilat()" style="${inp}"><option value="">Tüm yıllar</option>${yillar.map(y=>`<option ${_mtYil===y?'selected':''}>${y}</option>`).join('')}</select>
+      <span style="color:var(--muted);font-size:.74rem">· ${L.length} kayıt · toplam <b>${(Math.round(top*100)/100).toLocaleString('tr-TR')}</b></span>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mtYeni()">+ Tahsilat</button>
+      <button class="btn btn-outline btn-sm" onclick="mtExcel()">📥 Excel</button>
+    </div>`;
+  h+=L.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+    <tr><th style="${th}">Tarih</th><th style="${th}">Mağaza</th><th style="${th}">Tutar</th><th style="${th}">Tür</th><th style="${th}">Açıklama</th><th style="${th}"></th></tr>
+    ${L.map(k=>{ const tt=_MT_TUR[k.tur||'acente']||_MT_TUR.acente; return `<tr>
+      <td style="${td}"><input type="date" value="${esc(_pdate(k.tarih)||'')}" onchange="mtSet('${k.id}','tarih',this.value)" style="${inp}"></td>
+      <td style="${td}"><select onchange="mtSet('${k.id}','firmaId',this.value)" style="${inp};min-width:140px"><option value="">seç…</option>${firmalar.map(f=>`<option value="${f.id}" ${k.firmaId===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select></td>
+      <td style="${td}"><input value="${esc(k.tutar||'')}" inputmode="decimal" onchange="mtSet('${k.id}','tutar',this.value)" style="${inp};width:100px;text-align:right;font-weight:700"> <select onchange="mtSet('${k.id}','para',this.value)" style="${inp}">${['EUR','USD','TRY'].map(p2=>`<option ${(k.para||'EUR')===p2?'selected':''}>${p2}</option>`).join('')}</select></td>
+      <td style="${td}"><select onchange="mtSet('${k.id}','tur',this.value)" style="${inp};background:${tt[1]};color:${tt[2]};font-weight:700">${Object.keys(_MT_TUR).map(t2=>`<option value="${t2}" ${(k.tur||'acente')===t2?'selected':''}>${_MT_TUR[t2][0]}</option>`).join('')}</select></td>
+      <td style="${td}"><input value="${esc(k.aciklama||'')}" list="mtAcikL" placeholder="Nakit / Havale / Mal Alımı…" onchange="mtSet('${k.id}','aciklama',this.value)" style="${inp};min-width:170px"></td>
+      <td style="${td}"><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mtSil('${k.id}')">✕</button></td></tr>`; }).join('')}
+  </table></div><datalist id="mtAcikL"><option value="Nakit"><option value="Havale/EFT"><option value="Avans Ödemesi-NAKİT"><option value="Mal Alımı"><option value="Borç"><option value="Mahsup"></datalist>`:'<p style="color:var(--muted);font-size:.85rem">Kayıt yok — "+ Tahsilat" ile başla.</p>';
+  h+='</div>';
+  box.innerHTML=h;
+}
+function mtExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  const firmalar=_moFirmalar();
+  let L=getMagTahsilat(); if(_mtFirmaF) L=L.filter(k=>k.firmaId===_mtFirmaF); if(_mtYil) L=L.filter(k=>String(_pdate(k.tarih)||'').slice(0,4)===_mtYil);
+  L.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
+  const aoa=[['DIOGENES TRAVEL — MAĞAZA TAHSİLATLARI'],[(_mtFirmaF?((firmalar.find(f=>f.id===_mtFirmaF)||{}).ad||''):'Tüm mağazalar')+(_mtYil?' · '+_mtYil:'')],[],['Tarih','Mağaza','Tutar','Para','Tür','Açıklama']];
+  L.forEach(k=>aoa.push([_fmtDateTR(k.tarih),(firmalar.find(f=>f.id===k.firmaId)||{}).ad||'',_tdN(k.tutar),k.para||'EUR',(_MT_TUR[k.tur||'acente']||[])[0]||'',k.aciklama||'']));
+  aoa.push([]); aoa.push(['TOPLAM','',L.reduce((t,k)=>t+_tdN(k.tutar),0)]);
+  const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[12,22,12,7,16,26].map(w2=>({wch:w2}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsilatlar');
+  XLSX.writeFile(wb,'magaza_tahsilatlari'+(_mtYil?'_'+_mtYil:'')+'.xlsx');
+}
+// ═══ MAĞAZA EKSTRESİ (Genel — onaylı satış → hakediş → tahsilat → kalan) ═══
+let _meYil='';
+function _mmPaylar(k){
+  // kalem pay'ları varsa paydaş bazlı; yoksa oran=acente
+  const out={acente:0,rehber:0,ofis:0,sef:0,kaptan:0};
+  (k.magKalemler||[]).forEach(x=>{ const c=_tdN(x.ciro);
+    if(x.pay&&typeof x.pay==='object'){ ['acente','rehber','ofis','sef','kaptan'].forEach(p2=>{ out[p2]+=c*_tdN(x.pay[p2])/100; }); }
+    else out.acente+=c*_tdN(x.oran)/100; });
+  return out;
+}
+function renderMagEkstre(){
+  const box=document.getElementById('magmuhEkstreWrap'); if(!box) return;
+  if(_cloudOn&&sbRol&&sbRol!=='yonetici'){ box.innerHTML='<div class="card"><b>Bu bölüm yalnız yönetime açıktır.</b></div>'; return; }
+  const firmalar=_moFirmalar();
+  const yilF=k=>!_meYil||String(_pdate(k.tarih)||'').slice(0,4)===_meYil;
+  const Z=getMagMuhAktif().filter(yilF), T=getMagTahsilat().filter(yilF);
+  const yillar=[...new Set(getMagMuhAktif().concat(getMagTahsilat()).map(k=>String(_pdate(k.tarih)||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  const M={};
+  Z.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
+    const c=_mmHesap(k);
+    if((k.durum||'')==='bekleme'){ m.bekleme+=c.mag; return; }
+    m.satis+=c.mag; m.n++;
+    const p=_mmPaylar(k); ['acente','rehber','ofis','sef','kaptan'].forEach(x=>m.hak[x]+=p[x]); });
+  T.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
+    const t2=_tdN(k.tutar);
+    if(k.tur==='ofis') m.tahO+=t2; else if(k.tur==='avans') m.avans+=t2; else m.tahA+=t2; });
+  const R=v=>(Math.round(v*100)/100).toLocaleString('tr-TR');
+  const th='background:var(--navy);color:#fff;padding:5px 9px;font-size:.6rem;text-align:right;white-space:nowrap';
+  const td='padding:5px 9px;font-size:.76rem;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap';
+  let h=`<div class="card"><div class="card-title">🧾 Mağaza Ekstresi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">onaylı satış → hakediş → tahsilat → kalan</span></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <select onchange="_meYil=this.value;renderMagEkstre()" style="padding:4px 7px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.76rem"><option value="">Tüm yıllar</option>${yillar.map(y=>`<option ${_meYil===y?'selected':''}>${y}</option>`).join('')}</select>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="meExcel()">📥 Excel</button>
+    </div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+    <tr><th style="${th};text-align:left">Mağaza</th><th style="${th}">Onaylı Satış</th><th style="${th}">Bekleme Satış</th><th style="${th}">Acente Hakediş</th><th style="${th}">Ofis Hakediş</th><th style="${th}">Rehber</th><th style="${th}">Şef</th><th style="${th}">Kaptan</th><th style="${th}">Acente Tahsilat</th><th style="${th}">Ofis Tahsilat</th><th style="${th}">Avans</th><th style="${th}">KALAN ACENTE</th><th style="${th}">KALAN OFİS</th></tr>`;
+  const idler=Object.keys(M).sort((a,b)=>(((firmalar.find(f=>f.id===a)||{}).ad)||'').localeCompare(((firmalar.find(f=>f.id===b)||{}).ad)||'','tr'));
+  const G={satis:0,bekleme:0,hakA:0,hakO:0,tahA:0,tahO:0,avans:0};
+  idler.forEach(id=>{ const m=M[id]; const ad=(firmalar.find(f=>f.id===id)||{}).ad||'—';
+    const kalanA=m.hak.acente-m.tahA, kalanO=m.hak.ofis-m.tahO;
+    G.satis+=m.satis; G.bekleme+=m.bekleme; G.hakA+=m.hak.acente; G.hakO+=m.hak.ofis; G.tahA+=m.tahA; G.tahO+=m.tahO; G.avans+=m.avans;
+    h+=`<tr><td style="${td};text-align:left"><b>${esc(ad)}</b> <span style="font-size:.62rem;color:var(--muted)">${m.n} ziyaret</span></td>
+      <td style="${td}"><b>${R(m.satis)}</b></td>
+      <td style="${td};color:#6d28d9">${m.bekleme?R(m.bekleme):'—'}</td>
+      <td style="${td}">${R(m.hak.acente)}</td><td style="${td}">${R(m.hak.ofis)}</td>
+      <td style="${td};color:var(--muted)">${m.hak.rehber?R(m.hak.rehber):'—'}</td>
+      <td style="${td};color:var(--muted)">${m.hak.sef?R(m.hak.sef):'—'}</td>
+      <td style="${td};color:var(--muted)">${m.hak.kaptan?R(m.hak.kaptan):'—'}</td>
+      <td style="${td}">${R(m.tahA)}</td><td style="${td}">${R(m.tahO)}</td>
+      <td style="${td};color:#92400e">${m.avans?R(m.avans):'—'}</td>
+      <td style="${td};font-weight:800;color:${kalanA>0.01?'#b91c1c':'#166534'}">${R(kalanA)}</td>
+      <td style="${td};font-weight:800;color:${kalanO>0.01?'#b91c1c':'#166534'}">${R(kalanO)}</td></tr>`;
+  });
+  h+=`<tr><td style="${td};text-align:left;background:var(--primary-soft)"><b>TOPLAM</b></td>
+    <td style="${td};background:var(--primary-soft)"><b>${R(G.satis)}</b></td><td style="${td};background:var(--primary-soft)">${R(G.bekleme)}</td>
+    <td style="${td};background:var(--primary-soft)"><b>${R(G.hakA)}</b></td><td style="${td};background:var(--primary-soft)">${R(G.hakO)}</td>
+    <td style="${td};background:var(--primary-soft)"></td><td style="${td};background:var(--primary-soft)"></td><td style="${td};background:var(--primary-soft)"></td>
+    <td style="${td};background:var(--primary-soft)"><b>${R(G.tahA)}</b></td><td style="${td};background:var(--primary-soft)">${R(G.tahO)}</td>
+    <td style="${td};background:var(--primary-soft)">${R(G.avans)}</td>
+    <td style="${td};background:var(--primary-soft)"><b>${R(G.hakA-G.tahA)}</b></td><td style="${td};background:var(--primary-soft)"><b>${R(G.hakO-G.tahO)}</b></td></tr>
+  </table></div>
+  <div style="font-size:.68rem;color:var(--muted);margin-top:8px">Bekleme Satış: ödemesi sonra yapılacak satışlar — hakedişe girmez, kayıt "Bekleme Satış" durumundan "Mutabık"a alınınca eklenir. Avans: mağazadan önden alınan tutar — kalan hesabına katılmaz, ayrıca izlenir.</div>
+  </div>`;
+  box.innerHTML=h;
+}
+function meExcel(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
+  const tbl=document.querySelector('#magmuhEkstreWrap table'); if(!tbl){ showToast('Önce ekstre açılmalı','error'); return; }
+  const aoa=[['DIOGENES TRAVEL — MAĞAZA EKSTRESİ'+(_meYil?' · '+_meYil:'')],[]];
+  tbl.querySelectorAll('tr').forEach(tr=>{ aoa.push([...tr.children].map(c2=>c2.innerText.replace(/\n/g,' ').trim())); });
+  const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[24,12,12,13,11,10,9,9,13,11,10,13,11].map(w2=>({wch:w2}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Ekstre');
+  XLSX.writeFile(wb,'magaza_ekstresi'+(_meYil?'_'+_meYil:'')+'.xlsx');
 }
 // geçmiş ziyaretleri muhasebe kaydına dönüştür (idempotent — otoKey: tarih|firma|kod)
 function _mmZiyaretSenk(){
@@ -15656,12 +15796,12 @@ function renderMagMuh(){
   const th='background:var(--navy);color:#fff;padding:4px 8px;font-size:.62rem;text-align:left;white-space:nowrap';
   const td='padding:4px 8px;font-size:.76rem;border-bottom:1px solid var(--border)';
   const inp='padding:3px 6px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.74rem';
-  const DAD={bekliyor:['Bekliyor','#fef3c7','#92400e'],mutabik:['Mutabık','#dcfce7','#166534'],tahsil:['Tahsil edildi','#e0f2fe','#0369a1']};
+  const DAD={bekliyor:['Bekliyor','#fef3c7','#92400e'],mutabik:['Mutabık','#dcfce7','#166534'],bekleme:['Bekleme Satış','#ede9fe','#6d28d9'],tahsil:['Tahsil edildi','#e0f2fe','#0369a1']};
   let h=(window._mmBildKartHTML||'')+`<div class="card"><div class="card-title">🏬 Mağaza Muhasebesi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetim · mağaza bildirimi ↔ rehber bildirimi</span></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
       <input type="month" value="${_mmAy}" onchange="_mmAy=this.value;renderMagMuh()" style="${inp}">
       <select onchange="_mmFirmaF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm mağazalar</option>${firmalar.map(f=>`<option value="${f.id}" ${_mmFirmaF===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>
-      <select onchange="_mmDurumF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm durumlar</option><option value="bekliyor" ${_mmDurumF==='bekliyor'?'selected':''}>Bekliyor</option><option value="mutabik" ${_mmDurumF==='mutabik'?'selected':''}>Mutabık</option><option value="tahsil" ${_mmDurumF==='tahsil'?'selected':''}>Tahsil edildi</option></select>
+      <select onchange="_mmDurumF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm durumlar</option><option value="bekliyor" ${_mmDurumF==='bekliyor'?'selected':''}>Bekliyor</option><option value="mutabik" ${_mmDurumF==='mutabik'?'selected':''}>Mutabık</option><option value="bekleme" ${_mmDurumF==='bekleme'?'selected':''}>Bekleme Satış</option><option value="tahsil" ${_mmDurumF==='tahsil'?'selected':''}>Tahsil edildi</option></select>
       <span style="color:var(--muted);font-size:.74rem">· ${L.length} kayıt</span>
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mmYeni()">+ Bildirim Kaydı</button>
       <button class="btn btn-outline btn-sm" onclick="mmExcel()">📥 Excel</button>
