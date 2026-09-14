@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v464 · 04.09.2026';
+const APP_VER='v465 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14705,7 +14705,7 @@ function renderTurDosyasi(box){
       Object.values(gr).sort((a,b)=>{ const t=x=>((_pdate(x[0].tarih))||'9999')+'T'+(x[0].saat||'99'); return t(a)<t(b)?-1:1; }).forEach(grp=>{
         const f=grp[0];
         const tekil=[]; const seen=new Set();
-        grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad; if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
+        grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad+'|'+(x.dogum||''); if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
         tekil.sort((a,b)=>(a.soyad+a.ad).localeCompare(b.soyad+b.ad,'tr'));
         const tr=trRows.find(r=>String(r.ucus||'').trim()===String(f.ucus||'').trim()&&r.tarih===_pdate(f.tarih));
         const gr2=tr&&tr.grup?_trGrupOf(tr):null;
@@ -14909,7 +14909,7 @@ function _tdUcusSatirlar(E){
         legs.push({yon,sira,tarih:String(tarih||'').trim(),hy:String(hy||'').trim(),ucus:String(ucus||'').trim(),
           rota:[String(k||'').trim(),String(v||'').trim()].filter(Boolean).join('–'),
           saat:[String(ks||'').trim(),String(vs||'').trim()].filter(Boolean).join('-'),
-          pnr:String(pnr||'').trim(),ad:r.ad||'',soyad:r.soyad||'',resno:u.resno});
+          pnr:String(pnr||'').trim(),ad:r.ad||'',soyad:r.soyad||'',dogum:r.dogum||'',resno:u.resno});
       };
       push('G',1,r.g_tarih,r.g_hy,r.g_u1,r.g_k1,r.g_v1,r.g_ks1,r.g_vs1,r.g_pnr);
       push('G',2,r.g_tarih,r.g_hy,r.g_u2,r.g_k2,r.g_v2,r.g_ks2,r.g_vs2,r.g_pnr);
@@ -14975,7 +14975,7 @@ function _tdDocUcus(g,E){
       const f=grp[0];
       const bas=[f.tarih,f.hy,f.ucus,f.rota,f.saat].filter(Boolean).join(' · ');
       const tekil=[]; const seen=new Set();
-      grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad; if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
+      grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad+'|'+(x.dogum||''); if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
       // VOUCHER GRUPLAMA: aynı voucher'ın yolcuları birleşik blok — voucher bir kez yazılır (Sejour listesi düzeni)
       const vg={}; const vSira=[];
       tekil.forEach(x=>{ const v=String(x.resno||'—'); if(!vg[v]){ vg[v]=[]; vSira.push(v); } vg[v].push(x); });
