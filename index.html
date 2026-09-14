@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v460 · 04.09.2026';
+const APP_VER='v461 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13738,7 +13738,12 @@ function _ogSplitGorunenSec(){
   gor.forEach(k=>{ hepsiSecili?_ogSplitSel.delete(k):_ogSplitSel.add(k); });
   renderOpsGrup();
 }
-function _ogResnoPax(pkgId,kalkis,resno){ const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!g)return 0; return (g.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===resno).length; }
+function _ogResnoPax(pkgId,kalkis,resno){
+  const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!g||g.iptal)return 0;
+  // İPTAL satırlar ve rezervasyonu iptal voucherlar sayılmaz
+  try{ const rz=(getRezv()||[]).find(z=>z.tip==='urun'&&z.pkgId===pkgId&&z.kalkis===kalkis&&z.durum==='iptal'&&(String(z.voucher||'').trim()===String(resno).trim()||String(z.asilVoucher||'').trim()===String(resno).trim())); if(rz) return 0; }catch(e){}
+  return (g.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===resno&&_durumEff(r)!=='iptal').length;
+}
 function _ogResnoName(pkgId,kalkis,resno){ const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!g)return ''; const r=(g.rows||[]).find(x=>_isim(x)&&(x.resno||'').trim()===resno); return r?((r.soyad||'')+' '+(r.ad||'')).trim():''; }
 function _ogResolve(){
   const S=getOpsGrup(); const exp=S.gruplar||{}; const claimed={};
