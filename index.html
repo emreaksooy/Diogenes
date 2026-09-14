@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v462 · 04.09.2026';
+const APP_VER='v463 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7181,7 +7181,10 @@ function _ucakSablonAktar(rows,wb,sessiz){
       if(tasan) y.not=((y.not?y.not+' · ':'')+tasan); }
     // mevcut satır → DİFF + güncelle; eşleşme temizlenmiş TOKEN setiyle (sıra/rakam/unvan bağımsız — eski ham kayıtlar da yakalanır)
     const hedefTok=adTok(p.soyad,p.ad);
-    const mevcutY=(g.rows||[]).find(x=>adTok(x.soyad,x.ad)===hedefTok&&(!resno||!String(x.resno||'').trim()||String(x.resno||'').trim()===resno));
+    const mevcutY=(g.rows||[]).find(x=>!_dosyadaGorulen.has(x) // aynı dosyada bir satır yalnız BİR kez eşleşir (aynı isimli iki kişi yutulmasın)
+      &&adTok(x.soyad,x.ad)===hedefTok
+      &&(!p.dogum||!x.dogum||x.dogum===p.dogum) // doğum tarihi farklıysa farklı kişi
+      &&(!resno||!String(x.resno||'').trim()||String(x.resno||'').trim()===resno));
     if(mevcutY){
       _dosyadaGorulen.add(mevcutY);
       mevcutY.soyad=p.soyad; mevcutY.ad=p.ad; if(p.dogum) mevcutY.dogum=p.dogum; if(resno) mevcutY.resno=resno;
