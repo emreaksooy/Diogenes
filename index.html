@@ -2032,7 +2032,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v463 · 04.09.2026';
+const APP_VER='v464 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7424,6 +7424,14 @@ async function ucakTopluImport(evt){
   if(!files.length){ showToast('Klasörde Excel dosyası bulunamadı','error'); return; }
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const eskiP=_resPkgId, eskiK=_resKalkis;
+  const _fOku=async f=>{
+    let sonErr=null;
+    for(let d=0;d<4;d++){
+      try{ return await f.arrayBuffer(); }
+      catch(e){ sonErr=e; await new Promise(r=>setTimeout(r,400*(d+1))); }
+    }
+    throw new Error('OneDrive dosyası okunamadı — dosya buluttan inmemiş olabilir. Klasöre sağ tık › "Her zaman bu cihazda tut" deyip yeniden aktar. ('+((sonErr&&sonErr.message)||'')+')');
+  };
   let ok=0, iptalAtla=0, cozulemedi=[], kodYok=[], sablonDegil=[], toplamYolcu=0, toplamDegisim=0;
   showToast(files.length+' dosya işleniyor…','success',3000);
   for(const f of files){
@@ -7443,7 +7451,7 @@ async function ucakTopluImport(evt){
     let erkenRows=null, erkenWb=null;
     if(!adaylar.length){
       try{
-        const bufE=await f.arrayBuffer();
+        const bufE=await _fOku(f);
         erkenWb=XLSX.read(new Uint8Array(bufE),{type:'array',cellStyles:true});
         erkenRows=XLSX.utils.sheet_to_json(erkenWb.Sheets[erkenWb.SheetNames[0]],{header:1,raw:true});
         const meta=_ucakDosyaMeta(erkenRows)||{};
@@ -7455,7 +7463,7 @@ async function ucakTopluImport(evt){
     if(!adaylar.length){
       // eşleştirme paneli için beklet (dosyayı şimdi oku ki tekrar seçtirmeyelim)
       try{
-        const buf0=await f.arrayBuffer();
+        const buf0=await _fOku(f);
         const wb0=XLSX.read(new Uint8Array(buf0),{type:'array',cellStyles:true});
         const rows0=XLSX.utils.sheet_to_json(wb0.Sheets[wb0.SheetNames[0]],{header:1,raw:true});
         if(_ucakSablonDetect(rows0)){
@@ -7468,7 +7476,7 @@ async function ucakTopluImport(evt){
     try{
       let wb=erkenWb, rows=erkenRows;
       if(!rows){
-        const buf=await f.arrayBuffer();
+        const buf=await _fOku(f);
         wb=XLSX.read(new Uint8Array(buf),{type:'array',cellStyles:true});
         rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
       }
