@@ -2036,7 +2036,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v469 · 04.09.2026';
+const APP_VER='v470 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -16020,6 +16020,7 @@ function renderOpsTransfer(){
       <button class="btn btn-outline btn-sm" onclick="_trTasimaciPdf()" title="Aynı listenin yazdırılabilir hali">🚌 Taşımacı PDF</button>
       <button class="btn btn-outline btn-sm" onclick="_trWhatsapp()" title="Taşımacı Excel'ini indirir + firmanın WhatsApp sohbetini hazır mesajla açar — dosyayı sohbete sürüklemen yeterli">📲 WhatsApp</button>
       <button class="btn btn-outline btn-sm" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
+      <button class="btn btn-outline btn-sm" onclick="_trRehberIsPdfWa()" title="Üst filtreden REHBER seç — aralıktaki tüm işleri (taşımacı formatında, yolcu isimli) PDF indirir + rehberin WhatsApp'ını açar">📲 Rehbere İş Listesi</button>
     </div>`;
   // ── ÜST FİLTRE PANELİ ──
   {
@@ -16793,6 +16794,40 @@ function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!
     ${rows.map(r=>{const dh=_trDeparHesap(r);return `<tr><td><b>${esc(dh.saat)}</b></td><td>${esc(r.tip)}</td><td>${esc(r.nereden)}</td><td>${esc(r.nereye)}</td><td>${esc(r.ucus||'')}</td><td>${esc(r.saat||'')}</td><td>${esc(r.op)}</td><td>${esc(r.urun)}</td><td>${r.pax}</td><td>${esc(r.not||'')}</td></tr>`;}).join('')}</table>
     <div class="imza"><span>Şoför: ____________</span><span>Rehber: ____________</span><span>Operasyon: ____________</span></div></div>`; }
 function _trPrint(html){ let p=document.getElementById('trfPrint'); if(!p){ p=document.createElement('div'); p.id='trfPrint'; document.body.appendChild(p); } p.innerHTML=html; document.body.classList.add('trf-printing'); window.print(); setTimeout(()=>document.body.classList.remove('trf-printing'),400); }
+function _trRehberIsPdfWa(){
+  const rehAd=(_trUst.reh||'').trim();
+  if(!rehAd){ showToast('Önce üst filtreden REHBER seç — liste o rehbere özel hazırlanır','error',5000); return; }
+  const list=(_trGorunur()||[]).filter(x=>x.r.grup&&(_trGrupOf(x.r).rehber||'')===rehAd);
+  if(!list.length){ showToast('Bu aralıkta '+rehAd+' rehberine atanmış iş yok','error'); return; }
+  const donem=_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate);
+  const bolum=x=>x.r.tip==='G'?'GELİŞ':(x.r.tip==='D'?'DÖNÜŞ':(x.r.tip==='TUR'?'TUR':'ARA UÇUŞ'));
+  const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+  const bolumler={'GELİŞ':[],'ARA UÇUŞ':[],'TUR':[],'DÖNÜŞ':[]};
+  sirali.forEach(x=>{ (bolumler[bolum(x)]=bolumler[bolum(x)]||[]).push(x); });
+  let h='';
+  Object.keys(bolumler).forEach(B=>{
+    const L=bolumler[B]; if(!L||!L.length) return;
+    h+=`<div class="gorev"><h1>${esc(B)} — ${esc(rehAd)}</h1><h2>${esc(donem)} · Diogenes Travel</h2>`;
+    L.forEach((x,bi)=>{
+      const r=x.r; const gr=_trGrupOf(r);
+      let yolcular=[]; try{ yolcular=_trYolcularDetay(r); }catch(e){}
+      const aracTxt=[gr.arac,gr.arac2].filter(Boolean).join(' + ')||'—';
+      h+=`<div style="background:#1F4E78;color:#fff;padding:5px 10px;font-size:11pt;font-weight:700;margin-top:6mm">${esc(_fmtDateTR(r.tarih))} · ${esc(B)}-${bi+1} · ${esc(r.urun)}${r.ucus?' · ✈ '+esc(r.ucus)+' '+esc(r.saat||''):''}${r.rota&&r.rota.includes('→')?' · '+esc(r.rota):''} · ${r.pax} pax</div>
+      <div style="font-size:9.5pt;padding:3px 8px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Depar:</b> ${esc(x.dh.saat||'—')} &nbsp;·&nbsp; <b>Güzergâh:</b> ${esc(r.nereden)} → ${esc(r.nereye)} &nbsp;·&nbsp; <b>Araç:</b> ${esc(aracTxt)}${gr.plaka?' · '+esc(gr.plaka):''}${gr.sofor?' · Şoför: '+esc(gr.sofor)+(gr.stel?' ('+esc(gr.stel)+')':''):''}${r.not?' · Not: '+esc(r.not):''}</div>
+      ${yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Voucher</th><th>Soyadı, Adı</th></tr>${yolcular.map((y,i)=>`<tr><td>${i+1}</td><td>${esc(y.voucher)}</td><td><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td></tr>`).join('')}</table>`:''}`;
+    });
+    h+=`<div style="margin-top:4mm;font-weight:700;font-size:10pt">TOPLAM — ${esc(B)}: ${L.length} iş · ${L.reduce((t,x)=>t+(+x.r.pax||0),0)} pax</div></div>`;
+  });
+  let tel=String(_rehTelBul(rehAd)||'').replace(/\D/g,'');
+  if(tel.length===11&&tel.startsWith('0')) tel='9'+tel;
+  else if(tel.length===10&&tel.startsWith('5')) tel='90'+tel;
+  const msg='Merhaba '+rehAd+', '+donem+' iş listen ektedir — '+list.length+' iş, transfer/uçuş/araç bilgileri PDF içinde.\nDiogenes Travel';
+  const ac=()=>{ window.open('https://wa.me/'+(tel||'')+'?text='+encodeURIComponent(msg),'_blank');
+    showToast(tel?'WhatsApp açıldı — indirilen PDF\'i sohbete sürükle':'Rehberin telefonu tanımlı değil — kişi seçip PDF\'i sohbete sürükle',tel?'success':'error',8000); };
+  const ad='rehber_isleri_'+_moDosyaAd(rehAd).toLowerCase()+'_'+(_opsTrDate||'')+(_opsTrDate2?'_'+_opsTrDate2:'')+'.pdf';
+  if(!window.html2canvas||!(window.jspdf&&window.jspdf.jsPDF)){ _trPrint(h); ac(); }
+  else _tdPdfIndir([h],ad,ac);
+}
 function trRehberWa(kod){
   const T=getTransfer(); const gr=(T.gruplar||{})[kod];
   if(!gr){ showToast('Görev bulunamadı','error'); return; }
