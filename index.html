@@ -903,6 +903,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 </head>
 <body>
 
@@ -1515,6 +1516,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
       <button class="btn btn-outline btn-sm" onclick="showPage('cikti')" style="white-space:nowrap">← Çıktılara Dön</button>
       <h2 style="margin:0;font-size:1.1rem;flex:1;white-space:nowrap"><svg class="ic"><use href="#i-chart"/></svg> Operatör Sunumu</h2>
       <span style="font-size:.8rem;color:var(--muted);white-space:nowrap">🌐 Dil:</span>
+      <button class="btn btn-outline btn-sm" onclick="urunWordIndir()" title="Ürünü operatör şablonu formatında .docx indirir (künye, Reiseverlauf, Saison, Zuschläge, Leistungen, Hotels, Flüge)">📄 Word</button>
       <select id="translateLangSelect" onchange="translateSunum()" style="padding:5px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:.83rem;color:var(--text);background:var(--bg);font-family:inherit">
         <option value="tr">🇹🇷 Türkçe</option>
         <option value="de">🇩🇪 Almanca</option>
@@ -2036,7 +2038,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v470 · 04.09.2026';
+const APP_VER='v471 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -5630,6 +5632,140 @@ const SUNUM_L2={
   en:{ovl:'ESCORTED TOUR',days:'Days',season:'Season',duration:'Duration',reference:'Reference',group:'Group',arrDep:'Arrival / Departure',day:'DAY',nightAt:'Overnight:',orSimilar:'or similar',services:'Services',incTitle:'Included',nincTitle:'Not included',extras:'Optional Packages & Activities',note:'Note',inc:'included',opt:'optional',hotelsTitle:'Sample Hotels',stage:'City / Region',category:'Category',board:'Board',total:'Total',sampleFlights:'Sample Flights',notes:'Notes',extTitle:'Extension Week',weekly:'Weekly',opPrice:'Operator price',depAirport:'Departure airport',fromDep:'From {H}: ',payTerms:'Payment Terms',birim:{kisi:'pax',oda:'rooms',kabin:'cabins'}},
   fr:{ovl:'CIRCUIT ACCOMPAGNÉ',days:'Jours',season:'Saison',duration:'Durée',reference:'Référence',group:'Groupe',arrDep:'Arrivée / Départ',day:'JOUR',nightAt:'Nuit à',orSimilar:'ou similaire',services:'Prestations',incTitle:'Prestations incluses',nincTitle:'Non inclus',extras:'Formules complémentaires',note:'À noter',inc:'inclus',opt:'optionnel',hotelsTitle:'Hébergement (à titre indicatif)',stage:'Étape',category:'Catégorie',board:'Pension',total:'Total',sampleFlights:'Exemples de vols',notes:'À noter',extTitle:'Semaine de prolongation',weekly:'Hebdomadaire',opPrice:'Prix opérateur',depAirport:'Aéroport de départ',fromDep:'Au départ de {H} : ',payTerms:'Conditions de paiement',birim:{kisi:'pers.',oda:'chambres',kabin:'cabines'}}
 };
+async function urunWordIndir(){
+  if(!(window.docx&&docx.Document)){ showToast('Word kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  const d=collectData();
+  const D=window.docx;
+  const MAVI='C1E4F5', TURUNCU='FAE2D5';
+  const fmtD=t=>{ const p=_pdate(t); return p?_fmtDateTR(p):String(t||''); };
+  const par=(t,o)=>new D.Paragraph({children:[new D.TextRun(Object.assign({text:String(t==null?'':t),size:(o&&o.size)||18,bold:!!(o&&o.bold),font:'Calibri'},(o&&o.color)?{color:o.color}:{}))],spacing:{after:(o&&o.after!=null)?o.after:40}});
+  const hc=(icerik,o)=>{ o=o||{};
+    const cocuk=Array.isArray(icerik)?icerik.map(x=>par(x,o)):[par(icerik,o)];
+    return new D.TableCell({children:cocuk,shading:o.fill?{type:D.ShadingType.CLEAR,fill:o.fill}:undefined,
+      width:o.w?{size:o.w,type:D.WidthType.PERCENTAGE}:undefined,
+      margins:{top:40,bottom:40,left:80,right:80},columnSpan:o.span||undefined}); };
+  const tablo=rows=>new D.Table({width:{size:100,type:D.WidthType.PERCENTAGE},rows});
+  const kids=[];
+  const push=el=>kids.push(el);
+  const bosluk=()=>push(par('',{after:120}));
+
+  // ── künye
+  push(tablo([
+    new D.TableRow({children:[hc('Product',{bold:true,w:30}),hc(d.paketAdi||d.destinasyon||'',{w:70})]}),
+    new D.TableRow({children:[hc('Product Code',{bold:true}),hc(d.paketKodu||'')]}),
+    new D.TableRow({children:[hc('Mindesteilnehmerzahl',{bold:true}),hc(d.pax?(d.pax+' Personen'):'')]})
+  ]));
+  bosluk();
+
+  // ── Reiseverlauf
+  { const rows=[new D.TableRow({children:[hc('Reiseverlauf',{bold:true,fill:MAVI,size:20})]})];
+    (d.gunler||[]).forEach((g,i)=>{
+      const bas=(g.baslik||('Tag '+(i+1))).trim();
+      const icerik=[]; icerik.push(par(bas,{bold:true}));
+      String(g.program||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>icerik.push(par(x)));
+      rows.push(new D.TableRow({children:[new D.TableCell({children:icerik,margins:{top:40,bottom:40,left:80,right:80}})]}));
+    });
+    push(tablo(rows)); bosluk(); }
+
+  // ── Saison tarih matrisi (sunumdaki mantık: fiyatlandirma → tarih→sezon; gateway satırları)
+  const fp=(d.sezonlar||[]).slice();
+  const hs=(d.havalimanSuppleri||[]).filter(x=>x.havalimani);
+  const dateToSz={};
+  (d.fiyatlandirma||[]).forEach(r=>{
+    if(!r.tarih) return;
+    if(r.sezon||r.apOverride) dateToSz[r.tarih]={_default:r.sezon||(r.ciftKisi?(fp.find(z=>z.ciftKisi===(+r.ciftKisi||0))||{}).ad:''),...(r.apOverride||{})};
+    else if(r.ciftKisi){ const z=fp.find(z2=>z2.ciftKisi===(+r.ciftKisi||0)); if(z) dateToSz[r.tarih]={_default:z.ad}; }
+  });
+  const szFor=(tarih,ap)=>{ const e=dateToSz[tarih]; if(!e) return null; return e[ap]||e._default||null; };
+  if(fp.length){
+    const hdr=[hc('Saison',{bold:true,fill:MAVI,w:16})].concat(fp.map(z=>hc(z.ad,{bold:true,fill:MAVI})));
+    const rows=[new D.TableRow({children:hdr})];
+    const kaynaklar=hs.length?hs:[{havalimani:'Termine',tarihler:Object.keys(dateToSz)}];
+    // aynı tarih imzalı havalimanlarını tek satırda birleştir
+    const gruplar={};
+    kaynaklar.forEach(sup=>{
+      const bySz={};
+      (sup.tarihler||[]).forEach(t=>{ const ts=typeof t==='string'?t:(t.tarih||''); const z=szFor(ts,sup.havalimani); if(z){ (bySz[z]=bySz[z]||[]).push(ts); } });
+      Object.values(bySz).forEach(a=>a.sort());
+      const imza=JSON.stringify(fp.map(z=>bySz[z.ad]||[]));
+      (gruplar[imza]=gruplar[imza]||{aps:[],bySz}).aps.push(sup.havalimani);
+    });
+    Object.values(gruplar).forEach(g=>{
+      if(!Object.keys(g.bySz).length) return;
+      rows.push(new D.TableRow({children:[hc(g.aps.join(', '),{bold:true})].concat(fp.map(z=>hc((g.bySz[z.ad]||[]).map(fmtD),{size:14})))}));
+    });
+    if(rows.length>1){ push(tablo(rows)); bosluk(); }
+    // fiyat tablosu
+    const sym=d.para==='USD'?'$':(d.para==='TRY'?'₺':'€');
+    const frows=[new D.TableRow({children:[hc('Saison',{bold:true,fill:MAVI,w:16})].concat(fp.map(z=>hc(z.ad,{bold:true,fill:MAVI})))})];
+    frows.push(new D.TableRow({children:[hc('P.p DZ '+sym,{bold:true})].concat(fp.map(z=>hc(String(z.ciftKisi||'—'),{bold:true})))}));
+    frows.push(new D.TableRow({children:[hc('EZZ '+sym)].concat(fp.map(z=>hc(String(z.tekSupp||'—'))))}));
+    if(d.cocukFiyatiAktif) frows.push(new D.TableRow({children:[hc('Kind '+sym)].concat(fp.map(z=>hc(String(z.cocuk||'—'))))}));
+    push(tablo(frows)); bosluk();
+  }
+
+  // ── Verlängerungswoche
+  const uz=d.uzatma||{};
+  if(uz&&uz.aktif){
+    push(par('Verlängerungswoche',{bold:true,size:20}));
+    push(par(['Verlängerungswoche',uz.gece?uz.gece+' Nächte':'',uz.otel||uz.ad||'',uz.pansiyon||''].filter(Boolean).join(' · '),{size:18}));
+    const uf2=a=>((uz.fiyat||{})[a])||{};
+    if(fp.length){
+      const urows=[new D.TableRow({children:[hc('Saison',{bold:true,fill:MAVI,w:16})].concat(fp.map(z=>hc(z.ad,{bold:true,fill:MAVI})))})];
+      urows.push(new D.TableRow({children:[hc('P.p DZ €',{bold:true})].concat(fp.map(z=>hc(String(uf2(z.ad).ciftKisi||'—'))))}));
+      urows.push(new D.TableRow({children:[hc('EZZ €')].concat(fp.map(z=>hc(String(uf2(z.ad).tekSupp||'—'))))}));
+      push(tablo(urows));
+    }
+    bosluk();
+  }
+
+  // ── Flughafenzuschläge
+  if(hs.length){
+    const srows=[new D.TableRow({children:[hc('Flughafenzuschläge',{bold:true,fill:TURUNCU,span:2})]})];
+    hs.slice().sort((a,b)=>((+a.supplement||0)-(+b.supplement||0))||String(a.havalimani).localeCompare(String(b.havalimani)))
+      .forEach(x=>srows.push(new D.TableRow({children:[hc(x.havalimani,{bold:true,w:40}),hc((x.supplement||0)+',-€',{w:60})]})));
+    push(tablo(srows)); bosluk();
+  }
+
+  // ── Leistungen
+  { const rows=[new D.TableRow({children:[hc('Leistungen',{bold:true,fill:MAVI,size:20})]})];
+    const blok=(baslikTxt,liste)=>{ if(!(liste&&liste.length)) return;
+      rows.push(new D.TableRow({children:[hc(baslikTxt,{bold:true})]}));
+      rows.push(new D.TableRow({children:[new D.TableCell({children:liste.map(x=>par('• '+x)),margins:{top:40,bottom:40,left:80,right:80}})]})); };
+    blok('Inkludierte Leistungen',(d.dahil||[]).filter(Boolean));
+    blok('Exklusive Leistungen',(d.dahilDegil||[]).filter(Boolean));
+    if(rows.length>1){ push(tablo(rows)); bosluk(); } }
+
+  // ── Beispiel Hotels (gün planından şehir bazlı gece + örnek otel)
+  { const konak={};
+    (d.gunler||[]).forEach(g=>{ const seh=(g.konaklamaSehir||g.konaklamaBolge||'').trim(); if(!seh) return; konak[seh]=(konak[seh]||0)+1; });
+    const satirlar=Object.entries(konak).map(([seh,n])=>{
+      const key=Object.keys(d.ornekOteller||{}).find(k2=>_norm(k2)===_norm(seh))||seh;
+      const otel=(d.ornekOteller||{})[key]||'';
+      return n+'x '+seh+(otel?' / '+otel:''); });
+    if(satirlar.length){
+      const rows=[new D.TableRow({children:[hc('Hotels',{bold:true,fill:MAVI,size:20})]}),
+        new D.TableRow({children:[hc('Beispiel Hotels',{bold:true})]}),
+        new D.TableRow({children:[new D.TableCell({children:satirlar.map(x=>par(x)),margins:{top:40,bottom:40,left:80,right:80}})]})];
+      push(tablo(rows)); bosluk(); } }
+
+  // ── Beispiel Flüge
+  { const uc=(d.ucuslar||[]).filter(u=>u&&(u.kod||u.rota||u.saat));
+    if(uc.length){
+      const rows=[new D.TableRow({children:[hc('Flüge',{bold:true,fill:MAVI,size:20})]}),
+        new D.TableRow({children:[hc('Beispiel Flüge',{bold:true})]}),
+        new D.TableRow({children:[new D.TableCell({children:uc.map(u=>par([u.kod,u.rota,u.saat,u.gunler].filter(Boolean).join(' / '))),margins:{top:40,bottom:40,left:80,right:80}})]})];
+      push(tablo(rows)); } }
+
+  const doc=new D.Document({sections:[{properties:{page:{margin:{top:720,bottom:720,left:900,right:900}}},children:kids}]});
+  const blob=await D.Packer.toBlob(doc);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=_moDosyaAd((d.paketKodu||'urun')+'_'+(d.paketAdi||''))+'.docx';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  showToast('Word dosyası indirildi — operatör şablonu formatında','success',5000);
+}
 function openSunum(lang){
   lang=lang||_sunumLang||'tr';
   _sunumLang=lang;
