@@ -2036,7 +2036,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v468 · 04.09.2026';
+const APP_VER='v469 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -16098,7 +16098,7 @@ function renderOpsTransfer(){
       h+=`<td>${gr.firma?esc(gr.firma):'<span style="color:var(--muted)">—</span>'}</td>`;
       h+=`<td><input class="notin" value="${esc(r0.not||'')}" onchange="_trNotElle('${r0.id}',this.value)" placeholder="—"></td>`;
       h+=`<td>${U.every(x=>x.r.onay)?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'}${U.some(x=>_yeniMi(x.r))?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
-      h+=`<td><button class="rowbtn" onclick="_trOnayCoklu('${_idsEnc}')" title="Hepsini onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldirCoklu('${_idsEnc}')" title="Birleşiği dağıt — atamaları kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r0.grup}')" title="Görev listesi">🖨</button></td>`;
+      h+=`<td><button class="rowbtn" onclick="_trOnayCoklu('${_idsEnc}')" title="Hepsini onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldirCoklu('${_idsEnc}')" title="Birleşiği dağıt — atamaları kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r0.grup}')" title="Görev listesi">🖨</button><button class="rowbtn" onclick="trRehberWa('${r0.grup}')" title="Rehbere WhatsApp: görev listesi PDF iner + sohbet açılır">📲</button></td>`;
       h+='</tr>';
       return;
     }
@@ -16119,7 +16119,7 @@ function renderOpsTransfer(){
     h+=`<td>${gr&&gr.firma?esc(gr.firma):(r.tahsis&&r.tahsis.firma?`<span style="color:#0369a1;font-weight:700">${esc(r.tahsis.firma)}</span>`:'<span style="color:var(--muted)">—</span>')}</td>`;
     h+=`<td><input class="notin" value="${esc(r.not||'')}" onchange="_trNotElle('${r.id}',this.value)" placeholder="—"></td>`;
     h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):(r.tahsis?'<span class="trchip" style="background:#e0f2fe;color:#0369a1">tahsis aracı</span>':'<span class="trchip c-yok">atanmadı</span>')}${_yeniMi(r)?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
-    h+=`<td>${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button>`:''}</td></tr>`;
+    h+=`<td>${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button><button class="rowbtn" onclick="trRehberWa('${r.grup}')" title="Rehbere WhatsApp: görev listesi PDF iner + sohbet açılır">📲</button>`:''}</td></tr>`;
   });
   h+='</table></div>';
   h+=_trTahsisBolumHTML();
@@ -16793,6 +16793,24 @@ function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!
     ${rows.map(r=>{const dh=_trDeparHesap(r);return `<tr><td><b>${esc(dh.saat)}</b></td><td>${esc(r.tip)}</td><td>${esc(r.nereden)}</td><td>${esc(r.nereye)}</td><td>${esc(r.ucus||'')}</td><td>${esc(r.saat||'')}</td><td>${esc(r.op)}</td><td>${esc(r.urun)}</td><td>${r.pax}</td><td>${esc(r.not||'')}</td></tr>`;}).join('')}</table>
     <div class="imza"><span>Şoför: ____________</span><span>Rehber: ____________</span><span>Operasyon: ____________</span></div></div>`; }
 function _trPrint(html){ let p=document.getElementById('trfPrint'); if(!p){ p=document.createElement('div'); p.id='trfPrint'; document.body.appendChild(p); } p.innerHTML=html; document.body.classList.add('trf-printing'); window.print(); setTimeout(()=>document.body.classList.remove('trf-printing'),400); }
+function trRehberWa(kod){
+  const T=getTransfer(); const gr=(T.gruplar||{})[kod];
+  if(!gr){ showToast('Görev bulunamadı','error'); return; }
+  const html=_trGorevHtml(kod);
+  if(!html){ showToast('Görev listesi boş','error'); return; }
+  const rehAd=(gr.rehber||'').trim();
+  let tel=String(rehAd?_rehTelBul(rehAd):'').replace(/\D/g,'');
+  if(tel.length===11&&tel.startsWith('0')) tel='9'+tel;
+  else if(tel.length===10&&tel.startsWith('5')) tel='90'+tel;
+  const rows=_trGenRows().filter(r=>r.grup===kod);
+  const tarih=rows.length?_fmtDateTR(rows[0].tarih):'';
+  const msg='Merhaba'+(rehAd?' '+rehAd:'')+', '+tarih+' '+_trKodOf(kod)+' araç görev listesi ektedir — araç, plaka, şoför ve depar bilgileri PDF içinde.\nDiogenes Travel';
+  const ac=()=>{ window.open('https://wa.me/'+(tel||'')+'?text='+encodeURIComponent(msg),'_blank');
+    showToast(tel?'WhatsApp açıldı — indirilen PDF\'i sohbete sürükle':'Rehberin telefonu tanımlı değil — kişi seçip PDF\'i sohbete sürükle',tel?'success':'error',8000); };
+  const ad='gorev_'+_moDosyaAd(_trKodOf(kod))+(rows.length?'_'+String(_pdate(rows[0].tarih)||''):'')+'.pdf';
+  if(!window.html2canvas||!(window.jspdf&&window.jspdf.jsPDF)){ _trPrint(html); ac(); }
+  else _tdPdfIndir([html],ad,ac);
+}
 function _trPrintGrup(kod){ const h=_trGorevHtml(kod); if(!h){ showToast('Görev bulunamadı','error'); return; } _trPrint(h); }
 // ═══ ŞIK EXCEL: marka renkleri + çerçeve + zebra (xlsx-js-style yüklüyse; değilse düz ama çalışır) ═══
 const _XSC={navy:'FF1E3A5F',turuncu:'FFE8630A',turuncuSoft:'FFFDEBDD',zebra:'FFF5F7FA',cizgi:'FFC9CDD4',yesil:'FFDCFCE7',yesilK:'FF166534',kirmizi:'FFFEE2E2',kirmiziK:'FFB91C1C',mavi:'FFE0F2FE',maviK:'FF0369A1',beyaz:'FFFFFFFF',gri:'FF555555'};
