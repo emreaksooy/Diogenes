@@ -2038,7 +2038,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v471 · 04.09.2026';
+const APP_VER='v472 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -17177,7 +17177,7 @@ function _trKlasikRows(){
         const _gunNo=(_isoDiff(ab,d)||0)+1;
         out.push({tarih:d,depar:'',
           yon:([t.gorev,(d===ab?t.basYer:'' )].filter(Boolean).join(' · ')||t.prog||t.tur)
-            +' · '+_fmtDateTR(ab).slice(0,5)+'–'+_fmtDateTR(abit).slice(0,5)+' · '+_gunNo+'/'+_gunT+'. gün',
+            +' · '+_fmtDateTR(ab)+' - '+_fmtDateTR(abit)+' - '+_gunNo+'/'+_gunT,
           pax:+t.pax||0,arac:t.arac.split('·')[0].trim(),tip:'Tahsis',
           kod:grpNo||t.tur,ops:new Set(),notlar:new Set([t.not].filter(Boolean)),
           kaptan:[t.sofor,t.stel].filter(Boolean).join(' · '),
