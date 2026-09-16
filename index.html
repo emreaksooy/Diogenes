@@ -2038,7 +2038,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v472 · 04.09.2026';
+const APP_VER='v473 · 04.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -17176,8 +17176,8 @@ function _trKlasikRows(){
         if(d<_d1||d>_d2) continue;
         const _gunNo=(_isoDiff(ab,d)||0)+1;
         out.push({tarih:d,depar:'',
-          yon:([t.gorev,(d===ab?t.basYer:'' )].filter(Boolean).join(' · ')||t.prog||t.tur)
-            +' · '+_fmtDateTR(ab)+' - '+_fmtDateTR(abit)+' - '+_gunNo+'/'+_gunT,
+          tBas:_fmtDateTR(ab),tBit:_fmtDateTR(abit),tGun:_gunNo+'/'+_gunT,
+          yon:([t.gorev,(d===ab?t.basYer:'' )].filter(Boolean).join(' · ')||t.prog||t.tur),
           pax:+t.pax||0,arac:t.arac.split('·')[0].trim(),tip:'Tahsis',
           kod:grpNo||t.tur,ops:new Set(),notlar:new Set([t.not].filter(Boolean)),
           kaptan:[t.sofor,t.stel].filter(Boolean).join(' · '),
@@ -17192,18 +17192,18 @@ function _trKlasikExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const L=_trKlasikRows();
   if(!L.length){ showToast('Bu aralıkta iş yok','error'); return; }
-  const aoa=[['İŞ','TARİH','DEPARTMAN','FİRMA','DEPAR','İŞİN YÖNÜ','KİŞİ','ARAÇ','TİP','İŞ KODU','OPERATÖRLER','NOTLAR','KAPTAN','REHBER']];
-  L.forEach((x,i)=>aoa.push([i+1,_fmtDateTR(x.tarih),'OPERASYON','DIOGENES TRAVEL',x.depar||'',x.yon||'',x.pax||'',x.arac||'',x.tip,x.kod||'',[...x.ops].join(' + '),[...x.notlar].join(' · '),x.kaptan||'',x.rehber||'']));
+  const aoa=[['İŞ','TARİH','DEPARTMAN','FİRMA','DEPAR','İŞİN YÖNÜ','T.BAŞLANGIÇ','T.BİTİŞ','GÜN','KİŞİ','ARAÇ','TİP','İŞ KODU','OPERATÖRLER','NOTLAR','KAPTAN','REHBER']];
+  L.forEach((x,i)=>aoa.push([i+1,_fmtDateTR(x.tarih),'OPERASYON','DIOGENES TRAVEL',x.depar||'',x.yon||'',x.tBas||'',x.tBit||'',x.tGun||'',x.pax||'',x.arac||'',x.tip,x.kod||'',[...x.ops].join(' + '),[...x.notlar].join(' · '),x.kaptan||'',x.rehber||'']));
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[4,11,12,16,7,30,5,8,10,10,18,22,24,30].map(w2=>({wch:w2}));
+  ws['!cols']=[4,11,12,16,7,26,12,12,6,5,8,10,10,18,22,24,30].map(w2=>({wch:w2}));
   try{
-    const nC=14;
+    const nC=17;
     _xsSatirStil(ws,0,nC,{font:{bold:true,sz:9,color:{rgb:'FFFFFFFF'}},fill:{fgColor:{rgb:'FF1E3A5F'}},border:_xsB('FFFFFFFF'),alignment:{vertical:'center',horizontal:'center'}});
     for(let r2=1;r2<aoa.length;r2++) for(let c=0;c<nC;c++) _xsSet(ws,r2,c,{
       font:{sz:9,name:'Arial'},
       fill:{fgColor:{rgb:'FFAFEEEE'}},
       border:_xsB('FF555555'),
-      alignment:{vertical:'center',horizontal:(c===0||c===4||c===6||c===8)?'center':'left'}});
+      alignment:{vertical:'center',horizontal:(c===0||c===4||c===6||c===7||c===8||c===9||c===11)?'center':'left'}});
   }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Is Listesi');
   const ad='is_listesi_'+(_opsTrDate||'')+(_opsTrDate2?('_'+_opsTrDate2):'')+'.xlsx';
