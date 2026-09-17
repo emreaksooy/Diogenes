@@ -2038,7 +2038,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v474 · 17.09.2026';
+const APP_VER='v475 · 17.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14561,10 +14561,17 @@ function tdSatisAdd(ozel){
   g.satislar.push({id:R_GID(),ad:'',alis:'',satis:'',pax:'',odeme:'',komTip:'%',komDeg:'',rez:'',ozel:!!ozel,not:'',ekleyen:ozel?((sbUser&&sbUser.email)||''):''});
   _tdSave(); renderOpsGrup();
 }
+const _TD_ODEME_TIPLERI=[['',' — '],['nakit','Nakit'],['kart','Kart'],['havale','Havale'],['diger','Diğer']];
+function _tdOdemeTipAd(t){ const o=_TD_ODEME_TIPLERI.find(x=>x[0]===t); return (o&&o[0])?o[1]:''; }
+function _tdSatisAcik(x){
+  if(sbRol==='rehber') return false;
+  if(x.ozel) return sbRol==='yonetici'||!sbRol;
+  return sbRol==='yonetici'||!sbRol;
+}
 function tdSatisSet(i,f,v){
   const g=_tdG(); if(!g||!g.satislar[i])return;
   const x0=g.satislar[i];
-  if(sbRol==='rehber'&&!['pax','odeme','rez','alis','satis'].includes(f)){ showToast('Komisyon ve paket adı tanımdan gelir','error'); return; }
+  if(sbRol==='rehber'&&!['pax','odeme','odemeTip','rez','alis','satis'].includes(f)){ showToast('Komisyon ve paket adı tanımdan gelir','error'); return; }
   if(sbRol==='rehber'&&f==='satis'&&x0.fiyatGizli){ showToast('Bu paketin fiyatı gizli','error'); return; }
   if(['ad','komTip','komDeg'].includes(f)&&!x0.ozel&&_cloudOn&&sbRol&&sbRol!=='yonetici'){ showToast('Komisyon ve paket adı Satış Paketleri tanımından yönetilir','error'); return; }
   g.satislar[i][f]=String(v).trim();
@@ -14751,17 +14758,17 @@ function renderTurDosyasi(box){
       </table></div>`;
     })()}
     <div style="overflow-x:auto"><table class="rzmg" style="min-width:900px">
-    <tr><th style="min-width:190px">Paket</th><th style="width:80px">Alış</th><th style="width:80px">Satış</th><th style="width:60px">Pax</th><th style="width:95px">Toplam</th><th style="width:85px">Ödemeler</th><th style="width:78px">Kom. tipi</th><th style="width:66px">Değer</th><th style="width:90px">Rehber Kom.</th><th style="width:104px">Op. Rez.</th><th style="width:30px"></th></tr>
+    <tr><th style="min-width:190px">Paket</th><th style="width:80px">Alış</th><th style="width:80px">Satış</th><th style="width:60px">Pax</th><th style="width:95px">Toplam</th><th style="width:134px">Ödemeler</th><th style="width:78px">Kom. tipi</th><th style="width:66px">Değer</th><th style="width:90px">Rehber Kom.</th><th style="width:104px">Op. Rez.</th><th style="width:30px"></th></tr>
     ${g.satislar.map((x,i)=>`<tr${x.ozel?' style="background:#fdf4ff"':''}>
-      <td><div style="display:flex;align-items:center;gap:5px"><input value="${esc(x.ad)}" list="tdAktL" style="flex:1" onchange="tdSatisSet(${i},'ad',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}>${x.ozel?`<span title="${esc(x.ekleyen||'')}" style="background:#f3e8ff;color:#7e22ce;padding:1px 6px;border-radius:8px;font-size:.56rem;font-weight:800">ÖZEL</span>`:''}</div>
+      <td><div style="display:flex;align-items:center;gap:5px"><input value="${esc(x.ad)}" list="tdAktL" style="flex:1" onchange="tdSatisSet(${i},'ad',this.value)"${_tdSatisAcik(x)?kilit:' disabled'}>${x.ozel?`<span title="${esc(x.ekleyen||'')}" style="background:#f3e8ff;color:#7e22ce;padding:1px 6px;border-radius:8px;font-size:.56rem;font-weight:800">ÖZEL</span>`:''}</div>
         ${x.ozel?`<input value="${esc(x.not)}" placeholder="not — ör. ilk gece yemek yok" style="margin-top:3px;font-size:.66rem" onchange="tdSatisSet(${i},'not',this.value)"${kilit}>`:''}</td>
       <td><input inputmode="decimal" value="${esc(x.alis)}" style="text-align:right" onchange="tdSatisSet(${i},'alis',this.value)"${kilit}></td>
       <td>${(x.fiyatGizli&&sbRol==='rehber')?'<span style="color:var(--muted)">•••</span>':`<input inputmode="decimal" value="${esc(x.satis)}" style="text-align:right" onchange="tdSatisSet(${i},'satis',this.value)"${kilit}>`}</td>
       <td><input inputmode="numeric" value="${esc(x.pax)}" style="text-align:right" onchange="tdSatisSet(${i},'pax',this.value)"${kilit}></td>
       <td class="ro" style="text-align:right;font-weight:700" id="tdTut_${i}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td>
-      <td><input inputmode="decimal" value="${esc(x.odeme)}" style="text-align:right" onchange="tdSatisSet(${i},'odeme',this.value)"${kilit}></td>
-      <td><select onchange="tdSatisSet(${i},'komTip',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}><option value="%"${x.komTip==='%'?' selected':''}>%</option><option value="pax"${x.komTip==='pax'?' selected':''}>€/pax</option><option value=""${!x.komTip?' selected':''}>yok</option></select></td>
-      <td><input inputmode="decimal" value="${esc(x.komDeg)}" style="text-align:right" onchange="tdSatisSet(${i},'komDeg',this.value)"${(x.ozel&&sbRol==='yonetici')||!sbRol?kilit:' disabled'}></td>
+      <td><div style="display:flex;gap:3px;align-items:center"><select style="width:64px;font-size:.68rem" onchange="tdSatisSet(${i},'odemeTip',this.value)"${kilit}>${_TD_ODEME_TIPLERI.map(o=>`<option value="${o[0]}"${(x.odemeTip||'')===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select><input inputmode="decimal" value="${esc(x.odeme)}" style="width:58px;text-align:right" onchange="tdSatisSet(${i},'odeme',this.value)"${kilit}></div></td>
+      <td><select onchange="tdSatisSet(${i},'komTip',this.value)"${_tdSatisAcik(x)?kilit:' disabled'}><option value="%"${x.komTip==='%'?' selected':''}>%</option><option value="pax"${x.komTip==='pax'?' selected':''}>€/pax</option><option value=""${!x.komTip?' selected':''}>yok</option></select></td>
+      <td><input inputmode="decimal" value="${esc(x.komDeg)}" style="text-align:right" onchange="tdSatisSet(${i},'komDeg',this.value)"${_tdSatisAcik(x)?kilit:' disabled'}></td>
       <td class="ro" style="text-align:right" id="tdKom_${i}">${_tdEur(_tdKom(x))}</td>
       <td><select onchange="tdSatisSet(${i},'rez',this.value)"${kilit}><option value=""${!x.rez?' selected':''}>—</option><option value="bekliyor"${x.rez==='bekliyor'?' selected':''}>rez. bekliyor</option><option value="yapildi"${x.rez==='yapildi'?' selected':''}>rez. yapıldı ✓</option></select></td>
       <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="tdSatisDel(${i})"${kilit}>✕</button></td></tr>`).join('')}
@@ -15263,7 +15270,7 @@ function _tdDocHesap(g,E){
   </table>
   ${BANT('1 · PAKET SATIŞLARI')}
   <table style="width:100%;border-collapse:collapse"><tr><th style="${TH}">Paket</th><th style="${TH};text-align:right">Alış</th><th style="${TH};text-align:right">Satış</th><th style="${TH};text-align:center">Pax</th><th style="${TH};text-align:right">Toplam</th><th style="${TH};text-align:right">Ödemeler</th><th style="${TH};text-align:right">Rehber Kom.</th></tr>
-  ${(g.satislar||[]).map(x=>`<tr><td style="${TD}">${esc(x.ad)}${x.ozel?' <b>(ÖZEL'+(x.not?': '+esc(x.not):'')+')</b>':''}</td><td style="${TDr}">${esc(x.alis)}</td><td style="${TDr}">${esc(x.satis)}</td><td style="${TD};text-align:center">${esc(x.pax)}</td><td style="${TDr}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td><td style="${TDr}">${esc(x.odeme)}</td><td style="${TDr}">${_tdEur(_tdKom(x))}</td></tr>`).join('')||`<tr><td style="${TD}" colspan="7">Satış yok</td></tr>`}
+  ${(g.satislar||[]).map(x=>`<tr><td style="${TD}">${esc(x.ad)}${x.ozel?' <b>(ÖZEL'+(x.not?': '+esc(x.not):'')+')</b>':''}</td><td style="${TDr}">${esc(x.alis)}</td><td style="${TDr}">${esc(x.satis)}</td><td style="${TD};text-align:center">${esc(x.pax)}</td><td style="${TDr}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td><td style="${TDr}">${esc(x.odeme)}${x.odemeTip?` <span style="font-size:7.5pt;color:#555">(${_tdOdemeTipAd(x.odemeTip)})</span>`:''}</td><td style="${TDr}">${_tdEur(_tdKom(x))}</td></tr>`).join('')||`<tr><td style="${TD}" colspan="7">Satış yok</td></tr>`}
   <tr><td style="${TD};font-weight:800;background:#DEEAF6;${PCA}" colspan="4">TOPLAM</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.ciro)}</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.ode)}</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.kom)}</td></tr></table>
   ${BANT('2 · MASRAFLAR')}
   <table style="width:100%;border-collapse:collapse"><tr><th style="${TH}">Açıklama</th><th style="${TH};text-align:right;width:15mm">$</th><th style="${TH};text-align:right;width:15mm">€</th><th style="${TH};text-align:right;width:17mm">₺</th><th style="${TH};text-align:right;width:22mm">€ karşılığı</th></tr>
