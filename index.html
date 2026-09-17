@@ -177,6 +177,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 .save-status .dot{width:7px;height:7px;border-radius:50%;background:#9ca3af;flex-shrink:0}
 .save-status.ok .dot{background:var(--success)}
 .save-status.dirty .dot{background:var(--warning)}
+.save-status .st-txt{display:none}
+.save-status .dot{width:9px;height:9px}
 .nav-undo-btn{padding:7px 13px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-right:2px;display:inline-flex;align-items:center;gap:6px}
 .nav-undo-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
 .nav-undo-btn:disabled{cursor:default}
@@ -918,13 +920,12 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
     <span id="appVerBadge" style="font-size:.62rem;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:1px 7px;white-space:nowrap" title="Uygulama sürümü — surumler/ klasöründen eski sürüme dönülebilir"></span>
   </div>
   <div style="flex:1"></div>
-  <span class="save-status" id="saveStatus"><span class="dot"></span><span id="saveStatusTxt">Hazır</span></span>
-  <span class="save-status" id="cloudStatus" title="Bulut bağlantısı — tıkla: hata günlüğü" onclick="hataGunluguAc()" style="cursor:pointer"><span class="dot"></span><span id="cloudStatusTxt">Bulut: —</span></span>
+  <span class="save-status" id="saveStatus" title="Kayıt durumu: Hazır"><span class="dot"></span><span class="st-txt" id="saveStatusTxt">Hazır</span></span>
+  <span class="save-status" id="cloudStatus" title="Bulut bağlantısı — tıkla: hata günlüğü" onclick="hataGunluguAc()" style="cursor:pointer"><span class="dot"></span><span class="st-txt" id="cloudStatusTxt">Bulut: —</span></span>
   <span id="userChip" style="display:none;align-items:center;gap:6px;font-size:.78rem;color:var(--text);white-space:nowrap"></span>
   <button class="theme-toggle" onclick="navGeri()" title="Önceki görünüme dön — nereden geldiysen oraya">←</button>
   <button class="theme-toggle" id="sbToggleBtn" onclick="_mobMenuToggle(event)" title="Menü">☰</button>
-  <button class="theme-toggle" id="themeToggle" onclick="toggleDark()" title="Koyu temaya geç"><svg class="ic"><use href="#i-moon"/></svg></button>
-  <button class="nav-undo-btn" id="navUndoBtn" onclick="undoLast()" title="Geri alınacak işlem yok" disabled style="opacity:.4"><svg class="ic"><use href="#i-undo"/></svg> Geri Al</button>
+  <button class="nav-undo-btn" id="navUndoBtn" onclick="undoLast()" title="Geri alınacak işlem yok" disabled style="opacity:.4"><svg class="ic"><use href="#i-undo"/></svg></button>
   <button class="nav-save-btn" id="navSaveBtn" onclick="saveCurrentPackage()"><svg class="ic"><use href="#i-save"/></svg> <span id="navSaveTxt">Kaydet</span></button>
 </div>
 
@@ -2038,7 +2039,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v475 · 17.09.2026';
+const APP_VER='v476 · 17.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -3026,12 +3027,12 @@ function _setSaveUI(state){
     if(st)st.className='save-status dirty'; if(sx)sx.textContent='Kaydedilmemiş değişiklik';
   } else if(state==='saved'){
     if(t)t.textContent='Kaydedildi'; if(b)b.classList.add('saved');
-    if(st)st.className='save-status ok';
+    if(st){st.className='save-status ok';st.title='Kayıt durumu: Kaydedildi · '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});}
     if(sx)sx.textContent='Kaydedildi · '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
     setTimeout(()=>{ if(!isDirty){ if(t)t.textContent='Kaydet'; if(b)b.classList.remove('saved'); } },2000);
   } else {
     if(t)t.textContent='Kaydet'; if(b)b.classList.remove('saved');
-    if(st)st.className='save-status'; if(sx)sx.textContent='Hazır';
+    if(st){st.className='save-status';st.title='Kayıt durumu: Hazır';} if(sx)sx.textContent='Hazır';
   }
 }
 window.addEventListener('beforeunload',function(e){
@@ -8265,6 +8266,7 @@ function _setCloud(state,msg){
   const el=document.getElementById('cloudStatus'), tx=document.getElementById('cloudStatusTxt');
   if(!el) return;
   el.className='save-status '+(state==='ok'?'ok':state==='err'||state==='login'?'dirty':'');
+  el.title=msg+' — tıkla: hata günlüğü';
   if(tx) tx.textContent=msg;
 }
 function _showLogin(show){
@@ -8338,10 +8340,23 @@ function _renderUserChip(){
   const chip=document.getElementById('userChip'); if(!chip) return;
   const rolAd={yonetici:'Yönetici',urun:'Ürün',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',rehber:'Rehber'}[sbRol]||sbRol;
   chip.style.display='inline-flex';
-  chip.innerHTML='<span>'+esc((sbUser.email||'').split('@')[0])+'</span><span class="user-role-badge">'+rolAd+'</span>'
-    +'<button class="chip-btn" title="Şifremi değiştir" onclick="openPwModal()">🔑</button>'
-    +(sbRol==='yonetici'?'<button class="chip-btn" title="Ekip paneli" onclick="showPage(\'ekip\')"><svg class="ic"><use href="#i-users"/></svg></button>':'')
-    +'<button class="chip-btn" title="Çıkış yap" onclick="doLogout()"><svg class="ic"><use href="#i-x"/></svg></button>';
+  chip.style.cursor='pointer';
+  chip.title='Hesap menüsü — şifre, tema, ekip, çıkış';
+  chip.onclick=_userMenuAc;
+  chip.innerHTML='<span>'+esc((sbUser.email||'').split('@')[0])+'</span><span class="user-role-badge">'+rolAd+'</span><span style="font-size:.6rem;color:var(--muted)">▾</span>';
+}
+function _userMenuAc(ev){
+  if(ev) ev.stopPropagation();
+  const eski=document.getElementById('userMenu'); if(eski){ eski.remove(); return; }
+  const m=document.createElement('div'); m.id='userMenu';
+  m.style.cssText='position:fixed;top:54px;right:8px;z-index:99999;background:var(--card,#fff);border:1px solid var(--border);border-radius:14px;box-shadow:0 14px 44px rgba(16,24,40,.22);padding:6px;min-width:190px';
+  const it=(txt,fn)=>'<div onclick="var m=document.getElementById(\'userMenu\');if(m)m.remove();'+fn+'" style="padding:10px 13px;font-size:.85rem;font-weight:600;cursor:pointer;border-radius:9px;color:var(--text)" onmouseover="this.style.background=\'var(--light)\'" onmouseout="this.style.background=\'transparent\'">'+txt+'</div>';
+  let h=it('🌙 Açık / koyu tema','toggleDark()')+it('🔑 Şifremi değiştir','openPwModal()');
+  if(sbRol==='yonetici') h+=it('👥 Ekip paneli','showPage(&quot;ekip&quot;)');
+  h+=it('🚪 Çıkış yap','doLogout()');
+  m.innerHTML=h;
+  document.body.appendChild(m);
+  setTimeout(()=>{ document.addEventListener('click',function kapat(e){ const mm=document.getElementById('userMenu'); if(mm&&!mm.contains(e.target)) mm.remove(); document.removeEventListener('click',kapat); },{once:false}); },30);
 }
 
 // ═══════════════ REZERVASYON INTAKE ═══════════════
