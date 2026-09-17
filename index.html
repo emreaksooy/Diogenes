@@ -2039,7 +2039,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v476 · 17.09.2026';
+const APP_VER='v477 · 17.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14634,7 +14634,7 @@ function renderTurDosyasi(box){
   const T=_tdTopla(g);
   const rehMod=(sbRol==='rehber');
   if(rehMod&&!['program','ucak','otel','magaza','yolcu','satis','evrak'].includes(_tdTab)) _tdTab='program';
-  const TB=rehMod?[['program','Program'],['ucak','Uçak'],['otel','Oteller'],['magaza','Mağazalar'],['yolcu','Yolcular'],['satis','Tur Satışları'],['evrak','Rehber Dosyası']]:[['yolcu','Yolcular'],['program','Program'],['ucak','Uçak'],['otel','Oteller'],['magaza','Mağazalar'],['rehber','Rehber'],['arac','Araçlar'],['satis','Tur Satışları'],['evrak','Rehber Dosyası'],['hesap','Hesaplaşma']];
+  const TB=rehMod?[['program','Program'],['ucak','Uçak'],['otel','Oteller'],['magaza','Mağazalar'],['yolcu','Yolcular'],['satis','Tur Satışları'],['evrak','Rehber Dosyası']]:[['yolcu','Yolcular'],['program','Program'],['ucak','Uçak'],['otel','Oteller'],['magaza','Mağazalar'],['rehber','Rehber'],['arac','Araçlar'],['satis','Satış & Hesap'],['evrak','Rehber Dosyası']];
   let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
     <button class="btn btn-outline btn-sm" onclick="${rehMod?'rehbGeri()':'opsTdKapat()'}">← Geri</button>
     <span style="font-size:.74rem;color:var(--muted)">${rehMod?'Rehber Panelim › Turlarım':'Operasyon › Gruplar'} › ${_fmtDateTR(E.tarih)} › <b>${esc(g.no||E.ad)}</b></span>
@@ -14992,12 +14992,25 @@ function renderTurDosyasi(box){
     <button class="btn btn-success" onclick="tdRehWhatsapp()" title="Dosyanın PDF'ini indirir + rehberin WhatsApp sohbetini hazır mesajla açar — PDF'i sohbete sürükle">📲 Rehbere WhatsApp</button>${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?(_kaseGet()?'<span style="font-size:.68rem;color:#166534;font-weight:700">✓ firma kaşesi tanımlı — sözleşmelere otomatik basılır (Tanımlamalar › Firma Kaşesi)</span>':'<span style="font-size:.68rem;color:var(--muted)">firma kaşesi: Tanımlamalar › Firma Kaşesi</span>'):''}</div>`;
   }
   // ═ HESAPLAŞMA ═
-  if(_tdTab==='hesap'){
+  if(_tdTab==='hesap'||(_tdTab==='satis'&&!rehMod)){
     const KATLAR=['TUR MASRAFLARI','OTOPARKLAR','TİPLER','KİŞİSEL ÖDEMELER','DİĞER'];
     const kilit=g.hesapKapali?' disabled':'';
     const mas=_tdMasrafEUR(g), yev=_tdYevToplam(g);
     const eksik=T.teslim-_tdN(g.teslimAlinan===''?String(T.teslim):g.teslimAlinan);
-    h+=`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:.76rem">
+    h+=`<div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px;border-top:2px solid var(--border);padding-top:14px">
+      <b style="font-size:.9rem">💶 Masraflar, Yevmiye & Kapanış</b>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:.76rem">
+      <b>Yevmiye:</b> <input inputmode="decimal" value="${esc(g.yevmiye.tutar)}" placeholder="€" style="width:70px;padding:5px 7px;border:1.5px solid var(--border);border-radius:8px;text-align:right" onchange="tdYev('tutar',this.value)"${kilit}>
+      <select style="padding:5px 7px;border:1.5px solid var(--border);border-radius:8px" onchange="tdYev('donem',this.value)"${kilit}>
+        <option value="gunluk"${g.yevmiye.donem==='gunluk'?' selected':''}>Günlük</option>
+        <option value="haftalik"${g.yevmiye.donem==='haftalik'?' selected':''}>Haftalık</option>
+        <option value="sabit"${g.yevmiye.donem==='sabit'?' selected':''}>Sabit</option>
+      </select>
+      · <b>Tur günü:</b> <input inputmode="numeric" value="${esc(g.gunSay)}" style="width:52px;padding:5px 7px;border:1.5px solid var(--border);border-radius:8px;text-align:center" onchange="tdSet('gunSay',this.value)"${kilit}>
+      <span style="color:var(--muted)">Yevmiye toplamı: <b>${_tdEur(yev)}</b></span>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:.76rem">
       <b>Kurlar:</b> €1 = ₺<input value="${esc(g.kurTL)}" style="width:70px;padding:5px 7px;border:1.5px solid var(--border);border-radius:8px" onchange="tdSet('kurTL',this.value)"${kilit}>
       · $1 = €<input value="${esc(g.kurUSD)}" style="width:70px;padding:5px 7px;border:1.5px solid var(--border);border-radius:8px" onchange="tdSet('kurUSD',this.value)"${kilit}>
       <span style="color:var(--muted);font-size:.66rem">$ ve ₺ masraflar kapanışta €'ya çevrilir</span>
