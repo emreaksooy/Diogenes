@@ -2038,7 +2038,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v473 · 04.09.2026';
+const APP_VER='v474 · 17.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15233,21 +15233,57 @@ function _tdDocAcente(g,E){ const t=getTanimlar();
 function _tdDocHesap(g,E){
   const T=_tdTopla(g), mas=_tdMasrafEUR(g), yev=_tdYevToplam(g);
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
-  const eksik=T.teslim-_tdN(g.teslimAlinan===''?String(T.teslim):g.teslimAlinan);
-  return _tdDocBas('Rehber Hesaplaşma',E)+`<p style="font-size:10pt"><b>Rehber:</b> ${esc(reh?reh.ad:'—')}</p>
-  <table style="width:100%;border-collapse:collapse;margin-bottom:4mm"><tr><th style="${_tdTh}">Paket</th><th style="${_tdTh}">Alış</th><th style="${_tdTh}">Satış</th><th style="${_tdTh}">Pax</th><th style="${_tdTh}">Toplam</th><th style="${_tdTh}">Ödemeler</th><th style="${_tdTh}">Rehber Kom.</th></tr>
-  ${g.satislar.map(x=>`<tr><td style="${_tdTd}">${esc(x.ad)}${x.ozel?' (ÖZEL'+(x.not?': '+esc(x.not):'')+')':''}</td><td style="${_tdTd}">${esc(x.alis)}</td><td style="${_tdTd}">${esc(x.satis)}</td><td style="${_tdTd}">${esc(x.pax)}</td><td style="${_tdTd}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td><td style="${_tdTd}">${esc(x.odeme)}</td><td style="${_tdTd}">${_tdEur(_tdKom(x))}</td></tr>`).join('')}
-  <tr><td style="${_tdTd}" colspan="4"><b>Toplam Ciro / Ödemeler / Teslim</b></td><td style="${_tdTd}"><b>${_tdEur(T.ciro)}</b></td><td style="${_tdTd}"><b>${_tdEur(T.ode)}</b></td><td style="${_tdTd}"><b>${_tdEur(T.kom)}</b></td></tr></table>
-  <table style="width:100%;border-collapse:collapse;margin-bottom:4mm"><tr><th style="${_tdTh}">Masraf</th><th style="${_tdTh}">Kategori</th><th style="${_tdTh}">$</th><th style="${_tdTh}">€</th><th style="${_tdTh}">₺</th></tr>
-  ${g.masraflar.map(m=>`<tr><td style="${_tdTd}">${esc(m.ad)}</td><td style="${_tdTd}">${esc(m.kat)}</td><td style="${_tdTd}">${esc(m.usd)}</td><td style="${_tdTd}">${esc(m.eur)}</td><td style="${_tdTd}">${esc(m.tl)}</td></tr>`).join('')||`<tr><td style="${_tdTd}" colspan="5">—</td></tr>`}</table>
-  <table style="width:60%;border-collapse:collapse"><tr><td style="${_tdTd}">Tur Satışı (teslim)</td><td style="${_tdTd};text-align:right">${_tdEur(T.teslim)}</td></tr>
-  <tr><td style="${_tdTd}">Teslim Alınan</td><td style="${_tdTd};text-align:right">${_tdEur(_tdN(g.teslimAlinan===''?String(T.teslim):g.teslimAlinan))}</td></tr>
-  <tr><td style="${_tdTd}">Rehber Yevmiye</td><td style="${_tdTd};text-align:right">−${_tdEur(yev)}</td></tr>
-  <tr><td style="${_tdTd}">Satış Komisyonları</td><td style="${_tdTd};text-align:right">−${_tdEur(T.kom)}</td></tr>
-  <tr><td style="${_tdTd}">Masraflar (€)</td><td style="${_tdTd};text-align:right">−${_tdEur(mas)}</td></tr>
-  <tr><td style="${_tdTd}"><b>REHBERE ÖDENECEK KALAN</b></td><td style="${_tdTd};text-align:right"><b>${_tdEur(yev+T.kom+mas-eksik)}</b></td></tr></table>
-  <p style="font-size:9pt;margin-top:3mm">Kurlar: €1=₺${esc(g.kurTL||'—')} · $1=€${esc(g.kurUSD||'—')}${g.hesapKapali?' · Kapanış: '+_fmtDateTR(g.hesapKapanis||''):''}</p>
-  <div style="display:flex;justify-content:space-around;margin-top:12mm;font-size:9.5pt"><span>Teslim Alan: ______________</span><span>Teslim Eden (Rehber): ______________</span></div></div>`;
+  const teslimA=_tdN(g.teslimAlinan===''?String(T.teslim):g.teslimAlinan);
+  const eksik=T.teslim-teslimA;
+  const kalan=yev+T.kom+mas-eksik;
+  const PCA='-webkit-print-color-adjust:exact;print-color-adjust:exact';
+  const TH='border:1px solid #1F4E78;background:#1F4E78;color:#fff;padding:3px 7px;font-size:9pt;text-align:left;'+PCA;
+  const TD='border:1px solid #9FB3C8;padding:3px 7px;font-size:9pt';
+  const TDr=TD+';text-align:right';
+  const BANT=t=>`<div style="background:#C55A11;color:#fff;font-weight:700;font-size:10pt;padding:2mm 3mm;margin:4mm 0 2mm;border-radius:2px;${PCA}">${t}</div>`;
+  const yevAcik=g.yevmiye&&g.yevmiye.donem==='gunluk'?((+g.gunSay||0)+' gün × '+esc(g.yevmiye.tutar||'0')):
+    (g.yevmiye&&g.yevmiye.donem==='haftalik'?('haftalık × '+esc(g.yevmiye.tutar||'0')):('sabit '+esc((g.yevmiye&&g.yevmiye.tutar)||'0')));
+  // masraflar kategori gruplu + kategori ara toplamı (€ karşılığı)
+  const mEur=m=>{ let e=_tdN(m.eur); const u=_tdN(m.usd); if(u&&_tdN(g.kurUSD)) e+=u*_tdN(g.kurUSD); const t=_tdN(m.tl); if(t&&_tdN(g.kurTL)) e+=t/_tdN(g.kurTL); return e; };
+  const grp=new Map();
+  (g.masraflar||[]).forEach(m=>{ const k=m.kat||'DİĞER'; if(!grp.has(k)) grp.set(k,[]); grp.get(k).push(m); });
+  let masHtml='';
+  grp.forEach((list,kat)=>{
+    const sub=list.reduce((a,m)=>a+mEur(m),0);
+    masHtml+=`<tr><td style="${TD};background:#DEEAF6;font-weight:700;${PCA}" colspan="4">${esc(kat)}</td><td style="${TDr};background:#DEEAF6;font-weight:700;${PCA}">${_tdEur(sub)}</td></tr>`
+      +list.map(m=>`<tr><td style="${TD}">${esc(m.ad)||'—'}</td><td style="${TDr}">${esc(m.usd)}</td><td style="${TDr}">${esc(m.eur)}</td><td style="${TDr}">${esc(m.tl)}</td><td style="${TDr};color:#555">${_tdEur(mEur(m))}</td></tr>`).join('');
+  });
+  const OZ=(ad,deg,neg,kalin)=>`<tr><td style="${TD};${kalin?'font-weight:800;background:#FBE4D5;'+PCA:''}">${ad}</td><td style="${TDr};${kalin?'font-weight:800;background:#FBE4D5;'+PCA:(neg?'color:#B00000':'')}">${neg?'−':''}${deg}</td></tr>`;
+  return _tdDocBas('Rehber Hesaplaşma Formu',E)+`
+  <table style="width:100%;border-collapse:collapse;margin-bottom:2mm;font-size:9.5pt">
+    <tr><td style="${TD};width:25%"><b>Rehber</b></td><td style="${TD};width:41%">${esc(reh?reh.ad:'—')}${reh&&reh.tel?' · '+esc(reh.tel):''}</td>
+        <td style="${TD};width:17%"><b>Tur günü</b></td><td style="${TD}">${esc(g.gunSay||'—')} gün</td></tr>
+    <tr><td style="${TD}"><b>Hesap durumu</b></td><td style="${TD}">${g.hesapKapali?('KAPANDI — '+_fmtDateTR(g.hesapKapanis||'')):'AÇIK'}</td>
+        <td style="${TD}"><b>Kurlar</b></td><td style="${TD}">€1 = ₺${esc(g.kurTL||'—')} · $1 = €${esc(g.kurUSD||'—')}</td></tr>
+  </table>
+  ${BANT('1 · PAKET SATIŞLARI')}
+  <table style="width:100%;border-collapse:collapse"><tr><th style="${TH}">Paket</th><th style="${TH};text-align:right">Alış</th><th style="${TH};text-align:right">Satış</th><th style="${TH};text-align:center">Pax</th><th style="${TH};text-align:right">Toplam</th><th style="${TH};text-align:right">Ödemeler</th><th style="${TH};text-align:right">Rehber Kom.</th></tr>
+  ${(g.satislar||[]).map(x=>`<tr><td style="${TD}">${esc(x.ad)}${x.ozel?' <b>(ÖZEL'+(x.not?': '+esc(x.not):'')+')</b>':''}</td><td style="${TDr}">${esc(x.alis)}</td><td style="${TDr}">${esc(x.satis)}</td><td style="${TD};text-align:center">${esc(x.pax)}</td><td style="${TDr}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td><td style="${TDr}">${esc(x.odeme)}</td><td style="${TDr}">${_tdEur(_tdKom(x))}</td></tr>`).join('')||`<tr><td style="${TD}" colspan="7">Satış yok</td></tr>`}
+  <tr><td style="${TD};font-weight:800;background:#DEEAF6;${PCA}" colspan="4">TOPLAM</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.ciro)}</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.ode)}</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.kom)}</td></tr></table>
+  ${BANT('2 · MASRAFLAR')}
+  <table style="width:100%;border-collapse:collapse"><tr><th style="${TH}">Açıklama</th><th style="${TH};text-align:right;width:15mm">$</th><th style="${TH};text-align:right;width:15mm">€</th><th style="${TH};text-align:right;width:17mm">₺</th><th style="${TH};text-align:right;width:22mm">€ karşılığı</th></tr>
+  ${masHtml||`<tr><td style="${TD}" colspan="5">Masraf yok</td></tr>`}
+  <tr><td style="${TD};font-weight:800;background:#DEEAF6;${PCA}" colspan="4">MASRAF TOPLAMI</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(mas)}</td></tr></table>
+  ${BANT('3 · KAPANIŞ ÖZETİ')}
+  <table style="width:96mm;border-collapse:collapse">
+  ${OZ('Tur satışı (teslim edilecek)',_tdEur(T.teslim),false,false)}
+  ${OZ('Teslim alınan',_tdEur(teslimA),false,false)}
+  ${eksik?OZ('Teslim farkı (rehberden düşülür)',_tdEur(eksik),true,false):''}
+  ${OZ('Rehber yevmiyesi ('+yevAcik+')',_tdEur(yev),false,false)}
+  ${OZ('Satış komisyonları',_tdEur(T.kom),false,false)}
+  ${OZ('Masraflar (€ karşılığı)',_tdEur(mas),false,false)}
+  ${OZ('REHBERE ÖDENECEK KALAN',_tdEur(kalan),false,true)}
+  </table>
+  <p style="font-size:8.5pt;color:#333;margin-top:3mm">Yevmiye, satış komisyonları ve rehberin ödediği masraflar rehbere ödenir; varsa teslim farkı bu tutardan düşülür. Ekli fiş/faturalar bu formun ayrılmaz parçasıdır.</p>
+  <table style="width:100%;margin-top:8mm;font-size:9.5pt"><tr>
+    <td style="width:50%;vertical-align:top"><b>TESLİM ALAN (ACENTE)</b><br>Adı Soyadı: ______________________<br>Tarih: ____ / ____ / ________<br>Kaşe ve imza:${_kaseGet()?`<br><img src="${_kaseGet()}" alt="kaşe" style="max-width:150px;max-height:80px;margin-top:1mm">`:'<br><br><br>'}</td>
+    <td style="width:50%;vertical-align:top"><b>TESLİM EDEN (REHBER)</b><br>Adı Soyadı: ${esc((reh&&reh.ad)||'______________________')}<br>Tarih: ____ / ____ / ________<br>İmza:</td>
+  </tr></table></div>`;
 }
 function tdYazdir(tip){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
