@@ -2039,7 +2039,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v481 · 21.09.2026';
+const APP_VER='v482 · 21.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14366,11 +14366,16 @@ function _tdInit(g,E){
   if(!g.gunSay){ const pk=(E&&E.uyeler[0])?getPackages().find(p=>p.id===E.uyeler[0].pkgId):null; g.gunSay=pk?String((+pk.gece||0)+1):''; }
   if(typeof g.hesapKapali!=='boolean') g.hesapKapali=false;
 }
+function _tdOdaTipiMi(t){
+  // "SGL/STD", "DBL-SUP", "TRP STD" gibi salt oda tipi değerleri not sayılmaz
+  return /^(SGL|SNG|DBL|TWN|TRP|TRPL|TPL|QDL|QUAD|FAM|SUI|SUITE)\s*[\/\-. ]?\s*[A-Z0-9]{0,6}$/i.test(String(t||'').trim());
+}
 function _tdKisiNot(k){
   const rz=_tdRezv(k.resno);
   let m=null;
   try{ m=rz&&(rz.musteriler||[]).find(x=>!x.iptal&&_norm((x.soyad||'')+'|'+(x.ad||''))===_norm((k.soyad||'')+'|'+(k.ad||''))); }catch(e){}
-  return [...new Set([rz&&(rz.not||'').trim(), rz&&(rz.onemliNot||'').trim(), m&&(m.trfNot||'').trim(), (k.not||'').trim()].filter(Boolean))].join(' · ');
+  return [...new Set([rz&&(rz.not||'').trim(), rz&&(rz.onemliNot||'').trim(), m&&(m.trfNot||'').trim(), (k.not||'').trim()]
+    .filter(Boolean).filter(t=>!_tdOdaTipiMi(t)))].join(' · ');
 }
 function _tdKisiler(E){
   const out=[]; const vGorunen=new Set();
