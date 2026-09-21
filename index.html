@@ -1560,6 +1560,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
           <button class="btn btn-success btn-sm" onclick="exportReservationExcel()" style="white-space:nowrap"><svg class="ic"><use href="#i-download"/></svg> Excel İndir</button>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field" style="min-width:140px;margin-bottom:0"><label><svg class="ic"><use href="#i-users"/></svg> Operatör</label><select id="resOpFSel" onchange="resPkgFChange()" style="width:100%"></select></div>
+          <div class="field" style="min-width:100px;margin-bottom:0"><label><svg class="ic"><use href="#i-calendar"/></svg> Yıl</label><select id="resYilFSel" onchange="resPkgFChange()" style="width:100%"></select></div>
           <div class="field" style="min-width:240px;margin-bottom:0"><label><svg class="ic"><use href="#i-box"/></svg> Paket</label><select id="resPkgSel" onchange="onResPkgChange()" style="width:100%"></select></div>
           <div class="field" style="min-width:180px;margin-bottom:0"><label><svg class="ic"><use href="#i-plane"/></svg> Kalkış (Varış Tarihi)</label><select id="resKalkisSel" onchange="onResKalkisChange()" style="width:100%"></select></div>
         </div>
@@ -2039,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v485 · 21.09.2026';
+const APP_VER='v486 · 21.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7084,13 +7086,31 @@ function _ucakView(detail){
   if(d) d.style.display=detail?'':'none';
 }
 function ucakBack(){ try{localStorage.removeItem('dmc_lastUcak');}catch(e){} _ucakView(false); renderUcakGenel(); window.scrollTo(0,0); }
+function resPkgFChange(){
+  window._resFOp=(document.getElementById('resOpFSel')||{}).value||'';
+  window._resFYil=(document.getElementById('resYilFSel')||{}).value||'';
+  try{ localStorage.setItem('dmc_resPkgF',JSON.stringify({op:window._resFOp,yil:window._resFYil})); }catch(e){}
+  renderRezervasyonPage();
+}
 function renderRezervasyonPage(){
   renderUcakGenel();
   const sel=document.getElementById('resPkgSel'); if(!sel) return;
   const pkgs=getPackages();
+  if(window._resFOp===undefined){ try{ const v=JSON.parse(localStorage.getItem('dmc_resPkgF')||'{}'); window._resFOp=v.op||''; window._resFYil=v.yil||''; }catch(e){ window._resFOp=''; window._resFYil=''; } }
+  const yilCache={};
+  const pYil=p=>yilCache[p.id]||(yilCache[p.id]=(function(){ try{ return [...new Set(_resDepartureDates(p).map(d=>String(d).slice(0,4)))]; }catch(e){ return []; } })());
+  const opSel=document.getElementById('resOpFSel');
+  if(opSel){ const ops=[...new Set(pkgs.map(p=>_resOpAd(p)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+    if(window._resFOp&&!ops.includes(window._resFOp)) window._resFOp='';
+    opSel.innerHTML='<option value="">Hepsi</option>'+ops.map(o=>`<option${o===window._resFOp?' selected':''}>${esc(o)}</option>`).join(''); }
+  const yilSel=document.getElementById('resYilFSel');
+  if(yilSel){ const ys=[...new Set(pkgs.flatMap(pYil))].filter(Boolean).sort();
+    if(window._resFYil&&!ys.includes(window._resFYil)) window._resFYil='';
+    yilSel.innerHTML='<option value="">Hepsi</option>'+ys.map(y=>`<option${y===window._resFYil?' selected':''}>${y}</option>`).join(''); }
+  const uygun=p=>p.id===_resPkgId||((!window._resFOp||_resOpAd(p)===window._resFOp)&&(!window._resFYil||pYil(p).includes(window._resFYil)));
   const _opt=p=>`<option value="${p.id}" ${p.id===_resPkgId?'selected':''}>${esc((p.paketKodu?p.paketKodu+' · ':'')+(p.paketAdi||'Adsız'))}</option>`;
-  const aktifler=pkgs.filter(p=>pkgDurum(p)==='aktif');
-  const digerler=pkgs.filter(p=>pkgDurum(p)!=='aktif'&&pkgDurum(p)!=='arsiv');
+  const aktifler=pkgs.filter(p=>pkgDurum(p)==='aktif'&&uygun(p));
+  const digerler=pkgs.filter(p=>pkgDurum(p)!=='aktif'&&pkgDurum(p)!=='arsiv'&&uygun(p));
   sel.innerHTML='<option value="">— Paket seçin —</option>'
     +(aktifler.length?'<optgroup label="Aktif — Satışta">'+aktifler.map(_opt).join('')+'</optgroup>':'')
     +(digerler.length?'<optgroup label="Henüz aktif değil">'+digerler.map(_opt).join('')+'</optgroup>':'');
