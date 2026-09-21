@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v486 · 21.09.2026';
+const APP_VER='v487 · 21.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -13948,11 +13948,22 @@ function _ogResnoPax(pkgId,kalkis,resno){
   return (g.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===resno&&_durumEff(r)!=='iptal').length;
 }
 function _ogResnoName(pkgId,kalkis,resno){ const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!g)return ''; const r=(g.rows||[]).find(x=>_isim(x)&&(x.resno||'').trim()===resno); return r?((r.soyad||'')+' '+(r.ad||'')).trim():''; }
+function _ogResnoPaxRezv(pkgId,kalkis,resno){
+  try{
+    const rz=(getRezv()||[]).find(z=>z.tip==='urun'&&z.pkgId===pkgId&&z.kalkis===kalkis
+      &&(String(z.voucher||'').trim()===String(resno).trim()||String(z.asilVoucher||'').trim()===String(resno).trim()));
+    if(rz&&_opsRezvSayilir(rz)){
+      const n=(rz.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length;
+      if(n>0) return n;
+    } else if(rz&&rz.durum==='iptal') return 0;
+  }catch(e){}
+  return _ogResnoPax(pkgId,kalkis,resno);
+}
 function _ogResolve(){
   const S=getOpsGrup(); const exp=S.gruplar||{}; const claimed={};
   Object.values(exp).forEach(g=>(g.uyeler||[]).forEach(u=>{ claimed[u.pkgId+'|'+u.kalkis+'|'+u.resno]=g.id; }));
   const pkgs=getPackages();
-  const enrich=g=>{ const uy=(g.uyeler||[]).map(u=>({pkgId:u.pkgId,kalkis:u.kalkis,resno:u.resno,pax:_ogResnoPax(u.pkgId,u.kalkis,u.resno)})); const ops=new Set(),ur=new Set(); let tarih=''; uy.forEach(u=>{ const pk=pkgs.find(p=>p.id===u.pkgId)||{}; ops.add(_resOpAd(pk)||''); ur.add(pk.paketKodu||''); if(!tarih||u.kalkis<tarih)tarih=u.kalkis; }); if(!tarih&&g.sefer){ tarih=g.sefer.kalkis; const pk2=pkgs.find(p=>p.id===g.sefer.pkgId)||{}; ops.add(_resOpAd(pk2)||''); ur.add(pk2.paketKodu||''); } return Object.assign({},g,{uyeler:uy,pax:uy.reduce((n,u)=>n+u.pax,0),ops:[...ops].filter(Boolean),urunler:[...ur].filter(Boolean),tarih}); };
+  const enrich=g=>{ const uy=(g.uyeler||[]).map(u=>({pkgId:u.pkgId,kalkis:u.kalkis,resno:u.resno,pax:_ogResnoPaxRezv(u.pkgId,u.kalkis,u.resno)})); const ops=new Set(),ur=new Set(); let tarih=''; uy.forEach(u=>{ const pk=pkgs.find(p=>p.id===u.pkgId)||{}; ops.add(_resOpAd(pk)||''); ur.add(pk.paketKodu||''); if(!tarih||u.kalkis<tarih)tarih=u.kalkis; }); if(!tarih&&g.sefer){ tarih=g.sefer.kalkis; const pk2=pkgs.find(p=>p.id===g.sefer.pkgId)||{}; ops.add(_resOpAd(pk2)||''); ur.add(pk2.paketKodu||''); } return Object.assign({},g,{uyeler:uy,pax:uy.reduce((n,u)=>n+u.pax,0),ops:[...ops].filter(Boolean),urunler:[...ur].filter(Boolean),tarih}); };
   const out=[];
   const seferMap={};
   Object.values(exp).forEach(g=>{ if(g.sefer&&!(g.uyeler||[]).length) seferMap[g.sefer.pkgId+'|'+g.sefer.kalkis]=g; });
