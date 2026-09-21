@@ -2039,7 +2039,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v483 · 21.09.2026';
+const APP_VER='v484 · 21.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14367,8 +14367,9 @@ function _tdInit(g,E){
   if(typeof g.hesapKapali!=='boolean') g.hesapKapali=false;
 }
 function _tdOdaTipiMi(t){
-  // "SGL/STD", "DBL-SUP", "TRP STD" gibi salt oda tipi değerleri not sayılmaz
-  return /^(SGL|SNG|DBL|TWN|TRP|TRPL|TPL|QDL|QUAD|FAM|SUI|SUITE)\s*[\/\-. ]?\s*[A-Z0-9]{0,6}$/i.test(String(t||'').trim());
+  // "SGL/STD", "· DBL/STD", "DBL-SUP" gibi salt oda tipi değerleri not sayılmaz
+  const x=String(t||'').trim().replace(/^[·•.\-\s]+/,'');
+  return /^(SGL|SNG|DBL|TWN|TRP|TRPL|TPL|QDL|QUAD|FAM|SUI|SUITE)\s*[\/\-. ]?\s*[A-Z0-9]{0,6}$/i.test(x);
 }
 function _tdTrfNot(k){
   try{
@@ -14682,7 +14683,7 @@ function renderTurDosyasi(box){
     let _pjTog=false,_pjV=null;
     kisiler.forEach((k,i)=>{
       const v0=String(k.resno||'').trim(); if(v0!==_pjV){ _pjTog=!_pjTog; _pjV=v0; }
-      const notlar=_tdKisiNot(k);
+      const notlar=_tdTrfNot(k);
       h+=`<tr${_pjTog?' style="background:#D9E2F2"':''}><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td>${esc(k.oda)||'—'}</td>
       <td style="font-size:.74rem;${notlar?'color:#92400e;font-weight:700':''}">${notlar?('⚠ '+esc(notlar)):'<span style="color:var(--muted)">—</span>'}</td></tr>`;
     });
