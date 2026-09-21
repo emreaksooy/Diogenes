@@ -2039,7 +2039,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v484 · 21.09.2026';
+const APP_VER='v485 · 21.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14679,12 +14679,13 @@ function renderTurDosyasi(box){
   <div class="card" style="border-radius:0 12px 12px 12px;padding:14px 16px">`;
   // ═ YOLCULAR ═
   if(_tdTab==='yolcu'){
-    h+=`<table class="rzmg"><tr><th style="width:34px">#</th><th style="width:100px">Voucher</th><th>Ad Soyad</th><th style="width:80px">Oda</th><th>Önemli Not</th></tr>`;
+    h+=`<table class="rzmg"><tr><th style="width:34px">#</th><th style="width:100px">Voucher</th><th style="width:100px">Operatör</th><th>Ad Soyad</th><th style="width:80px">Oda</th><th>Not</th></tr>`;
     let _pjTog=false,_pjV=null;
+    const _opAd=k=>{ try{ const rz=_tdRezv(k.resno); return (rz&&(rz.operator||'').trim())||''; }catch(e){ return ''; } };
     kisiler.forEach((k,i)=>{
       const v0=String(k.resno||'').trim(); if(v0!==_pjV){ _pjTog=!_pjTog; _pjV=v0; }
       const notlar=_tdTrfNot(k);
-      h+=`<tr${_pjTog?' style="background:#D9E2F2"':''}><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td>${esc(k.oda)||'—'}</td>
+      h+=`<tr${_pjTog?' style="background:#D9E2F2"':''}><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td style="font-size:.72rem">${esc(_opAd(k))||'<span style="color:var(--muted)">—</span>'}</td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td>${esc(k.oda)||'—'}</td>
       <td style="font-size:.74rem;${notlar?'color:#92400e;font-weight:700':''}">${notlar?('⚠ '+esc(notlar)):'<span style="color:var(--muted)">—</span>'}</td></tr>`;
     });
     h+=`</table>`;
