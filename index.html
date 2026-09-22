@@ -2062,7 +2062,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v524 · 22.09.2026';
+const APP_VER='v525 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2564,7 +2564,11 @@ function getAllDepartureDates(){
 
 // ═══ ŞİRKET PANOSU: görevler + duyurular ═══
 let _panoForm=false,_panoGor='bana',_panoDuyForm=false;
-function _benKim(){ return (sbUser&&sbUser.email)||''; }
+function _benKim(){
+  // Rol önizlemesinde 'ben' = bakılan kişi: pano/görevler onun gözünden görünür
+  try{ if(typeof _rolGercek!=='undefined'&&_rolGercek!=null&&_rolOnizleKim) return _rolOnizleKim; }catch(e){}
+  return (sbUser&&sbUser.email)||'';
+}
 function _panoTarih(ts){ return ts?_fmtDateTR(String(ts).slice(0,10)):''; }
 function renderPano(){
   const el=document.getElementById('panoWrap');
