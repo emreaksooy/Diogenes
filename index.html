@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v488 · 22.09.2026';
+const APP_VER='v489 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7591,14 +7591,21 @@ function _ucakDosyaCoz(yol){
   return null;
 }
 function _ucakOpSecim(adaylar,ipuclari){
-  // aynı kod birden çok operatörde: klasör adı + dosyadaki Operatör kolonu ipuçlarıyla doğru ürünü seç
-  if(adaylar.length<=1) return adaylar[0]||null;
   const ops=getOperators();
   const duz=t=>_norm(String(t||'')).replace(/ /g,'');
+  const uyum=(op,h)=>{ const on=duz(op&&op.ad), hn=duz(h); return !!(on&&hn&&hn.length>=3&&(on===hn||on.includes(hn)||hn.includes(on))); };
+  if(adaylar.length===1){
+    // TEK aday: dosyanın operatör ipucu BAŞKA bir tanımlı operatörü işaret ediyorsa otomatik yazma
+    const aday=adaylar[0];
+    const adayOp=ops.find(o=>o.id===aday.operatorId);
+    const adayaUyan=(ipuclari||[]).some(h=>uyum(adayOp,h));
+    const baskasinaUyan=(ipuclari||[]).some(h=>ops.some(o=>o.id!==(adayOp&&adayOp.id)&&uyum(o,h)));
+    if(!adayaUyan&&baskasinaUyan) return null; // çelişki — panelde seçtir
+    return aday;
+  }
   for(const aday of adaylar){
     const op=ops.find(o=>o.id===aday.operatorId); if(!op) continue;
-    const on=duz(op.ad); if(!on) continue;
-    if(ipuclari.some(h=>{ const hn=duz(h); return hn&&hn.length>=3&&(on===hn||on.includes(hn)||hn.includes(on)); })) return aday;
+    if((ipuclari||[]).some(h=>uyum(op,h))) return aday;
   }
   return null; // ipucu eşleşmedi — rastgele operatöre YAZMA
 }
@@ -7835,6 +7842,46 @@ function _resCxxTog(){
     showConfirm('🚫','Sefer CXX','Bu KALKIŞIN TAMAMI CXX (iptal) işaretlenecek: transfer üretilmez, tur dosyasında/rehberde görünmez, tarih listesinde kırmızı CXX görünür.','CXX işaretle',()=>{ _resCxxIsaretle(_resPkgId,_resKalkis,true); renderRezervasyon(); try{renderUcakGenel();}catch(e){} });
   }
 }
+function _resOpKarisikBant(g){
+  try{
+    if(!g||!(g.rows||[]).length) return '';
+    const pkg=getPackages().find(p=>p.id===g.pkgId)||{};
+    const pkgOp=getOperators().find(o=>o.id===pkg.operatorId); if(!pkgOp) return '';
+    const duz=t=>_norm(String(t||'')).replace(/ /g,'');
+    const pn=duz(pkgOp.ad); if(!pn) return '';
+    const uyar=o2=>{ const n2=duz(o2); return n2&&n2.length>=3&&!(pn===n2||pn.includes(n2)||n2.includes(pn)); };
+    const yabanci=(g.rows||[]).filter(r=>_isim(r)&&(r.op||'').trim()&&uyar(r.op)
+      &&getOperators().some(o=>{ const on=duz(o.ad), rn=duz(r.op); return o.id!==pkgOp.id&&on&&rn&&(on===rn||on.includes(rn)||rn.includes(on)); }));
+    if(!yabanci.length) return '';
+    const opAdlar=[...new Set(yabanci.map(r=>String(r.op).trim()))].join(', ');
+    return `<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:12px;padding:10px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <b style="font-size:.8rem">⚠ Bu listede farklı operatörün yolcuları var:</b>
+      <span style="font-size:.76rem">${yabanci.length} satır — ${esc(opAdlar)} (liste operatörü: ${esc(pkgOp.ad)})</span>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto;color:#b45309;border-color:#f59e0b" onclick="_resOpAyikla()">🧹 Yabancı operatör satırlarını sil</button>
+    </div>`;
+  }catch(e){ return ''; }
+}
+function _resOpAyikla(){
+  const g=_resGrid(); if(!g) return;
+  if(sbRol&&sbRol!=='yonetici'&&sbRol!=='ucak'){ showToast('Bu işlem için yetkin yok','error'); return; }
+  const pkg=getPackages().find(p=>p.id===g.pkgId)||{};
+  const pkgOp=getOperators().find(o=>o.id===pkg.operatorId); if(!pkgOp) return;
+  const duz=t=>_norm(String(t||'')).replace(/ /g,'');
+  const pn=duz(pkgOp.ad);
+  const yabanciMi=r=>{ const rn=duz(r.op); return _isim(r)&&(r.op||'').trim()&&rn&&!(pn===rn||pn.includes(rn)||rn.includes(pn))
+    &&getOperators().some(o=>{ const on=duz(o.ad); return o.id!==pkgOp.id&&on&&(on===rn||on.includes(rn)||rn.includes(on)); }); };
+  const n=(g.rows||[]).filter(yabanciMi).length;
+  if(!n){ showToast('Yabancı operatör satırı yok'); return; }
+  showConfirm('🧹','Yabancı Satırları Sil',
+    n+' satır bu listeden silinecek (operatörü '+pkgOp.ad+' olmayan yolcular). Bu yolcuların kendi operatörünün listesi ayrıca aktarılmalı.',
+    'Evet, Sil',()=>{
+      window._resOpAyiklaBackup={pkgId:g.pkgId,kalkis:g.kalkis,rows:(g.rows||[]).filter(yabanciMi)};
+      g.rows=(g.rows||[]).filter(r=>!yabanciMi(r));
+      setReservations(getReservations());
+      renderRezervasyon(); try{renderUcakGenel();}catch(e){}
+      showToast(n+' satır silindi','success');
+    });
+}
 function renderRezervasyon(){
   const _w0=document.querySelector('#resBody .gridwrap');
   const _sl=_w0?_w0.scrollLeft:0, _st=_w0?_w0.scrollTop:0;
@@ -7904,7 +7951,7 @@ function _renderRezervasyonIc(){
   const _cxxBant=g.iptal
     ?`<div style="background:#dc2626;color:#fff;border-radius:12px;padding:10px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-weight:800">🚫 CXX — SEFER İPTAL <span style="font-weight:600;font-size:.76rem">transfer üretilmez · tur dosyasında ve rehberde görünmez</span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#dc2626;font-weight:800" onclick="_resCxxTog()">CXX'i Kaldır</button></div>`
     :`<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="btn btn-outline btn-sm" style="color:#dc2626;border-color:#fecaca" onclick="_resCxxTog()" title="Kalkışın tamamını CXX (iptal) işaretler — yalnız bu ekrandan değiştirilir">🚫 Seferi CXX İşaretle</button></div>`;
-  body.innerHTML=_cxxBant+( _mutSefer.length?_mutPanel(_mutSefer):'' )+`<div class="card">
+  body.innerHTML=_cxxBant+_resOpKarisikBant(g)+( _mutSefer.length?_mutPanel(_mutSefer):'' )+`<div class="card">
     <div class="res-mets">${_resMetricsHTML(rows,pnrs)}</div>
     <div class="res-ozet">${_resOzetHTML(rows)}</div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
