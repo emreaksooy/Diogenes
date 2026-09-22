@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v546 · 23.09.2026';
+const APP_VER='v547 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15410,7 +15410,7 @@ function _tdHesapDom(){
   const ktO=E?_tdKurTaxOzet(E):{toplam:0,metin:''};
   const teslimHedef=Math.round((T.teslim+ktO.toplam)*100)/100;
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-  set('tdHesTeslim',_tdEur(T.teslim)); set('tdHesKurtax',_tdEur(ktO.toplam)); set('tdHesTeslimT',_tdEur(teslimHedef));
+  set('tdHesCiro',_tdEur(T.ciro)); set('tdHesOde','−'+_tdEur(T.ode)); set('tdHesKurtax',_tdEur(ktO.toplam)); set('tdHesTeslimT',_tdEur(teslimHedef));
   set('tdHesYev','−'+_tdEur(yev)); set('tdHesKom','−'+_tdEur(T.kom)); set('tdHesMas','−'+_tdEur(mas));
   // rehbere ödenecek = yevmiye + komisyon + masraflar − (teslim edilmesi gerekenden eksik kalan)
   const eksik=teslimHedef-_tdN(g.teslimAlinan===''?String(teslimHedef):g.teslimAlinan);
@@ -15840,9 +15840,10 @@ function renderTurDosyasi(box){
     ${g.masraflar.length?'':'<div style="font-size:.74rem;color:var(--muted);padding:8px 2px">Masraf yok — üstteki kategori düğmeleriyle fiş/masraf ekle.</div>'}
     <div style="margin-top:14px;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;max-width:640px">
       <div style="background:var(--navy);color:#fff;padding:9px 16px;font-size:.78rem;font-weight:700">KAPANIŞ</div>
-      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Tur Satışı</span><b id="tdHesTeslim">${_tdEur(T.teslim)}</b></div>
-      ${ktO.toplam?`<div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Kur Tax <span style="color:var(--muted);font-size:.66rem">(${ktO.metin} — otomatik)</span></span><b id="tdHesKurtax">${_tdEur(ktO.toplam)}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span><b>Toplam teslim edilecek</b></span><b id="tdHesTeslimT">${_tdEur(teslimHedef)}</b></div>`:''}
+      ${ktO.toplam?`<div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Kur Tax <span style="color:var(--muted);font-size:.66rem">(${ktO.metin} — otomatik)</span></span><b id="tdHesKurtax">${_tdEur(ktO.toplam)}</b></div>`:''}
+      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Toplam Tur Satışı</span><b id="tdHesCiro">${_tdEur(T.ciro)}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Tur Ödemeleri <span style="color:var(--muted);font-size:.66rem">(satış tablosundaki ödemeler)</span></span><b id="tdHesOde" style="color:var(--danger)">−${_tdEur(T.ode)}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span><b>Toplam teslim edilecek</b></span><b id="tdHesTeslimT">${_tdEur(teslimHedef)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border);align-items:center"><span>Teslim Alınan</span><span><input inputmode="decimal" value="${esc(g.teslimAlinan)}" placeholder="${teslimHedef}" style="width:110px;padding:5px 7px;border:1.5px solid var(--border);border-radius:8px;text-align:right" onchange="tdSet('teslimAlinan',this.value)"${kilit}> <span id="tdHesEksik" style="font-size:.64rem;color:var(--danger)">${eksik?('Teslim farkı: '+_tdEur(eksik)):''}</span></span></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Rehber Yevmiye (${g.yevmiye.donem==='gunluk'?(g.gunSay+' gün × '):(g.yevmiye.donem==='haftalik'?'haftalık × ':'sabit ')}${esc(g.yevmiye.tutar||'0')})</span><b id="tdHesYev" style="color:var(--danger)">−${_tdEur(yev)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Satış Komisyonları (paket bazlı)</span><b id="tdHesKom" style="color:var(--danger)">−${_tdEur(T.kom)}</b></div>
