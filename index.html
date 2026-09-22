@@ -2041,7 +2041,30 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v507 · 22.09.2026';
+const APP_VER='v508 · 22.09.2026';
+// KAYAR MASKE: saat (__:__) ve tarih (__.__.____ ) alanlarında yazdıkça biçimlenir
+document.addEventListener('input',function(e){
+  try{
+    const el=e.target;
+    if(!el||el.tagName!=='INPUT') return;
+    if(el.type&&el.type!=='text') return;
+    if(e.inputType&&e.inputType.indexOf('delete')===0) return; // silmeyi engelleme
+    const ip=(el.placeholder||'')+' '+(el.title||'')+' '+(el.className||'');
+    const saatMi=/saatin/.test(el.className||'')||/saat|depar|ss:dd/i.test(ip);
+    const tarihMi=!saatMi&&/tarih|gg\.aa|dogum|doğum/i.test(ip);
+    if(!saatMi&&!tarihMi) return;
+    const d=String(el.value||'').replace(/\D/g,'');
+    let yeni;
+    if(saatMi){
+      const dd=d.slice(0,4);
+      yeni=dd.length<=2?dd:dd.slice(0,2)+':'+dd.slice(2);
+    }else{
+      const dd=d.slice(0,8);
+      yeni=dd.length<=2?dd:(dd.length<=4?dd.slice(0,2)+'.'+dd.slice(2):dd.slice(0,2)+'.'+dd.slice(2,4)+'.'+dd.slice(4));
+    }
+    if(yeni!==el.value){ el.value=yeni; try{ el.setSelectionRange(yeni.length,yeni.length); }catch(e2){} }
+  }catch(err){}
+},true);
 document.addEventListener('change',function(e){
   try{
     const el=e.target;
