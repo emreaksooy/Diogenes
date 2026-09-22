@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v498 · 22.09.2026';
+const APP_VER='v499 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2080,7 +2080,7 @@ function idbSet(key,val){return _idbOpen().then(db=>new Promise((res,rej)=>{cons
 // Bellek-içi önbellek (senkron API korunur) + IndexedDB'ye kalıcılaştırma
 let _pkgCache=[], _opCache=[];
 const getPackages  = () => _pkgCache;
-const setPackages = a => { _pkgCache = a; idbSet('packages', a).then(ok=>{ if(!ok) showToast('⚠️ Kayıt yapılamadı (depolama erişimi).','error',6000); }); _cloudQueue('packages'); return true; };
+const setPackages = a => { _paxMemoSifirla(); _pkgCache = a; idbSet('packages', a).then(ok=>{ if(!ok) showToast('⚠️ Kayıt yapılamadı (depolama erişimi).','error',6000); }); _cloudQueue('packages'); return true; };
 const getOperators = () => _opCache;
 const setOperators = a  => { _opCache = a; idbSet('operators', a); _cloudQueue('operators'); return true; };
 // Rezervasyon / Uçak modülü
@@ -2092,7 +2092,7 @@ let _trCache=null, _trSaveT=null;
 let _ogCache=null, _ogSaveT=null;
 const getReservations = () => _resCache;
 let _paxMemo={m:{}};
-function _paxMemoSifirla(){ _paxMemo.m={}; window._ogBakimTs=0; }
+function _paxMemoSifirla(){ _paxMemo.m={}; window._ogBakimTs=0; window._trRowsMemo=null; window._ogResolveMemo=null; }
 const setReservations = a => { _paxMemoSifirla(); _resCache=a; clearTimeout(_resSaveT); _resSaveT=setTimeout(()=>idbSet('reservations', _resCache),250); _cloudQueue('reservations'); return true; };
 const getRezv         = () => _rezvCache;
 const setRezv         = a => {
@@ -2115,9 +2115,9 @@ const setMagMuh = a => { _mmCache=a; clearTimeout(_mmSaveT); _mmSaveT=setTimeout
 const getPnrLedger    = () => _pnrCache;
 const setPnrLedger    = a => { _pnrCache=a; clearTimeout(_pnrSaveT); _pnrSaveT=setTimeout(()=>idbSet('pnrLedger', _pnrCache),250); _cloudQueue('pnrLedger'); return true; };
 const getOperasyon    = () => _opsCache;
-const setOperasyon    = a => { _opsCache=a; clearTimeout(_opsSaveT); _opsSaveT=setTimeout(()=>idbSet('operasyon', _opsCache),250); _cloudQueue('operasyon'); return true; };
+const setOperasyon    = a => { _paxMemoSifirla(); _opsCache=a; clearTimeout(_opsSaveT); _opsSaveT=setTimeout(()=>idbSet('operasyon', _opsCache),250); _cloudQueue('operasyon'); return true; };
 const getTanimlar     = () => (_tanimCache&&typeof _tanimCache==='object')?_tanimCache:{rehberler:[],aracFirmalari:[],saglayicilar:[]};
-const setTanimlar     = a => { _tanimCache=a; clearTimeout(_tanimSaveT); _tanimSaveT=setTimeout(()=>idbSet('tanimlar', _tanimCache),250); _cloudQueue('tanimlar'); return true; };
+const setTanimlar     = a => { _paxMemoSifirla(); _tanimCache=a; clearTimeout(_tanimSaveT); _tanimSaveT=setTimeout(()=>idbSet('tanimlar', _tanimCache),250); _cloudQueue('tanimlar'); return true; };
 let _gorevCache=null,_gorevT=null,_duyuruCache=null,_duyuruT=null,_ekipCache=null;
 const getGorevler  = () => Array.isArray(_gorevCache)?_gorevCache:[];
 const setGorevler  = a => { _gorevCache=a; clearTimeout(_gorevT); _gorevT=setTimeout(()=>idbSet('gorevler',_gorevCache),250); _cloudQueue('gorevler'); return true; };
@@ -2125,7 +2125,7 @@ const getDuyurular = () => Array.isArray(_duyuruCache)?_duyuruCache:[];
 const setDuyurular = a => { _duyuruCache=a; clearTimeout(_duyuruT); _duyuruT=setTimeout(()=>idbSet('duyurular',_duyuruCache),250); _cloudQueue('duyurular'); return true; };
 const getEkip      = () => Array.isArray(_ekipCache)?_ekipCache:[];
 const getTransfer     = () => (_trCache&&typeof _trCache==='object')?_trCache:{seq:1,gruplar:{},sat:{}};
-const setTransfer     = a => { _trCache=a; clearTimeout(_trSaveT); _trSaveT=setTimeout(()=>idbSet('transfer', _trCache),250); _cloudQueue('transfer'); return true; };
+const setTransfer     = a => { _paxMemoSifirla(); _trCache=a; clearTimeout(_trSaveT); _trSaveT=setTimeout(()=>idbSet('transfer', _trCache),250); _cloudQueue('transfer'); return true; };
 const getOpsGrup      = () => (_ogCache&&typeof _ogCache==='object')?_ogCache:{gruplar:{},seq:1};
 const setOpsGrup      = a => { _paxMemoSifirla(); _ogCache=a; clearTimeout(_ogSaveT); _ogSaveT=setTimeout(()=>idbSet('opsgrup', _ogCache),250); _cloudQueue('opsgrup'); return true; };
 const genId = () => 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
@@ -14130,6 +14130,10 @@ function _ogOtoKat(){
   }catch(e){}
 }
 function _ogResolve(){
+  if(window._ogResolveMemo) return window._ogResolveMemo;
+  return window._ogResolveMemo=_ogResolveHesap();
+}
+function _ogResolveHesap(){
   if(!window._ogBakimTs||Date.now()-window._ogBakimTs>5000){
     window._ogBakimTs=Date.now();
     _ogHayaletTemizle();
@@ -15697,6 +15701,10 @@ function _trHatRozet(rota){
                  :'<span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.54rem;padding:1px 5px;border-radius:6px">DIŞ HAT</span>';
 }
 function _trGenRows(){
+  if(window._trRowsMemo) return window._trRowsMemo;
+  return window._trRowsMemo=_trGenRowsHesap();
+}
+function _trGenRowsHesap(){
   const T=getTransfer(); const sat=T.sat||{}; const pkgs=getPackages(); const out=[];
   const vsat=T.vsat||{};
   // İPTAL rezervasyonların voucher'ları transfer ÜRETMEZ (uçak listesinde satırları dursa bile)
