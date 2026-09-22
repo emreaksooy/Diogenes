@@ -2105,7 +2105,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v533 · 23.09.2026';
+const APP_VER='v534 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8790,7 +8790,7 @@ async function doLogin(){
   try{
     const {data,error}=await _zam(sb.auth.signInWithPassword({email:em,password:pw}),20,'Sunucu 20 saniyedir yanıt vermiyor. Supabase projesi uyumuş olabilir — supabase.com üzerinden projeyi açıp "Restore project" düğmesine basın, 1-2 dk sonra tekrar deneyin.');
     if(error){ if(err)err.textContent='Giriş başarısız: '+(error.message==='Invalid login credentials'?'e-posta veya şifre hatalı':error.message); }
-    else{ if(err)err.textContent=''; _showLogin(false); await _cloudStart(data.session); }
+    else{ if(err)err.textContent=''; await _cloudStart(data.session); }
   }catch(e){ if(err)err.textContent='Bağlantı hatası: '+(e.message||''); }
   if(btn){btn.disabled=false;btn.textContent='Giriş Yap';}
 }
@@ -8821,6 +8821,7 @@ async function _cloudStart(session){
     _renderUserChip();
     _applyRoleNav();
     try{ if(sbRol==='rehber'){ showPage('rehberim'); } else { showPage(((document.querySelector('.page.active')||{id:'page-paketlerim'}).id||'page-paketlerim').replace('page-','')); } }catch(e){}
+    _showLogin(false); // rol uygulandı, doğru sayfa açık — login şimdi kapanır (flash yok)
     _setCloud('ok','Bulut: bağlanıyor…');
     await Promise.race([_cloudPull(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Bulut çekimi 60 sn içinde tamamlanamadı — bağlantıyı kontrol edip sayfayı yenileyin')),60000))]);
     _cloudSubscribe();
@@ -12418,8 +12419,8 @@ async function _boot(){
   try{
     await Promise.race([_cloudBoot(), new Promise(r=>setTimeout(r,20000))]);
   }catch(e){ console.warn('bulut açılış',e); }
-  _bootSplashKapat();
   _bootRender();
+  _bootSplashKapat();
 }
 function _bootSplashGoster(){
   try{
@@ -12442,7 +12443,8 @@ function _bootRender(){
   renderDashboard();
   updateCalc();
   try{ const rc=localStorage.getItem('dmc_rolCache'); if(rc){ sbRol=rc; _applyRoleNav(); } }catch(e){}
-  restoreLastState();
+  if(sbRol==='rehber'){ try{ showPage('rehberim'); }catch(e){} }
+  else restoreLastState();
   try{ _initSecCollapse(); }catch(e){}
 }
 // ═══════════════ LOGO ZEMİN DÜZELTME (bir defalık) ═══════════════
