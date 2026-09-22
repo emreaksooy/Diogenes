@@ -2062,7 +2062,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v521 · 22.09.2026';
+const APP_VER='v522 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2143,6 +2143,21 @@ let _airportCalStates={}; // {i:{yil,ay}}
 // ═══════════════ STORAGE ═══════════════
 // ── IndexedDB anahtar-değer deposu (localStorage ~5MB kotasını aşmaz, görseller için bol kapasite) ──
 const IDB_NAME='dmc_db', IDB_STORE='kv';
+// ACİL KURTARMA: adrese ?sifirla eklenirse yerel depo (IndexedDB + önbellekler) silinir,
+// sayfa temiz açılır ve her şey BULUTTAN yeniden yüklenir. Bulut verisine dokunmaz.
+(function(){
+  try{
+    if(location.search.indexOf('sifirla')<0) return;
+    try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('dmc')===0) localStorage.removeItem(k); }); }catch(e){} // oturum (sb-) korunur
+    const bitir=()=>{ location.replace(location.pathname); };
+    try{
+      const r=indexedDB.deleteDatabase(IDB_NAME);
+      r.onsuccess=bitir; r.onerror=bitir; r.onblocked=bitir;
+      setTimeout(bitir,3000);
+    }catch(e){ bitir(); }
+    throw new Error('__sifirla__'); // açılışın devamını durdur
+  }catch(e){ if(String(e&&e.message)==='__sifirla__') throw e; }
+})();
 function _idbOpen(){return new Promise((res,rej)=>{let r;try{r=indexedDB.open(IDB_NAME,1);}catch(e){return rej(e);}r.onupgradeneeded=()=>{try{r.result.createObjectStore(IDB_STORE);}catch(e){}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function idbGet(key){return _idbOpen().then(db=>new Promise((res,rej)=>{const t=db.transaction(IDB_STORE,'readonly').objectStore(IDB_STORE).get(key);t.onsuccess=()=>res(t.result);t.onerror=()=>rej(t.error);})).catch(()=>undefined);}
 function idbSet(key,val){return _idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(val,key);tx.oncomplete=()=>res(true);tx.onerror=()=>rej(tx.error);})).catch(e=>{
