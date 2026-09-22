@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v537 · 23.09.2026';
+const APP_VER='v538 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15499,7 +15499,7 @@ function renderTurDosyasi(box){
   }
   // ═ TUR SATIŞLARI ═
   if(_tdTab==='satis'){
-    if(!(g.satislar||[]).length&&!g.hesapKapali){ try{ tdSatisPaketleriGetir(true); }catch(e){} }
+    if(!g.hesapKapali){ try{ tdSatisPaketleriGetir(true); }catch(e){} }
     const aktL=_tdAktList(E);
     const kilit=g.hesapKapali?' disabled':'';
     h+=`<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
