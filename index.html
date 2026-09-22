@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v509 · 22.09.2026';
+const APP_VER='v510 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -14119,6 +14119,14 @@ function opsPickRehber(id){ const g=(getTanimlar().rehberler||[]).find(x=>x.id==
 /* ── Transfer varış panosu ── */
 function opsTrNav(d){ _opsTrDate=_isoAdd(_opsTrDate||_opsToday(),d); renderOpsTransfer(); }
 function opsTrSet(v){ _opsTrDate=v||_opsToday(); renderOpsTransfer(); }
+function opsTrTxt(el,ikinci){
+  const t=String(el.value||'').trim();
+  if(!t){ ikinci?opsTrSet2(''):opsTrSet(''); return; }
+  const n=_tarihNorm(t);
+  if(!_tarihGecerli(n)||n.length<10){ showToast('Geçersiz tarih: "'+t+'" — gg.aa.yyyy','error',3500); el.value=ikinci?(_opsTrDate2?_fmtDateTR(_opsTrDate2):''):_fmtDateTR(_opsTrDate); return; }
+  const p=_pdate(n);
+  ikinci?opsTrSet2(p):opsTrSet(p);
+}
 // ═══ Operasyon Grubu (Faz A) ═══
 let _ogDate='', _ogSel=new Set(), _ogSplitGid=null, _ogSplitSel=new Set(), _ogSplitPnrOnay=false, _ogSplitFilt={yer:'',saat:''};
 function _ogSplitFiltSet(f,el){
@@ -16629,9 +16637,9 @@ function renderOpsTransfer(){
   let h=`<div style="margin-bottom:8px"><button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')">← Ana Sayfa</button></div>
     <div class="ops-datebar">
       <button class="btn btn-outline btn-sm" onclick="opsTrNav(-1)">◀</button>
-      <input type="date" value="${_opsTrDate}" onchange="opsTrSet(this.value)" class="ops-date">
+      <input value="${_fmtDateTR(_opsTrDate)}" placeholder="gg.aa.yyyy" inputmode="numeric" title="Tarih — gg.aa.yyyy" onchange="opsTrTxt(this,false)" class="ops-date" style="width:106px;text-align:center">
       <span style="color:var(--muted)">~</span>
-      <input type="date" value="${_opsTrDate2}" onchange="opsTrSet2(this.value)" class="ops-date" title="Bitiş tarihi — doluysa aralık listesi">
+      <input value="${_opsTrDate2?_fmtDateTR(_opsTrDate2):''}" placeholder="gg.aa.yyyy" inputmode="numeric" title="Bitiş tarihi — doluysa aralık listesi" onchange="opsTrTxt(this,true)" class="ops-date" style="width:106px;text-align:center">
       <button class="btn btn-outline btn-sm" onclick="opsTrNav(1)">▶</button>
       <button class="btn btn-outline btn-sm" onclick="opsTrSet('')">Bugün</button>
       <button class="btn btn-outline btn-sm ${_opsTrDate2&&_isoDiff(_opsTrDate,_opsTrDate2)===6?'active-ops':''}" onclick="opsTrAralik(7)">7g</button>
