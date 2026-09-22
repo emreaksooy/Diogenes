@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v493 · 22.09.2026';
+const APP_VER='v494 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15729,9 +15729,37 @@ function _trGenRows(){
         }
       }catch(e){}
       });
-    const gunler=pkg.turTransferYok?[]:(pkg.gunler||[]); let prevCity='';
+    // TUR geçişleri: önce GERÇEK açılım (rezervasyon kartlarındaki şehir zinciri) —
+    // tur tersten yürüyorsa yön ve tarihler ürün programından değil kartlardan gelir
+    const _turVlist=[...new Set(real.map(x=>String(x.resno||'').trim()).filter(Boolean))];
+    let kartTur=false;
+    try{
+      if(!pkg.turTransferYok){
+        const rzler=(getRezv()||[]).filter(r=>r.tip==='urun'&&r.pkgId===g.pkgId&&r.kalkis===g.kalkis&&r.durum!=='iptal');
+        let enIyi=null;
+        rzler.forEach(r=>{ const ks=(r.kartlar||[]).filter(k=>k&&k.tip!=='ulasim'&&(k.sehir||'').trim()&&k.baslangic);
+          if(ks.length>=2&&(!enIyi||ks.length>enIyi.length)) enIyi=ks; });
+        if(enIyi){
+          const zincir=[...enIyi].sort((a,b)=>String(_pdate(a.baslangic)).localeCompare(String(_pdate(b.baslangic))));
+          let onceki=zincir[0], gecisVar=false;
+          for(let zi=1;zi<zincir.length;zi++){
+            const k=zincir[zi];
+            const c1=(onceki.sehir||'').trim(), c2=(k.sehir||'').trim();
+            if(c1&&c2&&_norm(c1)!==_norm(c2)){
+              const tarihK=_pdate(k.baslangic)||'';
+              const gunNo=tarihK?Math.max(1,_isoDiff(g.kalkis,tarihK)||0):zi;
+              out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+gunNo,tip:'TUR',tarih:tarihK||_trGunEkle(g.kalkis,zi),op,urun,grupKod:'',nereden:c1,nereye:c2,bolge:'',ucus:'',saat:'08:00',pax:real.length,yet:real.length,coc:0,beb:0},_turVlist));
+              gecisVar=true;
+            }
+            onceki=k;
+          }
+          if(gecisVar||zincir.length>=2) kartTur=true; // şehir zinciri tanımlı — program fallback devre dışı
+        }
+      }
+    }catch(e){}
+    const gunler=(pkg.turTransferYok||kartTur)?[]:(pkg.gunler||[]); let prevCity='';
     gunler.forEach((gd,i)=>{ const nk=(gd.noktalar||[]).filter(x=>x&&x.trim()); const city=(gd.konaklamaSehir||(nk.length?nk[nk.length-1]:'')||'').trim();
-      if(i>0&&city&&prevCity&&city!==prevCity){ out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+i,tip:'TUR',tarih:_trGunEkle(g.kalkis,i),op,urun,grupKod:'',nereden:prevCity,nereye:city,bolge:'',ucus:'',saat:'08:00',pax:real.length,yet:real.length,coc:0,beb:0},[...new Set(real.map(x=>String(x.resno||'').trim()).filter(Boolean))])); }
+      if(i>0&&city&&prevCity&&city!==prevCity){ out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+i,tip:'TUR',tarih:_trGunEkle(g.kalkis,i),op,urun,grupKod:'',nereden:prevCity,nereye:city,bolge:'',ucus:'',saat:'08:00',pax:real.length,yet:real.length,coc:0,beb:0},_turVlist)); }
       if(city)prevCity=city; });
   });
   // TUR görevleri: tarihi kapsayan TAHSİS aracı varsa satıra işlenir (araç/firma monitörde görünür)
