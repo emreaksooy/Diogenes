@@ -2041,16 +2041,22 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v506 · 22.09.2026';
+const APP_VER='v507 · 22.09.2026';
 document.addEventListener('change',function(e){
   try{
     const el=e.target;
     if(!el||el.tagName!=='INPUT') return;
     if(el.type&&el.type!=='text') return;
     const ip=(el.placeholder||'')+' '+(el.title||'')+' '+(el.className||'');
-    if(!(/saatin/.test(el.className||'')||/saat|depar|ss:dd/i.test(ip))) return;
-    const n=_saatNorm(el.value);
-    if(n&&n!==el.value) el.value=n;
+    if(/saatin/.test(el.className||'')||/saat|depar|ss:dd/i.test(ip)){
+      const n=_saatNorm(el.value);
+      if(n&&n!==el.value) el.value=n;
+      return;
+    }
+    if(/tarih|gg\.aa|dogum|doğum/i.test(ip)){
+      const n=_tarihNorm(el.value);
+      if(n&&n!==el.value) el.value=n;
+    }
   }catch(err){}
 },true);
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
@@ -8008,7 +8014,25 @@ function _saatNorm(v){
   return t;
 }
 function _saatGecerli(v){ const t=String(v||'').trim(); return !t||/^([01]\d|2[0-3]):[0-5]\d$/.test(t); }
-function _tarihNorm(v){ const t=String(v||'').trim(); if(!t) return t; const p=_pdate(t); if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p)){ const a=p.split('-'); return a[2]+'.'+a[1]+'.'+a[0]; } return t; }
+function _tarihNorm(v){
+  const t=String(v||'').trim(); if(!t) return t;
+  const yilNow=new Date().getFullYear();
+  const yap=(d,m,y)=>{ d=+d; m=+m; y=+y; if(y<100) y+=2000;
+    if(d>=1&&d<=31&&m>=1&&m<=12&&y>=2000&&y<=2100) return String(d).padStart(2,'0')+'.'+String(m).padStart(2,'0')+'.'+y; return null; };
+  let mm=t.match(/^(\d{1,2})[.\/\-\s]+(\d{1,2})[.\/\-\s]+(\d{2}|\d{4})$/); // 23.09.26 · 23/9/2026
+  if(mm){ const r=yap(mm[1],mm[2],mm[3]); if(r) return r; }
+  mm=t.match(/^(\d{1,2})[.\/\-\s]+(\d{1,2})[.\/\-\s]*$/);                    // 23.09 → bu yıl
+  if(mm){ const r=yap(mm[1],mm[2],yilNow); if(r) return r; }
+  mm=t.match(/^(\d{2})(\d{2})(\d{4})$/);                                          // 23092026
+  if(mm){ const r=yap(mm[1],mm[2],mm[3]); if(r) return r; }
+  mm=t.match(/^(\d{2})(\d{2})(\d{2})$/);                                          // 230926
+  if(mm){ const r=yap(mm[1],mm[2],mm[3]); if(r) return r; }
+  mm=t.match(/^(\d{2})(\d{2})$/);                                                  // 2309 → bu yıl
+  if(mm){ const r=yap(mm[1],mm[2],yilNow); if(r) return r; }
+  const p=_pdate(t); if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p)){ const a=p.split('-'); return a[2]+'.'+a[1]+'.'+a[0]; }
+  return t;
+}
+function _tarihGecerli(v){ const t=String(v||'').trim(); return !t||/^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.20\d{2}$/.test(t); }
 function _resSetFlight(r,f,v){
   const g=_resGrid(true), y=g.rows[r]; if(!y) return;
   if(/_(ks|vs)\d$/.test(f)){ v=_saatNorm(v); }
