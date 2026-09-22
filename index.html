@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v501 · 22.09.2026';
+const APP_VER='v502 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14630,7 +14630,7 @@ function _tdKisiler(E){
       &&!_iptV.has(u.pkgId+'|'+u.kalkis+'|'+String(r.resno||'').trim()));
     if(satirlar.length) vGorunen.add(String(u.resno||'').trim());
     satirlar.forEach(r=>{
-      out.push({resno:u.resno,pkgId:u.pkgId,ad:r.ad||'',soyad:r.soyad||'',oda:r.oda||'',
+      out.push({resno:u.resno,pkgId:u.pkgId,ad:r.ad||'',soyad:r.soyad||'',oda:r.oda||'',dogum:r.dogum||'',
         gelis:[(r.g_hy||''),(r.g_u1||'')&&((r.g_u1||'')+'→'+(r.g_v2||r.g_v1||'')),(r.g_ks1||'')].filter(Boolean).join(' · '),
         donus:[(r.d_hy||''),(r.d_u1||'')&&((r.d_u1||'')+'→'+(r.d_v2||r.d_v1||'')),(r.d_ks1||'')].filter(Boolean).join(' · ')});
     });
@@ -14651,7 +14651,7 @@ function _tdKisiler(E){
       (r.musteriler||[]).forEach(m=>{
         if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
         const uk=(r.ukartlar||[]).find(k=>(k.uyeler||[]).includes(m.id));
-        out.push({resno:v,ad:m.ad||'',soyad:m.soyad||'',oda:uk?(uk.tip||''):'',gelis:m.gelis||'',donus:m.donus||''});
+        out.push({resno:v,ad:m.ad||'',soyad:m.soyad||'',oda:uk?(uk.tip||''):'',dogum:m.dogum||'',gelis:m.gelis||'',donus:m.donus||''});
       });
     });
   }catch(e){}
@@ -14907,13 +14907,14 @@ function renderTurDosyasi(box){
   <div class="card" style="border-radius:0 12px 12px 12px;padding:14px 16px">`;
   // ═ YOLCULAR ═
   if(_tdTab==='yolcu'){
-    h+=`<table class="rzmg"><tr><th style="width:34px">#</th><th style="width:100px">Voucher</th><th style="width:100px">Operatör</th><th>Ad Soyad</th><th style="width:80px">Oda</th><th>Not</th></tr>`;
+    h+=`<table class="rzmg"><tr><th style="width:34px">#</th><th style="width:100px">Voucher</th><th style="width:96px">Operatör</th><th style="width:56px">Mr./Mrs.</th><th>Ad Soyad</th><th style="width:92px">Doğum Tarihi</th><th style="width:70px">Oda</th><th>Not</th></tr>`;
     let _pjTog=false,_pjV=null;
     const _opAd=k=>{ try{ const rz=_tdRezv(k.resno); return (rz&&(rz.operator||'').trim())||''; }catch(e){ return ''; } };
     kisiler.forEach((k,i)=>{
       const v0=String(k.resno||'').trim(); if(v0!==_pjV){ _pjTog=!_pjTog; _pjV=v0; }
       const notlar=_tdTrfNot(k);
-      h+=`<tr${_pjTog?' style="background:#D9E2F2"':''}><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td style="font-size:.72rem">${esc(_opAd(k))||'<span style="color:var(--muted)">—</span>'}</td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}${_tdUnvan(k)?` <span style="color:var(--muted);font-size:.68rem">${esc(_tdUnvan(k))}</span>`:''}</td><td>${esc(k.oda)||'—'}</td>
+      const dg=_pdate(k.dogum||''); 
+      h+=`<tr${_pjTog?' style="background:#D9E2F2"':''}><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td style="font-size:.72rem">${esc(_opAd(k))||'<span style="color:var(--muted)">—</span>'}</td><td style="text-align:center">${esc(_tdUnvan(k))||'<span style="color:var(--muted)">—</span>'}</td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="font-size:.74rem">${dg?_fmtDateTR(dg):'<span style="color:var(--muted)">—</span>'}</td><td>${esc(k.oda)||'—'}</td>
       <td style="font-size:.74rem;${notlar?'color:#92400e;font-weight:700':''}">${notlar?('⚠ '+esc(notlar)):'<span style="color:var(--muted)">—</span>'}</td></tr>`;
     });
     h+=`</table>`;
@@ -15311,7 +15312,7 @@ function _tdDocIsim(g,E){ const K=_tdKisiler(E);
   K.forEach(k=>{ const v=String(k.resno||'').trim(); if(v!==sonV){ tog=!tog; sonV=v; } vDolgu[v+'#'+k.soyad+'#'+k.ad]=tog; });
   const stil=k=>vDolgu[String(k.resno||'').trim()+'#'+k.soyad+'#'+k.ad]?'background:#D9E2F2;-webkit-print-color-adjust:exact;print-color-adjust:exact;':'';
   const opAd=k=>{ try{ const rz=_tdRezv(k.resno); return (rz&&(rz.operator||'').trim())||''; }catch(e){ return ''; } };
-  return _tdDocBas('İsim Listesi',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">#</th><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Operatör</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Oda</th><th style="${_tdTh}">Not</th></tr>${K.map((k,i)=>`<tr><td style="${_tdTd};${stil(k)}">${i+1}</td><td style="${_tdTd};${stil(k)}">${esc(k.resno)}</td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${esc(opAd(k))}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}${_tdUnvan(k)?` <span style="color:#555;font-size:8.5pt">${esc(_tdUnvan(k))}</span>`:''}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.oda)}</b></td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${esc(_tdTrfNot(k))}</td></tr>`).join('')}</table><p style="font-size:9pt;margin-top:4mm">Toplam: ${K.length} kişi · dolgu değişimi = ayrı voucher/oda</p></div>`; }
+  return _tdDocBas('İsim Listesi',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">#</th><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Operatör</th><th style="${_tdTh}">Mr./Mrs.</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Doğum Tarihi</th><th style="${_tdTh}">Oda</th><th style="${_tdTh}">Not</th></tr>${K.map((k,i)=>`<tr><td style="${_tdTd};${stil(k)}">${i+1}</td><td style="${_tdTd};${stil(k)}">${esc(k.resno)}</td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${esc(opAd(k))}</td><td style="${_tdTd};${stil(k)};text-align:center;font-size:8.5pt">${esc(_tdUnvan(k))}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${(function(){const d=_pdate(k.dogum||'');return d?_fmtDateTR(d):'';})()}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.oda)}</b></td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${esc(_tdTrfNot(k))}</td></tr>`).join('')}</table><p style="font-size:9pt;margin-top:4mm">Toplam: ${K.length} kişi · dolgu değişimi = ayrı voucher/oda</p></div>`; }
 function _tdDocOtel(g,E){
   const satir=[];
   (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
