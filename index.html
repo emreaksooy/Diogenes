@@ -1095,9 +1095,6 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
     <div id="ynWrap"></div>
 
 
-    <!-- OPERATORS -->
-    <div class="dash-section-title"><svg class="ic"><use href="#i-building"/></svg> Operatörler</div>
-    <div class="op-main-grid" id="opMainGrid"></div>
   </div>
 
   <!-- PAGE: OPERATÖR PAKETLERİ -->
@@ -2065,7 +2062,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v520 · 22.09.2026';
+const APP_VER='v521 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2824,7 +2821,6 @@ function renderYonetici(){
 function renderDashboard(){
   try{ renderYonetici(); }catch(e){ console.warn('yonetici',e); }
   try{ renderPano(); }catch(e){}
-  renderOpMainGrid();
   refreshSidebarPkgSwitch();
 }
 
