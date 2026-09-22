@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v499 · 22.09.2026';
+const APP_VER='v500 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15781,7 +15781,9 @@ function _trGenRowsHesap(){
         const _otlN=t=>_norm(String(t||''));
         const _otlL=(getTanimlar().oteller||[]);
         const _kSehir=k=>{ let c=(k.sehir||'').trim();
-          if(!c&&(k.otel||'').trim()){ const o=_otlL.find(o2=>_otlN(o2.ad)===_otlN(k.otel)||(_otlN(o2.ad)&&(_otlN(k.otel).includes(_otlN(o2.ad))||_otlN(o2.ad).includes(_otlN(k.otel)))));
+          if(!c&&(k.otel||'').trim()){
+            // yalnız TAM isim eşleşmesi — gevşek eşleşme yanlış şehir kapıyor
+            const o=_otlL.find(o2=>_otlN(o2.ad)&&_otlN(o2.ad)===_otlN(k.otel));
             if(o&&(o.sehir||'').trim()) c=o.sehir.trim(); }
           return c; };
         let enIyi=null;
