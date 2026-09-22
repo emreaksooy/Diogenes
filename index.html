@@ -796,7 +796,11 @@ table.ptab td input{border:none;background:transparent;padding:4px 8px;font-size
 table.ptab td.ro{padding:4px 8px;color:var(--muted)}
 tr.res-secili td{background:#dbeafe!important}
 /* ═ login split ═ */
-.login-overlay{align-items:stretch!important;justify-content:stretch!important;padding:0!important}
+.login-overlay{align-items:stretch!important;justify-content:stretch!important;padding:0!important;overflow:auto}
+body.login-acik{overflow:hidden!important}
+body.login-acik .app-body,body.login-acik .topbar,body.login-acik #rolPvBar{display:none!important}
+.lg-split{min-height:100dvh}
+@supports not (height:100dvh){.lg-split{min-height:100vh}}
 .lg-split{display:flex;width:100%;height:100%;background:#fff}
 .lg-foto{flex:1.1;position:relative;background:linear-gradient(160deg,#1e2a3a,#31445c 55%,#f26522 140%);background-size:cover;background-position:center;display:flex;align-items:flex-end}
 .lg-foto .yazi{padding:44px 48px;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.5)}
@@ -2090,7 +2094,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v529 · 22.09.2026';
+const APP_VER='v530 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8758,7 +8762,8 @@ function _setCloud(state,msg){
 function _showLogin(show){
   const o=document.getElementById('loginOverlay');
   if(o) o.classList.toggle('open',!!show);
-  if(show){ const e=document.getElementById('loginEmail'); if(e) setTimeout(()=>e.focus(),100); }
+  try{ document.body.classList.toggle('login-acik',!!show); }catch(e){}
+  if(show){ try{ window.scrollTo(0,0); }catch(e){} const e=document.getElementById('loginEmail'); if(e) setTimeout(()=>e.focus(),100); }
 }
 function _skipLogin(){ _showLogin(false); _setCloud('err','Çevrimdışı (eşitleme kapalı)'); showToast('Çevrimdışı moddasın — değişiklikler buluta yazılmayacak','error',5000); }
 
