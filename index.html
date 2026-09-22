@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v542 · 23.09.2026';
+const APP_VER='v543 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -14380,7 +14380,7 @@ function _renderSatisPaketYon(box){
     ${(window._spBas||window._spSon)?`<button class="btn btn-outline btn-sm" onclick="window._spBas='';window._spSon='';renderOpsTanim()">✕ Tarihi temizle</button>`:''}
     <span style="color:var(--muted);font-size:.72rem">· ${pkgs.length} tur</span></div>`;
   pkgs.forEach(p=>{
-    const acik=(window._spAcik===p.id); const akt=(p.aktiviteler||[]);
+    const acik=(window._spAcik===p.id); const akt=_spMigrate(p);
     let op=''; try{ op=_resOpAd(p)||''; }catch(e){}
     const satilir=akt.filter(a=>!a.dahilMi&&(a.ad||'').trim()).length;
     h+=`<div class="card" style="margin-bottom:8px;padding:.7rem 1rem">
@@ -14423,9 +14423,17 @@ function _renderSatisPaketYon(box){
   box.innerHTML=h;
 }
 function _spPkg(id){ return getPackages().find(p=>p.id===id)||null; }
-function spAdd(id){ const p=_spPkg(id); if(!p)return; (p.aktiviteler=p.aktiviteler||[]).push({ad:'',fiyat:'',komTip:'%',komDeg:''}); setPackages(getPackages()); renderOpsTanim(); }
-function spSet(id,i,f,v){ const p=_spPkg(id); if(!p||!(p.aktiviteler||[])[i])return; p.aktiviteler[i][f]=(f==='dahilMi'||f==='fiyatGizli')?!!v:String(v).trim(); setPackages(getPackages()); }
-function spDel(id,i){ const p=_spPkg(id); if(!p||!p.aktiviteler)return; p.aktiviteler.splice(i,1); setPackages(getPackages()); renderOpsTanim(); }
+function _spMigrate(p){
+  if(!p) return [];
+  if(!Array.isArray(p.satisPaketleri)){
+    p.satisPaketleri=(p.aktiviteler||[]).filter(a=>a&&String(a.ad||'').trim()&&((a.komTip==='%'||a.komTip==='€')||a.fiyatGizli||String(a.icerik||'').trim()))
+      .map(a=>({ad:String(a.ad).trim(),fiyat:a.fiyat!=null?a.fiyat:'',komTip:a.komTip||'%',komDeg:a.komDeg!=null?a.komDeg:'',dahilMi:!!a.dahilMi,fiyatGizli:!!a.fiyatGizli,icerik:String(a.icerik||'').trim()}));
+  }
+  return p.satisPaketleri;
+}
+function spAdd(id){ const p=_spPkg(id); if(!p)return; _spMigrate(p).push({ad:'',fiyat:'',komTip:'%',komDeg:'',icerik:''}); setPackages(getPackages()); renderOpsTanim(); }
+function spSet(id,i,f,v){ const p=_spPkg(id); if(!p||!_spMigrate(p)[i])return; p.satisPaketleri[i][f]=(f==='dahilMi'||f==='fiyatGizli')?!!v:String(v).trim(); setPackages(getPackages()); }
+function spDel(id,i){ const p=_spPkg(id); if(!p)return; _spMigrate(p).splice(i,1); setPackages(getPackages()); renderOpsTanim(); }
 function spKurTax(id,f,v){ const p=_spPkg(id); if(!p)return; p.kurTax=p.kurTax||{tip:'gece',deger:''}; p.kurTax[f]=String(v).trim(); setPackages(getPackages()); if(f==='tip') renderOpsTanim(); }
 function _tdKurTaxKisi(k){
   try{
@@ -14502,7 +14510,7 @@ function renderOpsTanim(){
     const card=(cat,ad,ic,n,desc)=>`<div class="tanim-card" onclick="opsTanimCat('${cat}')"><div class="tc-ic"><svg class="ic"><use href="#i-${ic}"/></svg></div><div><div class="tc-ad">${ad}</div><div class="tc-sub">${n} kayıt · ${desc}</div></div></div>`;
     box.innerHTML=`<button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')" style="margin-bottom:10px">← Ana Sayfa</button><p class="section-tip">Bir kez tanımla, seferlerde listeden seç. Bir kartı aç.</p>
       <div class="tanim-cards">
-        ${card('satispaket','Satış Paketleri','ticket',getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&String((p.paketKodu||'')+(p.paketAdi||'')).trim()).reduce((n,p)=>n+((p.aktiviteler||[]).length),0),'tur başına satılacak paketler · fiyat · komisyon')}
+        ${card('satispaket','Satış Paketleri','ticket',getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&String((p.paketKodu||'')+(p.paketAdi||'')).trim()).reduce((n,p)=>n+_spMigrate(p).length,0),'tur başına satılacak paketler · fiyat · komisyon')}
         ${card('rehberler','Rehberler','users',(t.rehberler||[]).length,'ad · telefon · dil')}
         ${(typeof sbRol!=='undefined'&&sbRol==='yonetici')?card('kase','Firma Kaşesi','file',_kaseGet()?1:0,'sözleşmelere otomatik basılır — yalnız yönetici'):''}
         ${card('aracFirmalari','Araç Firmaları','bus',(t.aracFirmalari||[]).length,'firma kartı · yetkili · filo')}
@@ -15190,7 +15198,7 @@ function _tdAktList(E){
   const out=[]; const seen=new Set();
   const uyeler=(E.uyeler||[]).length?E.uyeler:((E.sefer&&E.sefer.pkgId)?[{pkgId:E.sefer.pkgId}]:[]);
   uyeler.forEach(u=>{ const pk=getPackages().find(p=>p.id===u.pkgId); if(!pk) return;
-    (pk.aktiviteler||[]).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:_aktFiyatNum(a.fiyat),dahil:!!a.dahilMi,fiyatGizli:!!a.fiyatGizli,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:''),icerik:String(a.icerik||'').trim()}); });
+    _spMigrate(pk).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:_aktFiyatNum(a.fiyat),dahil:!!a.dahilMi,fiyatGizli:!!a.fiyatGizli,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:''),icerik:String(a.icerik||'').trim()}); });
   });
   return out;
 }
