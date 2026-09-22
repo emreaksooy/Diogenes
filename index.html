@@ -2062,7 +2062,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v522 · 22.09.2026';
+const APP_VER='v523 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -12250,6 +12250,30 @@ async function _boot(){
   let trf = await idbGet('transfer');      _trCache = (trf&&typeof trf==='object')?trf:null;
   let ogr = await idbGet('opsgrup');       _ogCache = (ogr&&typeof ogr==='object')?ogr:null;
   await _docSigLoad();
+  // ── BULUT ÖNCELİKLİ AÇILIŞ ──
+  // Ekran çizilmeden ÖNCE bulut çekilir: her cihaz açılışta bulutla eşitlenir.
+  // Çevrimdışı / oturum yok / 20 sn'de yanıt yoksa yerel veriyle devam edilir
+  // (bulut arka planda tamamlanınca ekranlar kendiliğinden tazelenir).
+  _bootSplashGoster();
+  try{
+    await Promise.race([_cloudBoot(), new Promise(r=>setTimeout(r,20000))]);
+  }catch(e){ console.warn('bulut açılış',e); }
+  _bootSplashKapat();
+  _bootRender();
+}
+function _bootSplashGoster(){
+  try{
+    if(document.getElementById('bootSplash')) return;
+    document.body.insertAdjacentHTML('beforeend',
+      '<div id="bootSplash" style="position:fixed;inset:0;z-index:99998;background:var(--light,#f5f7fa);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:inherit">'
+      +'<div style="font-weight:800;font-size:1.05rem;color:var(--navy,#1e2a3a)">Diogenes Travel</div>'
+      +'<div style="width:34px;height:34px;border:4px solid #e5e9f0;border-top-color:var(--primary,#f26522);border-radius:50%;animation:bsdon 0.9s linear infinite"></div>'
+      +'<div style="font-size:.78rem;color:#6b7280">Buluttan güncel veriler yükleniyor…</div>'
+      +'<style>@keyframes bsdon{to{transform:rotate(360deg)}}</style></div>');
+  }catch(e){}
+}
+function _bootSplashKapat(){ try{ const b=document.getElementById('bootSplash'); if(b) b.remove(); }catch(e){} }
+function _bootRender(){
   seedData();
   _migrateResData();
   renderDestinasyonSelect('');
@@ -18211,7 +18235,7 @@ function opsMagSet(i,f,v){ const r=_opsRec(true); if(r.magazalar&&r.magazalar[i]
 function setDark(on){ document.body.classList.toggle('dark',on); try{localStorage.setItem('dmcDark',on?'1':'0');}catch(e){} const t=document.getElementById('themeToggle'); if(t) t.title=on?'Açık temaya geç':'Koyu temaya geç'; }
 function toggleDark(){ setDark(!document.body.classList.contains('dark')); }
 try{ if(localStorage.getItem('dmcDark')==='1') document.body.classList.add('dark'); }catch(e){}
-_boot().then(()=>{ _cloudBoot(); _fixDarkLogoBackgrounds(); });
+_boot().then(()=>{ _fixDarkLogoBackgrounds(); });
 </script>
 
 
