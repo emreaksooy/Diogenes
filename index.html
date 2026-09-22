@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v512 · 22.09.2026';
+const APP_VER='v513 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8676,7 +8676,7 @@ function _mutRezvChip(r){
   }catch(e){ return ''; }
 }
 function _mutPanel(list,baslik,digerN){
-  if(!list.length&&!digerN) return '';
+  if(!list.length) return ''; // bu tarihte uyarı yoksa bant hiç gösterilmez
   const R={ucakYok:['#b45309','#fef3c7','UÇAK LİSTESİNDE YOK'],rezvYok:['#0369a1','#e0f2fe','REZV. KAYDI YOK'],ucFark:['#b91c1c','#fee2e2','UÇUŞ UÇLARI FARKLI'],seferUrunYok:['#7e22ce','#f3e8ff','ÜRÜNDE TARİH YOK'],iptalBilet:['#b91c1c','#fee2e2','İPTAL — BİLETİ İPTAL ET'],biletIptalRezvAktif:['#b45309','#fef3c7','BİLET İPTAL — REZV AKTİF']};
   let ic2=list.slice(0,20).map(x=>`<div style="display:flex;gap:8px;align-items:center;font-size:.74rem;padding:3px 0;flex-wrap:wrap">
       <span style="background:${R[x.tip][1]};color:${R[x.tip][0]};font-weight:800;font-size:.58rem;padding:2px 7px;border-radius:9px;white-space:nowrap">${R[x.tip][2]}</span>
