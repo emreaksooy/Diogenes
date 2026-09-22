@@ -2042,7 +2042,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v516 · 22.09.2026';
+const APP_VER='v517 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -7045,12 +7045,14 @@ function renderUcakGenel(){
     [...new Set((_resDepartureDates(pkg)||[]).map(t=>_pdate(t)).filter(Boolean))].forEach(d=>{
       const g=resAll.find(x=>x.pkgId===pkg.id && x.kalkis===d);
       const rows=g?g.rows:[];
-      const real=rows.filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim()));
+      const _adli=rows.filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim()));
+      const real=_adli.filter(r=>_durumEff(r)!=='iptal');
+      const iptalN=_adli.length-real.length;
       const pax=real.length;
       const pend=real.filter(r=>!((r.g_pnr||'').toString().trim())).length;
-      let status; if(!real.length){status='giris';} else if(pend>0){status='bekliyor';} else {status='biletlendi';}
+      let status; if(!_adli.length){status='giris';} else if(pend>0){status='bekliyor';} else {status='biletlendi';}
       const aps=new Set(); real.forEach(r=>{ [r.g_k1,r.g_v1,r.g_v2,r.d_k1,r.d_v1,r.d_v2].forEach(a=>{ const t=(a||'').toString().trim().toUpperCase(); if(t.length===3) aps.add(t); }); });
-      items.push({id:pkg.id,kalkis:d||'',yil:(d||'').slice(0,4)||'—',ay:(d||'').slice(5,7)||'--',pkg,opAd,pax,real:real.length,pend,status,aps:[...aps],iptal:!!(g&&g.iptal)});
+      items.push({id:pkg.id,kalkis:d||'',yil:(d||'').slice(0,4)||'—',ay:(d||'').slice(5,7)||'--',pkg,opAd,pax,real:_adli.length,pend,status,aps:[...aps],iptalN,iptal:!!(g&&g.iptal)});
     });
   });
   // Uçakçının açtığı ürün-dışı listeler + özel gruplar da klasörlerde görünsün
@@ -7062,12 +7064,14 @@ function renderUcakGenel(){
     if(_itemSet.has(gr.pkgId+'|'+_pdate(gr.kalkis))) return;
     const pkg=pkgs.find(p=>p.id===gr.pkgId); if(!pkg) return;
     const rows=gr.rows||[];
-    const real=rows.filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim()));
+    const _adli=rows.filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim()));
+    const real=_adli.filter(r=>_durumEff(r)!=='iptal');
+    const iptalN=_adli.length-real.length;
     const pax=real.length;
     const pend=real.filter(r=>!((r.g_pnr||'').toString().trim())).length;
-    let status; if(!real.length){status='giris';} else if(pend>0){status='bekliyor';} else {status='biletlendi';}
+    let status; if(!_adli.length){status='giris';} else if(pend>0){status='bekliyor';} else {status='biletlendi';}
     const aps=new Set(); real.forEach(r=>{ [r.g_k1,r.g_v1,r.g_v2,r.d_k1,r.d_v1,r.d_v2].forEach(a=>{ const t=(a||'').toString().trim().toUpperCase(); if(t.length===3) aps.add(t); }); });
-    items.push({id:pkg.id,kalkis:gr.kalkis,yil:(gr.kalkis||'').slice(0,4)||'—',ay:(gr.kalkis||'').slice(5,7)||'--',pkg,opAd:_resOpAd(pkg)||'',pax,real:real.length,pend,status,aps:[...aps],ekstra:!pkg.ozelGrup&&!_rozetSet.has(gr.pkgId+'|'+_pdate(gr.kalkis)),ozel:!!pkg.ozelGrup,iptal:!!gr.iptal});
+    items.push({id:pkg.id,kalkis:gr.kalkis,yil:(gr.kalkis||'').slice(0,4)||'—',ay:(gr.kalkis||'').slice(5,7)||'--',pkg,opAd:_resOpAd(pkg)||'',pax,real:_adli.length,pend,status,aps:[...aps],iptalN,ekstra:!pkg.ozelGrup&&!_rozetSet.has(gr.pkgId+'|'+_pdate(gr.kalkis)),ozel:!!pkg.ozelGrup,iptal:!!gr.iptal});
   });
   if(_ucakGizle.bos) items=items.filter(x=>x.real);
   if(_ucakGizle.iptal) items=items.filter(x=>!x.iptal);
@@ -7088,7 +7092,7 @@ function renderUcakGenel(){
       <input type="checkbox" ${_ucakSec.has(it.id+'|'+_pdate(it.kalkis))?'checked':''} onclick="_ucakSecTog('${it.id}|${_pdate(it.kalkis)}',event)" title="Toplu silme için seç" style="width:15px;height:15px;flex:0 0 auto;cursor:pointer">
       <div class="ud-date">${fmtGun(it.kalkis)}</div>
       <div class="ud-main"><div class="ud-name">${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</div><div class="ud-aps">${esc(it.opAd)||'—'}${it.aps.length?' · '+esc(it.aps.join(' · ')):''}</div></div>
-      <div class="ud-pax">${it.real?it.pax+' yolcu':'—'}</div>
+      <div class="ud-pax">${it.pax?it.pax+' yolcu':(it.iptalN?'':'—')}${it.iptalN?`<span style="color:#b91c1c;font-weight:700"> ${it.pax?'· ':''}${it.iptalN} iptal</span>`:''}</div>
       ${it.ozel?'<div class="ud-status ozelg">özel grup</div>':(it.ekstra?`<div class="ud-status urunyok">üründe yok</div><button title="Bu eski/yanlış listeyi kalıcı sil — üründe bu tarih tanımlı değil" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:3px 8px;cursor:pointer;font-size:.72rem" onclick="event.stopPropagation();ucakSeferSil('${it.id}','${it.kalkis}')">🗑</button>`:'')}
       ${it.pkg.ucakOperatorde?'<div class="ud-status" style="background:#dbeafe;color:#1d4ed8;white-space:nowrap">✈ Uçakları Operatör Alıyor</div>':''}
       ${it.pkg.opsDisAcente?'<div class="ud-status" style="background:#e0f2fe;color:#0369a1;white-space:nowrap">🚌 Dış Operasyon</div>':''}
