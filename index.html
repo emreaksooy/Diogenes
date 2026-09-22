@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v490 · 22.09.2026';
+const APP_VER='v491 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14028,7 +14028,29 @@ function _ogResnoPaxRezv(pkgId,kalkis,resno){
   }catch(e){}
   return _ogResnoPax(pkgId,kalkis,resno);
 }
+function _ogOtoKat(){
+  // Sefere SONRADAN eklenen voucherlar: seferin diğer tüm voucherları tek bir grupta ise
+  // yeni voucher da otomatik o gruba üye yapılır (bölünmüş gruplara karışılmaz).
+  try{
+    const S=getOpsGrup(); const exp=S.gruplar||{}; const cl={}; let degisti=false;
+    Object.values(exp).forEach(g=>(g.uyeler||[]).forEach(u=>{ cl[u.pkgId+'|'+u.kalkis+'|'+u.resno]=g.id; }));
+    getReservations().forEach(grid=>{
+      if(!grid||grid.iptal) return;
+      const real=(grid.rows||[]).filter(_isim);
+      const resnos=[...new Set(real.map(r=>(r.resno||'').trim()).filter(Boolean))];
+      const un=resnos.filter(rn=>!cl[grid.pkgId+'|'+grid.kalkis+'|'+rn]);
+      if(!un.length||un.length===resnos.length) return;
+      const gids=[...new Set(resnos.filter(rn=>cl[grid.pkgId+'|'+grid.kalkis+'|'+rn]).map(rn=>cl[grid.pkgId+'|'+grid.kalkis+'|'+rn]))];
+      if(gids.length!==1) return;
+      const grup=exp[gids[0]]; if(!grup||!Array.isArray(grup.uyeler)) return;
+      un.forEach(rn=>{ grup.uyeler.push({pkgId:grid.pkgId,kalkis:grid.kalkis,resno:rn}); cl[grid.pkgId+'|'+grid.kalkis+'|'+rn]=grup.id; });
+      degisti=true;
+    });
+    if(degisti) setOpsGrup(S);
+  }catch(e){}
+}
 function _ogResolve(){
+  _ogOtoKat();
   const S=getOpsGrup(); const exp=S.gruplar||{}; const claimed={};
   Object.values(exp).forEach(g=>(g.uyeler||[]).forEach(u=>{ claimed[u.pkgId+'|'+u.kalkis+'|'+u.resno]=g.id; }));
   const pkgs=getPackages();
