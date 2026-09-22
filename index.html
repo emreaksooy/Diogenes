@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v511 · 22.09.2026';
+const APP_VER='v512 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11962,7 +11962,8 @@ function restoreLastState(){
     showPage('operasyon');
     let td=''; try{td=localStorage.getItem('dmc_lastTd')||'';}catch(e){}
     let ot=''; try{ot=localStorage.getItem('dmc_opsTab')||'';}catch(e){}
-    if(td){ try{ if(_ogResolve().find(x=>x.id===td)){ _tdGid=td; _tdTab='yolcu'; opsTab('grup',true); renderOpsGrup(); return; } }catch(e){} }
+    // son kaldığın SEKME esastır; tur dosyası yalnız gruplar sekmesindeyken geri açılır
+    if(ot==='grup'&&td){ try{ if(_ogResolve().find(x=>x.id===td)){ _tdGid=td; _tdTab='yolcu'; opsTab('grup',true); renderOpsGrup(); return; } }catch(e){} }
     if(ot){ try{opsTab(ot,true);}catch(e){} }
     return;
   }
