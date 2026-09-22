@@ -1088,35 +1088,12 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
     <!-- HERO -->
     <div class="dash-hero">
-      <div class="dash-hero-title"><svg class="ic"><use href="#i-plane"/></svg> Diogenes Travel Paneli</div>
-      <div class="dash-hero-sub">Kalkışları ve operatörleri tek ekranda takip edin</div>
-      <div class="dash-hero-actions">
-        <button class="dash-hero-btn dash-hero-btn-primary" onclick="openOpModal()"><svg class="ic"><use href="#i-plus"/></svg> Operatör Ekle</button>
-        <button class="dash-hero-btn dash-hero-btn-outline" onclick="exportAllData()"><svg class="ic"><use href="#i-download"/></svg> Yedek Al</button>
-        <label class="dash-hero-btn dash-hero-btn-outline" style="cursor:pointer"><svg class="ic"><use href="#i-upload"/></svg> Yedek Yükle<input type="file" accept=".json" onchange="importAllData(event)" style="display:none"></label>
-      </div>
-    </div>
+      <div class="dash-hero-title"><svg class="ic"><use href="#i-plane"/></svg> Diogenes Travel Yönetim Paneli</div>
+          </div>
 
     <!-- YÖNETİCİ ÖZETİ -->
     <div id="ynWrap"></div>
 
-    <!-- ŞİRKET PANOSU -->
-    <div id="panoWrap" style="margin-bottom:14px"></div>
-
-    <!-- STAT CARDS -->
-    <div class="dash-stats" id="dashStats"></div>
-
-    <!-- CALENDAR + UPCOMING -->
-    <div class="dash-lower">
-      <div class="dash-cal" id="dashCalContainer">
-        <div class="dash-section-title"><svg class="ic"><use href="#i-calendar"/></svg> Tur Takvimi</div>
-        <div id="dashCal"></div>
-      </div>
-      <div class="dash-upcoming">
-        <div class="dash-section-title"><svg class="ic"><use href="#i-clock"/></svg> Yaklaşan Turlar</div>
-        <div id="dashUpcoming"></div>
-      </div>
-    </div>
 
     <!-- OPERATORS -->
     <div class="dash-section-title"><svg class="ic"><use href="#i-building"/></svg> Operatörler</div>
@@ -2088,7 +2065,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v518 · 22.09.2026';
+const APP_VER='v519 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2608,7 +2585,7 @@ function renderPano(){
     </div>`;
   };
   const gorH=`<div class="card" style="padding:.8rem 1rem">
-    <div class="card-title" style="margin-bottom:.4rem"><svg class="ic"><use href="#i-check"/></svg> Görevler
+    <div class="card-title" style="margin-bottom:.4rem;color:var(--primary)"><svg class="ic"><use href="#i-check"/></svg> Görevler
       ${benimAcik.length?`<span class="rzchip rzc-bek">${benimAcik.length} açık görevin var</span>`:''}
       <span style="flex:1"></span>
       <button class="btn btn-outline btn-sm" onclick="_panoForm=!_panoForm;renderPano()">${_panoForm?'Vazgeç':'+ Görev ata'}</button>
@@ -2628,7 +2605,7 @@ function renderPano(){
     ${list.length?list.map(gorSat).join(''):'<div style="font-size:.74rem;color:var(--muted);padding:6px 0">Görev yok.</div>'}
   </div>`;
   const duyH=`<div class="card" style="padding:.8rem 1rem">
-    <div class="card-title" style="margin-bottom:.4rem"><svg class="ic"><use href="#i-alert"/></svg> Duyurular
+    <div class="card-title" style="margin-bottom:.4rem;color:var(--primary)"><svg class="ic"><use href="#i-alert"/></svg> Duyurular
       ${okunmadi?`<span class="rzchip rzc-bek">${okunmadi} yeni</span>`:''}
       <span style="flex:1"></span>
       ${sbRol==='yonetici'?`<button class="btn btn-outline btn-sm" onclick="_panoDuyForm=!_panoDuyForm;renderPano()">${_panoDuyForm?'Vazgeç':'+ Duyuru yayınla'}</button>`:''}
@@ -2650,7 +2627,7 @@ function renderPano(){
     }).join(''):'<div style="font-size:.74rem;color:var(--muted);padding:6px 0">Duyuru yok.</div>'}
   </div>`;
   let suyH='';
-  if(sbRol==='yonetici'||sbRol==='urun'){
+  if(false){
     try{
       const L=_mutIssues().filter(x=>x.tip==='seferUrunYok');
       if(L.length) suyH=`<div class="card" style="border:1.5px solid #d8b4fe;background:#faf5ff;padding:.65rem .95rem;margin-bottom:12px;color:#4b3a63">
@@ -2718,15 +2695,15 @@ function _ynVeri(){
   const pkgs=getPackages();
   const aylik=Array(12).fill(0), aylikK=Array(12).fill(0);
   let sezonP=0,sezonK=0,oncekiP=0,g30P=0,g30K=0;
-  const opPax={};
+  const kayitlar=[];
   const g30son=_isoAdd(bugun,30);
   sefer.forEach(sf=>{
     let p=0; try{ p=_opsPax(sf.pkgId,sf.kalkis)||0; }catch(e){}
     if(!p) return;
     const y=+sf.kalkis.slice(0,4), m=+sf.kalkis.slice(5,7);
     if(y===yil){ aylik[m-1]+=p; aylikK[m-1]++; sezonP+=p; sezonK++;
-      const pk=pkgs.find(x=>x.id===sf.pkgId); const op=pk?(_resOpAd(pk)||'Diğer'):'Diğer';
-      opPax[op]=(opPax[op]||0)+p; }
+      const pk=pkgs.find(x=>x.id===sf.pkgId);
+      kayitlar.push({ay:m,pax:p,op:pk?(_resOpAd(pk)||'Diğer'):'Diğer',kod:pk?(pk.paketKodu||pk.paketAdi||'?'):'?'}); }
     if(y===yil-1) oncekiP+=p;
     if(sf.kalkis>=bugun&&sf.kalkis<=g30son){ g30P+=p; g30K++; }
   });
@@ -2759,21 +2736,36 @@ function _ynVeri(){
   const rehSet=[...new Set(hepsi30.filter(t=>(t.rehberAd||'').trim()).map(t=>t.rehberAd.trim()))];
   const rehYuk=rehSet.map(r=>{ let g=0; try{ g=_rtRehYuk(r,hepsi30,ayBas,ayBit); }catch(e){}
     return {ad:r,g}; }).filter(x=>x.g>0).sort((a,b)=>b.g-a.g).slice(0,6);
-  return {bugun,yil,ayIdx,aylik,aylikK,sezonP,sezonK,oncekiP,g30P,g30K,opPax,aktif,yak,yog,
+  return {bugun,yil,ayIdx,aylik,aylikK,sezonP,sezonK,oncekiP,g30P,g30K,kayitlar,aktif,yak,yog,
     dBilet,dTrans,dReh,dUrun,sehir,tahsisN,rehYuk};
+}
+function ynSecim(tip,ay){ window._ynSecimD={tip:tip,ay:ay||0}; try{ renderYonetici(); }catch(e){} }
+function _ynSecimAl(ayIdx){
+  const d=window._ynSecimD;
+  if(d&&d.tip) return d;
+  return {tip:ayIdx<=6?'s1':'s2',ay:0};
 }
 function renderYonetici(){
   const el=document.getElementById('ynWrap'); if(!el) return;
   let V; try{ V=_ynVeri(); }catch(e){ el.innerHTML=''; return; }
   const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const sec=_ynSecimAl(V.ayIdx);
+  const secAylar=sec.tip==='ay'?[sec.ay]:(sec.tip==='s1'?[1,2,3,4,5,6]:[7,8,9,10,11,12]);
+  const secAd=sec.tip==='ay'?(AYK[sec.ay-1]+' '+V.yil):(sec.tip==='s1'?'1. Sezon (Oca–Haz)':'2. Sezon (Tem–Ara)');
+  const K=V.kayitlar.filter(k=>secAylar.includes(k.ay));
+  const secP=K.reduce((a,k)=>a+k.pax,0);
   const enB=Math.max.apply(null,V.aylik.concat([1]));
-  const grH=V.aylik.map((p,i)=>`<div class="c${i===V.ayIdx-1?' aktif':''}"><span class="v">${p||''}</span><div class="bar" style="height:${Math.max(2,Math.round(p/enB*100))}%"></div><span class="ay">${AYK[i]}</span></div>`).join('');
-  const opL=Object.entries(V.opPax).sort((a,b)=>b[1]-a[1]);
-  const opTop=opL.slice(0,4); const digerP=opL.slice(4).reduce((a,x)=>a+x[1],0);
-  if(digerP) opTop.push(['Diğer',digerP]);
-  const opRenk=['var(--navy)','var(--primary)','#1d4ed8','#16a34a','#b45309'];
-  const opH=opTop.map((x,i)=>{ const pct=V.sezonP?Math.round(x[1]/V.sezonP*100):0;
-    return `<div class="yn-oprow"><span class="ad">${esc(x[0])}</span><div class="cz"><div class="dl" style="width:${pct}%;background:${opRenk[i%5]}"></div></div><span class="p"><b>${x[1].toLocaleString('tr-TR')}</b> · %${pct}</span></div>`; }).join('')||'<div style="font-size:.74rem;color:var(--muted)">Bu yıl veri yok</div>';
+  const grH=V.aylik.map((p,i)=>`<div class="c${secAylar.includes(i+1)?' aktif':''}" style="cursor:pointer" onclick="ynSecim('ay',${i+1})" title="${AYK[i]} dağılımını göster"><span class="v">${p||''}</span><div class="bar" style="height:${Math.max(2,Math.round(p/enB*100))}%"></div><span class="ay">${AYK[i]}</span></div>`).join('');
+  const dagit=(anah)=>{ const t={}; K.forEach(k=>{ t[k[anah]]=(t[k[anah]]||0)+k.pax; });
+    const L2=Object.entries(t).sort((a,b)=>b[1]-a[1]);
+    const top=L2.slice(0,5); const dg=L2.slice(5).reduce((a,x)=>a+x[1],0);
+    if(dg) top.push(['Diğer',dg]); return top; };
+  const opRenk=['var(--navy)','var(--primary)','#1d4ed8','#16a34a','#b45309','#7e22ce'];
+  const cubuk=top=>top.map((x,i)=>{ const pct=secP?Math.round(x[1]/secP*100):0;
+    return `<div class="yn-oprow"><span class="ad">${esc(x[0])}</span><div class="cz"><div class="dl" style="width:${pct}%;background:${opRenk[i%6]}"></div></div><span class="p"><b>${x[1].toLocaleString('tr-TR')}</b> · %${pct}</span></div>`; }).join('')||'<div style="font-size:.74rem;color:var(--muted)">Bu dönemde veri yok</div>';
+  const opH=cubuk(dagit('op'));
+  const turH=cubuk(dagit('kod'));
+  const szBtn=(t,ad)=>`<button class="btn ${sec.tip===t?'btn-primary':'btn-outline'} btn-sm" style="padding:3px 12px;font-size:.68rem" onclick="ynSecim('${t}')">${ad}</button>`;
   const yEnB=Math.max.apply(null,V.yog.map(x=>x.p).concat([1]));
   const yogH=V.yog.map(x=>{ const r=x.p/yEnB; const cls=x.p===0?'':(r<0.34?'s1':(r<0.67?'s2':'s3'));
     return `<div class="yn-yg ${cls}" title="${_fmtDateTR(x.d)} · ${x.p} yolcu"><span class="tt">${+x.d.slice(8,10)}</span></div>`; }).join('');
@@ -2794,6 +2786,7 @@ function renderYonetici(){
     ${V.dReh?`<span class="yn-chip" onclick="showPage('operasyon');opsTab('turlar')">👨‍🏫 Rehbersiz tur (7g) <i>${V.dReh}</i></span>`:''}
     ${V.dUrun?`<span class="yn-chip" onclick="showPage('rezervasyon')">🔁 Yanlış ürüne bağlı rezv <i>${V.dUrun}</i></span>`:''}
   </div>`:''}
+  <div id="panoWrap" style="margin-bottom:14px"></div>
   <div class="yn-kpi">
     <div class="yn-kp vurgu"><div class="l">Bu Ay (${AYK[V.ayIdx-1]})</div><div class="n">${buAyP.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${buAyK} kalkış</div></div>
     <div class="yn-kp"><div class="l">Sezon ${V.yil}</div><div class="n">${V.sezonP.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${V.sezonK} kalkış${artis!==null?` · <b>${artis>=0?'▲':'▼'} %${Math.abs(artis)}</b>`:''}</div></div>
@@ -2802,8 +2795,12 @@ function renderYonetici(){
   </div>
   <div class="yn-izgara">
     <div>
-      <div class="yn-panel"><h3>📈 Aylık Yolcu — ${V.yil} <span>toplam ${V.sezonP.toLocaleString('tr-TR')}</span></h3><div class="yn-gr">${grH}</div></div>
-      <div class="yn-panel"><h3>🤝 Operatör Dağılımı — ${V.yil} <span>yolcu bazında</span></h3>${opH}</div>
+      <div class="yn-panel"><h3>📈 Aylık Yolcu — ${V.yil}
+        <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${szBtn('s1','1. Sezon')}${szBtn('s2','2. Sezon')}</span></h3>
+        <div class="yn-gr">${grH}</div>
+        <div style="font-size:.64rem;color:var(--muted);margin-top:6px">Aya tıkla → alttaki dağılımlar o aya göre gelir · Seçili: <b style="color:var(--primary)">${secAd}</b> — ${secP.toLocaleString('tr-TR')} yolcu</div></div>
+      <div class="yn-panel"><h3>🧳 Tur Dağılımı — ${secAd} <span>yolcu bazında</span></h3>${turH}</div>
+      <div class="yn-panel"><h3>🤝 Operatör Dağılımı — ${secAd} <span>yolcu bazında</span></h3>${opH}</div>
       <div class="yn-panel"><h3>🗓 Önümüzdeki 30 Gün Yoğunluğu <span>günlük sahadaki yolcu</span></h3><div class="yn-yog">${yogH}</div></div>
     </div>
     <div>
@@ -2828,10 +2825,7 @@ function renderYonetici(){
 }
 function renderDashboard(){
   try{ renderYonetici(); }catch(e){ console.warn('yonetici',e); }
-  renderPano();
-  renderDashboardStats();
-  renderDashboardCalendar(_dashCalYear, _dashCalMonth);
-  renderDashboardUpcoming();
+  try{ renderPano(); }catch(e){}
   renderOpMainGrid();
   refreshSidebarPkgSwitch();
 }
