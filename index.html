@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v551 · 23.09.2026';
+const APP_VER='v552 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16021,16 +16021,16 @@ function _tdDocSatisMx(g,E){
       <td style="${_tdTd};white-space:nowrap;background:${al?'#e8f5e9':'#f6fef7'}">${kt?`<span style="display:flex;justify-content:space-between;gap:8px"><b>${Math.round(kt*100)/100} €</b><span style="font-size:11pt">${al?'☑':'☐'}</span></span>`:'—'}</td>
       ${P.map(x=>`<td style="${_tdTd};text-align:center;font-weight:700">${row[x.id]?'✓':''}</td>`).join('')}</tr>`;
   }).join('');
-  return _tdDocBas('Yolcu Satış Tablosu',E)+`
+  return `<style>@page satmxp{size:A4 landscape}</style><div style="page:satmxp">`+_tdDocBas('Yolcu Satış Tablosu',E)+`
   <table style="width:100%;border-collapse:collapse">
-    <tr><th style="${_tdTh};width:8mm;text-align:center">#</th><th style="${_tdTh}">GASTNAMEN</th><th style="${_tdTh};width:22mm">Voucher</th><th style="${_tdTh};width:20mm;text-align:right">KUR TAX</th>
-    ${P.map(x=>`<th style="${_tdTh};text-align:center">${esc(x.ad)}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:400;font-size:7.5pt">${_tdN(x.satis)} €</div>`:''}${x.icerik?`<div style="font-weight:400;font-size:7pt;color:#555">${esc(x.icerik)}</div>`:''}</th>`).join('')}</tr>
-    ${rows||`<tr><td style="${_tdTd}" colspan="${4+P.length}">Yolcu yok</td></tr>`}
+    <thead><tr><th style="${_tdTh};width:8mm;text-align:center">#</th><th style="${_tdTh}">GASTNAMEN</th><th style="${_tdTh};width:22mm">Voucher</th><th style="${_tdTh};width:20mm;text-align:right">KUR TAX</th>
+    ${P.map(x=>`<th style="${_tdTh};text-align:center">${esc(x.ad)}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:400;font-size:7.5pt">${_tdN(x.satis)} €</div>`:''}${x.icerik?`<div style="font-weight:400;font-size:7pt;color:#555">${esc(x.icerik)}</div>`:''}</th>`).join('')}</tr></thead>
+    <tbody>${rows||`<tr><td style="${_tdTd}" colspan="${4+P.length}">Yolcu yok</td></tr>`}
     <tr style="background:#DEEAF6;font-weight:bold"><td style="${_tdTd}" colspan="3">TOPLAM · ${K.length} kişi</td>
     <td style="${_tdTd};text-align:right;white-space:nowrap;color:#C55A11">${Math.round(ktTop*100)/100||'—'} €${alTop?`<div style="font-size:7pt;font-weight:400;color:#166534">alınan: ${Math.round(alTop*100)/100}</div>`:''}</td>
-    ${P.map(x=>{ let t=0; Object.values(g.satisMx).forEach(r2=>{t+=_tdN(r2[x.id]);}); return `<td style="${_tdTd};text-align:center">${t||''}</td>`; }).join('')}</tr>
+    ${P.map(x=>{ let t=0; Object.values(g.satisMx).forEach(r2=>{t+=_tdN(r2[x.id]);}); return `<td style="${_tdTd};text-align:center">${t||''}</td>`; }).join('')}</tr></tbody>
   </table>
-  <p style="font-size:8.5pt;color:#555;margin-top:3mm">☑ = kur tax rehber tarafından alındı · ✓ = paket satışı işaretli</p></div>`;
+  <p style="font-size:8.5pt;color:#555;margin-top:3mm">☑ = kur tax rehber tarafından alındı · ✓ = paket satışı işaretli</p></div></div>`;
 }
 function _tdDocMasraf(g,E){
   return _tdDocBas('Masraf Formu',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">Tarih</th><th style="${_tdTh}">Açıklama</th><th style="${_tdTh};width:60px">$</th><th style="${_tdTh};width:60px">€</th><th style="${_tdTh};width:60px">₺</th></tr>${Array.from({length:16}).map(()=>`<tr>${Array.from({length:5}).map(()=>`<td style="${_tdTd};height:18px"></td>`).join('')}</tr>`).join('')}</table><p style="font-size:9pt;margin-top:5mm">İmza (Rehber): ______________________</p></div>`;
@@ -16198,18 +16198,18 @@ function tdOnizle(tip){
   ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
   document.body.appendChild(ov);
 }
-async function _tdPdfIndir(htmlListe,dosyaAd,cb){
+async function _tdPdfIndir(htmlListe,dosyaAd,cb,yatay){
   if(!Array.isArray(htmlListe)) htmlListe=[htmlListe];
   htmlListe=htmlListe.flatMap(x=>String(x).split('<!--SAYFA-->'));
   if(!window.html2canvas||!(window.jspdf&&window.jspdf.jsPDF)){ showToast('PDF kütüphanesi yüklenemedi (internet gerekli) — Yazdır ile PDF kaydedebilirsin','error',6000); return; }
   showToast('PDF hazırlanıyor… '+htmlListe.length+' belge',null,4000);
   const holder=document.createElement('div');
-  holder.style.cssText='position:fixed;left:-12000px;top:0;width:780px;background:#fff;color:#111;font-family:-apple-system,Segoe UI,sans-serif';
+  holder.style.cssText='position:fixed;left:-12000px;top:0;width:'+(yatay?'1120px':'780px')+';background:#fff;color:#111;font-family:-apple-system,Segoe UI,sans-serif';
   document.body.appendChild(holder);
   try{
     const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
-    const M=9, W=192, H=279; // mm
+    const pdf=new jsPDF({unit:'mm',format:'a4',orientation:yatay?'landscape':'portrait'});
+    const M=9, W=yatay?279:192, H=yatay?192:279; // mm
     let ilk=true;
     for(let bi=0;bi<htmlListe.length;bi++){
       holder.innerHTML='<div style="padding:6px;background:#fff">'+htmlListe[bi]+'</div>';
@@ -16241,9 +16241,9 @@ function _tdDosyaKok(E){
 }
 function tdPdf(tip){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
-  const map={program:_tdDocProgram,isim:_tdDocIsim,otel:_tdDocOtel,ucus:_tdDocUcus,cizelge:_tdDocCizelge,masraf:_tdDocMasraf,sozlesme:_tdDocSozlesme,acente:_tdDocAcente,hesap:_tdDocHesap};
+  const map=_tdDocMap();
   if(!map[tip]) return;
-  _tdPdfIndir(map[tip](g,E),_tdDosyaKok(E)+'_'+tip+'.pdf');
+  _tdPdfIndir(map[tip](g,E),_tdDosyaKok(E)+'_'+tip+'.pdf',null,tip==='satmx');
 }
 function tdPdfHepsi(cb){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
