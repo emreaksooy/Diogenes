@@ -802,12 +802,19 @@ body.login-acik{overflow:hidden!important;overscroll-behavior:none;position:fixe
 body.login-acik>*:not(#loginOverlay){display:none!important}
 .lg-split{min-height:100dvh}
 @supports not (height:100dvh){.lg-split{min-height:100vh}}
-.lg-split{display:flex;width:100%;height:100%;background:#fff}
-.lg-foto{flex:1.1;position:relative;background:linear-gradient(160deg,#1e2a3a,#31445c 55%,#f26522 140%);background-size:cover;background-position:center;display:flex;align-items:flex-end}
+.lg-split{display:flex;width:100%;height:100%;background:#fff;position:relative;overflow:hidden}
+.lg-slides{position:absolute;inset:0;z-index:0;background:linear-gradient(160deg,#1e2a3a,#31445c 55%,#f26522 140%)}
+.lg-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.4s ease}
+.lg-slide.aktif{opacity:1}
+.lg-slide::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(20,28,44,.22),rgba(20,28,44,.45))}
+.lg-dots{position:absolute;left:48px;bottom:22px;z-index:2;display:flex;gap:7px}
+.lg-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.45);transition:all .3s}
+.lg-dots i.aktif{background:#fff;width:22px;border-radius:5px}
+.lg-foto{flex:1.1;position:relative;z-index:1;display:flex;align-items:flex-end}
 .lg-foto .yazi{padding:44px 48px;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.5)}
 .lg-foto .yazi h2{font-size:2rem;font-weight:800;line-height:1.2;letter-spacing:-.5px;margin-bottom:12px}
 .lg-foto .yazi p{font-size:.9rem;opacity:.92;max-width:420px;line-height:1.6}
-.lg-form{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+.lg-form{flex:1;display:flex;align-items:center;justify-content:center;padding:40px;position:relative;z-index:1;background:#fff}
 .lg-form .ic2{width:100%;max-width:360px}
 .lg-form .marka{display:flex;align-items:center;gap:10px;margin-bottom:34px}
 .lg-form .marka img{height:40px}
@@ -822,7 +829,8 @@ body.login-acik>*:not(#loginOverlay){display:none!important}
 @media(max-width:760px){
   .lg-foto{display:none}
   .lg-split{background:linear-gradient(rgba(20,28,44,.35),rgba(20,28,44,.6)),url('https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=900&q=65') center/cover no-repeat, linear-gradient(160deg,#1e2a3a,#31445c)}
-  .lg-form{padding:22px}
+  .lg-form{padding:22px;background:transparent}
+  .lg-slides,.lg-dots{display:none}
   .lg-form .ic2{background:rgba(255,255,255,.96);border-radius:20px;padding:28px 22px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
 }
 /* ═ yönetici özeti (ana sayfa) ═ */
@@ -1849,7 +1857,14 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 <!-- modalSunum kaldırıldı - artık page-sunum kullanılıyor -->
 <div id="loginOverlay" class="login-overlay">
   <div class="lg-split">
-    <div class="lg-foto" style="background-image:linear-gradient(rgba(20,28,44,.25),rgba(20,28,44,.45)),url('https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1400&q=70')">
+    <div class="lg-slides" id="lgSlides">
+      <div class="lg-slide aktif" style="background-image:url('https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1400&q=70')"></div>
+      <div class="lg-slide" style="background-image:url('https://images.unsplash.com/photo-1699519324068-8cade0601b53?auto=format&fit=crop&w=1400&q=70')"></div>
+      <div class="lg-slide" style="background-image:url('https://images.unsplash.com/photo-1764787102596-5e0dde4090bc?auto=format&fit=crop&w=1400&q=70')"></div>
+      <div class="lg-slide" style="background-image:url('https://images.unsplash.com/photo-1720974613069-690834d3d08d?auto=format&fit=crop&w=1400&q=70')"></div>
+    </div>
+    <div class="lg-dots" id="lgDots"><i class="aktif"></i><i></i><i></i><i></i></div>
+    <div class="lg-foto">
       <div class="yazi">
         <h2>Operasyonu tek panelden,<br>profesyonelce yönet.</h2>
         <p>Diogenes Travel'in özel yönetim paneli. Rezervasyondan transfere, uçaktan rehber dosyasına — bütün operasyon tek ekranda.</p>
@@ -2105,7 +2120,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v535 · 23.09.2026';
+const APP_VER='v536 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8770,11 +8785,26 @@ function _setCloud(state,msg){
   el.title=msg+' — tıkla: hata günlüğü';
   if(tx) tx.textContent=msg;
 }
+let _lgSlaytI=0,_lgSlaytT=null;
+function _lgSlaytBas(){
+  clearInterval(_lgSlaytT);
+  _lgSlaytT=setInterval(()=>{
+    try{
+      const S=document.querySelectorAll('#lgSlides .lg-slide');
+      const D=document.querySelectorAll('#lgDots i');
+      if(!S.length) return;
+      _lgSlaytI=(_lgSlaytI+1)%S.length;
+      S.forEach((el,i)=>el.classList.toggle('aktif',i===_lgSlaytI));
+      D.forEach((el,i)=>el.classList.toggle('aktif',i===_lgSlaytI));
+    }catch(e){}
+  },6000);
+}
 function _showLogin(show){
   const o=document.getElementById('loginOverlay');
   if(o) o.classList.toggle('open',!!show);
   try{ document.body.classList.toggle('login-acik',!!show); }catch(e){}
-  if(show){ try{ window.scrollTo(0,0); }catch(e){} const e=document.getElementById('loginEmail'); if(e) setTimeout(()=>e.focus(),100); }
+  if(show){ try{ window.scrollTo(0,0); }catch(e){} _lgSlaytBas(); const e=document.getElementById('loginEmail'); if(e) setTimeout(()=>e.focus(),100); }
+  else clearInterval(_lgSlaytT);
 }
 function _skipLogin(){ _showLogin(false); _setCloud('err','Çevrimdışı (eşitleme kapalı)'); showToast('Çevrimdışı moddasın — değişiklikler buluta yazılmayacak','error',5000); }
 
