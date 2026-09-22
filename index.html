@@ -2042,7 +2042,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v514 · 22.09.2026';
+const APP_VER='v515 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -6995,6 +6995,31 @@ function ucakSeferSil(pkgId,kalkis){
       renderUcakGenel();
       showToast('Liste silindi. Yanlışlıkla sildiysen: ucakSeferSilGeriAl()','success',5000); });
 }
+let _ucakSec=new Set();
+function _ucakSecTog(key,ev){ if(ev) ev.stopPropagation(); _ucakSec.has(key)?_ucakSec.delete(key):_ucakSec.add(key); renderUcakGenel(); }
+function _ucakSecSil(){
+  if(sbRol&&sbRol!=='yonetici'&&sbRol!=='ucak'){ showToast('Bu işlem için yetkin yok','error'); return; }
+  if(!_ucakSec.size){ showToast('Seçili liste yok'); return; }
+  const arr=getReservations();
+  const hedef=arr.filter(g=>_ucakSec.has(g.pkgId+'|'+g.kalkis));
+  const topY=hedef.reduce((t,g)=>t+((g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length),0);
+  const oz=hedef.map(g=>{ const pk=getPackages().find(p=>p.id===g.pkgId)||{}; return (pk.paketKodu||'?')+' '+_fmtDateTR(g.kalkis); }).join(', ');
+  showConfirm('🗑️','Seçili Uçak Listelerini Sil',
+    hedef.length+' liste ('+topY+' yolcu satırı) kalıcı silinecek: '+oz+'. Rezervasyon kayıtlarına dokunulmaz.',
+    'Evet, Sil',()=>{
+      window._ucakSilBackup=null; window._ucakSecBackup=hedef;
+      const kalan=arr.filter(g=>!_ucakSec.has(g.pkgId+'|'+g.kalkis));
+      _ucakSec.clear();
+      setReservations(kalan);
+      renderUcakGenel();
+      showToast(hedef.length+' liste silindi. Yanlışlıkla olduysa: ucakSecSilGeriAl()','success',5000);
+    });
+}
+function ucakSecSilGeriAl(){
+  const b=window._ucakSecBackup; if(!b||!b.length){ showToast('Geri alınacak silinmiş liste yok','error'); return; }
+  const a=getReservations(); b.forEach(g=>a.push(g)); setReservations(a); window._ucakSecBackup=null;
+  renderUcakGenel(); showToast(b.length+' liste geri getirildi','success');
+}
 function ucakSeferSilGeriAl(){
   const b=window._ucakSilBackup; if(!b){ showToast('Geri alınacak silinmiş liste yok','error'); return; }
   const a=getReservations(); a.push(b); setReservations(a); window._ucakSilBackup=null;
@@ -7051,6 +7076,7 @@ function renderUcakGenel(){
       <div class="ucak-metric ${m.pend?'warn':''}"><div class="um-num">${m.pend}</div><div class="um-lbl">Bekleyen bilet</div></div>
     </div>`; };
   const depRow=(it)=>{ const cur=(it.id===_resPkgId && it.kalkis===_resKalkis)?' cur':''; const ekCls=(it.real?'':' ud-bos')+(it.ekstra?' ud-ekstra':'')+(it.ozel?' ud-ozel':'')+(it.iptal?' ud-cxx':''); return `<div class="ucak-dep${cur}${ekCls}" onclick="ucakOpen('${it.id}','${it.kalkis}')">
+      <input type="checkbox" ${_ucakSec.has(it.id+'|'+_pdate(it.kalkis))?'checked':''} onclick="_ucakSecTog('${it.id}|${_pdate(it.kalkis)}',event)" title="Toplu silme için seç" style="width:15px;height:15px;flex:0 0 auto;cursor:pointer">
       <div class="ud-date">${fmtGun(it.kalkis)}</div>
       <div class="ud-main"><div class="ud-name">${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</div><div class="ud-aps">${esc(it.opAd)||'—'}${it.aps.length?' · '+esc(it.aps.join(' · ')):''}</div></div>
       <div class="ud-pax">${it.real?it.pax+' yolcu':'—'}</div>
@@ -7135,6 +7161,7 @@ function renderUcakGenel(){
         </div>
         <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap"><input type="checkbox" ${_ucakGizle.bos?'checked':''} onchange="_ucakGizleTog('bos',this)" style="width:15px;height:15px;accent-color:var(--primary)"> Boş gizle</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap"><input type="checkbox" ${_ucakGizle.iptal?'checked':''} onchange="_ucakGizleTog('iptal',this)" style="width:15px;height:15px;accent-color:var(--primary)"> İptal gizle</label>
+        ${_ucakSec.size?`<button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;font-weight:700;white-space:nowrap" onclick="_ucakSecSil()">🗑 Seçilenleri Sil (${_ucakSec.size})</button>`:''}
         <button class="btn btn-outline btn-sm" style="white-space:nowrap" onclick="_ucYeniListe()">+ Yeni Liste</button>
         <label class="btn btn-outline btn-sm" style="cursor:pointer;white-space:nowrap"><svg class="ic"><use href="#i-upload"/></svg> Liste İçe Aktar<input type="file" accept=".json" multiple onchange="importPackages(event)" style="display:none"></label>
       </div>
