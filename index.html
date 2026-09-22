@@ -2090,7 +2090,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v528 · 22.09.2026';
+const APP_VER='v529 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8831,13 +8831,18 @@ function _renderUserChip(){
   chip.onclick=_userMenuAc;
   chip.innerHTML='<span>'+esc((sbUser.email||'').split('@')[0])+'</span><span class="user-role-badge">'+rolAd+'</span><span style="font-size:.6rem;color:var(--muted)">▾</span>';
 }
+async function _tamEsitle(){
+  showToast('Buluttan tam eşitleme başladı…',null,3000);
+  try{ await _cloudPullFull(); showToast('Tam eşitleme tamamlandı ✓','success'); }
+  catch(e){ showToast('Eşitleme hatası: '+((e&&e.message)||e),'error',5000); }
+}
 function _userMenuAc(ev){
   if(ev) ev.stopPropagation();
   const eski=document.getElementById('userMenu'); if(eski){ eski.remove(); return; }
   const m=document.createElement('div'); m.id='userMenu';
   m.style.cssText='position:fixed;top:54px;right:8px;z-index:99999;background:var(--card,#fff);border:1px solid var(--border);border-radius:14px;box-shadow:0 14px 44px rgba(16,24,40,.22);padding:6px;min-width:190px';
   const it=(txt,fn)=>'<div onclick="var m=document.getElementById(\'userMenu\');if(m)m.remove();'+fn+'" style="padding:10px 13px;font-size:.85rem;font-weight:600;cursor:pointer;border-radius:9px;color:var(--text)" onmouseover="this.style.background=\'var(--light)\'" onmouseout="this.style.background=\'transparent\'">'+txt+'</div>';
-  let h=it('🌙 Açık / koyu tema','toggleDark()')+it('🔑 Şifremi değiştir','openPwModal()');
+  let h=it('🔄 Buluttan tam eşitle','_tamEsitle()')+it('🌙 Açık / koyu tema','toggleDark()')+it('🔑 Şifremi değiştir','openPwModal()');
   if(sbRol==='yonetici') h+=it('👥 Ekip paneli','showPage(&quot;ekip&quot;)');
   h+=it('🚪 Çıkış yap','doLogout()');
   m.innerHTML=h;
@@ -11765,9 +11770,17 @@ async function _cloudPullIncre(last){
       if(ci>0){ const c=r.id.slice(0,ci), did=r.id.slice(ci+1);
         if(_docSig[c]&&_docSig[c].has(did)){ _docSig[c].delete(did); _docApplyOne(c,did,null); degisti++; } }
       return; }
-    if(!_docSig[r.col])return; const sig=_dsig(r.data); if(_docSig[r.col].get(r.id)===sig)return;
-    if(_silTomb.has(r.col+':'+r.id)) _silTomb.delete(r.col+':'+r.id); // güncel satır geldi → taş düşer (yeniden oluşturma)
+    if(!_docSig[r.col])return;
+    if(_silTomb.has(r.col+':'+r.id)){ // MEZAR TAŞLI: uygulama yok, bulut kalıntısı temizlenecek
+      (window._tombTemizleK=window._tombTemizleK||[]).push({col:r.col,id:r.id}); return; }
+    const sig=_dsig(r.data); if(_docSig[r.col].get(r.id)===sig)return;
     _docSig[r.col].set(r.id,sig); _docApplyOne(r.col,r.id,r.data); degisti++; });
+  // taşlı kalıntıları buluttan arka planda sil
+  if((window._tombTemizleK||[]).length){ const L=window._tombTemizleK.splice(0); setTimeout(async()=>{ try{
+    const byCol={}; L.forEach(x=>(byCol[x.col]=byCol[x.col]||[]).push(x.id));
+    for(const c of Object.keys(byCol)) for(let i=0;i<byCol[c].length;i+=100) await sb.from('doc_rows').delete().eq('col',c).in('id',byCol[c].slice(i,i+100));
+    console.warn('İncre: mezar taşlı bulut kalıntısı silindi:',L.length);
+  }catch(e){ console.warn('kalıntı silme',e); } },1200); }
   { const uzak={}; (drIds.data||[]).forEach(r=>{ (uzak[r.col]=uzak[r.col]||new Set()).add(r.id); });
     Object.keys(_docSig).forEach(col=>{ const set=uzak[col]||new Set(); [..._docSig[col].keys()].forEach(id=>{ if(!set.has(id)){ _docSig[col].delete(id); _docApplyOne(col,id,null); degisti++; } }); }); }
   // ── BACKFILL: bulutta olup YERELDE OLMAYAN kayıtları tamamla ──
