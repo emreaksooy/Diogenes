@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v544 · 23.09.2026';
+const APP_VER='v545 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2504,7 +2504,7 @@ function showPage(id, tabEl) {
   // Stash'teki modalı kapat (sayfa değiştiğinde)
   closeSectionModal();
   window.scrollTo(0,0);
-  localStorage.setItem('dmc_lastPage', id);
+  if(!window._bootAni) localStorage.setItem('dmc_lastPage', id);
   if(currentId&&['paket','maliyet','harita','cikti','sunum'].includes(id)){history.replaceState(null,'','#pkg='+currentId+'&page='+id);}
   else{ try{history.replaceState(null,'',location.pathname+location.search);}catch(e){} }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -12397,6 +12397,8 @@ function restoreLastState(){
 
 // ── Açılış: önbelleği IndexedDB'den yükle (yoksa localStorage'dan taşı), sonra her şeyi başlat ──
 async function _boot(){
+  window._bootAni=true; // açılış boyunca dmc_lastPage yazılmaz (restore ezilmesin)
+  setTimeout(()=>{ window._bootAni=false; },25000); // emniyet: açılış takılırsa bayrak kalkar
   let pkgs = await idbGet('packages');
   let ops  = await idbGet('operators');
   if(pkgs===undefined){ try{pkgs=JSON.parse(localStorage.getItem(PKG_KEY)||'[]');}catch(e){pkgs=[];} await idbSet('packages', pkgs); }
@@ -12456,6 +12458,7 @@ function _bootRender(){
   try{ const rc=localStorage.getItem('dmc_rolCache'); if(rc){ sbRol=rc; _applyRoleNav(); } }catch(e){}
   if(sbRol==='rehber'){ try{ showPage('rehberim'); }catch(e){} }
   else restoreLastState();
+  window._bootAni=false;
   try{ _initSecCollapse(); }catch(e){}
 }
 // ═══════════════ LOGO ZEMİN DÜZELTME (bir defalık) ═══════════════
