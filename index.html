@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v510 · 22.09.2026';
+const APP_VER='v511 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2049,8 +2049,8 @@ document.addEventListener('focusin',function(e){
     if(!el||el.tagName!=='INPUT') return;
     if(el.type&&el.type!=='text') return;
     const ip=(el.placeholder||'')+' '+(el.title||'')+' '+(el.className||'');
-    if(/saatin/.test(el.className||'')||/saat|depar|ss:dd|__:__/i.test(ip)){ el.placeholder='__:__'; return; }
-    if(/tarih|gg\.aa|dogum|doğum|__\.__/i.test(ip)){ el.placeholder='__.__.____'; }
+    if(/saatin/.test(el.className||'')||/saat|depar|ss:dd|__:__/i.test(ip)){ el.placeholder='__:__'; try{el.select();}catch(e2){} return; }
+    if(/tarih|gg\.aa|dogum|doğum|__\.__/i.test(ip)){ el.placeholder='__.__.____'; try{el.select();}catch(e2){} }
   }catch(err){}
 },true);
 // KAYAR MASKE: saat (__:__) ve tarih (__.__.____ ) alanlarında yazdıkça biçimlenir
@@ -2067,10 +2067,10 @@ document.addEventListener('input',function(e){
     const d=String(el.value||'').replace(/\D/g,'');
     let yeni;
     if(saatMi){
-      const dd=d.slice(0,4);
+      const dd=d.length>4?d.slice(4):d;   // kutu doluyken yazılan = yeni giriş
       yeni=dd.length<=2?dd:dd.slice(0,2)+':'+dd.slice(2);
     }else{
-      const dd=d.slice(0,8);
+      const dd=d.length>8?d.slice(8):d;   // kutu doluyken yazılan = yeni giriş
       yeni=dd.length<=2?dd:(dd.length<=4?dd.slice(0,2)+'.'+dd.slice(2):dd.slice(0,2)+'.'+dd.slice(2,4)+'.'+dd.slice(4));
     }
     if(yeni!==el.value){ el.value=yeni; try{ el.setSelectionRange(yeni.length,yeni.length); }catch(e2){} }
