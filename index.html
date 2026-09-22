@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v504 · 22.09.2026';
+const APP_VER='v505 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -17113,7 +17113,7 @@ function trGorevBilgiKaydet(gid){
   const b=document.getElementById('trGorevBilgi'); if(b) b.remove();
   renderOpsTransfer(); showToast('Araç bilgisi kaydedildi','success');
 }
-function _trDeparBirlesik(ids,v){ const sv=(typeof _saatNorm==='function')?_saatNorm(v):v; String(ids||'').split('~').filter(Boolean).forEach(id=>{ try{ _trSatKaydet(id,{depar:sv,deparMan:true}); }catch(e){} }); renderOpsTransfer(); }
+function _trDeparBirlesik(ids,v){ const sv=(typeof _saatNorm==='function')?_saatNorm(v):v; String(ids||'').split('~').filter(Boolean).forEach(id=>{ try{ _trSatKaydet(decodeURIComponent(id),{depar:sv,deparMan:!!sv}); }catch(e){} }); renderOpsTransfer(); }
 function _trSonGonderim(firma){
   const G=(getTransfer().gonderimler||[]).filter(g2=>g2.firma===firma);
   return G.length?G[G.length-1]:null;
