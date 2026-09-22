@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v539 · 23.09.2026';
+const APP_VER='v540 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15760,6 +15760,7 @@ function renderTurDosyasi(box){
       ${belgeler.map(b=>`<div style="border:1.5px solid var(--border);border-radius:13px;padding:12px;display:flex;gap:10px;align-items:center">
         <div style="width:36px;height:36px;border-radius:10px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;color:var(--primary)"><svg class="ic"><use href="#i-file"/></svg></div>
         <div style="flex:1"><b style="font-size:.76rem;display:block">${b[1]}</b><span style="font-size:.62rem;color:var(--muted)">${b[2]}</span></div>
+        <button class="btn btn-outline btn-sm" onclick="tdOnizle('${b[0]}')" title="Belgeyi ekranda gör">👁</button>
         <button class="btn btn-outline btn-sm" onclick="tdYazdir('${b[0]}')">Yazdır</button>
         <button class="btn btn-outline btn-sm" onclick="tdPdf('${b[0]}')" title="Doğrudan .pdf dosyası indirir">📄 PDF</button>
       </div>`).join('')}
@@ -16106,12 +16107,33 @@ function _tdDocHesap(g,E){
     <td style="width:50%;vertical-align:top"><b>TESLİM EDEN (REHBER)</b><br>Adı Soyadı: ${esc((reh&&reh.ad)||'______________________')}<br>Tarih: ____ / ____ / ________<br>İmza:</td>
   </tr></table></div>`;
 }
+function _tdDocMap(){ return {program:_tdDocProgram,isim:_tdDocIsim,otel:_tdDocOtel,ucus:_tdDocUcus,cizelge:_tdDocCizelge,masraf:_tdDocMasraf,sozlesme:_tdDocSozlesme,acente:_tdDocAcente,hesap:_tdDocHesap}; }
 function tdYazdir(tip){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
-  const map={program:_tdDocProgram,isim:_tdDocIsim,otel:_tdDocOtel,ucus:_tdDocUcus,cizelge:_tdDocCizelge,masraf:_tdDocMasraf,sozlesme:_tdDocSozlesme,acente:_tdDocAcente,hesap:_tdDocHesap};
+  const map=_tdDocMap();
   if(!map[tip]) return;
   document.getElementById('rzPrintBox').innerHTML=map[tip](g,E);
   doPrint('rzPrintBox');
+}
+function tdOnizle(tip){
+  const g=_tdG(), E=_tdE(); if(!g||!E) return;
+  const map=_tdDocMap(); if(!map[tip]) return;
+  let html='';
+  try{ html=map[tip](g,E); }catch(e){ showToast('Belge oluşturulamadı: '+e.message,'error'); return; }
+  const eski=document.getElementById('tdOnizleModal'); if(eski) eski.remove();
+  const ov=document.createElement('div');
+  ov.id='tdOnizleModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;flex-direction:column;align-items:center;padding:18px 10px;overflow:auto';
+  ov.innerHTML=`<div style="width:min(860px,100%);display:flex;gap:8px;align-items:center;margin-bottom:10px;position:sticky;top:0;z-index:1">
+      <b style="color:#fff;font-size:.85rem;text-shadow:0 1px 6px rgba(0,0,0,.4)">👁 Önizleme</b>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto;background:#fff" onclick="document.getElementById('tdOnizleModal').remove();tdYazdir('${tip}')">🖨 Yazdır</button>
+      <button class="btn btn-outline btn-sm" style="background:#fff" onclick="document.getElementById('tdOnizleModal').remove();tdPdf('${tip}')">📄 PDF</button>
+      <button class="btn btn-primary btn-sm" onclick="document.getElementById('tdOnizleModal').remove()">✕ Kapat</button>
+    </div>
+    <div style="width:min(860px,100%);background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:26px 30px;color:#111;font-family:-apple-system,'Segoe UI',sans-serif"></div>`;
+  ov.lastElementChild.innerHTML=String(html).split('<!--SAYFA-->').join('<hr style="border:none;border-top:2px dashed #cbd5e1;margin:22px -30px">');
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
+  document.body.appendChild(ov);
 }
 async function _tdPdfIndir(htmlListe,dosyaAd,cb){
   if(!Array.isArray(htmlListe)) htmlListe=[htmlListe];
