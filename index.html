@@ -794,6 +794,7 @@ table.ptab th{background:var(--light);padding:4px 8px;font-size:.64rem;text-alig
 table.ptab td{border-bottom:1px solid var(--border);padding:0}
 table.ptab td input{border:none;background:transparent;padding:4px 8px;font-size:.75rem;font-family:inherit;width:100%;color:var(--text)}
 table.ptab td.ro{padding:4px 8px;color:var(--muted)}
+tr.res-secili td{background:#dbeafe!important}
 .rowdel{background:none;border:none;color:var(--muted);cursor:pointer;padding:3px 6px;font-size:.8rem;border-radius:5px}.rowdel:hover{background:#fee2e2;color:var(--danger)}
 .res-toast{position:fixed;bottom:18px;right:18px;background:#1e2d3d;color:#fff;padding:10px 14px;border-radius:11px;font-size:.82rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:all .25s;box-shadow:0 12px 32px rgba(16,24,40,.28);display:flex;gap:10px;align-items:center}
 .res-toast.show{opacity:1;transform:none}
@@ -2041,13 +2042,14 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v513 · 22.09.2026';
+const APP_VER='v514 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
     const el=e.target;
     if(!el||el.tagName!=='INPUT') return;
     if(el.type&&el.type!=='text') return;
+    if(el.getAttribute('list')) return; // öneri/filtre kutuları: maske yok, serbest arama
     const ip=(el.placeholder||'')+' '+(el.title||'')+' '+(el.className||'');
     if(/saatin/.test(el.className||'')||/saat|depar|ss:dd|__:__/i.test(ip)){ el.placeholder='__:__'; try{el.select();}catch(e2){} return; }
     if(/tarih|gg\.aa|dogum|doğum|__\.__/i.test(ip)){ el.placeholder='__.__.____'; try{el.select();}catch(e2){} }
@@ -2060,6 +2062,7 @@ document.addEventListener('input',function(e){
     if(!el||el.tagName!=='INPUT') return;
     if(el.type&&el.type!=='text') return;
     if(e.inputType&&e.inputType.indexOf('delete')===0) return; // silmeyi engelleme
+    if(el.getAttribute('list')) return; // öneri/filtre kutuları maskelenmez
     const ip=(el.placeholder||'')+' '+(el.title||'')+' '+(el.className||'');
     const saatMi=/saatin/.test(el.className||'')||/saat|depar|ss:dd/i.test(ip);
     const tarihMi=!saatMi&&/tarih|gg\.aa|dogum|doğum/i.test(ip);
@@ -2081,6 +2084,7 @@ document.addEventListener('change',function(e){
     const el=e.target;
     if(!el||el.tagName!=='INPUT') return;
     if(el.type&&el.type!=='text') return;
+    if(el.getAttribute('list')) return; // öneri/filtre kutuları normalize edilmez
     const ip=(el.placeholder||'')+' '+(el.title||'')+' '+(el.className||'');
     if(/saatin/.test(el.className||'')||/saat|depar|ss:dd/i.test(ip)){
       const n=_saatNorm(el.value);
@@ -7081,7 +7085,8 @@ function renderUcakGenel(){
     const f=items.filter(it=>{
       if(fo && !_uFold(it.opAd).includes(fo)) return false;
       if(fp && !(_uFold(it.pkg.paketKodu).includes(fp)||_uFold(it.pkg.paketAdi).includes(fp))) return false;
-      if(ft && !(_uFold(it.kalkis).includes(ft)||_uFold(_fmtDateTR(it.kalkis)).includes(ft))) return false;
+      if(ft){ const fd=ft.replace(/\D/g,''); const kd=String(_fmtDateTR(it.kalkis)).replace(/\D/g,'');
+        if(!(_uFold(it.kalkis).includes(ft)||_uFold(_fmtDateTR(it.kalkis)).includes(ft)||(fd&&kd.startsWith(fd)))) return false; }
       if(vq){ const g=resAll.find(x=>x.pkgId===it.id && x.kalkis===it.kalkis); const has=g&&(g.rows||[]).some(r=>{ const rn=_uFold((r.resno||'').toString()); const nm=_uFold((r.soyad||'')+' '+(r.ad||'')); return rn.includes(vq)||nm.includes(vq); }); if(!has) return false; }
       return true;
     }).sort((a,b)=>(a.kalkis||'').localeCompare(b.kalkis||''));
@@ -7946,7 +7951,7 @@ function _renderRezervasyonIc(){
   _migrateResData();
   const body=document.getElementById('resBody'); if(!body) return;
   if(!_resPkgId||!_resKalkis){ body.innerHTML='<div class="card"><p style="color:var(--muted);font-size:.88rem">Liste için yukarıdan paket ve kalkış seçin.</p></div>'; return; }
-  const key=_resPkgId+'|'+_resKalkis; if(key!==_resTglKey){ _resTglKey=key; _resAutoTgl(); }
+  const key=_resPkgId+'|'+_resKalkis; if(key!==_resTglKey){ _resTglKey=key; _resAutoTgl(); _resRowSec.clear(); }
   const g=_resGrid(true); const rows=g.rows;
   const _pkgB=getPackages().find(p=>p.id===_resPkgId)||{}; const _bagOpts=(_pkgB.bagajlar||[]).filter(b=>(b.ad||'').trim());
   const _mutSefer=_mutIssues().filter(x=>x.pkgId===_resPkgId&&x.kalkis===_resKalkis);
@@ -7960,12 +7965,12 @@ function _renderRezervasyonIc(){
   gh+='<tr class="ghead"><th></th><th colspan="'+PCOLS.length+'"></th><th class="sep"></th><th colspan="'+gCnt+'" class="gh-g">GELİŞ</th><th class="sep"></th>'
     +(aCnt?'<th colspan="'+aCnt+'" class="gh-a">ARA UÇUŞ</th><th class="sep"></th>':'')
     +'<th colspan="'+dCnt+'" class="gh-d">DÖNÜŞ</th><th class="sep"></th><th colspan="2"></th></tr>';
-  gh+='<tr><th class="rnh">#</th>'+disp.map(c=>{ if(c===null) return '<th class="sep"></th>'; const f=c[0]; const grp=f.startsWith('g_')?' hg':f.startsWith('a_')?' ha':f.startsWith('d_')?' hd':''; return `<th class="${grp.trim()}">${c[1]}<span class="rs" data-f="${f}"></span></th>`; }).join('')+'<th></th><th></th></tr>';
+  gh+='<tr><th class="rnh" onclick="_resRowSecTum()" style="cursor:pointer" title="Tümünü seç / bırak">#</th>'+disp.map(c=>{ if(c===null) return '<th class="sep"></th>'; const f=c[0]; const grp=f.startsWith('g_')?' hg':f.startsWith('a_')?' ha':f.startsWith('d_')?' hd':''; return `<th class="${grp.trim()}">${c[1]}<span class="rs" data-f="${f}"></span></th>`; }).join('')+'<th></th><th></th></tr>';
   rows.forEach((y,r)=>{
     const st=_durum(y), frk=_farkliMi(y,rows);
     const hlMatch=_hl && ((y.resno||'').toLowerCase().includes(_hl)||((y.soyad||'')+' '+(y.ad||'')).toLowerCase().includes(_hl));
     const _eff=_durumEff(y);
-    gh+=`<tr class="${_eff==='iptal'?'res-iptal ':''}${frk?'farkli ':''}${hlMatch?'reshl':''}"><td class="rn" data-rn="${r}">${r+1}</td>`;
+    gh+=`<tr class="${_eff==='iptal'?'res-iptal ':''}${frk?'farkli ':''}${hlMatch?'reshl':''}${_resRowSec.has(r)?' res-secili':''}"><td class="rn" data-rn="${r}" onclick="_resRowSecTog(${r})" style="cursor:pointer" title="Seçmek için tıkla">${_resRowSec.has(r)?'☑':(r+1)}</td>`;
     disp.forEach(c=>{
       if(c===null){ gh+='<td class="sep"></td>'; return; }
       const f=c[0]; const v=y[f]==null?'':y[f];
@@ -8017,6 +8022,7 @@ function _renderRezervasyonIc(){
       </div>
       <span style="display:flex;gap:8px;align-items:center">
         <input id="resSearch" oninput="_resSearchRows(this.value)" value="${esc(_resHighlight||'')}" placeholder="Voucher / isim ara…" class="ops-jump" style="min-width:150px" autocomplete="off">
+        ${_resRowSec.size?`<button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;font-weight:700" onclick="_resRowSecSil()">🗑 Seçilenleri Sil (${_resRowSec.size})</button>`:''}
         <button class="btn btn-primary btn-sm" onclick="addResRow()">+ Yolcu</button>
       </span>
     </div>
@@ -8082,6 +8088,25 @@ function _resSetFlight(r,f,v){
   renderRezervasyon();
 }
 function _resUndoProp(){ if(!_resUndoSnap) return; const g=_resGrid(true); _resUndoSnap.forEach(([i,f,v])=>{ if(g.rows[i]) g.rows[i][f]=v; }); _resUndoSnap=null; setReservations(getReservations()); renderRezervasyon(); _resToast('Geri alındı'); }
+let _resRowSec=new Set();
+function _resRowSecTog(r){ _resRowSec.has(r)?_resRowSec.delete(r):_resRowSec.add(r); renderRezervasyon(); }
+function _resRowSecTum(){
+  const g=_resGrid(); if(!g) return;
+  if(_resRowSec.size) _resRowSec.clear();
+  else (g.rows||[]).forEach((y,i)=>_resRowSec.add(i));
+  renderRezervasyon();
+}
+function _resRowSecSil(){
+  const g=_resGrid(); if(!g||!_resRowSec.size) return;
+  const n=_resRowSec.size;
+  showConfirm('🗑️','Seçili Satırları Sil',n+' satır listeden silinecek.','Evet, Sil',()=>{
+    g.rows=(g.rows||[]).filter((y,i)=>!_resRowSec.has(i));
+    _resRowSec.clear();
+    setReservations(getReservations());
+    renderRezervasyon(); try{renderUcakGenel();}catch(e){}
+    showToast(n+' satır silindi','success');
+  });
+}
 let _resSrT=null;
 function _resSoftRefresh(){ clearTimeout(_resSrT); _resSrT=setTimeout(()=>{ const ae=document.activeElement, pos=ae&&ae.dataset&&ae.dataset.f?{r:ae.dataset.r,f:ae.dataset.f,s:ae.selectionStart}:null; renderRezervasyon(); if(pos){ const el=document.querySelector(`#resTbl input[data-r="${pos.r}"][data-f="${pos.f}"]`); if(el){ el.focus(); try{el.setSelectionRange(pos.s,pos.s);}catch(e){} } } },900); }
 function addResRow(){ if(!_resPkgId||!_resKalkis){showToast('Önce paket ve kalkış seçin','error');return;} const g=_resGrid(true); g.rows.push(_newResRow()); setReservations(getReservations()); renderRezervasyon(); if(window._resXLSelCell)_resXLSelCell(g.rows.length-1,'resno'); }
