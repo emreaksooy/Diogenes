@@ -2041,7 +2041,18 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v508 · 22.09.2026';
+const APP_VER='v509 · 22.09.2026';
+// MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
+document.addEventListener('focusin',function(e){
+  try{
+    const el=e.target;
+    if(!el||el.tagName!=='INPUT') return;
+    if(el.type&&el.type!=='text') return;
+    const ip=(el.placeholder||'')+' '+(el.title||'')+' '+(el.className||'');
+    if(/saatin/.test(el.className||'')||/saat|depar|ss:dd|__:__/i.test(ip)){ el.placeholder='__:__'; return; }
+    if(/tarih|gg\.aa|dogum|doğum|__\.__/i.test(ip)){ el.placeholder='__.__.____'; }
+  }catch(err){}
+},true);
 // KAYAR MASKE: saat (__:__) ve tarih (__.__.____ ) alanlarında yazdıkça biçimlenir
 document.addEventListener('input',function(e){
   try{
