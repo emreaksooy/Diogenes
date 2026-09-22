@@ -2064,7 +2064,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v526 · 22.09.2026';
+const APP_VER='v527 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2763,6 +2763,67 @@ function _ynSecimAl(ayIdx){
   if(d&&d.tip) return d;
   return {tip:ayIdx<=6?'s1':'s2',ay:0};
 }
+function ynSayiMutabakat(){
+  const yil=new Date().getFullYear();
+  const M=m=>(m||[]).filter(x=>!x.iptal&&((x.ad||'').trim()||(x.soyad||'').trim())).length;
+  // panelin saydığı seferler
+  const sefer=new Map();
+  try{ getReservations().forEach(g=>{ if(g&&g.pkgId&&g.kalkis) sefer.set(g.pkgId+'|'+g.kalkis,1); }); }catch(e){}
+  try{ (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&r.pkgId&&r.kalkis&&r.durum!=='iptal') sefer.set(r.pkgId+'|'+r.kalkis,1); }); }catch(e){}
+  let sayilanRezv=0, sayilanUcak=0, seferN=0;
+  sefer.forEach((v,kk)=>{
+    const p=kk.split('|'); if(+p[1].slice(0,4)!==yil) return;
+    let d={ucak:0,rezvP:0}; try{ d=_opsPaxDetay(p[0],p[1]); }catch(e){}
+    if(d.rezvP>0){ sayilanRezv+=d.rezvP; seferN++; }
+    else if(d.ucak>0){ sayilanUcak+=d.ucak; seferN++; }
+  });
+  // sayılmayan rezervasyon müşterileri (kalem kalem)
+  let iptalM=0, personelM=0, urunsuz=0, kalkissiz=0, yilDisi=0, acilimsizUcaksiz=0, toplamM=0;
+  (getRezv()||[]).forEach(r=>{
+    if(!r||r.tip!=='urun') return;
+    const n=(r.musteriler||[]).length; toplamM+=n;
+    const na=M(r.musteriler);
+    if(r.durum==='iptal'){ iptalM+=n; return; }
+    iptalM+=(n-na); // aktif rezvdeki iptal müşteriler
+    if(r.personel){ personelM+=na; return; }
+    if(!r.pkgId){ urunsuz+=na; return; }
+    if(!r.kalkis){ kalkissiz+=na; return; }
+    if(+String(r.kalkis).slice(0,4)!==yil){ yilDisi+=na; return; }
+    if(!((r.kartlar||[]).length)){
+      // kartsız: sefer uçak-esaslıysa uçaktan sayılmıştır; uçakta da yoksa DIŞARIDA
+      let d={ucak:0,rezvP:0}; try{ d=_opsPaxDetay(r.pkgId,r.kalkis); }catch(e){}
+      if(!(d.rezvP>0)&&d.ucak>0) return; // uçak-esaslı sayıldı
+      if(d.rezvP>0) { acilimsizUcaksiz+=na; return; } // sefer rezv-esaslı ama bu kayıt kartsız → dışarıda
+      acilimsizUcaksiz+=na; return;
+    }
+  });
+  const sayilan=sayilanRezv+sayilanUcak;
+  const sat=(ad,n,renk)=>`<div style="display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px dashed var(--border);font-size:.8rem"><span>${ad}</span><b style="color:${renk||'inherit'}">${(+n).toLocaleString('tr-TR')}</b></div>`;
+  const html=`<div style="max-width:430px">
+    <div style="font-weight:800;font-size:.8rem;margin-bottom:6px;color:var(--primary)">PANELİN SAYDIĞI (Sezon ${yil})</div>
+    ${sat('Rezervasyon esaslı (ürünlü + açılımlı seferler)',sayilanRezv)}
+    ${sat('Uçak listesi esaslı (rezervasyonu olmayan seferler)',sayilanUcak)}
+    ${sat('<b>TOPLAM — paneldeki sayı</b>',sayilan,'var(--primary)')}
+    <div style="font-weight:800;font-size:.8rem;margin:12px 0 6px;color:#b91c1c">SAYILMAYANLAR (rezervasyondaki ${toplamM.toLocaleString('tr-TR')} kişiden)</div>
+    ${sat('İptal müşteriler / iptal rezervasyonlar',iptalM,'#b91c1c')}
+    ${personelM?sat('Personel işaretli (rehber/kaptan)',personelM,'#7e22ce'):''}
+    ${sat('Ürüne bağlanmamış kayıtlar',urunsuz,'#b45309')}
+    ${kalkissiz?sat('Kalkış tarihi boş',kalkissiz,'#b45309'):''}
+    ${yilDisi?sat(yil+' dışı kalkışlar',yilDisi,'#6b7280'):''}
+    ${sat('Açılımsız + uçak listesinde karşılığı yok',acilimsizUcaksiz,'#b45309')}
+    <div style="font-size:.7rem;color:var(--muted);margin-top:10px">Kural: her sefer için ÖNCE rezervasyonun aktif müşterileri (ürüne bağlı ve açılımı yapılmış); rezervasyon yoksa uçak listesi satırları sayılır. Turuncu kalemler temizlik/tamamlama bekleyen kayıtlardır — ürüne bağla ya da personel/iptal işaretle, sayı kendiliğinden oturur.</div>
+  </div>`;
+  let box=document.getElementById('ynMutModal');
+  if(box) box.remove();
+  box=document.createElement('div'); box.id='ynMutModal';
+  box.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  box.onclick=e=>{ if(e.target===box) box.remove(); };
+  box.innerHTML='<div style="background:var(--card,#fff);border-radius:16px;padding:20px 22px;max-height:84vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<div style="font-weight:800;font-size:1rem;margin-bottom:10px">🧮 Sayı Mutabakatı — '+sayilan.toLocaleString('tr-TR')+' yolcu</div>'
+    +html
+    +'<div style="text-align:right;margin-top:12px"><button class="btn btn-primary btn-sm" onclick="document.getElementById(\'ynMutModal\').remove()">Tamam</button></div></div>';
+  document.body.appendChild(box);
+}
 function renderYonetici(){
   const el=document.getElementById('ynWrap'); if(!el) return;
   let V; try{ V=_ynVeri(); }catch(e){ el.innerHTML=''; return; }
@@ -2805,7 +2866,7 @@ function renderYonetici(){
   <div id="panoWrap" style="margin-bottom:14px"></div>
   <div class="yn-kpi">
     <div class="yn-kp vurgu"><div class="l">Bu Ay (${AYK[V.ayIdx-1]})</div><div class="n">${buAyP.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${buAyK} kalkış</div></div>
-    <div class="yn-kp"><div class="l">Sezon ${V.yil}</div><div class="n">${V.sezonP.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${V.sezonK} kalkış${artis!==null?` · <b>${artis>=0?'▲':'▼'} %${Math.abs(artis)}</b>`:''}</div></div>
+    <div class="yn-kp" style="cursor:pointer" onclick="ynSayiMutabakat()" title="Bu sayı neye göre? — tıkla, tam dökümü gör"><div class="l">Sezon ${V.yil} <span style="font-weight:600">🧮</span></div><div class="n">${V.sezonP.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${V.sezonK} kalkış${artis!==null?` · <b>${artis>=0?'▲':'▼'} %${Math.abs(artis)}</b>`:''}</div></div>
     <div class="yn-kp"><div class="l">Şu An Sahada</div><div class="n">${V.aktif.length}</div><div class="a">grup · ${aktifPax} yolcu · ${aktifReh} rehber</div></div>
     <div class="yn-kp"><div class="l">Önümüzdeki 30 Gün</div><div class="n">${V.g30P.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${V.g30K} kalkış</div></div>
   </div>
