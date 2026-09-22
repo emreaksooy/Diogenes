@@ -795,6 +795,49 @@ table.ptab td{border-bottom:1px solid var(--border);padding:0}
 table.ptab td input{border:none;background:transparent;padding:4px 8px;font-size:.75rem;font-family:inherit;width:100%;color:var(--text)}
 table.ptab td.ro{padding:4px 8px;color:var(--muted)}
 tr.res-secili td{background:#dbeafe!important}
+/* ═ yönetici özeti (ana sayfa) ═ */
+.yn-dikkat{font-size:.78rem;color:#9a3412;background:#fff7ed;border:1.5px solid #fdba74;border-radius:14px;padding:8px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.yn-chip{background:#fff;border:1px solid #fdba74;border-radius:20px;padding:3px 12px;font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.yn-chip i{font-style:normal;color:var(--danger)}
+.yn-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin-bottom:14px}
+.yn-kp{background:var(--card,#fff);border:1.5px solid var(--border);border-radius:16px;padding:14px 17px}
+.yn-kp .l{font-size:.64rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.yn-kp .n{font-size:1.8rem;font-weight:800;letter-spacing:-1px;margin-top:3px}
+.yn-kp .a{font-size:.68rem;color:var(--muted);margin-top:2px}
+.yn-kp .a b{color:var(--success)}
+.yn-kp.vurgu{background:linear-gradient(135deg,#f5793f,var(--primary) 60%,var(--primary-dark));color:#fff;border:none}
+.yn-kp.vurgu .l,.yn-kp.vurgu .a{color:rgba(255,255,255,.85)}
+.yn-izgara{display:grid;grid-template-columns:3fr 2fr;gap:14px;align-items:start;margin-bottom:14px}
+@media(max-width:920px){.yn-izgara{grid-template-columns:1fr}}
+.yn-panel{background:var(--card,#fff);border:1.5px solid var(--border);border-radius:16px;padding:14px 17px;margin-bottom:14px}
+.yn-panel h3{font-size:.8rem;font-weight:800;display:flex;align-items:center;gap:7px;margin-bottom:12px}
+.yn-panel h3 span{margin-left:auto;font-size:.66rem;color:var(--muted);font-weight:600}
+.yn-gr{display:flex;align-items:flex-end;gap:5px;height:120px}
+.yn-gr .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.yn-gr .bar{width:100%;border-radius:5px 5px 0 0;background:#dbe4f0;min-height:2px}
+.yn-gr .c.aktif .bar{background:var(--primary)}
+.yn-gr .v{font-size:.58rem;font-weight:800}
+.yn-gr .ay{font-size:.58rem;color:var(--muted);font-weight:700}
+.yn-oprow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.yn-oprow .ad{width:120px;font-size:.74rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.yn-oprow .cz{flex:1;height:10px;background:var(--light);border-radius:6px;overflow:hidden}
+.yn-oprow .dl{height:100%;border-radius:6px}
+.yn-oprow .p{width:96px;font-size:.7rem;text-align:right;color:var(--muted);white-space:nowrap}
+.yn-oprow .p b{color:var(--text)}
+.yn-saha{display:flex;gap:9px;flex-wrap:wrap}
+.yn-sh{flex:1;min-width:105px;background:var(--light);border-radius:12px;padding:10px 13px}
+.yn-sh b{font-size:1.1rem;display:block}
+.yn-sh span{font-size:.62rem;color:var(--muted);font-weight:700}
+.yn-yog{display:grid;grid-template-columns:repeat(15,1fr);gap:4px}
+.yn-yg{aspect-ratio:1;border-radius:6px;background:#e6ebf3;position:relative}
+.yn-yg.s1{background:#fed7aa}.yn-yg.s2{background:#fb923c}.yn-yg.s3{background:var(--primary-dark)}
+.yn-yg .tt{font-size:.52rem;color:var(--muted);position:absolute;top:2px;left:3px;font-weight:700}
+.yn-yg.s2 .tt,.yn-yg.s3 .tt{color:#fff}
+.yn-tbl td{padding:6px 4px;font-size:.76rem;border-bottom:1px dashed var(--border)}
+.yn-tbl td:last-child{text-align:right;font-weight:800}
+.yn-tbl tr{cursor:pointer}
+.yn-tbl tr:hover td{background:var(--primary-soft)}
+.yn-kirmizi{color:var(--danger)!important}
 .rowdel{background:none;border:none;color:var(--muted);cursor:pointer;padding:3px 6px;font-size:.8rem;border-radius:5px}.rowdel:hover{background:#fee2e2;color:var(--danger)}
 .res-toast{position:fixed;bottom:18px;right:18px;background:#1e2d3d;color:#fff;padding:10px 14px;border-radius:11px;font-size:.82rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:all .25s;box-shadow:0 12px 32px rgba(16,24,40,.28);display:flex;gap:10px;align-items:center}
 .res-toast.show{opacity:1;transform:none}
@@ -1053,6 +1096,9 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
         <label class="dash-hero-btn dash-hero-btn-outline" style="cursor:pointer"><svg class="ic"><use href="#i-upload"/></svg> Yedek Yükle<input type="file" accept=".json" onchange="importAllData(event)" style="display:none"></label>
       </div>
     </div>
+
+    <!-- YÖNETİCİ ÖZETİ -->
+    <div id="ynWrap"></div>
 
     <!-- ŞİRKET PANOSU -->
     <div id="panoWrap" style="margin-bottom:14px"></div>
@@ -2042,7 +2088,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v517 · 22.09.2026';
+const APP_VER='v518 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2663,7 +2709,125 @@ function panoDuyuruSil(id){
   if(sbRol!=='yonetici') return;
   showConfirm('🗑️','Duyuruyu Sil','Duyuru silinecek.','Sil',()=>{ setDuyurular(getDuyurular().filter(x=>x.id!==id)); renderPano(); });
 }
+function _ynVeri(){
+  const bugun=_opsToday(); const yil=+bugun.slice(0,4); const ayIdx=+bugun.slice(5,7);
+  // tüm seferler (uçak listeleri + rezervasyon kayıtları)
+  const sefer=new Map();
+  try{ getReservations().forEach(g=>{ if(g&&g.pkgId&&g.kalkis) sefer.set(g.pkgId+'|'+g.kalkis,{pkgId:g.pkgId,kalkis:g.kalkis}); }); }catch(e){}
+  try{ (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&r.pkgId&&r.kalkis&&r.durum!=='iptal') sefer.set(r.pkgId+'|'+r.kalkis,{pkgId:r.pkgId,kalkis:r.kalkis}); }); }catch(e){}
+  const pkgs=getPackages();
+  const aylik=Array(12).fill(0), aylikK=Array(12).fill(0);
+  let sezonP=0,sezonK=0,oncekiP=0,g30P=0,g30K=0;
+  const opPax={};
+  const g30son=_isoAdd(bugun,30);
+  sefer.forEach(sf=>{
+    let p=0; try{ p=_opsPax(sf.pkgId,sf.kalkis)||0; }catch(e){}
+    if(!p) return;
+    const y=+sf.kalkis.slice(0,4), m=+sf.kalkis.slice(5,7);
+    if(y===yil){ aylik[m-1]+=p; aylikK[m-1]++; sezonP+=p; sezonK++;
+      const pk=pkgs.find(x=>x.id===sf.pkgId); const op=pk?(_resOpAd(pk)||'Diğer'):'Diğer';
+      opPax[op]=(opPax[op]||0)+p; }
+    if(y===yil-1) oncekiP+=p;
+    if(sf.kalkis>=bugun&&sf.kalkis<=g30son){ g30P+=p; g30K++; }
+  });
+  // aktif + yaklaşan turlar
+  let aktif=[],yak=[],hepsi30=[];
+  try{ hepsi30=_rtTurlar(_isoAdd(bugun,-45),g30son); }catch(e){}
+  aktif=hepsi30.filter(t=>t.kalkis<=bugun&&t.end>=bugun);
+  yak=hepsi30.filter(t=>t.kalkis>bugun&&t.kalkis<=_isoAdd(bugun,14)).slice(0,8);
+  // yoğunluk
+  const yog=[]; for(let i=0;i<30;i++){ const d=_isoAdd(bugun,i);
+    yog.push({d,p:hepsi30.filter(t=>t.kalkis<=d&&t.end>=d).reduce((a,t)=>a+(+t.pax||0),0)}); }
+  // dikkat
+  let dBilet=0,dTrans=0,dReh=0,dUrun=0;
+  try{ dBilet=_mutIssues().filter(x=>x.tip==='iptalBilet').length; }catch(e){}
+  try{ const s7=_isoAdd(bugun,7); dTrans=_trGenRows().filter(r=>['G','D','UZT'].includes(r.tip)&&!r.grup&&r.tarih>=bugun&&r.tarih<=s7).length; }catch(e){}
+  dReh=hepsi30.filter(t=>t.end>=bugun&&t.kalkis<=_isoAdd(bugun,7)&&!(t.rehberAd||'').trim()).length;
+  try{ dUrun=_rzYanlisUrunList().length; }catch(e){}
+  // sahadaki şehirler + tahsis
+  const sehir={}; let tahsisN=0;
+  aktif.forEach(t=>{ try{
+    const pk=pkgs.find(x=>x.id===t.pkgId); const gN=(_isoDiff(t.kalkis,bugun)||0)+1;
+    const c=pk?(_opsCity(pk,gN)||''):''; if(c) sehir[c]=(sehir[c]||0)+(+t.pax||0);
+  }catch(e){} });
+  try{ _ogResolve().forEach(g2=>{ ((getOpsGrup().gruplar||{})[g2.id]||{}).id;
+    const gg=(getOpsGrup().gruplar||{})[g2.id];
+    (gg&&gg.araclar||[]).forEach(a=>{ if(a.tip==='tahsis'&&_pdate(a.bas)<=bugun&&(_pdate(a.bit)||_pdate(a.bas))>=bugun) tahsisN++; });
+  }); }catch(e){}
+  // rehber yükü (bu ay)
+  const ayBas=bugun.slice(0,8)+'01', ayBit=_isoAdd(_isoAdd(ayBas,32).slice(0,8)+'01',-1);
+  const rehSet=[...new Set(hepsi30.filter(t=>(t.rehberAd||'').trim()).map(t=>t.rehberAd.trim()))];
+  const rehYuk=rehSet.map(r=>{ let g=0; try{ g=_rtRehYuk(r,hepsi30,ayBas,ayBit); }catch(e){}
+    return {ad:r,g}; }).filter(x=>x.g>0).sort((a,b)=>b.g-a.g).slice(0,6);
+  return {bugun,yil,ayIdx,aylik,aylikK,sezonP,sezonK,oncekiP,g30P,g30K,opPax,aktif,yak,yog,
+    dBilet,dTrans,dReh,dUrun,sehir,tahsisN,rehYuk};
+}
+function renderYonetici(){
+  const el=document.getElementById('ynWrap'); if(!el) return;
+  let V; try{ V=_ynVeri(); }catch(e){ el.innerHTML=''; return; }
+  const AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const enB=Math.max.apply(null,V.aylik.concat([1]));
+  const grH=V.aylik.map((p,i)=>`<div class="c${i===V.ayIdx-1?' aktif':''}"><span class="v">${p||''}</span><div class="bar" style="height:${Math.max(2,Math.round(p/enB*100))}%"></div><span class="ay">${AYK[i]}</span></div>`).join('');
+  const opL=Object.entries(V.opPax).sort((a,b)=>b[1]-a[1]);
+  const opTop=opL.slice(0,4); const digerP=opL.slice(4).reduce((a,x)=>a+x[1],0);
+  if(digerP) opTop.push(['Diğer',digerP]);
+  const opRenk=['var(--navy)','var(--primary)','#1d4ed8','#16a34a','#b45309'];
+  const opH=opTop.map((x,i)=>{ const pct=V.sezonP?Math.round(x[1]/V.sezonP*100):0;
+    return `<div class="yn-oprow"><span class="ad">${esc(x[0])}</span><div class="cz"><div class="dl" style="width:${pct}%;background:${opRenk[i%5]}"></div></div><span class="p"><b>${x[1].toLocaleString('tr-TR')}</b> · %${pct}</span></div>`; }).join('')||'<div style="font-size:.74rem;color:var(--muted)">Bu yıl veri yok</div>';
+  const yEnB=Math.max.apply(null,V.yog.map(x=>x.p).concat([1]));
+  const yogH=V.yog.map(x=>{ const r=x.p/yEnB; const cls=x.p===0?'':(r<0.34?'s1':(r<0.67?'s2':'s3'));
+    return `<div class="yn-yg ${cls}" title="${_fmtDateTR(x.d)} · ${x.p} yolcu"><span class="tt">${+x.d.slice(8,10)}</span></div>`; }).join('');
+  const sehirH=Object.entries(V.sehir).sort((a,b)=>b[1]-a[1]).slice(0,4)
+    .map(x=>`${esc(x[0])} <b>${x[1]}</b>`).join(' · ');
+  const yakH=V.yak.map(t=>`<tr onclick="try{opsOpen('${t.pkgId}','${t.kalkis}')}catch(e){}"><td><b>${_fmtDateTR(t.kalkis).slice(0,5)}</b> · ${esc(t.kod)} · <b>${t.pax}</b> pax</td><td class="${(t.rehberAd||'').trim()?'':'yn-kirmizi'}">${esc((t.rehberAd||'').trim()||'rehber yok!')}</td></tr>`).join('')||'<tr><td colspan="2" style="color:var(--muted)">14 günde kalkış yok</td></tr>';
+  const rehH=V.rehYuk.map(r=>{ const pct=Math.min(100,Math.round(r.g/31*100));
+    return `<div class="yn-oprow"><span class="ad">${esc(r.ad)}</span><div class="cz"><div class="dl" style="width:${pct}%;background:var(--primary)"></div></div><span class="p"><b>${r.g}</b> gün</span></div>`; }).join('')||'<div style="font-size:.74rem;color:var(--muted)">Bu ay görev yok</div>';
+  const dikTop=V.dBilet+V.dTrans+V.dReh+V.dUrun;
+  const aktifPax=V.aktif.reduce((a,t)=>a+(+t.pax||0),0);
+  const aktifReh=[...new Set(V.aktif.map(t=>(t.rehberAd||'').trim()).filter(Boolean))].length;
+  const buAyP=V.aylik[V.ayIdx-1]||0, buAyK=V.aylikK[V.ayIdx-1]||0;
+  const artis=(V.oncekiP>0)?Math.round((V.sezonP-V.oncekiP)/V.oncekiP*100):null;
+  el.innerHTML=`
+  ${dikTop?`<div class="yn-dikkat"><b>⚠ Dikkat gerektirenler</b>
+    ${V.dBilet?`<span class="yn-chip" onclick="showPage('ucak')">🎫 Bilet iptali gerekli <i>${V.dBilet}</i></span>`:''}
+    ${V.dTrans?`<span class="yn-chip" onclick="showPage('operasyon');opsTab('transfer')">🚌 Atanmamış transfer (7g) <i>${V.dTrans}</i></span>`:''}
+    ${V.dReh?`<span class="yn-chip" onclick="showPage('operasyon');opsTab('turlar')">👨‍🏫 Rehbersiz tur (7g) <i>${V.dReh}</i></span>`:''}
+    ${V.dUrun?`<span class="yn-chip" onclick="showPage('rezervasyon')">🔁 Yanlış ürüne bağlı rezv <i>${V.dUrun}</i></span>`:''}
+  </div>`:''}
+  <div class="yn-kpi">
+    <div class="yn-kp vurgu"><div class="l">Bu Ay (${AYK[V.ayIdx-1]})</div><div class="n">${buAyP.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${buAyK} kalkış</div></div>
+    <div class="yn-kp"><div class="l">Sezon ${V.yil}</div><div class="n">${V.sezonP.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${V.sezonK} kalkış${artis!==null?` · <b>${artis>=0?'▲':'▼'} %${Math.abs(artis)}</b>`:''}</div></div>
+    <div class="yn-kp"><div class="l">Şu An Sahada</div><div class="n">${V.aktif.length}</div><div class="a">grup · ${aktifPax} yolcu · ${aktifReh} rehber</div></div>
+    <div class="yn-kp"><div class="l">Önümüzdeki 30 Gün</div><div class="n">${V.g30P.toLocaleString('tr-TR')}</div><div class="a">yolcu · ${V.g30K} kalkış</div></div>
+  </div>
+  <div class="yn-izgara">
+    <div>
+      <div class="yn-panel"><h3>📈 Aylık Yolcu — ${V.yil} <span>toplam ${V.sezonP.toLocaleString('tr-TR')}</span></h3><div class="yn-gr">${grH}</div></div>
+      <div class="yn-panel"><h3>🤝 Operatör Dağılımı — ${V.yil} <span>yolcu bazında</span></h3>${opH}</div>
+      <div class="yn-panel"><h3>🗓 Önümüzdeki 30 Gün Yoğunluğu <span>günlük sahadaki yolcu</span></h3><div class="yn-yog">${yogH}</div></div>
+    </div>
+    <div>
+      <div class="yn-panel"><h3>🧭 Sahadaki Durum</h3>
+        <div class="yn-saha">
+          <div class="yn-sh"><b>${V.aktif.length}</b><span>AKTİF GRUP</span></div>
+          <div class="yn-sh"><b>${aktifPax}</b><span>YOLCU</span></div>
+          <div class="yn-sh"><b>${aktifReh}</b><span>REHBER</span></div>
+          <div class="yn-sh"><b>${V.tahsisN}</b><span>TAHSİS</span></div>
+        </div>
+        ${sehirH?`<div style="font-size:.72rem;color:var(--muted);margin-top:9px">${sehirH}</div>`:''}
+      </div>
+      <div class="yn-panel"><h3>🗺 Aktif Turlar Haritası <span>gün · rehber</span></h3>
+        <div id="ynMap" style="height:250px;border-radius:12px;overflow:hidden;background:var(--light)"></div>
+      </div>
+      <div class="yn-panel"><h3>🧳 Yaklaşan Turlar &amp; Rehberleri <span>14 gün</span></h3>
+        <table class="yn-tbl" style="width:100%;border-collapse:collapse">${yakH}</table></div>
+      <div class="yn-panel"><h3>👨‍🏫 Rehber Yükü — ${AYK[V.ayIdx-1]} <span>gün</span></h3>${rehH}</div>
+    </div>
+  </div>`;
+  try{ _opsMapDate=''; _opsRenderMap('ynMap'); }catch(e){}
+}
 function renderDashboard(){
+  try{ renderYonetici(); }catch(e){ console.warn('yonetici',e); }
   renderPano();
   renderDashboardStats();
   renderDashboardCalendar(_dashCalYear, _dashCalMonth);
@@ -12455,14 +12619,15 @@ function renderOpsAnasayfa(){
     </div>`;
   _opsRenderMap();
 }
-async function _opsRenderMap(){
-  const el=document.getElementById('opsMap'); if(!el) return;
+async function _opsRenderMap(_cid){
+  const cid=_cid||'opsMap';
+  const el=document.getElementById(cid); if(!el) return;
   const _dISO=_opsMapDate||_opsToday(); const _dLbl=(_dISO===_opsToday())?'bugün':_fmtDateTR(_dISO);
   const aktif=_opsActiveOn(_dISO).filter(it=>{ try{ return _opsPax(it.pkg.id,it.kalkis)>0; }catch(e){ return true; } });
   const info=document.getElementById('opsMapInfo');
   if(typeof L==='undefined'){ el.innerHTML='<div style="padding:20px;color:var(--muted)">Harita yüklenemedi (internet gerekebilir).</div>'; if(info)info.textContent=''; return; }
   if(_opsMap){ try{_opsMap.remove();}catch(e){} _opsMap=null; }
-  const m=L.map('opsMap',{zoomControl:true,scrollWheelZoom:false}); _opsMap=m;
+  const m=L.map(cid,{zoomControl:true,scrollWheelZoom:false}); _opsMap=m;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(m);
   m.setView([39,35],5); setTimeout(()=>{try{m.invalidateSize();}catch(e){}},120);
   // BİRLEŞİK gruplar haritada TEK grup: sefer → birleşik grup eşlemesi
