@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v497 · 22.09.2026';
+const APP_VER='v498 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2091,14 +2091,16 @@ let _tanimCache=null, _tanimSaveT=null;
 let _trCache=null, _trSaveT=null;
 let _ogCache=null, _ogSaveT=null;
 const getReservations = () => _resCache;
-const setReservations = a => { _resCache=a; clearTimeout(_resSaveT); _resSaveT=setTimeout(()=>idbSet('reservations', _resCache),250); _cloudQueue('reservations'); return true; };
+let _paxMemo={m:{}};
+function _paxMemoSifirla(){ _paxMemo.m={}; window._ogBakimTs=0; }
+const setReservations = a => { _paxMemoSifirla(); _resCache=a; clearTimeout(_resSaveT); _resSaveT=setTimeout(()=>idbSet('reservations', _resCache),250); _cloudQueue('reservations'); return true; };
 const getRezv         = () => _rezvCache;
 const setRezv         = a => {
   try{ const eski=(_rezvCache||[]).length, yeni=(a||[]).length;
     if(yeni<eski-2){ const st=String(new Error().stack||'').split('\n').slice(1,4).join(' | ');
       _hataKaydet&&_hataKaydet('REZV-DÜŞÜŞ',eski+' → '+yeni+' · '+st);
       console.warn('REZV DÜŞÜŞ',eski,'→',yeni,st); } }catch(e){}
-  _rezvCache=a; clearTimeout(_rezvSaveT); _rezvSaveT=setTimeout(()=>idbSet('rezervasyonlar', _rezvCache),250); _cloudQueue('rezervasyonlar'); return true; };
+  _paxMemoSifirla(); _rezvCache=a; clearTimeout(_rezvSaveT); _rezvSaveT=setTimeout(()=>idbSet('rezervasyonlar', _rezvCache),250); _cloudQueue('rezervasyonlar'); return true; };
 let _mmCache=null,_mmSaveT=null;
 let _ekipEkCache=null,_ekeSaveT=null,_ekipProf=null,_ekDuzEmail=null;
 const getEkipEk = () => (_ekipEkCache&&typeof _ekipEkCache==='object')?_ekipEkCache:{};
@@ -2125,7 +2127,7 @@ const getEkip      = () => Array.isArray(_ekipCache)?_ekipCache:[];
 const getTransfer     = () => (_trCache&&typeof _trCache==='object')?_trCache:{seq:1,gruplar:{},sat:{}};
 const setTransfer     = a => { _trCache=a; clearTimeout(_trSaveT); _trSaveT=setTimeout(()=>idbSet('transfer', _trCache),250); _cloudQueue('transfer'); return true; };
 const getOpsGrup      = () => (_ogCache&&typeof _ogCache==='object')?_ogCache:{gruplar:{},seq:1};
-const setOpsGrup      = a => { _ogCache=a; clearTimeout(_ogSaveT); _ogSaveT=setTimeout(()=>idbSet('opsgrup', _ogCache),250); _cloudQueue('opsgrup'); return true; };
+const setOpsGrup      = a => { _paxMemoSifirla(); _ogCache=a; clearTimeout(_ogSaveT); _ogSaveT=setTimeout(()=>idbSet('opsgrup', _ogCache),250); _cloudQueue('opsgrup'); return true; };
 const genId = () => 'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
 
 // ═══════════════ NAV ═══════════════
@@ -12069,6 +12071,11 @@ function _opsPaxDetay(pkgId,kalkis){
 }
 function _rtPaxTip(t){ const d=_opsPaxDetay(t.pkgId,t.kalkis); return ' (uçak listesi: '+d.ucak+' · rezervasyon: '+d.rezvP+' yolcu / '+d.rezvSay+' kayıt)'; }
 function _opsPax(pkgId,kalkis){
+  const _mk='op|'+pkgId+'|'+kalkis;
+  if(_mk in _paxMemo.m) return _paxMemo.m[_mk];
+  return _paxMemo.m[_mk]=_opsPaxHesap(pkgId,kalkis);
+}
+function _opsPaxHesap(pkgId,kalkis){
   const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
   if(g&&g.iptal) return 0; // CXX sefer
   // uçak sayımı: İPTAL satırlar hariç
@@ -14068,6 +14075,11 @@ function _ogResnoPax(pkgId,kalkis,resno){
 }
 function _ogResnoName(pkgId,kalkis,resno){ const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!g)return ''; const r=(g.rows||[]).find(x=>_isim(x)&&(x.resno||'').trim()===resno); return r?((r.soyad||'')+' '+(r.ad||'')).trim():''; }
 function _ogResnoPaxRezv(pkgId,kalkis,resno){
+  const _mk='rv|'+pkgId+'|'+kalkis+'|'+resno;
+  if(_mk in _paxMemo.m) return _paxMemo.m[_mk];
+  return _paxMemo.m[_mk]=_ogResnoPaxRezvHesap(pkgId,kalkis,resno);
+}
+function _ogResnoPaxRezvHesap(pkgId,kalkis,resno){
   try{
     const g0=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
     const ucakta=g0&&(g0.rows||[]).some(r=>_isim(r)&&String((r.resno||'').trim())===String(resno).trim());
@@ -14118,8 +14130,12 @@ function _ogOtoKat(){
   }catch(e){}
 }
 function _ogResolve(){
-  _ogHayaletTemizle();
-  _ogOtoKat();
+  if(!window._ogBakimTs||Date.now()-window._ogBakimTs>5000){
+    window._ogBakimTs=Date.now();
+    _ogHayaletTemizle();
+    _ogOtoKat();
+    window._ogBakimTs=Date.now();
+  }
   const S=getOpsGrup(); const exp=S.gruplar||{}; const claimed={};
   Object.values(exp).forEach(g=>(g.uyeler||[]).forEach(u=>{ claimed[u.pkgId+'|'+u.kalkis+'|'+u.resno]=g.id; }));
   const pkgs=getPackages();
