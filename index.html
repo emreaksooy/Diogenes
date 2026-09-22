@@ -2065,7 +2065,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v519 · 22.09.2026';
+const APP_VER='v520 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2757,9 +2757,7 @@ function renderYonetici(){
   const enB=Math.max.apply(null,V.aylik.concat([1]));
   const grH=V.aylik.map((p,i)=>`<div class="c${secAylar.includes(i+1)?' aktif':''}" style="cursor:pointer" onclick="ynSecim('ay',${i+1})" title="${AYK[i]} dağılımını göster"><span class="v">${p||''}</span><div class="bar" style="height:${Math.max(2,Math.round(p/enB*100))}%"></div><span class="ay">${AYK[i]}</span></div>`).join('');
   const dagit=(anah)=>{ const t={}; K.forEach(k=>{ t[k[anah]]=(t[k[anah]]||0)+k.pax; });
-    const L2=Object.entries(t).sort((a,b)=>b[1]-a[1]);
-    const top=L2.slice(0,5); const dg=L2.slice(5).reduce((a,x)=>a+x[1],0);
-    if(dg) top.push(['Diğer',dg]); return top; };
+    return Object.entries(t).sort((a,b)=>b[1]-a[1]); }; // hepsi listelenir
   const opRenk=['var(--navy)','var(--primary)','#1d4ed8','#16a34a','#b45309','#7e22ce'];
   const cubuk=top=>top.map((x,i)=>{ const pct=secP?Math.round(x[1]/secP*100):0;
     return `<div class="yn-oprow"><span class="ad">${esc(x[0])}</span><div class="cz"><div class="dl" style="width:${pct}%;background:${opRenk[i%6]}"></div></div><span class="p"><b>${x[1].toLocaleString('tr-TR')}</b> · %${pct}</span></div>`; }).join('')||'<div style="font-size:.74rem;color:var(--muted)">Bu dönemde veri yok</div>';
