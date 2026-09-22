@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v495 · 22.09.2026';
+const APP_VER='v496 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -2365,7 +2365,8 @@ function showPage(id, tabEl) {
   closeSectionModal();
   window.scrollTo(0,0);
   localStorage.setItem('dmc_lastPage', id);
-  if(currentId){const h='pkg='+currentId+(id&&['paket','maliyet','harita','cikti','sunum'].includes(id)?'&page='+id:'');history.replaceState(null,'','#'+h);}
+  if(currentId&&['paket','maliyet','harita','cikti','sunum'].includes(id)){history.replaceState(null,'','#pkg='+currentId+'&page='+id);}
+  else{ try{history.replaceState(null,'',location.pathname+location.search);}catch(e){} }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   if(!document.getElementById('page-'+id)) id='paketlerim';
@@ -11879,6 +11880,15 @@ function restoreLastState(){
     return;
   }
 
+  // Operasyon: son sekme + açık tur dosyası geri gelsin
+  if(page==='operasyon'){
+    showPage('operasyon');
+    let td=''; try{td=localStorage.getItem('dmc_lastTd')||'';}catch(e){}
+    let ot=''; try{ot=localStorage.getItem('dmc_opsTab')||'';}catch(e){}
+    if(td){ try{ if(_ogResolve().find(x=>x.id===td)){ _tdGid=td; _tdTab='yolcu'; opsTab('grup',true); renderOpsGrup(); return; } }catch(e){} }
+    if(ot){ try{opsTab(ot,true);}catch(e){} }
+    return;
+  }
   // Uçak detay: son açık kalkışı geri aç
   if(page==='ucak'){
     let u=''; try{u=localStorage.getItem('dmc_lastUcak')||'';}catch(e){}
@@ -14527,14 +14537,14 @@ function renderOpsGrup(){
 }
 // ═══ TUR DOSYASI (grup kartı) ═══
 let _tdGid=null,_tdTab='yolcu';
-function opsTdAc(gid){ _navPush(); gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; renderOpsGrup(); }
+function opsTdAc(gid){ _navPush(); gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; try{localStorage.setItem('dmc_lastTd',gid);}catch(e){} renderOpsGrup(); }
 function moDosyaAc(pkgId,kalkis){
   try{ showPage('operasyon',document.querySelector('.nav-tab[data-page="operasyon"]')); }catch(e){ try{ showPage('operasyon'); }catch(e2){} }
   opsOpen(pkgId,kalkis);
   _tdTab='magaza';
   try{ renderOpsGrup(); }catch(e){}
 }
-function opsTdKapat(){
+function opsTdKapat(){ try{localStorage.removeItem('dmc_lastTd');}catch(e){}
   _tdGid=null;
   if(_navGecmis.length){ navGeri(); return; }
   const d=window._tdDonus;
@@ -14883,7 +14893,7 @@ function renderTurDosyasi(box){
     kisiler.forEach((k,i)=>{
       const v0=String(k.resno||'').trim(); if(v0!==_pjV){ _pjTog=!_pjTog; _pjV=v0; }
       const notlar=_tdTrfNot(k);
-      h+=`<tr${_pjTog?' style="background:#D9E2F2"':''}><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td style="font-size:.72rem">${esc(_opAd(k))||'<span style="color:var(--muted)">—</span>'}</td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td>${esc(k.oda)||'—'}</td>
+      h+=`<tr${_pjTog?' style="background:#D9E2F2"':''}><td>${i+1}</td><td><b>${esc(k.resno)}</b></td><td style="font-size:.72rem">${esc(_opAd(k))||'<span style="color:var(--muted)">—</span>'}</td><td><b>${esc(k.soyad)}</b>, ${esc(k.ad)}${_tdUnvan(k)?` <span style="color:var(--muted);font-size:.68rem">${esc(_tdUnvan(k))}</span>`:''}</td><td>${esc(k.oda)||'—'}</td>
       <td style="font-size:.74rem;${notlar?'color:#92400e;font-weight:700':''}">${notlar?('⚠ '+esc(notlar)):'<span style="color:var(--muted)">—</span>'}</td></tr>`;
     });
     h+=`</table>`;
