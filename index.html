@@ -797,6 +797,8 @@ table.ptab td.ro{padding:4px 8px;color:var(--muted)}
 tr.res-secili td{background:#dbeafe!important}
 /* ═ login split ═ */
 .login-overlay{align-items:stretch!important;justify-content:stretch!important;padding:0!important;overflow:auto}
+.mxtab td,.mxtab th{border-right:1px solid var(--border)}
+.mxtab td:last-child,.mxtab th:last-child{border-right:none}
 html:has(body.login-acik){overflow:hidden;overscroll-behavior:none;background:#fff}
 body.login-acik{overflow:hidden!important;overscroll-behavior:none;position:fixed;inset:0;width:100%;background:#fff}
 body.login-acik>*:not(#loginOverlay){display:none!important}
@@ -2110,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v550 · 23.09.2026';
+const APP_VER='v551 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15549,9 +15551,7 @@ function renderTurDosyasi(box){
       const satirlar=kisiler.map(k=>{
         const key=_tdMxKey(k); const row=g.satisMx[key]||{};
         const kt=_tdKurTaxKisi(k); ktTop+=kt;
-        const kToplam=g.satislar.reduce((t2,x)=>t2+_tdN(row[x.id])*_tdN(x.satis),0);
         return `<tr><td style="white-space:nowrap"><b>${esc(k.soyad)}</b> ${esc(k.ad)}</td>
-          <td class="ro" style="text-align:right;font-weight:800;color:var(--primary);white-space:nowrap">${kToplam?(Math.round(kToplam*100)/100)+' €':''}</td>
           <td>${esc(k.resno)}</td>
           <td ${(kt&&!g.hesapKapali)?`onclick="tdKtTog('${key}')"`:''} style="background:${(g.ktAlindi||{})[key]?'#dcfce7':'#f0fdf4'};cursor:${(kt&&!g.hesapKapali)?'pointer':'default'};white-space:nowrap;user-select:none;padding:5px 10px" title="${kt?'Tıkla: rehber kur taxı aldı işareti':''}">${kt?`<span style="display:flex;align-items:center;justify-content:space-between;gap:10px"><b style="color:var(--primary)">${Math.round(kt*100)/100} €</b><span style="font-size:1.25rem;line-height:1;color:${(g.ktAlindi||{})[key]?'#166534':'#94a3b8'}">${(g.ktAlindi||{})[key]?'☑':'☐'}</span></span>`:'—'}</td>
           ${g.satislar.map(x=>`<td ${g.hesapKapali?'':`onclick="tdMxTog('${key}','${x.id}')"`} style="cursor:${g.hesapKapali?'default':'pointer'};text-align:center;font-weight:800;font-size:.95rem;color:#166534;background:${row[x.id]?'#dcfce7':'transparent'};user-select:none;min-width:52px;padding:7px 4px">${row[x.id]?'✓':''}</td>`).join('')}</tr>`;
@@ -15563,13 +15563,12 @@ function renderTurDosyasi(box){
         <button class="btn btn-outline btn-sm" onclick="tdPdf('satmx')">📄 PDF</button>
         <button class="btn btn-outline btn-sm" onclick="tdMxExcel()">📥 Excel</button>
       </div>
-      <div style="overflow-x:auto;margin-bottom:14px"><table class="rzmg" style="min-width:700px">
-        <tr><th style="min-width:170px">GASTNAMEN</th><th style="width:82px" title="İşaretli paket satışları (kur tax hariç — kur tax kendi sütununda)">TOPLAM €</th><th style="width:90px">Voucher</th><th style="width:76px" title="Üründe tanımlı kur tax — kişi başı">KUR TAX</th>
+      <div style="overflow-x:auto;margin-bottom:14px"><table class="rzmg mxtab" style="min-width:700px">
+        <tr><th style="min-width:170px">GASTNAMEN</th><th style="width:90px">Voucher</th><th style="width:76px" title="Üründe tanımlı kur tax — kişi başı">KUR TAX</th>
         ${g.satislar.map(x=>`<th style="min-width:80px;text-align:center" title="${esc(x.icerik||'')}">${esc(x.ad)}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:500;font-size:.6rem">${_tdN(x.satis)} €</div>`:''}</th>`).join('')}</tr>
         ${satirlar}
         <tr style="background:var(--light);font-weight:800"><td>TOPLAM</td>
-        <td style="text-align:right;color:var(--primary)">${(()=>{ let gt=0; kisiler.forEach(k2=>{ const r3=g.satisMx[_tdMxKey(k2)]||{}; g.satislar.forEach(x=>{ gt+=_tdN(r3[x.id])*_tdN(x.satis); }); }); return Math.round(gt*100)/100||'—'; })()} €</td>
-        <td>${kisiler.length} kişi</td><td style="text-align:right;white-space:nowrap">${Math.round(ktTop*100)/100||'—'}${(()=>{ let al=0; kisiler.forEach(k2=>{ if((g.ktAlindi||{})[_tdMxKey(k2)]) al+=_tdKurTaxKisi(k2); }); return al?`<div style="font-size:.58rem;color:#166534">alınan: ${Math.round(al*100)/100}</div>`:''; })()}</td>
+        <td>${kisiler.length} kişi</td><td style="text-align:right;white-space:nowrap;color:var(--primary)">${Math.round(ktTop*100)/100||'—'} €${(()=>{ let al=0; kisiler.forEach(k2=>{ if((g.ktAlindi||{})[_tdMxKey(k2)]) al+=_tdKurTaxKisi(k2); }); return al?`<div style="font-size:.58rem;color:#166534">alınan: ${Math.round(al*100)/100}</div>`:''; })()}</td>
         ${g.satislar.map(x=>{ let t=0; Object.values(g.satisMx).forEach(r2=>{t+=_tdN(r2[x.id]);}); return `<td style="text-align:center">${t||''}</td>`; }).join('')}</tr>
       </table></div>`;
     })()}
@@ -15847,7 +15846,7 @@ function renderTurDosyasi(box){
       ${ktO.toplam?`<div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Kur Tax <span style="color:var(--muted);font-size:.66rem">(${ktO.metin} — otomatik)</span></span><b id="tdHesKurtax">${_tdEur(ktO.toplam)}</b></div>`:''}
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Toplam Tur Satışı</span><b id="tdHesCiro">${_tdEur(T.ciro)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Tur Ödemeleri <span style="color:var(--muted);font-size:.66rem">(satış tablosundaki ödemeler)</span></span><b id="tdHesOde" style="color:var(--danger)">−${_tdEur(T.ode)}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span><b>Toplam teslim edilecek</b></span><b id="tdHesTeslimT">${_tdEur(teslimHedef)}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span><b>Turlardan toplam teslim edilecek</b></span><b id="tdHesTeslimT">${_tdEur(teslimHedef)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Rehber Yevmiye (${g.yevmiye.donem==='gunluk'?(g.gunSay+' gün × '):(g.yevmiye.donem==='haftalik'?'haftalık × ':'sabit ')}${esc(g.yevmiye.tutar||'0')})</span><b id="tdHesYev" style="color:var(--danger)">−${_tdEur(yev)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Satış Komisyonları (paket bazlı)</span><b id="tdHesKom" style="color:var(--danger)">−${_tdEur(T.kom)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Masraflar (€ karşılığı)</span><b id="tdHesMas" style="color:var(--danger)">−${_tdEur(mas)}</b></div>
@@ -16016,25 +16015,20 @@ function _tdDocSatisMx(g,E){
     const key=_tdMxKey(k); const row=g.satisMx[key]||{};
     const kt=_tdKurTaxKisi(k); ktTop+=kt;
     const al=(g.ktAlindi||{})[key]; if(al) alTop+=kt;
-    const kToplam=P.reduce((t2,x)=>t2+_tdN(row[x.id])*_tdN(x.satis),0);
     return `<tr><td style="${_tdTd};text-align:center;color:#888">${i+1}</td>
       <td style="${_tdTd};white-space:nowrap"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td>
       <td style="${_tdTd}">${esc(k.resno)}</td>
       <td style="${_tdTd};white-space:nowrap;background:${al?'#e8f5e9':'#f6fef7'}">${kt?`<span style="display:flex;justify-content:space-between;gap:8px"><b>${Math.round(kt*100)/100} €</b><span style="font-size:11pt">${al?'☑':'☐'}</span></span>`:'—'}</td>
-      ${P.map(x=>`<td style="${_tdTd};text-align:center;font-weight:700">${row[x.id]?'✓':''}</td>`).join('')}
-      <td style="${_tdTd};text-align:right;font-weight:700">${kToplam?(Math.round(kToplam*100)/100)+' €':''}</td></tr>`;
+      ${P.map(x=>`<td style="${_tdTd};text-align:center;font-weight:700">${row[x.id]?'✓':''}</td>`).join('')}</tr>`;
   }).join('');
-  let genel=0; K.forEach(k2=>{ const r3=g.satisMx[_tdMxKey(k2)]||{}; P.forEach(x=>{ genel+=_tdN(r3[x.id])*_tdN(x.satis); }); });
   return _tdDocBas('Yolcu Satış Tablosu',E)+`
   <table style="width:100%;border-collapse:collapse">
     <tr><th style="${_tdTh};width:8mm;text-align:center">#</th><th style="${_tdTh}">GASTNAMEN</th><th style="${_tdTh};width:22mm">Voucher</th><th style="${_tdTh};width:20mm;text-align:right">KUR TAX</th>
-    ${P.map(x=>`<th style="${_tdTh};text-align:center">${esc(x.ad)}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:400;font-size:7.5pt">${_tdN(x.satis)} €</div>`:''}${x.icerik?`<div style="font-weight:400;font-size:7pt;color:#555">${esc(x.icerik)}</div>`:''}</th>`).join('')}
-    <th style="${_tdTh};width:20mm;text-align:right">TOPLAM</th></tr>
-    ${rows||`<tr><td style="${_tdTd}" colspan="${5+P.length}">Yolcu yok</td></tr>`}
+    ${P.map(x=>`<th style="${_tdTh};text-align:center">${esc(x.ad)}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:400;font-size:7.5pt">${_tdN(x.satis)} €</div>`:''}${x.icerik?`<div style="font-weight:400;font-size:7pt;color:#555">${esc(x.icerik)}</div>`:''}</th>`).join('')}</tr>
+    ${rows||`<tr><td style="${_tdTd}" colspan="${4+P.length}">Yolcu yok</td></tr>`}
     <tr style="background:#DEEAF6;font-weight:bold"><td style="${_tdTd}" colspan="3">TOPLAM · ${K.length} kişi</td>
-    <td style="${_tdTd};text-align:right;white-space:nowrap">${Math.round(ktTop*100)/100||'—'}${alTop?`<div style="font-size:7pt;font-weight:400">alınan: ${Math.round(alTop*100)/100}</div>`:''}</td>
-    ${P.map(x=>{ let t=0; Object.values(g.satisMx).forEach(r2=>{t+=_tdN(r2[x.id]);}); return `<td style="${_tdTd};text-align:center">${t||''}</td>`; }).join('')}
-    <td style="${_tdTd};text-align:right">${Math.round(genel*100)/100||'—'} €</td></tr>
+    <td style="${_tdTd};text-align:right;white-space:nowrap;color:#C55A11">${Math.round(ktTop*100)/100||'—'} €${alTop?`<div style="font-size:7pt;font-weight:400;color:#166534">alınan: ${Math.round(alTop*100)/100}</div>`:''}</td>
+    ${P.map(x=>{ let t=0; Object.values(g.satisMx).forEach(r2=>{t+=_tdN(r2[x.id]);}); return `<td style="${_tdTd};text-align:center">${t||''}</td>`; }).join('')}</tr>
   </table>
   <p style="font-size:8.5pt;color:#555;margin-top:3mm">☑ = kur tax rehber tarafından alındı · ✓ = paket satışı işaretli</p></div>`;
 }
@@ -16162,7 +16156,7 @@ function _tdDocHesap(g,E){
   ${ktO.toplam?OZ('Kur tax ('+ktO.metin+')',_tdEur(ktO.toplam),false,false):''}
   ${OZ('Toplam tur satışı',_tdEur(T.ciro),false,false)}
   ${T.ode?OZ('Tur ödemeleri (satış tablosundan)',_tdEur(T.ode),true,false):''}
-  ${OZ('Toplam teslim edilecek',_tdEur(teslimHedef),false,false)}
+  ${OZ('Turlardan toplam teslim edilecek',_tdEur(teslimHedef),false,false)}
   ${OZ('Rehber yevmiyesi ('+yevAcik+')',_tdEur(yev),true,false)}
   ${OZ('Satış komisyonları',_tdEur(T.kom),true,false)}
   ${OZ('Masraflar (€ karşılığı)',_tdEur(mas),true,false)}
