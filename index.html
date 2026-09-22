@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v545 · 23.09.2026';
+const APP_VER='v546 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15201,7 +15201,7 @@ function _tdAktList(E){
   const out=[]; const seen=new Set();
   const uyeler=(E.uyeler||[]).length?E.uyeler:((E.sefer&&E.sefer.pkgId)?[{pkgId:E.sefer.pkgId}]:[]);
   uyeler.forEach(u=>{ const pk=getPackages().find(p=>p.id===u.pkgId); if(!pk) return;
-    _spMigrate(pk).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:_aktFiyatNum(a.fiyat),dahil:!!a.dahilMi,fiyatGizli:!!a.fiyatGizli,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:''),icerik:String(a.icerik||'').trim()}); });
+    _spMigrate(pk).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:_aktFiyatNum(a.fiyat),dahil:!!a.dahilMi,fiyatGizli:!!a.fiyatGizli,komTip:(a.komTip==='€'?'pax':(a.komTip||'')),komDeg:(a.komDeg!=null?a.komDeg:''),icerik:String(a.icerik||'').trim()}); });
   });
   return out;
 }
