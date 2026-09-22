@@ -2062,7 +2062,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v523 · 22.09.2026';
+const APP_VER='v524 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11550,14 +11550,22 @@ async function _cloudPullFull(){
         _docJoin(col,docBy[col]);
         _docSig[col].clear();
         docBy[col].forEach(r=>_docSig[col].set(r.id,_dsig(r.data)));
-        let kurtarilan=0;
+        // BULUT MUTLAK KAYNAK: bulutta olmayan yerel kayıtlar cache'e GERİ KONMAZ ve
+        // buluta GERİ GÖNDERİLMEZ (eski cihazlardaki kalıntılar hortlamasın diye).
+        // Yine de veri kaybına karşı KARANTİNAYA alınır — gerekirse elle kurtarılır.
+        const karantina=[];
         yerel.forEach(r=>{
           if(_docSig[col].has(r.id)) return;      // bulutta var
-          if(eskiSig.has(r.id)) return;           // daha önce senkronize olmuştu → bulut sildi, biz de sileriz
-          if(_silTomb.has(col+':'+r.id)) return;  // MEZAR TAŞLI → silinmişti, hortlatma
-          _docApplyOne(col,r.id,r.data); kurtarilan++;  // hiç gitmemiş yerel kayıt → koru
+          if(_silTomb.has(col+':'+r.id)) return;  // mezar taşlı — zaten silinmişti
+          karantina.push(r);
         });
-        if(kurtarilan){ console.warn(col+': '+kurtarilan+' yerel kayıt buluta hiç gitmemişti — korundu, yeniden gönderiliyor'); _cloudQueue(_COL2KIND[col]||col); }
+        if(karantina.length){
+          try{ idbGet('karantina_'+col).then(v=>{ const L=Array.isArray(v)?v:[];
+            karantina.forEach(r=>{ if(!L.some(x=>x.id===r.id)) L.push(Object.assign({ts:Date.now()},r)); });
+            idbSet('karantina_'+col,L.slice(-500)); }); }catch(e){}
+          console.warn(col+': bulutta olmayan '+karantina.length+' yerel kayıt karantinaya alındı (hortlatılmadı)');
+          try{ _hataYaz&&_hataYaz('SENKRON-KARANTİNA',col+': '+karantina.length+' kayıt'); }catch(e){}
+        }
       } else {
         const kind=legacy[col][0], val=legacy[col][1];
         if(val!==null){
