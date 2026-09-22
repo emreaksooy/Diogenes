@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v555 · 23.09.2026';
+const APP_VER='v556 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2865,6 +2865,12 @@ function ynSayiMutabakat(){
     +'<div style="text-align:right;margin-top:12px"><button class="btn btn-primary btn-sm" onclick="document.getElementById(\'ynMutModal\').remove()">Tamam</button></div></div>';
   document.body.appendChild(box);
 }
+function ynDetayTog(anah,degerEnc){
+  const deger=decodeURIComponent(degerEnc||'');
+  if(window._ynDetay&&window._ynDetay.anah===anah&&window._ynDetay.deger===deger) window._ynDetay=null;
+  else window._ynDetay={anah,deger};
+  renderYonetici();
+}
 function renderYonetici(){
   const el=document.getElementById('ynWrap'); if(!el) return;
   let V; try{ V=_ynVeri(); }catch(e){ el.innerHTML=''; return; }
@@ -2879,10 +2885,22 @@ function renderYonetici(){
   const dagit=(anah)=>{ const t={}; K.forEach(k=>{ t[k[anah]]=(t[k[anah]]||0)+k.pax; });
     return Object.entries(t).sort((a,b)=>b[1]-a[1]); }; // hepsi listelenir
   const opRenk=['var(--navy)','var(--primary)','#1d4ed8','#16a34a','#b45309','#7e22ce'];
-  const cubuk=top=>top.map((x,i)=>{ const pct=secP?Math.round(x[1]/secP*100):0;
-    return `<div class="yn-oprow"><span class="ad">${esc(x[0])}</span><div class="cz"><div class="dl" style="width:${pct}%;background:${opRenk[i%6]}"></div></div><span class="p"><b>${x[1].toLocaleString('tr-TR')}</b> · %${pct}</span></div>`; }).join('')||'<div style="font-size:.74rem;color:var(--muted)">Bu dönemde veri yok</div>';
-  const opH=cubuk(dagit('op'));
-  const turH=cubuk(dagit('kod'));
+  const cubuk=(top,anah)=>top.map((x,i)=>{ const pct=secP?Math.round(x[1]/secP*100):0;
+    const acik=window._ynDetay&&window._ynDetay.anah===anah&&window._ynDetay.deger===String(x[0]);
+    let det='';
+    if(acik){
+      const diger=anah==='kod'?'op':'kod';
+      const alt={}; K.forEach(k=>{ if(String(k[anah])===String(x[0])) alt[k[diger]]=(alt[k[diger]]||0)+k.pax; });
+      const L=Object.entries(alt).sort((a,b)=>b[1]-a[1]);
+      det=`<div style="margin:2px 0 10px 16px;padding:7px 12px;background:var(--light);border-radius:10px;border-left:3px solid ${opRenk[i%6]}">
+        <div style="font-size:.62rem;font-weight:800;color:var(--muted);margin-bottom:4px">${anah==='kod'?'OPERATÖR DAĞILIMI':'TUR DAĞILIMI'} — ${esc(x[0])}</div>
+        ${L.map((y,j)=>{ const p2=x[1]?Math.round(y[1]/x[1]*100):0;
+          return `<div class="yn-oprow" style="font-size:.72rem"><span class="ad">${esc(y[0])}</span><div class="cz"><div class="dl" style="width:${p2}%;background:${opRenk[j%6]}"></div></div><span class="p"><b>${y[1].toLocaleString('tr-TR')}</b> · %${p2}</span></div>`; }).join('')}
+      </div>`;
+    }
+    return `<div class="yn-oprow" style="cursor:pointer;user-select:none" title="${anah==='kod'?'Tıkla: bu turun operatör dağılımı':'Tıkla: bu operatörün tur dağılımı'}" onclick="ynDetayTog('${anah}','${encodeURIComponent(String(x[0]))}')"><span class="ad">${acik?'▾':'▸'} ${esc(x[0])}</span><div class="cz"><div class="dl" style="width:${pct}%;background:${opRenk[i%6]}"></div></div><span class="p"><b>${x[1].toLocaleString('tr-TR')}</b> · %${pct}</span></div>${det}`; }).join('')||'<div style="font-size:.74rem;color:var(--muted)">Bu dönemde veri yok</div>';
+  const opH=cubuk(dagit('op'),'op');
+  const turH=cubuk(dagit('kod'),'kod');
   const szBtn=(t,ad)=>`<button class="btn ${sec.tip===t?'btn-primary':'btn-outline'} btn-sm" style="padding:3px 12px;font-size:.68rem" onclick="ynSecim('${t}')">${ad}</button>`;
   const yEnB=Math.max.apply(null,V.yog.map(x=>x.p).concat([1]));
   const yogH=V.yog.map(x=>{ const r=x.p/yEnB; const cls=x.p===0?'':(r<0.34?'s1':(r<0.67?'s2':'s3'));
