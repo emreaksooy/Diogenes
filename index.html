@@ -2041,7 +2041,18 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v505 · 22.09.2026';
+const APP_VER='v506 · 22.09.2026';
+document.addEventListener('change',function(e){
+  try{
+    const el=e.target;
+    if(!el||el.tagName!=='INPUT') return;
+    if(el.type&&el.type!=='text') return;
+    const ip=(el.placeholder||'')+' '+(el.title||'')+' '+(el.className||'');
+    if(!(/saatin/.test(el.className||'')||/saat|depar|ss:dd/i.test(ip))) return;
+    const n=_saatNorm(el.value);
+    if(n&&n!==el.value) el.value=n;
+  }catch(err){}
+},true);
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -7987,10 +7998,16 @@ function _resSetP(r,f,v){ const g=_resGrid(true); const y=g.rows[r]; if(!y)retur
 let _resUndoSnap=null;
 function _saatNorm(v){
   const t=String(v||'').trim(); if(!t) return t;
-  const m=t.match(/^(\d{1,2})[:.\s]?(\d{2})$/);
-  if(m){ const h=+m[1], mm=+m[2]; if(h<=23&&mm<=59) return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
+  const yap=(h,mm)=>(h<=23&&mm<=59)?String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0'):null;
+  let m=t.match(/^(\d{1,2})[:.,\s]+(\d{1,2})$/);           // 16:15 · 16.15 · 16 15 · 16:5→16:05
+  if(m){ const r=yap(+m[1],+m[2]); if(r) return r; }
+  m=t.match(/^(\d{1,2})[:.,\s]?(\d{2})$/);                 // 1600 · 930 (3-4 hane)
+  if(m){ const r=yap(+m[1],+m[2]); if(r) return r; }
+  m=t.match(/^(\d{1,2})$/);                                  // 16 → 16:00
+  if(m){ const r=yap(+m[1],0); if(r) return r; }
   return t;
 }
+function _saatGecerli(v){ const t=String(v||'').trim(); return !t||/^([01]\d|2[0-3]):[0-5]\d$/.test(t); }
 function _tarihNorm(v){ const t=String(v||'').trim(); if(!t) return t; const p=_pdate(t); if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p)){ const a=p.split('-'); return a[2]+'.'+a[1]+'.'+a[0]; } return t; }
 function _resSetFlight(r,f,v){
   const g=_resGrid(true), y=g.rows[r]; if(!y) return;
@@ -16592,8 +16609,8 @@ function renderOpsTransfer(){
         </select></label>
       <label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">UÇUŞ SAATİ
         <span style="display:inline-flex;gap:3px;align-items:center">
-          <input type="time" value="${esc(_trSaatB)}" onchange="_trSaatFiltre(this.value,_trSaatS)" style="padding:4px 5px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.74rem">~
-          <input type="time" value="${esc(_trSaatS)}" onchange="_trSaatFiltre(_trSaatB,this.value)" style="padding:4px 5px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.74rem">
+          <input value="${esc(_trSaatB)}" placeholder="ss:dd" inputmode="numeric" onchange="_trSaatFiltre(_saatNorm(this.value),_trSaatS)" style="width:58px;padding:4px 5px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.74rem;text-align:center">~
+          <input value="${esc(_trSaatS)}" placeholder="ss:dd" inputmode="numeric" onchange="_trSaatFiltre(_trSaatB,_saatNorm(this.value))" style="width:58px;padding:4px 5px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.74rem;text-align:center">
         </span></label>
       ${aktifSay?`<button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="_trUstTemizle()">✕ Filtreleri temizle (${aktifSay})</button>`:''}
     </div>`;
@@ -17113,7 +17130,9 @@ function trGorevBilgiKaydet(gid){
   const b=document.getElementById('trGorevBilgi'); if(b) b.remove();
   renderOpsTransfer(); showToast('Araç bilgisi kaydedildi','success');
 }
-function _trDeparBirlesik(ids,v){ const sv=(typeof _saatNorm==='function')?_saatNorm(v):v; String(ids||'').split('~').filter(Boolean).forEach(id=>{ try{ _trSatKaydet(decodeURIComponent(id),{depar:sv,deparMan:!!sv}); }catch(e){} }); renderOpsTransfer(); }
+function _trDeparBirlesik(ids,v){ const sv=(typeof _saatNorm==='function')?_saatNorm(String(v||'').trim()):v;
+  if(!_saatGecerli(sv)){ showToast('Geçersiz saat: "'+sv+'" — ss:dd biçiminde gir (ör. 16, 1615, 16:15)','error',4000); renderOpsTransfer(); return; }
+  String(ids||'').split('~').filter(Boolean).forEach(id=>{ try{ _trSatKaydet(decodeURIComponent(id),{depar:sv,deparMan:!!sv}); }catch(e){} }); renderOpsTransfer(); }
 function _trSonGonderim(firma){
   const G=(getTransfer().gonderimler||[]).filter(g2=>g2.firma===firma);
   return G.length?G[G.length-1]:null;
@@ -17335,7 +17354,9 @@ function _trDetayCoklu(enc){
 }
 function _trAtamaKaldir(id){ _trSatKaydet(id,{grup:null,onay:false}); window._trKod=null; renderOpsTransfer(); }
 function _trOnay(id){ const r=_trGenRows().find(x=>x.id===id); _trSatKaydet(id,{onay:!(r&&r.onay)}); renderOpsTransfer(); }
-function _trDeparElle(id,v){ v=_saatNorm((v||'').trim()); _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
+function _trDeparElle(id,v){ v=_saatNorm((v||'').trim());
+  if(!_saatGecerli(v)){ showToast('Geçersiz saat: "'+v+'" — ss:dd biçiminde gir (ör. 16, 1615, 16:15)','error',4000); renderOpsTransfer(); return; }
+  _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
 function _trNotElle(id,v){ _trSatKaydet(id,{not:(v||'').trim()}); }
 // ── PDF ──
 function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!gr)return''; const rowsAll=_trGenRows(); const rows=rowsAll.filter(r=>r.grup===kod).sort((a,b)=>(_dk(_trDeparHesap(a).saat)??9999)-(_dk(_trDeparHesap(b).saat)??9999)); if(!rows.length)return''; const tarih=_trGunAd(rows[0].tarih); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0);
