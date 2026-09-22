@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v492 · 22.09.2026';
+const APP_VER='v493 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -9656,6 +9656,46 @@ function rzFytPaste(e,si,di){
 function rzOtelDetSil(){ const o=_otlDetO(); if(!o)return;
   showConfirm('🗑️','Oteli Sil',(o.ad||'Kayıt')+' silinecek.','Sil',()=>{ getTanimlar().oteller.splice(_otlDet,1); _otlDetSave(); rzOtelGoster(); });
 }
+function _rzYanlisUrunList(){
+  // Rezervasyonun operatörü ile bağlı ürünün operatörü çelişiyor VE
+  // rezervasyonun operatöründe AYNI KODLU başka ürün varsa → yanlış ürüne bağlı demektir
+  const out=[];
+  try{
+    const pkgs=getPackages();
+    const duz=t=>_norm(String(t||'')).replace(/ /g,'');
+    const uyum=(a,b)=>{ const x=duz(a), y=duz(b); return !!(x&&y&&(x===y||x.includes(y)||y.includes(x))); };
+    (getRezv()||[]).forEach(r=>{
+      if(!r||r.tip!=='urun'||!r.pkgId||!(r.operator||'').trim()) return;
+      const pkg=pkgs.find(p=>p.id===r.pkgId); if(!pkg) return;
+      const pkgOpAd=_resOpAd(pkg); if(!pkgOpAd) return;
+      if(uyum(pkgOpAd,r.operator)) return; // operatör uyumlu — sorun yok
+      const dogru=pkgs.find(p2=>p2.id!==pkg.id&&_norm(p2.paketKodu||'')===_norm(pkg.paketKodu||'')&&uyum(_resOpAd(p2),r.operator));
+      if(dogru) out.push({r,pkg,dogru});
+    });
+  }catch(e){}
+  return out;
+}
+function rzYanlisUrunDuzelt(){
+  const L=_rzYanlisUrunList();
+  if(!L.length){ showToast('Yanlış ürüne bağlı rezervasyon yok'); return; }
+  const oz=L.map(x=>String(x.r.voucher||'?')+' ('+esc(x.r.operator)+')').join(', ');
+  showConfirm('🔁','Doğru Ürüne Taşı',
+    L.length+' rezervasyon, operatörünün kendi ürünü dururken başka operatörün AYNI KODLU ürününe bağlı: '+oz+'. Her biri kendi operatörünün ürününe taşınacak. Açılım kartları ve yolcular aynen kalır.',
+    'Taşı',()=>{
+      L.forEach(x=>{ x.r.pkgId=x.dogru.id; x.r.urunKod=x.dogru.paketKodu||x.dogru.paketAdi||x.r.urunKod; });
+      setRezv(getRezv());
+      try{renderRezvListe();}catch(e){} try{renderUcakGenel();}catch(e){}
+      showToast(L.length+' rezervasyon doğru ürüne taşındı','success');
+    });
+}
+function _rzYanlisUrunBant(){
+  const L=_rzYanlisUrunList(); if(!L.length) return '';
+  return `<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:12px;padding:10px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <b style="font-size:.8rem">⚠ ${L.length} rezervasyon yanlış ürüne bağlı</b>
+    <span style="font-size:.74rem">${L.map(x=>esc(String(x.r.voucher||'?'))+' → '+esc(_resOpAd(x.dogru)||'')+' '+esc(x.dogru.paketKodu||'')).join(' · ')}</span>
+    <button class="btn btn-outline btn-sm" style="margin-left:auto;color:#b45309;border-color:#f59e0b" onclick="rzYanlisUrunDuzelt()">🔁 Doğru ürüne taşı</button>
+  </div>`;
+}
 function renderRezvListe(){
   const rez=getRezv();
   if(!window._rzFRestore){ window._rzFRestore=true;
@@ -9737,7 +9777,7 @@ function renderRezvListe(){
   h+='</tbody>';
   if(!list.length) h+='<tbody><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
   document.getElementById('rzLst').innerHTML=h;
-  try{ const ub=document.getElementById('rzUyariBand'); if(ub) ub.innerHTML=_rzIptalUyariHTML(); }catch(e){}
+  try{ const ub=document.getElementById('rzUyariBand'); if(ub) ub.innerHTML=_rzYanlisUrunBant()+_rzIptalUyariHTML(); }catch(e){}
   rzTopluBarGuncel();
   const bugun=new Date().toISOString().slice(0,10);
   const filtreliMi=list.length!==rez.length;
