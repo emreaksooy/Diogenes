@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v489 · 22.09.2026';
+const APP_VER='v490 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14032,7 +14032,17 @@ function _ogResolve(){
   const S=getOpsGrup(); const exp=S.gruplar||{}; const claimed={};
   Object.values(exp).forEach(g=>(g.uyeler||[]).forEach(u=>{ claimed[u.pkgId+'|'+u.kalkis+'|'+u.resno]=g.id; }));
   const pkgs=getPackages();
-  const enrich=g=>{ const uy=(g.uyeler||[]).map(u=>({pkgId:u.pkgId,kalkis:u.kalkis,resno:u.resno,pax:_ogResnoPaxRezv(u.pkgId,u.kalkis,u.resno)})); const ops=new Set(),ur=new Set(); let tarih=''; uy.forEach(u=>{ const pk=pkgs.find(p=>p.id===u.pkgId)||{}; ops.add(_resOpAd(pk)||''); ur.add(pk.paketKodu||''); if(!tarih||u.kalkis<tarih)tarih=u.kalkis; }); if(!tarih&&g.sefer){ tarih=g.sefer.kalkis; const pk2=pkgs.find(p=>p.id===g.sefer.pkgId)||{}; ops.add(_resOpAd(pk2)||''); ur.add(pk2.paketKodu||''); } return Object.assign({},g,{uyeler:uy,pax:uy.reduce((n,u)=>n+u.pax,0),ops:[...ops].filter(Boolean),urunler:[...ur].filter(Boolean),tarih}); };
+  const enrich=g=>{ const uy=(g.uyeler||[]).map(u=>({pkgId:u.pkgId,kalkis:u.kalkis,resno:u.resno,pax:_ogResnoPaxRezv(u.pkgId,u.kalkis,u.resno)})); const ops=new Set(),ur=new Set(); let tarih=''; uy.forEach(u=>{ const pk=pkgs.find(p=>p.id===u.pkgId)||{}; ops.add(_resOpAd(pk)||''); ur.add(pk.paketKodu||''); if(!tarih||u.kalkis<tarih)tarih=u.kalkis; }); if(!tarih&&g.sefer){ tarih=g.sefer.kalkis; const pk2=pkgs.find(p=>p.id===g.sefer.pkgId)||{}; ops.add(_resOpAd(pk2)||''); ur.add(pk2.paketKodu||''); } const sefSet=[...new Set(uy.map(u=>u.pkgId+'|'+u.kalkis))];
+    let paxT=0;
+    sefSet.forEach(kk=>{ const p=kk.split('|');
+      const uyeV=new Set(uy.filter(u=>u.pkgId===p[0]&&u.kalkis===p[1]).map(u=>String(u.resno)));
+      let tumV=[];
+      try{ tumV=[...new Set((((getReservations().find(x=>x.pkgId===p[0]&&x.kalkis===p[1])||{}).rows)||[]).filter(_isim).map(r=>String((r.resno||'').trim())).filter(Boolean))]; }catch(e){}
+      const tamKapsiyor=tumV.every(v=>uyeV.has(v));
+      if(tamKapsiyor) paxT+=_opsPax(p[0],p[1]);
+      else uy.filter(u=>u.pkgId===p[0]&&u.kalkis===p[1]).forEach(u=>{ paxT+=u.pax; });
+    });
+    return Object.assign({},g,{uyeler:uy,pax:paxT||uy.reduce((n,u)=>n+u.pax,0),ops:[...ops].filter(Boolean),urunler:[...ur].filter(Boolean),tarih}); };
   const out=[];
   const seferMap={};
   Object.values(exp).forEach(g=>{ if(g.sefer&&!(g.uyeler||[]).length) seferMap[g.sefer.pkgId+'|'+g.sefer.kalkis]=g; });
@@ -14767,7 +14777,7 @@ function renderTurDosyasi(box){
     <div style="background:var(--navy);color:#fff;border-radius:12px;padding:8px 14px;text-align:center"><b style="font-size:1.05rem;display:block">${E.pax}</b><span style="font-size:.58rem;opacity:.8">PAX</span></div>
     <div style="flex:1;min-width:220px">
       <div style="font-weight:800;font-size:.95rem">${g.no?`<span style="background:var(--navy);color:#fff;border-radius:8px;padding:2px 9px;font-size:.7rem;font-weight:800;margin-right:7px">${esc(g.no)}</span>`:''}${esc(E.urunler.join(', ')||'—')} · ${_fmtDateTR(E.tarih)}</div>
-      <div style="font-size:.74rem;color:var(--muted)">${esc(E.ops.join(', ')||'')} · ${E.uyeler.length} rezervasyon · ${kisiler.length} isim${reh?' · Rehber: <b>'+esc(reh.ad)+'</b>':''}</div>
+      <div style="font-size:.74rem;color:var(--muted)">${esc(E.ops.join(', ')||'')} · ${E.uyeler.length} rezervasyon · ${kisiler.length} isim${(+E.pax>kisiler.length&&kisiler.length)?` <span style="background:#fef3c7;color:#b45309;font-weight:800;border-radius:8px;padding:1px 8px;font-size:.62rem">⚠ ${+E.pax-kisiler.length} kişi uçak listesinde yok</span>`:''}${reh?' · Rehber: <b>'+esc(reh.ad)+'</b>':''}</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       ${reh?'<span class="rzchip rzc-ok">Rehber atandı</span>':'<span class="rzchip rzc-bek">Rehber yok</span>'}
