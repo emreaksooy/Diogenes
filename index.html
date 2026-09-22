@@ -1622,6 +1622,8 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
           <option value="urun">Ürüne bağla</option>
           <option value="kalkis">Giriş tarihi ata</option>
           <option value="operator">Operatör ata</option>
+          <option value="personel">🧑‍✈️ Personel işaretle (rehber/kaptan)</option>
+          <option value="personelKaldir">Personel işaretini kaldır</option>
           <option value="iptal">İptal işaretle</option>
           <option value="aktif">İptali kaldır</option>
           <option value="sil">Sil</option>
@@ -2062,7 +2064,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v525 · 22.09.2026';
+const APP_VER='v526 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -10003,6 +10005,38 @@ function rzYanlisUrunDuzelt(){
       showToast(L.length+' rezervasyon doğru ürüne taşındı','success');
     });
 }
+function _rzPersonelAdayList(){
+  const out=[];
+  try{
+    const rehTok=new Set((getTanimlar().rehberler||[]).map(r=>_tdAdTok('',r.ad||'')).filter(Boolean));
+    if(!rehTok.size) return out;
+    (getRezv()||[]).forEach(r=>{
+      if(!r||r.tip!=='urun'||r.personel||r.durum==='iptal') return;
+      if((r.kartlar||[]).length) return; // açılımı olan kayıt yolcudur
+      const esle=(r.musteriler||[]).some(m=>rehTok.has(_tdAdTok(m.soyad,m.ad)));
+      if(esle) out.push(r);
+    });
+  }catch(e){}
+  return out;
+}
+function rzPersonelOner(){
+  const L=_rzPersonelAdayList();
+  if(!L.length){ showToast('Personel adayı bulunamadı'); return; }
+  showConfirm('🧑‍✈️','Personel Olarak İşaretle',
+    L.length+' kayıt, adı rehber tanımlarıyla eşleşiyor ve ürün açılımı yok — personel (rehber/kaptan) olarak işaretlenecek, yolcu sayımlarına girmeyecek: '+L.slice(0,8).map(x=>String(x.voucher||'?')).join(', ')+(L.length>8?' …':''),
+    'İşaretle',()=>{
+      L.forEach(r=>{ r.personel=true; });
+      setRezv(getRezv()); renderRezvListe(); showToast(L.length+' kayıt personel işaretlendi','success');
+    });
+}
+function _rzPersonelBant(){
+  const L=_rzPersonelAdayList(); if(!L.length) return '';
+  return `<div style="background:#f3e8ff;border:1.5px solid #d8b4fe;border-radius:12px;padding:10px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <b style="font-size:.8rem;color:#6b21a8">🧑‍✈️ ${L.length} kayıt personel (rehber/kaptan) olabilir</b>
+    <span style="font-size:.72rem;color:#6b21a8">adı rehber tanımlarıyla eşleşiyor, ürün açılımı yok</span>
+    <button class="btn btn-outline btn-sm" style="margin-left:auto;color:#6b21a8;border-color:#d8b4fe" onclick="rzPersonelOner()">Hepsini personel işaretle</button>
+  </div>`;
+}
 function _rzYanlisUrunBant(){
   const L=_rzYanlisUrunList(); if(!L.length) return '';
   return `<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:12px;padding:10px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
@@ -10078,7 +10112,7 @@ function renderRezvListe(){
     const konf=hk.length?`${hk.filter(k=>k.konfirme==='Evet').length}/${hk.length}`:'—';
     h+=`<tr onclick="rzAc('${r.id}')"${r.durum==='iptal'?' style="background:#fef2f2"':''}>
       <td onclick="event.stopPropagation()"><input type="checkbox" ${window._rzSec.has(r.id)?'checked ':''}onchange="rzSecTog('${r.id}',this.checked)"></td>
-      <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span>${r.durum==='iptal'?' <span style="background:#dc2626;color:#fff;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">İPTAL</span>':''}</td>
+      <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span>${r.personel?' <span style="background:#7e22ce;color:#fff;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 6px">PERSONEL</span>':''}${r.durum==='iptal'?' <span style="background:#dc2626;color:#fff;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">İPTAL</span>':''}</td>
       <td>${esc(r.operator||'—')}</td><td><b>${esc(r.voucher||'—')}</b></td>
       <td>${(()=>{ const pkgVar=r.pkgId&&getPackages().some(p=>p.id===r.pkgId);
         if(r.tip==='urun'||(r.urunKod&&!pkgVar)) return `<b>${esc(r.urunKod||'?')}</b>${(!pkgVar)?' <span style="background:#fef3c7;color:#92400e;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 5px" title="Bu kod üründe tanımlı değil — ürünü tanımlayıp Sejour dosyasını yeniden yükleyin">KOD EŞLEŞMEDİ</span>':''}`;
@@ -10092,15 +10126,16 @@ function renderRezvListe(){
   h+='</tbody>';
   if(!list.length) h+='<tbody><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
   document.getElementById('rzLst').innerHTML=h;
-  try{ const ub=document.getElementById('rzUyariBand'); if(ub) ub.innerHTML=_rzYanlisUrunBant()+_rzIptalUyariHTML(); }catch(e){}
+  try{ const ub=document.getElementById('rzUyariBand'); if(ub) ub.innerHTML=_rzPersonelBant()+_rzYanlisUrunBant()+_rzIptalUyariHTML(); }catch(e){}
   rzTopluBarGuncel();
   const bugun=new Date().toISOString().slice(0,10);
   const filtreliMi=list.length!==rez.length;
   document.getElementById('rzMets').innerHTML=
     (filtreliMi?`<div class="rzmet" style="border:1.5px solid #2563eb;background:#eff6ff;padding:3px 10px;border-radius:9px"><div class="n" style="color:#1d4ed8">${list.length}</div><div class="l" style="color:#1d4ed8;font-weight:700">Filtrelenen · ${list.reduce((t,r)=>t+(r.musteriler||[]).length,0)} yolcu</div></div>`:'')+
     `<div class="rzmet"><div class="n">${rez.length}</div><div class="l">Rezervasyon</div></div>`+
-    `<div class="rzmet"><div class="n" style="color:${rez.filter(r=>rzDurum(r)==='bekliyor').length?'#b91c1c':'#065f46'}">${rez.filter(r=>rzDurum(r)==='bekliyor').length}</div><div class="l">Açılım bekleyen</div></div>`+
-    `<div class="rzmet"><div class="n">${rez.reduce((t,r)=>t+(r.musteriler||[]).length,0)}</div><div class="l">Toplam yolcu</div></div>`+
+    `<div class="rzmet"><div class="n" style="color:${rez.filter(r=>!r.personel&&rzDurum(r)==='bekliyor').length?'#b91c1c':'#065f46'}">${rez.filter(r=>!r.personel&&rzDurum(r)==='bekliyor').length}</div><div class="l">Açılım bekleyen</div></div>`+
+    `<div class="rzmet"><div class="n">${rez.filter(r=>!r.personel).reduce((t,r)=>t+(r.musteriler||[]).length,0)}</div><div class="l">Toplam yolcu</div></div>`+
+    `<div class="rzmet"><div class="n" style="color:#7e22ce">${rez.filter(r=>!!r.personel).reduce((t,r)=>t+(r.musteriler||[]).length,0)}</div><div class="l">Personel (rehber/kaptan)</div></div>`+
     `<div class="rzmet"><div class="n">${rez.filter(r=>r.satisTarihi===bugun).length}</div><div class="l">Bugün gelen</div></div>`;
 }
 function _sjTarih(v){ // Excel serial ya da metin → ISO
@@ -11134,6 +11169,10 @@ function rzTopluUygula(){
       const op=(document.getElementById('rzTopluOp').value||'').trim();
       if(!op){ showToast('Operatör adı girin','error'); return; }
       hedef.forEach(r=>{ r.operator=op; n++; });
+    } else if(a==='personel'){
+      hedef.forEach(r=>{ r.personel=true; n++; });
+    } else if(a==='personelKaldir'){
+      hedef.forEach(r=>{ if(r.personel){ delete r.personel; n++; } });
     } else if(a==='iptal'){
       const bugun=new Date().toISOString().slice(0,10);
       hedef.forEach(r=>{ r.durum='iptal'; if(!r.iptalTarihi) r.iptalTarihi=bugun; n++; });
@@ -12392,7 +12431,7 @@ function _opsTarihler(pkg){
   return [...set].sort();
 }
 // operasyon sayılarına yalnız AÇILIMI YAPILMIŞ (konaklama kartları oluşturulmuş) rezervasyonlar girer
-function _opsRezvSayilir(r){ return r&&r.tip==='urun'&&r.durum!=='iptal'&&((r.kartlar||[]).length>0); }
+function _opsRezvSayilir(r){ return r&&r.tip==='urun'&&!r.personel&&r.durum!=='iptal'&&((r.kartlar||[]).length>0); }
 function _opsRehGet(pkgId,kalkis,bolum){
   const rec=_opsGet(pkgId,kalkis);
   if(bolum&&bolum!=='01'){ const b=(rec.bolumReh||{})[bolum]||{}; return {rehberId:b.rehberId||'',rehberAd:(b.rehberAd||'').trim()}; }
@@ -12745,7 +12784,7 @@ function _rtTurlar(bas,son){
   // sefer başına bölüm pax'ları (rezv.grupBolum; boş='01')
   const bolumMap={};
   const hamMap={}; // açılımı yapılmamış (kartsız) rezervasyonların yolcu sayısı
-  try{ (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&r.durum!=='iptal'&&!((r.kartlar||[]).length)&&r.pkgId&&r.kalkis){
+  try{ (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&!r.personel&&r.durum!=='iptal'&&!((r.kartlar||[]).length)&&r.pkgId&&r.kalkis){
     const kk=r.pkgId+'|'+r.kalkis;
     hamMap[kk]=(hamMap[kk]||0)+(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length;
   } }); }catch(e){}
@@ -14440,6 +14479,7 @@ function _ogResnoPaxRezvHesap(pkgId,kalkis,resno){
     if(!ucakta) return 0;
     const rz=(getRezv()||[]).find(z=>z.tip==='urun'&&z.pkgId===pkgId&&z.kalkis===kalkis
       &&(String(z.voucher||'').trim()===String(resno).trim()||String(z.asilVoucher||'').trim()===String(resno).trim()));
+    if(rz&&rz.personel) return 0;
     if(rz&&_opsRezvSayilir(rz)){
       const n=(rz.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())).length;
       if(n>0) return n;
