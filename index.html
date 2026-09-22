@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v548 · 23.09.2026';
+const APP_VER='v549 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15412,11 +15412,14 @@ function _tdHesapDom(){
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('tdHesCiro',_tdEur(T.ciro)); set('tdHesOde','−'+_tdEur(T.ode)); set('tdHesKurtax',_tdEur(ktO.toplam)); set('tdHesTeslimT',_tdEur(teslimHedef));
   set('tdHesYev','−'+_tdEur(yev)); set('tdHesKom','−'+_tdEur(T.kom)); set('tdHesMas','−'+_tdEur(mas));
-  // rehbere ödenecek = yevmiye + komisyon + masraflar − (teslim edilmesi gerekenden eksik kalan)
-  const eksik=teslimHedef-_tdN(g.teslimAlinan);
-  set('tdHesKalan',_tdEur(yev+T.kom+mas-eksik));
-  set('tdHesNet',_tdEur(teslimHedef-(yev+T.kom+mas)));
-  set('tdHesEksik',eksik?('Teslim farkı: '+_tdEur(eksik)):'');
+  // bakiye = mahsuplu net − teslim alınan (0 = kapatılabilir; + rehber verecek; − şirket rehbere ödeyecek)
+  const net=Math.round((teslimHedef-(yev+T.kom+mas))*100)/100;
+  const bakiye=Math.round((net-_tdN(g.teslimAlinan))*100)/100;
+  set('tdHesNet',_tdEur(net));
+  set('tdHesKalan',_tdEur(Math.abs(bakiye)));
+  const kEl=document.getElementById('tdHesKalan');
+  if(kEl) kEl.style.color=bakiye===0?'#166534':(bakiye>0?'var(--danger)':'var(--navy)');
+  set('tdHesEksik',bakiye===0?'✓ kapandı — hesaplaşmayı kapatabilirsin':(bakiye>0?'rehber şirkete verecek':'şirket rehbere ödeyecek'));
 }
 // ── ana render ──
 function renderTurDosyasi(box){
@@ -15845,12 +15848,13 @@ function renderTurDosyasi(box){
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Toplam Tur Satışı</span><b id="tdHesCiro">${_tdEur(T.ciro)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Tur Ödemeleri <span style="color:var(--muted);font-size:.66rem">(satış tablosundaki ödemeler)</span></span><b id="tdHesOde" style="color:var(--danger)">−${_tdEur(T.ode)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span><b>Toplam teslim edilecek</b></span><b id="tdHesTeslimT">${_tdEur(teslimHedef)}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border);align-items:center"><span>Teslim Alınan</span><span><input inputmode="decimal" value="${esc(g.teslimAlinan)}" placeholder="0" style="width:110px;padding:5px 7px;border:1.5px solid var(--border);border-radius:8px;text-align:right" onchange="tdSet('teslimAlinan',this.value)"${kilit}> <span id="tdHesEksik" style="font-size:.64rem;color:var(--danger)">${eksik?('Teslim farkı: '+_tdEur(eksik)):''}</span></span></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Rehber Yevmiye (${g.yevmiye.donem==='gunluk'?(g.gunSay+' gün × '):(g.yevmiye.donem==='haftalik'?'haftalık × ':'sabit ')}${esc(g.yevmiye.tutar||'0')})</span><b id="tdHesYev" style="color:var(--danger)">−${_tdEur(yev)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Satış Komisyonları (paket bazlı)</span><b id="tdHesKom" style="color:var(--danger)">−${_tdEur(T.kom)}</b></div>
       <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.78rem;border-bottom:1px dashed var(--border)"><span>Masraflar (€ karşılığı)</span><b id="tdHesMas" style="color:var(--danger)">−${_tdEur(mas)}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:9px 16px;font-size:.82rem;background:var(--primary-soft);font-weight:800"><span>REHBERE ÖDENECEK KALAN</span><b id="tdHesKalan">${_tdEur(yev+T.kom+mas-eksik)}</b></div>
-      <div style="display:flex;justify-content:space-between;padding:7px 16px;font-size:.72rem;background:#f8fafc;color:var(--muted)"><span>Mahsuplu net <span style="font-size:.62rem">(rehber yevmiye+komisyon+masrafı kendinde tutarsa şirkete verir)</span></span><b id="tdHesNet">${_tdEur(teslimHedef-(yev+T.kom+mas))}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 16px;font-size:.8rem;border-bottom:1px dashed var(--border);font-weight:800"><span>REHBERDEN ALINACAK NET <span style="color:var(--muted);font-weight:500;font-size:.64rem">(yevmiye+komisyon+masraf mahsuplu)</span></span><b id="tdHesNet">${_tdEur(teslimHedef-(yev+T.kom+mas))}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 16px;font-size:.78rem;border-bottom:1px dashed var(--border);align-items:center"><span>Teslim Alınan</span><input inputmode="decimal" value="${esc(g.teslimAlinan)}" placeholder="0" style="width:110px;padding:5px 7px;border:1.5px solid var(--border);border-radius:8px;text-align:right" onchange="tdSet('teslimAlinan',this.value)"${kilit}></div>
+      ${(()=>{ const net=Math.round((teslimHedef-(yev+T.kom+mas))*100)/100; const bak=Math.round((net-_tdN(g.teslimAlinan))*100)/100;
+        return `<div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:.84rem;background:var(--primary-soft);font-weight:800;align-items:center"><span>KALAN BAKİYE <span id="tdHesEksik" style="font-weight:600;font-size:.62rem">${bak===0?'✓ kapandı — hesaplaşmayı kapatabilirsin':(bak>0?'rehber şirkete verecek':'şirket rehbere ödeyecek')}</span></span><b id="tdHesKalan" style="color:${bak===0?'#166534':(bak>0?'var(--danger)':'var(--navy)')}">${_tdEur(Math.abs(bak))}</b></div>`; })()}
     </div>
     <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
       <button class="btn ${g.hesapKapali?'btn-outline':'btn-primary'}" onclick="tdHesapKapat()">${g.hesapKapali?'Hesaplaşmayı Yeniden Aç':'Hesaplaşmayı Kapat'}</button>
@@ -16118,8 +16122,8 @@ function _tdDocHesap(g,E){
   const ktO=_tdKurTaxOzet(E);
   const teslimHedef=Math.round((T.teslim+ktO.toplam)*100)/100;
   const teslimA=_tdN(g.teslimAlinan);
-  const eksik=teslimHedef-teslimA;
-  const kalan=yev+T.kom+mas-eksik;
+  const net=Math.round((teslimHedef-(yev+T.kom+mas))*100)/100;
+  const bakiye=Math.round((net-teslimA)*100)/100;
   const PCA='-webkit-print-color-adjust:exact;print-color-adjust:exact';
   const TH='border:1px solid #1F4E78;background:#1F4E78;color:#fff;padding:3px 7px;font-size:9pt;text-align:left;'+PCA;
   const TD='border:1px solid #9FB3C8;padding:3px 7px;font-size:9pt';
@@ -16155,17 +16159,18 @@ function _tdDocHesap(g,E){
   <tr><td style="${TD};font-weight:800;background:#DEEAF6;${PCA}" colspan="4">MASRAF TOPLAMI</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(mas)}</td></tr></table>
   ${BANT('3 · KAPANIŞ ÖZETİ')}
   <table style="width:96mm;border-collapse:collapse">
-  ${OZ('Tur satışı',_tdEur(T.teslim),false,false)}
   ${ktO.toplam?OZ('Kur tax ('+ktO.metin+')',_tdEur(ktO.toplam),false,false):''}
-  ${ktO.toplam?OZ('Toplam teslim edilecek',_tdEur(teslimHedef),false,false):''}
+  ${OZ('Toplam tur satışı',_tdEur(T.ciro),false,false)}
+  ${T.ode?OZ('Tur ödemeleri (satış tablosundan)',_tdEur(T.ode),true,false):''}
+  ${OZ('Toplam teslim edilecek',_tdEur(teslimHedef),false,false)}
+  ${OZ('Rehber yevmiyesi ('+yevAcik+')',_tdEur(yev),true,false)}
+  ${OZ('Satış komisyonları',_tdEur(T.kom),true,false)}
+  ${OZ('Masraflar (€ karşılığı)',_tdEur(mas),true,false)}
+  ${OZ('REHBERDEN ALINACAK NET (mahsuplu)',_tdEur(net),false,false)}
   ${OZ('Teslim alınan',_tdEur(teslimA),false,false)}
-  ${eksik?OZ('Teslim farkı (rehberden düşülür)',_tdEur(eksik),true,false):''}
-  ${OZ('Rehber yevmiyesi ('+yevAcik+')',_tdEur(yev),false,false)}
-  ${OZ('Satış komisyonları',_tdEur(T.kom),false,false)}
-  ${OZ('Masraflar (€ karşılığı)',_tdEur(mas),false,false)}
-  ${OZ('REHBERE ÖDENECEK KALAN',_tdEur(kalan),false,true)}
+  ${OZ('KALAN BAKİYE'+(bakiye===0?' (kapandı)':(bakiye>0?' — rehber şirkete verecek':' — şirket rehbere ödeyecek')),_tdEur(Math.abs(bakiye)),false,true)}
   </table>
-  <p style="font-size:8.5pt;color:#333;margin-top:3mm">Yevmiye, satış komisyonları ve rehberin ödediği masraflar rehbere ödenir; varsa teslim farkı bu tutardan düşülür. Ekli fiş/faturalar bu formun ayrılmaz parçasıdır.</p>
+  <p style="font-size:8.5pt;color:#333;margin-top:3mm">Yevmiye, satış komisyonları ve rehberin ödediği masraflar teslim edilecek tutardan mahsup edilir; kalan bakiye teslim alınarak hesaplaşma kapatılır. Ekli fiş/faturalar bu formun ayrılmaz parçasıdır.</p>
   <table style="width:100%;margin-top:8mm;font-size:9.5pt"><tr>
     <td style="width:50%;vertical-align:top"><b>TESLİM ALAN (ACENTE)</b><br>Adı Soyadı: ______________________<br>Tarih: ____ / ____ / ________<br>Kaşe ve imza:${_kaseGet()?`<br><img src="${_kaseGet()}" alt="kaşe" style="max-width:150px;max-height:80px;margin-top:1mm">`:'<br><br><br>'}</td>
     <td style="width:50%;vertical-align:top"><b>TESLİM EDEN (REHBER)</b><br>Adı Soyadı: ${esc((reh&&reh.ad)||'______________________')}<br>Tarih: ____ / ____ / ________<br>İmza:</td>
