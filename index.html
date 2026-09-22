@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v487 · 21.09.2026';
+const APP_VER='v488 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -6920,6 +6920,28 @@ function _ucakIptalUyariHTML(){
     </div>`).join('')}
   </div>`;
 }
+function ucakSeferSil(pkgId,kalkis){
+  if(sbRol&&sbRol!=='yonetici'&&sbRol!=='ucak'){ showToast('Bu işlem için yetkin yok','error'); return; }
+  const arr=getReservations();
+  const g=arr.find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+  const n=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())).length:0;
+  const pk=getPackages().find(p=>p.id===pkgId)||{};
+  showConfirm('🗑','Uçak Listesini Sil',
+    (pk.paketKodu||pk.paketAdi||'?')+' · '+_fmtDateTR(kalkis)+' listesi ('+n+' yolcu) silinecek. Bu liste üründe tanımlı olmayan bir tarihte — genelde yanlış ürüne açılmış eski listedir. Doğru listedeki yolcular etkilenmez.',
+    'Evet, Sil',
+    ()=>{ const i=getReservations().findIndex(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+      if(i<0){ showToast('Liste bulunamadı','error'); return; }
+      const a2=getReservations();
+      window._ucakSilBackup=a2[i];
+      a2.splice(i,1); setReservations(a2);
+      renderUcakGenel();
+      showToast('Liste silindi. Yanlışlıkla sildiysen: ucakSeferSilGeriAl()','success',5000); });
+}
+function ucakSeferSilGeriAl(){
+  const b=window._ucakSilBackup; if(!b){ showToast('Geri alınacak silinmiş liste yok','error'); return; }
+  const a=getReservations(); a.push(b); setReservations(a); window._ucakSilBackup=null;
+  renderUcakGenel(); showToast('Silinen liste geri getirildi','success');
+}
 function renderUcakGenel(){
   const box=document.getElementById('ucakGenel'); if(!box) return;
   _migrateResData();
@@ -6974,7 +6996,7 @@ function renderUcakGenel(){
       <div class="ud-date">${fmtGun(it.kalkis)}</div>
       <div class="ud-main"><div class="ud-name">${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</div><div class="ud-aps">${esc(it.opAd)||'—'}${it.aps.length?' · '+esc(it.aps.join(' · ')):''}</div></div>
       <div class="ud-pax">${it.real?it.pax+' yolcu':'—'}</div>
-      ${it.ozel?'<div class="ud-status ozelg">özel grup</div>':(it.ekstra?'<div class="ud-status urunyok">üründe yok</div>':'')}
+      ${it.ozel?'<div class="ud-status ozelg">özel grup</div>':(it.ekstra?`<div class="ud-status urunyok">üründe yok</div><button title="Bu eski/yanlış listeyi kalıcı sil — üründe bu tarih tanımlı değil" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:3px 8px;cursor:pointer;font-size:.72rem" onclick="event.stopPropagation();ucakSeferSil('${it.id}','${it.kalkis}')">🗑</button>`:'')}
       ${it.pkg.ucakOperatorde?'<div class="ud-status" style="background:#dbeafe;color:#1d4ed8;white-space:nowrap">✈ Uçakları Operatör Alıyor</div>':''}
       ${it.pkg.opsDisAcente?'<div class="ud-status" style="background:#e0f2fe;color:#0369a1;white-space:nowrap">🚌 Dış Operasyon</div>':''}
       ${it.iptal?'<div class="ud-status" style="background:#dc2626;color:#fff;font-weight:800">🚫 CXX</div>':''}
