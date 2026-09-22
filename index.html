@@ -797,8 +797,9 @@ table.ptab td.ro{padding:4px 8px;color:var(--muted)}
 tr.res-secili td{background:#dbeafe!important}
 /* ═ login split ═ */
 .login-overlay{align-items:stretch!important;justify-content:stretch!important;padding:0!important;overflow:auto}
-body.login-acik{overflow:hidden!important}
-body.login-acik .app-body,body.login-acik .topbar,body.login-acik #rolPvBar{display:none!important}
+html:has(body.login-acik){overflow:hidden;overscroll-behavior:none;background:#fff}
+body.login-acik{overflow:hidden!important;overscroll-behavior:none;position:fixed;inset:0;width:100%;background:#fff}
+body.login-acik>*:not(#loginOverlay){display:none!important}
 .lg-split{min-height:100dvh}
 @supports not (height:100dvh){.lg-split{min-height:100vh}}
 .lg-split{display:flex;width:100%;height:100%;background:#fff}
@@ -2094,7 +2095,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v530 · 22.09.2026';
+const APP_VER='v531 · 22.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
