@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v496 · 22.09.2026';
+const APP_VER='v497 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -15753,15 +15753,22 @@ function _trGenRows(){
     try{
       if(!pkg.turTransferYok){
         const rzler=(getRezv()||[]).filter(r=>r.tip==='urun'&&r.pkgId===g.pkgId&&r.kalkis===g.kalkis&&r.durum!=='iptal');
+        // kartın şehri: kartta yazan; boşsa otel TANIMINDAN (Tanımlamalar › Oteller) çözülür
+        const _otlN=t=>_norm(String(t||''));
+        const _otlL=(getTanimlar().oteller||[]);
+        const _kSehir=k=>{ let c=(k.sehir||'').trim();
+          if(!c&&(k.otel||'').trim()){ const o=_otlL.find(o2=>_otlN(o2.ad)===_otlN(k.otel)||(_otlN(o2.ad)&&(_otlN(k.otel).includes(_otlN(o2.ad))||_otlN(o2.ad).includes(_otlN(k.otel)))));
+            if(o&&(o.sehir||'').trim()) c=o.sehir.trim(); }
+          return c; };
         let enIyi=null;
-        rzler.forEach(r=>{ const ks=(r.kartlar||[]).filter(k=>k&&k.tip!=='ulasim'&&(k.sehir||'').trim()&&k.baslangic);
+        rzler.forEach(r=>{ const ks=(r.kartlar||[]).filter(k=>k&&k.tip!=='ulasim'&&k.baslangic&&_kSehir(k));
           if(ks.length>=2&&(!enIyi||ks.length>enIyi.length)) enIyi=ks; });
         if(enIyi){
           const zincir=[...enIyi].sort((a,b)=>String(_pdate(a.baslangic)).localeCompare(String(_pdate(b.baslangic))));
           let onceki=zincir[0], gecisVar=false;
           for(let zi=1;zi<zincir.length;zi++){
             const k=zincir[zi];
-            const c1=(onceki.sehir||'').trim(), c2=(k.sehir||'').trim();
+            const c1=_kSehir(onceki), c2=_kSehir(k);
             if(c1&&c2&&_norm(c1)!==_norm(c2)){
               const tarihK=_pdate(k.baslangic)||'';
               const gunNo=tarihK?Math.max(1,_isoDiff(g.kalkis,tarihK)||0):zi;
