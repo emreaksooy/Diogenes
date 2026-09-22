@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v503 · 22.09.2026';
+const APP_VER='v504 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14592,17 +14592,20 @@ function _tdOdaTipiMi(t){
   const x=String(t||'').trim().replace(/^[·•.\-\s]+/,'');
   return /^(SGL|SNG|DBL|TWN|TRP|TRPL|TPL|QDL|QUAD|FAM|SUI|SUITE)\s*[\/\-. ]?\s*[A-Z0-9]{0,6}$/i.test(x);
 }
+function _tdAdTok(soyad,ad){
+  return _norm((soyad||'')+' '+(ad||'')).split(/\s+/).filter(Boolean).sort().join('|');
+}
+function _tdMusteriBul(k){
+  const rz=_tdRezv(k.resno); if(!rz) return null;
+  const hedef=_tdAdTok(k.soyad,k.ad);
+  return (rz.musteriler||[]).find(x=>!x.iptal&&_tdAdTok(x.soyad,x.ad)===hedef)||null;
+}
 function _tdUnvan(k){
-  try{
-    const rz=_tdRezv(k.resno); if(!rz) return '';
-    const m=(rz.musteriler||[]).find(x=>!x.iptal&&_norm((x.soyad||'')+'|'+(x.ad||''))===_norm((k.soyad||'')+'|'+(k.ad||'')));
-    return (m&&(m.unvan||'').trim())||'';
-  }catch(e){ return ''; }
+  try{ const m=_tdMusteriBul(k); return (m&&(m.unvan||'').trim())||''; }catch(e){ return ''; }
 }
 function _tdTrfNot(k){
   try{
-    const rz=_tdRezv(k.resno); if(!rz) return '';
-    const m=(rz.musteriler||[]).find(x=>!x.iptal&&_norm((x.soyad||'')+'|'+(x.ad||''))===_norm((k.soyad||'')+'|'+(k.ad||'')));
+    const m=_tdMusteriBul(k);
     const t=(m&&(m.trfNot||'').trim())||'';
     return _tdOdaTipiMi(t)?'':t;
   }catch(e){ return ''; }
@@ -14610,7 +14613,7 @@ function _tdTrfNot(k){
 function _tdKisiNot(k){
   const rz=_tdRezv(k.resno);
   let m=null;
-  try{ m=rz&&(rz.musteriler||[]).find(x=>!x.iptal&&_norm((x.soyad||'')+'|'+(x.ad||''))===_norm((k.soyad||'')+'|'+(k.ad||''))); }catch(e){}
+  try{ m=_tdMusteriBul(k); }catch(e){}
   return [...new Set([rz&&(rz.not||'').trim(), rz&&(rz.onemliNot||'').trim(), m&&(m.trfNot||'').trim(), (k.not||'').trim()]
     .filter(Boolean).filter(t=>!_tdOdaTipiMi(t)))].join(' · ');
 }
