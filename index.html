@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v541 · 23.09.2026';
+const APP_VER='v542 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15315,11 +15315,14 @@ function tdSatisPaketleriGetir(sessiz){
   const g=_tdG(), E=_tdE(); if(!g||!E) return 0;
   if(g.hesapKapali){ if(!sessiz) showToast('Hesaplaşma kapalı — önce yeniden aç','error'); return 0; }
   g.satislar=g.satislar||[];
+  if(!sessiz&&(g.satisGizle||[]).length){ g.satisGizle=[]; }
+  const gizle=new Set(g.satisGizle||[]);
   const mev=new Set(g.satislar.map(x=>String(x.ad||'').trim().toLocaleUpperCase('tr')));
   let n=0, guncel=0;
   _tdAktList(E).forEach(a=>{
     if(a.dahil) return;
     const anah=String(a.ad).trim().toLocaleUpperCase('tr');
+    if(gizle.has(anah)) return;
     if(mev.has(anah)){
       // mevcut satırın fiyat/komisyonunu tanımla eşitle (pax/ödeme korunur)
       const st=g.satislar.find(x=>!x.ozel&&String(x.ad||'').trim().toLocaleUpperCase('tr')===anah);
@@ -15362,7 +15365,15 @@ function tdSatisSet(i,f,v){
   if(f==='ad'){ const E=_tdE(); const a=E?_tdAktList(E).find(x=>x.ad.toLocaleLowerCase('tr')===String(v).trim().toLocaleLowerCase('tr')):null; if(a){ if(!_tdN(g.satislar[i].satis)) g.satislar[i].satis=String(a.fiyat||''); if(a.komTip&&!g.satislar[i].komTip){ g.satislar[i].komTip=a.komTip; if((a.komDeg!==''&&a.komDeg!=null)&&!_tdN(g.satislar[i].komDeg)) g.satislar[i].komDeg=String(a.komDeg); } } }
   _tdSave(); _tdSatisDom();
 }
-function tdSatisDel(i){ const g=_tdG(); if(!g)return; g.satislar.splice(i,1); _tdSave(); renderOpsGrup(); }
+function tdSatisDel(i){ const g=_tdG(); if(!g)return;
+  const x=g.satislar[i];
+  if(x&&!x.ozel&&(x.ad||'').trim()){
+    g.satisGizle=g.satisGizle||[];
+    const an=String(x.ad).trim().toLocaleUpperCase('tr');
+    if(!g.satisGizle.includes(an)) g.satisGizle.push(an);
+    showToast('Satır silindi — otomatik getirme bu paketi tekrar eklemez ("⟳ Paketleri Getir" geri getirir)',null,4500);
+  }
+  g.satislar.splice(i,1); _tdSave(); renderOpsGrup(); }
 function tdMasrafAdd(kat){ const g=_tdG(); if(!g)return; g.masraflar.push({id:R_GID(),kat:kat||'TUR MASRAFLARI',ad:'',usd:'',eur:'',tl:''}); _tdSave(); renderOpsGrup(); }
 function tdMasrafSet(i,f,v){ const g=_tdG(); if(!g||!g.masraflar[i])return; g.masraflar[i][f]=String(v).trim(); _tdSave(); _tdHesapDom(); }
 function tdMasrafDel(i){ const g=_tdG(); if(!g)return; g.masraflar.splice(i,1); _tdSave(); renderOpsGrup(); }
