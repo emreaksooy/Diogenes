@@ -2041,7 +2041,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v491 · 22.09.2026';
+const APP_VER='v492 · 22.09.2026';
 document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('appVerBadge');if(b)b.textContent=APP_VER;});
 const PKG_KEY = 'dmc_packages_v2';
 const OP_KEY  = 'dmc_operators_v1';
@@ -14019,6 +14019,9 @@ function _ogResnoPax(pkgId,kalkis,resno){
 function _ogResnoName(pkgId,kalkis,resno){ const g=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!g)return ''; const r=(g.rows||[]).find(x=>_isim(x)&&(x.resno||'').trim()===resno); return r?((r.soyad||'')+' '+(r.ad||'')).trim():''; }
 function _ogResnoPaxRezv(pkgId,kalkis,resno){
   try{
+    const g0=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
+    const ucakta=g0&&(g0.rows||[]).some(r=>_isim(r)&&String((r.resno||'').trim())===String(resno).trim());
+    if(!ucakta) return 0;
     const rz=(getRezv()||[]).find(z=>z.tip==='urun'&&z.pkgId===pkgId&&z.kalkis===kalkis
       &&(String(z.voucher||'').trim()===String(resno).trim()||String(z.asilVoucher||'').trim()===String(resno).trim()));
     if(rz&&_opsRezvSayilir(rz)){
@@ -14027,6 +14030,21 @@ function _ogResnoPaxRezv(pkgId,kalkis,resno){
     } else if(rz&&rz.durum==='iptal') return 0;
   }catch(e){}
   return _ogResnoPax(pkgId,kalkis,resno);
+}
+function _ogHayaletTemizle(){
+  // Grup üyeliği, seferin uçak listesinde artık karşılığı olmayan voucher'ı gösteriyorsa düşür
+  // (ör. yanlış listeye karışmış yolcular ayıklandıktan sonra kalan eski üyelikler).
+  try{
+    const S=getOpsGrup(); const exp=S.gruplar||{}; let degisti=false;
+    const gridV={};
+    getReservations().forEach(g=>{ gridV[g.pkgId+'|'+g.kalkis]=new Set((g.rows||[]).filter(_isim).map(r=>String((r.resno||'').trim())).filter(Boolean)); });
+    Object.keys(exp).forEach(gid=>{
+      const g=exp[gid]; if(!Array.isArray(g.uyeler)||!g.uyeler.length) return;
+      const kalan=g.uyeler.filter(u=>{ const vs=gridV[u.pkgId+'|'+u.kalkis]; return vs&&vs.has(String(u.resno)); });
+      if(kalan.length!==g.uyeler.length){ g.uyeler=kalan; degisti=true; if(!kalan.length) delete exp[gid]; }
+    });
+    if(degisti) setOpsGrup(S);
+  }catch(e){}
 }
 function _ogOtoKat(){
   // Sefere SONRADAN eklenen voucherlar: seferin diğer tüm voucherları tek bir grupta ise
@@ -14050,6 +14068,7 @@ function _ogOtoKat(){
   }catch(e){}
 }
 function _ogResolve(){
+  _ogHayaletTemizle();
   _ogOtoKat();
   const S=getOpsGrup(); const exp=S.gruplar||{}; const claimed={};
   Object.values(exp).forEach(g=>(g.uyeler||[]).forEach(u=>{ claimed[u.pkgId+'|'+u.kalkis+'|'+u.resno]=g.id; }));
