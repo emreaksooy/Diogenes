@@ -2110,7 +2110,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v538 · 23.09.2026';
+const APP_VER='v539 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -14399,9 +14399,10 @@ function _renderSatisPaketYon(box){
         <span style="font-size:.66rem;color:var(--muted)">Rehber dosyasındaki yolcu listesinde kişi başı otomatik yazılır</span>
       </div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:8px">
-        <tr><th style="${th}">Paket / Aktivite</th><th style="${th}">Fiyat €</th><th style="${th}">Kom. Tipi</th><th style="${th}">Kom.</th><th style="${th}" title="Pakete dahil — satış listesine gelmez">Dahil</th><th style="${th}" title="Tur tabelasında (yolcu satış tablosunda) fiyatı görünmez — hesaba normal girer">Fiyat gizli</th><th style="${th}"></th></tr>
+        <tr><th style="${th}">Paket / Aktivite</th><th style="${th}">İçerik</th><th style="${th}">Fiyat €</th><th style="${th}">Kom. Tipi</th><th style="${th}">Kom.</th><th style="${th}" title="Pakete dahil — satış listesine gelmez">Dahil</th><th style="${th}" title="Tur tabelasında (yolcu satış tablosunda) fiyatı görünmez — hesaba normal girer">Fiyat gizli</th><th style="${th}"></th></tr>
         ${akt.map((a,i)=>`<tr>
           <td style="padding:3px 4px"><input value="${esc(a.ad||'')}" placeholder="ör. Kapadokya Balon" onchange="spSet('${p.id}',${i},'ad',this.value)" style="${inp};width:100%;min-width:160px"></td>
+          <td style="padding:3px 4px"><input value="${esc(a.icerik||'')}" placeholder="ör. balon uçuşu + transfer + kahvaltı" onchange="spSet('${p.id}',${i},'icerik',this.value)" style="${inp};width:100%;min-width:200px"></td>
           <td style="padding:3px 4px"><input value="${esc(a.fiyat!=null?a.fiyat:'')}" inputmode="decimal" onchange="spSet('${p.id}',${i},'fiyat',this.value)" style="${inp};width:72px;text-align:right"></td>
           <td style="padding:3px 4px"><select onchange="spSet('${p.id}',${i},'komTip',this.value)" style="${inp}"><option value="%" ${(a.komTip||'%')==='%'?'selected':''}>% (yüzde)</option><option value="€" ${a.komTip==='€'?'selected':''}>€ (kişi başı)</option></select></td>
           <td style="padding:3px 4px"><input value="${esc(a.komDeg!=null?a.komDeg:'')}" inputmode="decimal" onchange="spSet('${p.id}',${i},'komDeg',this.value)" style="${inp};width:56px;text-align:right"></td>
@@ -14461,7 +14462,7 @@ function tdMxExcel(){
   const kisiler=_tdKisiler(E); const satislar=(g.satislar||[]);
   const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
   const aoa=[[(reh?reh.ad:'')||'', _fmtDateTR(E.tarih), (E.ops||[]).join(', '), (E.urunler||[]).join(', ')],
-    ['GASTNAMEN','Voucher No','KUR TAX'].concat(satislar.map(x=>x.ad+(_tdN(x.satis)?(' ('+_tdN(x.satis)+' €)'):'')))];
+    ['GASTNAMEN','Voucher No','KUR TAX'].concat(satislar.map(x=>x.ad+(_tdN(x.satis)?(' ('+_tdN(x.satis)+' €)'):'')+(x.icerik?('\n'+x.icerik):'')))];
   let ktTop=0;
   kisiler.forEach(k=>{
     const key=_tdMxKey(k); const row=(g.satisMx||{})[key]||{};
@@ -15184,7 +15185,7 @@ function _tdAktList(E){
   const out=[]; const seen=new Set();
   const uyeler=(E.uyeler||[]).length?E.uyeler:((E.sefer&&E.sefer.pkgId)?[{pkgId:E.sefer.pkgId}]:[]);
   uyeler.forEach(u=>{ const pk=getPackages().find(p=>p.id===u.pkgId); if(!pk) return;
-    (pk.aktiviteler||[]).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:_aktFiyatNum(a.fiyat),dahil:!!a.dahilMi,fiyatGizli:!!a.fiyatGizli,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:'')}); });
+    (pk.aktiviteler||[]).forEach(a=>{ const ad=(a.ad||'').trim(); if(!ad||seen.has(ad.toUpperCase()))return; seen.add(ad.toUpperCase()); out.push({ad,fiyat:_aktFiyatNum(a.fiyat),dahil:!!a.dahilMi,fiyatGizli:!!a.fiyatGizli,komTip:a.komTip||'',komDeg:(a.komDeg!=null?a.komDeg:''),icerik:String(a.icerik||'').trim()}); });
   });
   return out;
 }
@@ -15318,12 +15319,12 @@ function tdSatisPaketleriGetir(sessiz){
       // mevcut satırın fiyat/komisyonunu tanımla eşitle (pax/ödeme korunur)
       const st=g.satislar.find(x=>!x.ozel&&String(x.ad||'').trim().toLocaleUpperCase('tr')===anah);
       if(st){
-        const yeniSatis=String(a.fiyat||''), yeniTip=a.komTip||st.komTip||'%', yeniDeg=(a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'';
-        if(st.satis!==yeniSatis||st.komTip!==yeniTip||st.komDeg!==yeniDeg||(!!st.fiyatGizli)!==(!!a.fiyatGizli)){ st.satis=yeniSatis; st.komTip=yeniTip; st.komDeg=yeniDeg; st.fiyatGizli=!!a.fiyatGizli; guncel++; }
+        const yeniSatis=String(a.fiyat||''), yeniTip=a.komTip||st.komTip||'%', yeniDeg=(a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'', yeniIc=String(a.icerik||'');
+        if(st.satis!==yeniSatis||st.komTip!==yeniTip||st.komDeg!==yeniDeg||(!!st.fiyatGizli)!==(!!a.fiyatGizli)||String(st.icerik||'')!==yeniIc){ st.satis=yeniSatis; st.komTip=yeniTip; st.komDeg=yeniDeg; st.fiyatGizli=!!a.fiyatGizli; st.icerik=yeniIc; guncel++; }
       }
       return;
     }
-    g.satislar.push({id:R_GID(),ad:a.ad,alis:'',satis:String(a.fiyat||''),pax:'',odeme:'',komTip:a.komTip||'%',komDeg:(a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'',rez:'',ozel:false,not:'',ekleyen:'',fiyatGizli:!!a.fiyatGizli});
+    g.satislar.push({id:R_GID(),ad:a.ad,alis:'',satis:String(a.fiyat||''),pax:'',odeme:'',komTip:a.komTip||'%',komDeg:(a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'',rez:'',ozel:false,not:'',ekleyen:'',fiyatGizli:!!a.fiyatGizli,icerik:String(a.icerik||'')});
     n++;
   });
   if(n||guncel) _tdSave();
@@ -15530,7 +15531,7 @@ function renderTurDosyasi(box){
       </div>
       <div style="overflow-x:auto;margin-bottom:14px"><table class="rzmg" style="min-width:700px">
         <tr><th style="min-width:170px">GASTNAMEN</th><th style="width:82px" title="İşaretli paketler + kur tax">TOPLAM €</th><th style="width:90px">Voucher</th><th style="width:76px" title="Üründe tanımlı kur tax — kişi başı">KUR TAX</th>
-        ${g.satislar.map(x=>`<th style="min-width:80px;text-align:center">${esc(x.ad)}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:500;font-size:.6rem">${_tdN(x.satis)} €</div>`:''}</th>`).join('')}</tr>
+        ${g.satislar.map(x=>`<th style="min-width:80px;text-align:center" title="${esc(x.icerik||'')}">${esc(x.ad)}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:500;font-size:.6rem">${_tdN(x.satis)} €</div>`:''}</th>`).join('')}</tr>
         ${satirlar}
         <tr style="background:var(--light);font-weight:800"><td>TOPLAM</td>
         <td style="text-align:right;color:var(--primary)">${(()=>{ let gt=ktTop; kisiler.forEach(k2=>{ const r3=g.satisMx[_tdMxKey(k2)]||{}; g.satislar.forEach(x=>{ gt+=_tdN(r3[x.id])*_tdN(x.satis); }); }); return Math.round(gt*100)/100||'—'; })()} €</td>
@@ -15542,7 +15543,8 @@ function renderTurDosyasi(box){
     <tr><th style="min-width:190px">Paket</th><th style="width:80px">Alış</th><th style="width:80px">Satış</th><th style="width:60px">Pax</th><th style="width:95px">Toplam</th><th style="width:134px">Ödemeler</th><th style="width:78px">Kom. tipi</th><th style="width:66px">Değer</th><th style="width:90px">Rehber Kom.</th><th style="width:104px">Op. Rez.</th><th style="width:30px"></th></tr>
     ${g.satislar.map((x,i)=>`<tr${x.ozel?' style="background:#fdf4ff"':''}>
       <td><div style="display:flex;align-items:center;gap:5px"><input value="${esc(x.ad)}" list="tdAktL" style="flex:1" onchange="tdSatisSet(${i},'ad',this.value)"${_tdSatisAcik(x)?kilit:' disabled'}>${x.ozel?`<span title="${esc(x.ekleyen||'')}" style="background:#f3e8ff;color:#7e22ce;padding:1px 6px;border-radius:8px;font-size:.56rem;font-weight:800">ÖZEL</span>`:''}</div>
-        ${x.ozel?`<input value="${esc(x.not)}" placeholder="not — ör. ilk gece yemek yok" style="margin-top:3px;font-size:.66rem" onchange="tdSatisSet(${i},'not',this.value)"${kilit}>`:''}</td>
+        ${x.ozel?`<input value="${esc(x.not)}" placeholder="not — ör. ilk gece yemek yok" style="margin-top:3px;font-size:.66rem" onchange="tdSatisSet(${i},'not',this.value)"${kilit}>`:''}
+        ${x.icerik?`<div style="font-size:.62rem;color:var(--muted);margin-top:2px;line-height:1.3">${esc(x.icerik)}</div>`:''}</td>
       <td><input inputmode="decimal" value="${esc(x.alis)}" style="text-align:right" onchange="tdSatisSet(${i},'alis',this.value)"${kilit}></td>
       <td>${(x.fiyatGizli&&sbRol==='rehber')?'<span style="color:var(--muted)">•••</span>':`<input inputmode="decimal" value="${esc(x.satis)}" style="text-align:right" onchange="tdSatisSet(${i},'satis',this.value)"${kilit}>`}</td>
       <td><input inputmode="numeric" value="${esc(x.pax)}" style="text-align:right" onchange="tdSatisSet(${i},'pax',this.value)"${kilit}></td>
@@ -16080,7 +16082,7 @@ function _tdDocHesap(g,E){
   </table>
   ${BANT('1 · PAKET SATIŞLARI')}
   <table style="width:100%;border-collapse:collapse"><tr><th style="${TH}">Paket</th><th style="${TH};text-align:right">Alış</th><th style="${TH};text-align:right">Satış</th><th style="${TH};text-align:center">Pax</th><th style="${TH};text-align:right">Toplam</th><th style="${TH};text-align:right">Ödemeler</th><th style="${TH};text-align:right">Rehber Kom.</th></tr>
-  ${(g.satislar||[]).map(x=>`<tr><td style="${TD}">${esc(x.ad)}${x.ozel?' <b>(ÖZEL'+(x.not?': '+esc(x.not):'')+')</b>':''}</td><td style="${TDr}">${esc(x.alis)}</td><td style="${TDr}">${esc(x.satis)}</td><td style="${TD};text-align:center">${esc(x.pax)}</td><td style="${TDr}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td><td style="${TDr}">${esc(x.odeme)}${x.odemeTip?` <span style="font-size:7.5pt;color:#555">(${_tdOdemeTipAd(x.odemeTip)})</span>`:''}</td><td style="${TDr}">${_tdEur(_tdKom(x))}</td></tr>`).join('')||`<tr><td style="${TD}" colspan="7">Satış yok</td></tr>`}
+  ${(g.satislar||[]).map(x=>`<tr><td style="${TD}">${esc(x.ad)}${x.ozel?' <b>(ÖZEL'+(x.not?': '+esc(x.not):'')+')</b>':''}${x.icerik?`<div style="font-size:7pt;color:#555">${esc(x.icerik)}</div>`:''}</td><td style="${TDr}">${esc(x.alis)}</td><td style="${TDr}">${esc(x.satis)}</td><td style="${TD};text-align:center">${esc(x.pax)}</td><td style="${TDr}">${_tdEur(_tdN(x.satis)*(+x.pax||0))}</td><td style="${TDr}">${esc(x.odeme)}${x.odemeTip?` <span style="font-size:7.5pt;color:#555">(${_tdOdemeTipAd(x.odemeTip)})</span>`:''}</td><td style="${TDr}">${_tdEur(_tdKom(x))}</td></tr>`).join('')||`<tr><td style="${TD}" colspan="7">Satış yok</td></tr>`}
   <tr><td style="${TD};font-weight:800;background:#DEEAF6;${PCA}" colspan="4">TOPLAM</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.ciro)}</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.ode)}</td><td style="${TDr};font-weight:800;background:#DEEAF6;${PCA}">${_tdEur(T.kom)}</td></tr></table>
   ${BANT('2 · MASRAFLAR')}
   <table style="width:100%;border-collapse:collapse"><tr><th style="${TH}">Açıklama</th><th style="${TH};text-align:right;width:15mm">$</th><th style="${TH};text-align:right;width:15mm">€</th><th style="${TH};text-align:right;width:17mm">₺</th><th style="${TH};text-align:right;width:22mm">€ karşılığı</th></tr>
