@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v562 · 23.09.2026';
+const APP_VER='v563 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -7469,6 +7469,7 @@ function renderUcakGenel(){
         <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap"><input type="checkbox" ${_ucakGizle.iptal?'checked':''} onchange="_ucakGizleTog('iptal',this)" style="width:15px;height:15px;accent-color:var(--primary)"> İptal gizle</label>
         <button class="btn btn-outline btn-sm" style="white-space:nowrap" onclick="_ucakSecTum()" title="Ekranda görünen (filtrelenmiş) tüm listeleri seç / bırak">☑ Tümünü Seç</button>
         ${_ucakSec.size?`<button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;font-weight:700;white-space:nowrap" onclick="_ucakSecSil()">🗑 Seçilenleri Sil (${_ucakSec.size})</button>`:''}
+        <button class="btn btn-outline btn-sm" style="white-space:nowrap;color:#7e22ce;border-color:#d8b4fe" onclick="ucakCiftVoucher()" title="Aynı voucher birden çok kalkışta/üründe kayıtlıysa bulur">🔍 Çift Voucher</button>
         <button class="btn btn-outline btn-sm" style="white-space:nowrap" onclick="_ucYeniListe()">+ Yeni Liste</button>
         <label class="btn btn-outline btn-sm" style="cursor:pointer;white-space:nowrap"><svg class="ic"><use href="#i-upload"/></svg> Liste İçe Aktar<input type="file" accept=".json" multiple onchange="importPackages(event)" style="display:none"></label>
       </div>
@@ -7869,6 +7870,71 @@ async function _aiSor(prompt,maxTok){
   return (j.content&&j.content[0]&&j.content[0].text)||'';
 }
 function _aiJson(t){ const m=String(t||'').match(/\{[\s\S]*\}/); if(!m) throw new Error('AI yanıtında JSON yok'); return JSON.parse(m[0]); }
+function ucakCiftVoucher(){
+  const kodOf=id=>{const p=getPackages().find(x=>x.id===id);return p?(p.paketKodu||p.paketAdi||'?'):'?';};
+  const adOf=id=>{const p=getPackages().find(x=>x.id===id);return p?(p.paketAdi||''):'';};
+  const map={}; // voucher -> Map(lockey -> {pkgId,kalkis,adlar[]})
+  getReservations().forEach(g=>{
+    const kisiler={};
+    (g.rows||[]).forEach(r=>{ const v=String(r.resno||'').trim(); const ad=((r.soyad||'')+' '+(r.ad||'')).trim(); if(!v||!ad) return; (kisiler[v]=kisiler[v]||[]).push(ad); });
+    Object.keys(kisiler).forEach(v=>{
+      const lk=g.pkgId+'|'+g.kalkis;
+      map[v]=map[v]||{};
+      if(!map[v][lk]) map[v][lk]={pkgId:g.pkgId,kalkis:g.kalkis,adlar:kisiler[v]};
+    });
+  });
+  // grupla: aynı konum-çifti deseni
+  const gruplar={};
+  Object.keys(map).forEach(v=>{
+    const lks=Object.keys(map[v]); if(lks.length<2) return;
+    const gk=lks.slice().sort().join('~');
+    (gruplar[gk]=gruplar[gk]||{lks:lks.slice().sort(),vouchers:[]}).vouchers.push(v);
+  });
+  const G=Object.values(gruplar);
+  const eski=document.getElementById('ucCiftModal'); if(eski) eski.remove();
+  const ov=document.createElement('div'); ov.id='ucCiftModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto';
+  window._ucCiftData=gruplar;
+  const etiket=lk=>{ const [pid,kal]=lk.split('|'); const kod=kodOf(pid), ad2=adOf(pid); return '<b>'+esc(kod)+'</b> · '+_fmtDateTR(kal)+(ad2?' <span style="color:var(--muted);font-size:.66rem">'+esc(ad2.slice(0,34))+'</span>':''); };
+  let ic='';
+  if(!G.length) ic='<p style="font-size:.85rem;color:#166534;font-weight:700">✓ Çift voucher yok — tüm yolcular tek kalkışta kayıtlı.</p>';
+  else G.forEach((gr,gi)=>{
+    ic+=`<div style="border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+        <span style="background:#f3e8ff;color:#7e22ce;font-weight:800;font-size:.68rem;padding:2px 9px;border-radius:8px">${gr.vouchers.length} voucher</span>
+        ${gr.lks.map(lk=>`<span style="font-size:.78rem">${etiket(lk)}</span>`).join('<span style="color:var(--muted)">↔</span>')}
+      </div>
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:8px">${gr.vouchers.slice(0,12).map(v=>esc(v)+' ('+esc((Object.values(window._ucCiftData)[gi]&&map[v][gr.lks[0]]?map[v][gr.lks[0]].adlar[0]:'')||'')+')').join(' · ')}${gr.vouchers.length>12?' · +'+(gr.vouchers.length-12):''}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${gr.lks.map((lk,li)=>`<button class="btn btn-outline btn-sm" style="color:#dc2626;border-color:#fca5a5" onclick="ucakCiftSil('${gi}','${li}')">🗑 ${etiket(lk).replace(/<[^>]+>/g,'')} tarafından sil</button>`).join('')}
+      </div>
+    </div>`;
+  });
+  ov.innerHTML=`<div style="width:min(780px,100%);background:#fff;border-radius:16px;padding:22px 24px;max-height:86vh;overflow:auto">
+    <div style="display:flex;align-items:center;margin-bottom:12px"><b style="font-size:1rem">🔍 Çift Voucher Denetimi</b>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="document.getElementById('ucCiftModal').remove()">✕ Kapat</button></div>
+    <p style="font-size:.72rem;color:var(--muted);margin-bottom:12px">Aynı voucher birden fazla kalkışta/üründe isimli satırla kayıtlı. Doğru olan tarafı BIRAK, yanlış/eski taraftaki satırları sil — yalnız o voucher'ların satırları silinir, listenin kalanına dokunulmaz.</p>
+    ${ic}</div>`;
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
+  document.body.appendChild(ov);
+}
+function ucakCiftSil(gi,li){
+  const G=Object.values(window._ucCiftData||{}); const gr=G[+gi]; if(!gr) return;
+  const lk=gr.lks[+li]; const [pid,kal]=lk.split('|');
+  const vs=new Set(gr.vouchers);
+  showConfirm('🗑','Satırları Sil',gr.vouchers.length+' voucher bu kalkıştan silinecek: '+_fmtDateTR(kal)+'. Diğer taraftaki kayıtlar durur.','Sil',()=>{
+    let n=0;
+    getReservations().forEach(g=>{ if(g.pkgId!==pid||g.kalkis!==kal) return;
+      const once=(g.rows||[]).length;
+      g.rows=(g.rows||[]).filter(r=>!vs.has(String(r.resno||'').trim()));
+      n+=once-g.rows.length;
+    });
+    setReservations(getReservations());
+    try{ renderUcak&&renderUcak(); }catch(e){}
+    showToast(n+' satır silindi','success');
+    ucakCiftVoucher(); // modalı tazele
+  });
+}
 function ucakExcelImport(evt){
   const f=evt.target.files[0]; evt.target.value=''; if(!f) return;
   if(!_resPkgId||!_resKalkis){ showToast('Önce ürün ve kalkış seçin','error'); return; }
