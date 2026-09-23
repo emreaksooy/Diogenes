@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v566 · 23.09.2026';
+const APP_VER='v567 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15841,7 +15841,7 @@ function renderTurDosyasi(box){
         const f=grp[0];
         const tekil=[]; const seen=new Set();
         grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad+'|'+(x.dogum||''); if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
-        tekil.sort((a,b)=>(a.soyad+a.ad).localeCompare(b.soyad+b.ad,'tr'));
+        tekil.sort((a,b)=>String(a.resno||'').localeCompare(String(b.resno||''),'tr',{numeric:true})||(a.soyad+a.ad).localeCompare(b.soyad+b.ad,'tr'));
         const tr=(()=>{ const UL=(f.ucusList&&f.ucusList.length)?f.ucusList.slice().reverse():[{ucus:f.ucus,tarih:f.tarih}];
           for(const u of UL){ const t2=trRows.find(r=>String(r.ucus||'').trim()===String(u.ucus||'').trim()&&r.tarih===_pdate(u.tarih||f.tarih)); if(t2) return t2; }
           return trRows.find(r=>String(f.ucus||'').includes(String(r.ucus||'').trim())&&r.tarih===_pdate(f.tarih))||null; })();
