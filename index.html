@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v560 · 23.09.2026';
+const APP_VER='v561 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18186,14 +18186,21 @@ function _trYolcularDetay(r){
     return Object.assign({},y,{unvan,pans,konak,oda,yas:yasHesap(y.dogum)});
   });
 }
-function _trTasimaciBloklar(sessiz){
-  const firma=_trUst.firma;
-  if(!firma){ if(!sessiz) showToast('Önce üst filtreden ARAÇ FİRMASI seç — liste o firmaya özel hazırlanır','error',5000); return null; }
-  const list=_trGorunur().filter(x=>x.r.grup&&(_trGrupOf(x.r).firma||'')===firma);
+function _trTasimaciBloklar(sessiz,secIds){
+  let firma=_trUst.firma, list;
+  if(secIds){
+    firma='SEÇİLİ İŞLER';
+    list=_trGorunur().filter(x=>secIds.has(x.r.id));
+    if(!list.length){ if(!sessiz) showToast('Seçili transferler görünür listede yok','error'); return null; }
+  } else {
+    if(!firma){ if(!sessiz) showToast('Önce üst filtreden ARAÇ FİRMASI seç — liste o firmaya özel hazırlanır','error',5000); return null; }
+    list=_trGorunur().filter(x=>x.r.grup&&(_trGrupOf(x.r).firma||'')===firma);
+  }
   // TAHSİS araçlar: tur dosyalarındaki tahsis satırları (firma eşleşen, görünür aralıkla kesişen)
   const _d1=_opsTrDate, _d2=_opsTrDate2||_opsTrDate;
   const tahsisler=[];
   try{
+    if(secIds) throw 0; // seçili modda tahsis taranmaz
     _ogResolve().forEach(E2=>{
       const g2=(getOpsGrup().gruplar||{})[E2.id]; if(!g2) return;
       (g2.araclar||[]).filter(a=>a.tip==='tahsis'&&String(a.firma||'').trim()===firma).forEach(a=>{
@@ -18215,7 +18222,7 @@ function _trTasimaciBloklar(sessiz){
   const bolumler={'GELİŞ':[],'DÖNÜŞ':[],'ARA TRANSFER':[],'ARA UÇUŞ':[]};
   const gorevMap={};
   sirali.forEach(x=>{
-    const B=bolum(x); const key=B+'|'+x.r.grup+'|'+x.r.tarih;
+    const B=bolum(x); const key=B+'|'+(x.r.grup||('TEK|'+x.r.id))+'|'+x.r.tarih;
     let blok=gorevMap[key];
     if(!blok){
       blok={kod:_trKodOf(x.r.grup),tarih:x.r.tarih,gr:_trGrupOf(x.r),ilkR:x.r,ucuslar:[],pax:0,depar:null,hedef:'',yolcular:[]};
@@ -18316,9 +18323,9 @@ function _trKlasikExcel(){
   XLSX.writeFile(wb,ad);
   showToast('Klasik iş listesi indirildi: '+L.length+' satır','success');
 }
-function _trTasimaciExcel(){
+function _trTasimaciExcel(secIds){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
-  const V=_trTasimaciBloklar(); if(!V) return;
+  const V=_trTasimaciBloklar(false,secIds); if(!V) return;
   const aoa=[['DIOGENES TRAVEL — TRANSFER LİSTESİ · '+V.firma],[V.donem],[]];
   const bantlar=[], bolumBant=[], yolcuHdr=[], detaylar=[], deparlar=[];
   Object.keys(V.bolumler).forEach(B=>{
@@ -18385,7 +18392,7 @@ function _trTasimaciExcel(){
   }catch(e){}
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Transfer Listesi');
-  const adx='tasimaci_'+String(V.firma).replace(/\s+/g,'')+'_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  const adx=(secIds?'transfer_secili_':'tasimaci_'+String(V.firma).replace(/\s+/g,'')+'_')+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
   XLSX.writeFile(wb,adx);
   showToast('Taşımacı listesi indirildi: '+adx,'success',6000);
 }
@@ -18486,17 +18493,8 @@ function _trUetdsExcel(){
   showToast(msg,'success',8000);
 }
 function _trExcelSecili(){
-  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   if(!_trSel.size){ showToast('Önce transfer seç','error'); return; }
-  const list=_trGorunur().filter(x=>_trSel.has(x.r.id));
-  if(!list.length){ showToast('Seçili transferler görünür listede yok (filtreleri kontrol et)','error'); return; }
-  const donemF=_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate);
-  const pax=list.reduce((t,x)=>t+(+x.r.pax||0),0);
-  const ws=_trExcelWsYap(list,'DIOGENES TRAVEL — TRANSFER LİSTESİ · SEÇİLİ İŞLER',donemF+' · '+list.length+' transfer · '+pax+' pax');
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Seçili');
-  XLSX.writeFile(wb,'transfer_secili_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx');
-  showToast(list.length+' transfer Excel olarak indirildi','success');
+  _trTasimaciExcel(new Set(_trSel));
 }
 function _trExcelFirma(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
