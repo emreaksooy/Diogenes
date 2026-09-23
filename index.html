@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v559 · 23.09.2026';
+const APP_VER='v560 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17934,6 +17934,7 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
     <input id="trDepar" placeholder="Toplu depar (boş=oto)" style="width:150px">
     <input id="trGuzergah" placeholder="Güzergâh notu" style="width:150px">
     <input id="trSecNot" placeholder="Not (iç hat, T1…)" style="width:140px">
+    <button class="btn btn-s" style="background:#166534" onclick="_trExcelSecili()" title="Yalnız seçili transferleri Excel indir">📥 Excel</button>
     <button class="btn btn-s" onclick="_trAtama(true)" title="Seçilenler TEK görev olur — monitörde dıştan tek satır, tek araç">🔗 Birleştir & Ata</button>
     ${_trSel.size>1?`<button class="btn btn-s" style="background:#0369a1" onclick="_trAtama(false)" title="Her seçili transfer AYRI görev olur — aynı araç bilgisi kopyalanır, satırlar birleşmez">⚟ Ayrı Ayrı Ata</button>`:''}
     <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trNotToplu()" title="Araç atamadan yalnız not yazar — satırın Not kolonuna işlenir">📝 Sadece Notu Kaydet</button>
@@ -18483,6 +18484,19 @@ function _trUetdsExcel(){
   let msg='UETDS indirildi: '+adx+' — '+Object.keys(gorevler).length+' görev, '+toplamYolcu+' yolcu';
   if(isimsizGorev.length) msg+=' · ⚠ isim bulunamayan: '+[...new Set(isimsizGorev)].slice(0,3).join(', ');
   showToast(msg,'success',8000);
+}
+function _trExcelSecili(){
+  if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
+  if(!_trSel.size){ showToast('Önce transfer seç','error'); return; }
+  const list=_trGorunur().filter(x=>_trSel.has(x.r.id));
+  if(!list.length){ showToast('Seçili transferler görünür listede yok (filtreleri kontrol et)','error'); return; }
+  const donemF=_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate);
+  const pax=list.reduce((t,x)=>t+(+x.r.pax||0),0);
+  const ws=_trExcelWsYap(list,'DIOGENES TRAVEL — TRANSFER LİSTESİ · SEÇİLİ İŞLER',donemF+' · '+list.length+' transfer · '+pax+' pax');
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Seçili');
+  XLSX.writeFile(wb,'transfer_secili_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx');
+  showToast(list.length+' transfer Excel olarak indirildi','success');
 }
 function _trExcelFirma(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
