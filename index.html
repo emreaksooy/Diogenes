@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v557 · 23.09.2026';
+const APP_VER='v558 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16055,6 +16055,8 @@ function _tdDocUstBilgi(E){
 }
 function _tdDocSatisMx(g,E){
   const K=_tdKisiler(E); const P=(g.satislar||[]);
+  const opAd=k=>{ try{ const rz=_tdRezv(k.resno); return (rz&&(rz.operator||'').trim())||''; }catch(e){ return ''; } };
+
   g.satisMx=g.satisMx||{};
   const ktO=_tdKurTaxOzet(E);
   const TH2='border:1px solid #8ea3b8;padding:4px 8px;background:#1F4E78;color:#fff;font-size:9pt;text-align:left;vertical-align:top';
@@ -16068,6 +16070,7 @@ function _tdDocSatisMx(g,E){
     return `<tr style="background:${zebra}"><td style="${TD2};text-align:center;color:#888">${i+1}</td>
       <td style="${TD2};white-space:nowrap"><b>${esc(k.soyad)}</b> ${esc(k.ad)}</td>
       <td style="${TD2}">${esc(k.resno)}</td>
+      <td style="${TD2};font-size:8pt">${esc(opAd(k))}</td>
       <td style="${TD2};white-space:nowrap;background:${al?'#dcfce7':'#f0fdf4'}">${kt?`<span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#C55A11">${Math.round(kt*100)/100} €</b><span style="font-size:11pt;color:${al?'#166534':'#94a3b8'}">${al?'☑':'☐'}</span></span>`:'—'}</td>
       ${P.map(x=>`<td style="${TD2};text-align:center;font-weight:700;color:#166534">${row[x.id]?'✓':''}</td>`).join('')}</tr>`;
   }).join('');
@@ -16075,11 +16078,11 @@ function _tdDocSatisMx(g,E){
   return `<style>@page satmxp{size:A4 landscape}</style><div style="page:satmxp">`+_tdDocBas('Yolcu Satış Tablosu',E)+_tdDocUstBilgi(E)+`
   ${aciklamalar?`<div style="border:1px solid #c3ccd6;border-left:3px solid #C55A11;border-radius:2mm;padding:2mm 3mm;margin-bottom:3mm;background:#fdf8f4">${aciklamalar}</div>`:''}
   <table style="width:100%;border-collapse:collapse">
-    <thead><tr><th style="${TH2};width:8mm;text-align:center">#</th><th style="${TH2}">GASTNAMEN</th><th style="${TH2};width:24mm">Voucher</th>
+    <thead><tr><th style="${TH2};width:8mm;text-align:center">#</th><th style="${TH2}">GASTNAMEN</th><th style="${TH2};width:24mm">Voucher</th><th style="${TH2};width:22mm">Operatör</th>
     <th style="${TH2};width:24mm">KUR TAX${ktO.metin?`<div style="font-weight:400;font-size:7.5pt">${ktO.metin}</div>`:''}</th>
     ${P.map(x=>`<th style="${TH2};text-align:center">${esc(x.ad)}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:400;font-size:7.5pt">${_tdN(x.satis)} €</div>`:''}</th>`).join('')}</tr></thead>
-    <tbody>${rows||`<tr><td style="${TD2}" colspan="${4+P.length}">Yolcu yok</td></tr>`}
-    <tr style="background:#DEEAF6;font-weight:bold"><td style="${TD2}" colspan="3">TOPLAM · ${K.length} kişi</td>
+    <tbody>${rows||`<tr><td style="${TD2}" colspan="${5+P.length}">Yolcu yok</td></tr>`}
+    <tr style="background:#DEEAF6;font-weight:bold"><td style="${TD2}" colspan="4">TOPLAM · ${K.length} kişi</td>
     <td style="${TD2};text-align:right;white-space:nowrap;color:#C55A11">${Math.round(ktTop*100)/100||'—'} €${alTop?`<div style="font-size:7pt;font-weight:400;color:#166534">alınan: ${Math.round(alTop*100)/100}</div>`:''}</td>
     ${P.map(x=>{ let t=0; Object.values(g.satisMx).forEach(r2=>{t+=_tdN(r2[x.id]);}); return `<td style="${TD2};text-align:center">${t||''}</td>`; }).join('')}</tr></tbody>
   </table>
@@ -16087,6 +16090,8 @@ function _tdDocSatisMx(g,E){
 }
 function _tdDocCizelge(g,E){
   const K=_tdKisiler(E);
+  const opAd=k=>{ try{ const rz=_tdRezv(k.resno); return (rz&&(rz.operator||'').trim())||''; }catch(e){ return ''; } };
+
   const P=(g.satislar||[]).length?g.satislar:[{ad:'',satis:''},{ad:'',satis:''},{ad:'',satis:''}];
   const ktO=_tdKurTaxOzet(E);
   const TH2='border:1px solid #8ea3b8;padding:4px 8px;background:#1F4E78;color:#fff;font-size:9pt;text-align:left;vertical-align:top';
@@ -16098,6 +16103,7 @@ function _tdDocCizelge(g,E){
     return `<tr style="background:${zebra}"><td style="${TD2};text-align:center;color:#888">${i+1}</td>
       <td style="${TD2};white-space:nowrap"><b>${esc(k.soyad)}</b> ${esc(k.ad)}</td>
       <td style="${TD2}">${esc(k.resno)}</td>
+      <td style="${TD2};font-size:8pt">${esc(opAd(k))}</td>
       <td style="${TD2};white-space:nowrap;background:#f0fdf4">${kt?`<span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#C55A11">${Math.round(kt*100)/100} €</b><span style="font-size:11pt;color:#94a3b8">☐</span></span>`:'—'}</td>
       ${P.map(()=>`<td style="${TD2};height:6mm"></td>`).join('')}</tr>`;
   }).join('');
@@ -16106,11 +16112,11 @@ function _tdDocCizelge(g,E){
   <p style="font-size:9pt;color:#555;margin:0 0 2mm">Rehber turda işaretler; dönüşte adetler sisteme girilir.</p>
   ${aciklamalar?`<div style="border:1px solid #c3ccd6;border-left:3px solid #C55A11;border-radius:2mm;padding:2mm 3mm;margin-bottom:3mm;background:#fdf8f4">${aciklamalar}</div>`:''}
   <table style="width:100%;border-collapse:collapse">
-    <thead><tr><th style="${TH2};width:8mm;text-align:center">#</th><th style="${TH2}">GASTNAMEN</th><th style="${TH2};width:24mm">Voucher</th>
+    <thead><tr><th style="${TH2};width:8mm;text-align:center">#</th><th style="${TH2}">GASTNAMEN</th><th style="${TH2};width:24mm">Voucher</th><th style="${TH2};width:22mm">Operatör</th>
     <th style="${TH2};width:24mm">KUR TAX${ktO.metin?`<div style="font-weight:400;font-size:7.5pt">${ktO.metin}</div>`:''}</th>
     ${P.map(x=>`<th style="${TH2};text-align:center">${esc(x.ad||'')}${(_tdN(x.satis)&&!x.fiyatGizli)?`<div style="font-weight:400;font-size:7.5pt">${_tdN(x.satis)} €</div>`:''}</th>`).join('')}</tr></thead>
-    <tbody>${rows||`<tr><td style="${TD2}" colspan="${4+P.length}">Yolcu yok</td></tr>`}
-    <tr style="background:#DEEAF6;font-weight:bold"><td style="${TD2}" colspan="3">TOPLAM · ${K.length} kişi</td>
+    <tbody>${rows||`<tr><td style="${TD2}" colspan="${5+P.length}">Yolcu yok</td></tr>`}
+    <tr style="background:#DEEAF6;font-weight:bold"><td style="${TD2}" colspan="4">TOPLAM · ${K.length} kişi</td>
     <td style="${TD2};text-align:right;color:#C55A11">${Math.round(ktTop*100)/100||'—'} €</td>
     ${P.map(()=>`<td style="${TD2}"></td>`).join('')}</tr></tbody>
   </table></div>`;
