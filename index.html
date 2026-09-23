@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v563 · 23.09.2026';
+const APP_VER='v564 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -7330,6 +7330,16 @@ function renderUcakGenel(){
   const box=document.getElementById('ucakGenel'); if(!box) return;
   window._ucakGorunen=[];
   _migrateResData();
+  // ── çift voucher haritası: voucher → kayıtlı olduğu kalkışlar ──
+  const _cvMap={};
+  try{ getReservations().forEach(gr=>{ if(!gr||!gr.pkgId||!gr.kalkis) return; const key=gr.pkgId+'|'+_pdate(gr.kalkis);
+    [...new Set((gr.rows||[]).filter(r=>(((r.soyad||'')+(r.ad||'')).trim())&&String(r.resno||'').trim()).map(r=>String(r.resno).trim()))].forEach(v=>{ (_cvMap[v]=_cvMap[v]||new Set()).add(key); }); }); }catch(e){}
+  const _cvRozet=(pid,kal)=>{ try{
+    const key=pid+'|'+_pdate(kal); const diger=new Set(); let n=0;
+    Object.keys(_cvMap).forEach(v=>{ const st=_cvMap[v]; if(st.size>1&&st.has(key)){ n++; st.forEach(k2=>{ if(k2!==key) diger.add(_fmtDateTR(k2.split('|')[1]).slice(0,5)); }); } });
+    if(!n) return '';
+    return `<div class="ud-status" style="background:#f3e8ff;color:#7e22ce;white-space:nowrap" title="Bu listedeki ${n} voucher başka kalkışta da kayıtlı — kaydırma/kalıntı olabilir. 🔍 Çift Voucher aracıyla temizle">🔀 ${n} voucher ${[...diger].slice(0,3).join(', ')}'te de var</div>`;
+  }catch(e){ return ''; } };
   const resAll=getReservations();
   const pkgs=getPackages().filter(p=>pkgDurum(p)!=='arsiv');
   let items=[];
@@ -7389,6 +7399,7 @@ function renderUcakGenel(){
       ${it.ozel?'<div class="ud-status ozelg">özel grup</div>':(it.ekstra?`<div class="ud-status urunyok">üründe yok</div><button title="Bu eski/yanlış listeyi kalıcı sil — üründe bu tarih tanımlı değil" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:3px 8px;cursor:pointer;font-size:.72rem" onclick="event.stopPropagation();ucakSeferSil('${it.id}','${it.kalkis}')">🗑</button>`:'')}
       ${it.pkg.ucakOperatorde?'<div class="ud-status" style="background:#dbeafe;color:#1d4ed8;white-space:nowrap">✈ Uçakları Operatör Alıyor</div>':''}
       ${it.pkg.opsDisAcente?'<div class="ud-status" style="background:#e0f2fe;color:#0369a1;white-space:nowrap">🚌 Dış Operasyon</div>':''}
+      ${_cvRozet(it.id,it.kalkis)}
       ${it.iptal?'<div class="ud-status" style="background:#dc2626;color:#fff;font-weight:800">🚫 CXX</div>':''}
       <div class="ud-status ${it.status}">${stTxt[it.status]}</div>
     </div>`; };
