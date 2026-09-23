@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v564 · 23.09.2026';
+const APP_VER='v565 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15019,7 +15019,7 @@ function renderOpsTurlar(){
       ${L.map(t=>{
         const key=t.pkgId+'|'+t.kalkis;
         const acik=window._otAcik&&window._otAcik.has(key);
-        const bl=(t.uyeSeferler&&t.uyeSeferler.length)?`<span style="background:var(--primary);color:#fff;font-weight:800;font-size:.58rem;padding:1px 7px;border-radius:8px;margin-left:5px">🔗 ${t.uyeSeferler.length}</span>`:'';
+        const bl=(t.uyeSeferler&&t.uyeSeferler.length)?`<div style="margin-top:2px"><span style="background:var(--primary);color:#fff;font-weight:800;font-size:.58rem;padding:1px 7px;border-radius:8px;white-space:nowrap">🔗 ${t.uyeSeferler.length} sefer</span></div>`:'';
         const secOk=(!t.bolum||t.bolum==='01');
         const secKey=t.birlesikGrupId?('G:'+t.birlesikGrupId):key;
         // KOMPAKT durum: transfer + tahsis tek satırda kısa
