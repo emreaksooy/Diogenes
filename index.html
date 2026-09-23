@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v561 · 23.09.2026';
+const APP_VER='v562 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -7827,7 +7827,34 @@ function _ucakSablonAktar(rows,wb,sessiz){
     if(!sessiz) showConfirm('🛎','Uçuş Değişikliği Tespit Edildi',degisimOzet+'\n\nSatırlar güncellendi. Transfer atamalarını gözden geçir!','Tamam',()=>{});
   }
   if(!sessiz) showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(iptalYolcu?' · 🚫 '+iptalYolcu+' yolcu İPTALE çekildi (kırmızı+0)':'')+(listedenDusen?' · 🚫 '+listedenDusen+' yolcu İPTALE çekildi (iptal rezv, yeni listede yok)':'')+(listedeYok?' · ⚠ '+listedeYok+' eski satır yeni listede görünmüyor (kontrol et)':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
+  try{ if(!sessiz) setTimeout(_ucakKaydirmaKontrol,400); }catch(e){}
   return {n,atla,degisim:degisimler.length,pnrN,degisimOzet,iptalYolcu,listedenDusen,listedeYok};
+}
+function _ucakKaydirmaKontrol(){
+  // Aktarılan listedeki voucherlar başka kalkışlarda da kayıtlıysa (sefer kaydırma /
+  // iptal-alternatif durumu) uyar ve eski kalkışlardan silmeyi öner.
+  try{
+    const hedef=getReservations().find(g=>g.pkgId===_resPkgId&&g.kalkis===_resKalkis); if(!hedef) return;
+    const vs=new Set((hedef.rows||[]).filter(_isim).map(r=>String(r.resno||'').trim()).filter(Boolean));
+    if(!vs.size) return;
+    const bulgular=[];
+    getReservations().forEach(g=>{
+      if(!g||(g.pkgId===_resPkgId&&g.kalkis===_resKalkis)) return;
+      const ortak=[...new Set((g.rows||[]).filter(_isim).map(r=>String(r.resno||'').trim()))].filter(v=>v&&vs.has(v));
+      if(ortak.length){ const pk=getPackages().find(p=>p.id===g.pkgId); bulgular.push({g,ortak,kod:(pk&&(pk.paketKodu||pk.paketAdi))||'?'}); }
+    });
+    if(!bulgular.length) return;
+    const ozet=bulgular.map(b=>'• '+b.kod+' · '+_fmtDateTR(b.g.kalkis)+' — voucher: '+b.ortak.join(', ')).join('\n');
+    showConfirm('🔀','Kaydırılmış Yolcu Tespiti',
+      'Bu listedeki bazı voucherlar BAŞKA kalkışlarda da kayıtlı (iptal/kaydırma sonrası eski liste kalıntısı olabilir):\n\n'+ozet+'\n\nESKİ kalkışlardaki bu yolcu satırları silinsin mi? (Diğer yolculara ve listelere dokunulmaz.)',
+      'Eskilerden Sil',()=>{
+        let n=0;
+        bulgular.forEach(b=>{ const set=new Set(b.ortak); const once=(b.g.rows||[]).length; b.g.rows=(b.g.rows||[]).filter(r=>!set.has(String(r.resno||'').trim())); n+=once-b.g.rows.length; });
+        setReservations(getReservations());
+        try{ renderUcak&&renderUcak(); }catch(e){}
+        showToast(n+' eski satır silindi — yolcular artık yalnız yeni kalkışta','success',6000);
+      });
+  }catch(e){}
 }
 async function _aiSor(prompt,maxTok){
   try{ await _txEnsureCache(); }catch(e){} // anahtar diskten yüklenmemiş olabilir
