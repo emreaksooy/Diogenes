@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v565 · 23.09.2026';
+const APP_VER='v566 · 23.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15811,7 +15811,24 @@ function renderTurDosyasi(box){
       ${yonBtn('G','🛬 Geliş')}${yonBtn('D','🛫 Dönüş')}${araVar?yonBtn('A','✈ Ara Uçuş'):''}
       <span style="font-size:.68rem;color:var(--muted);margin-left:auto">Uçak listelerinden canlı · transfer görevleriyle eşleşik</span>
     </div>`;
-    const yl=legs.filter(l=>l.yon===window._tdUcakYon);
+    // aktarmalı bacakları kişi bazında TEK yolculuğa zincirle (VIE–SAW–ADB)
+    const yl0=legs.filter(l=>l.yon===window._tdUcakYon);
+    const _byKisi={};
+    yl0.forEach(l=>{ const kk=[l.resno,l.soyad,l.ad,l.dogum].join('|'); (_byKisi[kk]=_byKisi[kk]||[]).push(l); });
+    const yl=[];
+    Object.values(_byKisi).forEach(L=>{
+      L.sort((a,b)=>(a.sira||1)-(b.sira||1));
+      const f0=L[0];
+      if(L.length>1){
+        const son=L[L.length-1];
+        const rotalar=[]; L.forEach(x=>{ String(x.rota||'').split('–').forEach(p=>{ if(p&&rotalar[rotalar.length-1]!==p) rotalar.push(p); }); });
+        yl.push(Object.assign({},f0,{sira:1,
+          ucus:L.map(x=>x.ucus).filter(Boolean).join(' + '),
+          rota:rotalar.join('–'),
+          saat:[String(f0.saat||'').split('-')[0]||'',(String(son.saat||'').split('-')[1]||String(son.saat||'').split('-')[0]||'')].filter(Boolean).join('-'),
+          ucusList:L.map(x=>({ucus:x.ucus,tarih:x.tarih}))}));
+      } else yl.push(Object.assign({},f0,{ucusList:[{ucus:f0.ucus,tarih:f0.tarih}]}));
+    });
     if(!yl.length) h+='<p style="color:var(--muted);font-size:.85rem">Bu yönde uçuş kaydı yok — uçak listesi import edilmemiş olabilir.</p>';
     else{
       // uçuş bazlı grupla
@@ -15825,7 +15842,9 @@ function renderTurDosyasi(box){
         const tekil=[]; const seen=new Set();
         grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad+'|'+(x.dogum||''); if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
         tekil.sort((a,b)=>(a.soyad+a.ad).localeCompare(b.soyad+b.ad,'tr'));
-        const tr=trRows.find(r=>String(r.ucus||'').trim()===String(f.ucus||'').trim()&&r.tarih===_pdate(f.tarih));
+        const tr=(()=>{ const UL=(f.ucusList&&f.ucusList.length)?f.ucusList.slice().reverse():[{ucus:f.ucus,tarih:f.tarih}];
+          for(const u of UL){ const t2=trRows.find(r=>String(r.ucus||'').trim()===String(u.ucus||'').trim()&&r.tarih===_pdate(u.tarih||f.tarih)); if(t2) return t2; }
+          return trRows.find(r=>String(f.ucus||'').includes(String(r.ucus||'').trim())&&r.tarih===_pdate(f.tarih))||null; })();
         const gr2=tr&&tr.grup?_trGrupOf(tr):null;
         _blk.push({gid:(tr&&tr.grup)||null,kisi:tekil.length,gr2:gr2||{},dep:(tr&&tr.grup)?(_trDeparHesap(tr).saat||''):'',mk:(ic,hideDep)=>`<div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">
           <div style="background:${ic?'var(--navy)':'var(--primary-soft)'};color:${ic?'#fff':'inherit'};padding:6px 12px;font-size:.8rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
