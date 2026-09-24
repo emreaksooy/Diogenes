@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v575 · 24.09.2026';
+const APP_VER='v576 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -7164,7 +7164,7 @@ function _resDepartureDates(pkg){
 }
 function _resOpAd(pkg){ const op=getOperators().find(o=>o.id===(pkg&&pkg.operatorId)); return op?op.ad:''; }
 function _fmtDateTR(iso){ if(!iso) return ''; const p=_pdate(iso); if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p)){ const a=p.split('-'); return a[2]+'.'+a[1]+'.'+a[0]; } return String(iso); }
-function _fmtDateFile(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso; return ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2); }
+function _fmtDateFile(iso){ if(!iso) return ''; const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso; return iso; }
 
 let _ucakNav=(()=>{try{return JSON.parse(localStorage.getItem('dmc_ucakNav')||'{"yil":null,"ay":null}');}catch(e){return {yil:null,ay:null};}})();
 let _ucakFilter={op:'',pkg:'',tarih:'',voucher:''};
@@ -13010,7 +13010,7 @@ function rtAtamaExcel(){
   ws['!cols']=aoa[0].map(h=>({wch:Math.max(12,String(h).length+4)}));
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Rehber Atamaları');
-  XLSX.writeFile(wb,'rehber-atamalari_'+bugun+'.xlsx');
+  XLSX.writeFile(wb,bugun+'_rehber-atamalari.xlsx');
 }
 function rtGorunumSec(v){ _rtGorunum=v; try{localStorage.setItem('dmc_rtGorunum',v);}catch(e){} renderRehberTakvim(); }
 const _rtFlt=(()=>{ try{ const k=JSON.parse(localStorage.getItem('dmc_rtFlt')||'{}');
@@ -13170,7 +13170,7 @@ function rtOzetExcel(){
   ws['!cols']=aoa[0].map((h,i)=>({wch:Math.max(12,String(h).length+2)}));
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Rehber Dağılımı');
-  XLSX.writeFile(wb,'rehber-operator-dagilimi_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  XLSX.writeFile(wb,new Date().toISOString().slice(0,10)+'_rehber-operator-dagilimi.xlsx');
 }
 function rtBolAc(){ window._rtBolum=window._rtBolum?null:1; renderRehberTakvim(); }
 function rtBolSet(rzId,b,v){ window._rtBolSecim=window._rtBolSecim||{}; (window._rtBolSecim[rzId]=window._rtBolSecim[rzId]||{})[b]=Math.max(0,parseInt(v)||0); }
@@ -13612,7 +13612,7 @@ function moExcel(){
   let dosyaOn='magaza-operasyonu';
   if(_moFltMag){ const czM=_moAtaCoz(_moFltMag); if(czM.sube&&(czM.sube.ad||czM.sube.sehir)) dosyaOn=_moDosyaAd(czM.sube.ad||czM.sube.sehir); else if(fg) dosyaOn=_moDosyaAd(fg.ad); }
   else if(fg) dosyaOn=_moDosyaAd(fg.ad);
-  XLSX.writeFile(wb,dosyaOn+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  XLSX.writeFile(wb,new Date().toISOString().slice(0,10)+'_'+dosyaOn+'.xlsx');
   showToast('Excel indirildi ('+rows.length+' ziyaret — ekrandaki filtreye göre)','success');
 }
 function renderMagFirmalar(){
@@ -13768,7 +13768,7 @@ function mgGrupExcel(fid){
   ws['!cols']=[{wch:13},{wch:16},{wch:7},{wch:22},{wch:18},{wch:15}];
   try{ _xsSusle(ws,aoa,{baslikR:0,altR:1,hdrR:3,veriBas:4,veriSon:3+rows.length,toplamR:aoa.length-1,nC:6,tipC:null,durumC:null}); }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Ziyaretler');
-  XLSX.writeFile(wb,_moDosyaAd(f.ad||'grup')+'_'+_opsToday()+'.xlsx');
+  XLSX.writeFile(wb,_opsToday()+'_'+_moDosyaAd(f.ad||'grup')+'.xlsx');
   showToast('Excel indirildi: '+f.ad,'success');
 }
 function mgGrupSil(id){
@@ -14622,7 +14622,7 @@ function tdMxExcel(){
   ws['!cols']=[{wch:28},{wch:12},{wch:9}].concat(satislar.map(()=>({wch:13})));
   try{ _xsSusle(ws,aoa,{baslikR:0,altR:0,hdrR:1,veriBas:2,veriSon:1+kisiler.length,toplamR:aoa.length-1,nC:aoa[1].length,tipC:null,durumC:null}); }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Satış');
-  XLSX.writeFile(wb,'satis_'+((E.urunler||[])[0]||'tur')+'_'+(E.tarih||'')+'.xlsx');
+  XLSX.writeFile(wb,(E.tarih||_opsToday())+'_satis_'+((E.urunler||[])[0]||'tur')+'.xlsx');
 }
 function renderOpsTanim(){
   const box=document.getElementById('opsPane_tanim'); if(!box) return;
@@ -15088,7 +15088,7 @@ function otExcel(){
   ws['!cols']=[12,12,26,16,6,18,14].map(w2=>({wch:w2}));
   try{ _xsSusle(ws,aoa,{baslikR:0,altR:1,hdrR:3,veriBas:4,veriSon:3+L.length,toplamR:aoa.length-1,nC:7,tipC:null,durumC:null}); }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Turlar');
-  XLSX.writeFile(wb,'turlar_'+(_otBas||'')+'_'+(_otSon||'')+'.xlsx');
+  XLSX.writeFile(wb,(_otBas||_opsToday())+(_otSon?'_'+_otSon:'')+'_turlar.xlsx');
   showToast('Excel indirildi','success');
 }
 function renderGrupBirlestir(){
@@ -17022,7 +17022,7 @@ function mtExcel(){
   aoa.push([]); aoa.push(['TOPLAM','',L.reduce((t,k)=>t+_tdN(k.tutar),0)]);
   const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[12,22,12,7,16,26].map(w2=>({wch:w2}));
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsilatlar');
-  XLSX.writeFile(wb,'magaza_tahsilatlari'+(_mtYil?'_'+_mtYil:'')+'.xlsx');
+  XLSX.writeFile(wb,(_mtYil?_mtYil+'_':'')+'magaza_tahsilatlari.xlsx');
 }
 // ═══ MAĞAZA EKSTRESİ (Genel — onaylı satış → hakediş → tahsilat → kalan) ═══
 let _meYil='';
@@ -17096,7 +17096,7 @@ function meExcel(){
   tbl.querySelectorAll('tr').forEach(tr=>{ aoa.push([...tr.children].map(c2=>c2.innerText.replace(/\n/g,' ').trim())); });
   const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[24,12,12,13,11,10,9,9,13,11,10,13,11].map(w2=>({wch:w2}));
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Ekstre');
-  XLSX.writeFile(wb,'magaza_ekstresi'+(_meYil?'_'+_meYil:'')+'.xlsx');
+  XLSX.writeFile(wb,(_meYil?_meYil+'_':'')+'magaza_ekstresi.xlsx');
 }
 // geçmiş ziyaretleri muhasebe kaydına dönüştür (idempotent — otoKey: tarih|firma|kod)
 function _mmZiyaretSenk(){
@@ -17255,7 +17255,7 @@ function mmExcel(){
   ws['!cols']=[11,18,9,14,5,44,12,12,10,11,6,12,20].map(w2=>({wch:w2}));
   try{ _xsSusle(ws,aoa,{baslikR:0,altR:null,hdrR:2,veriBas:3,veriSon:2+L.length,toplamR:aoa.length-1,nC:13,tipC:null,durumC:null}); ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:12}}); }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Mağaza');
-  XLSX.writeFile(wb,'magaza_muhasebe_'+_mmAy+'.xlsx');
+  XLSX.writeFile(wb,_mmAy+'_magaza_muhasebe.xlsx');
   showToast('Excel indirildi','success');
 }
 function renderOpsMutabakat(){
@@ -17327,7 +17327,7 @@ function _mutAracExcel(){
     try{ _xsSusle(ws,aoa,{baslikR:0,altR:null,hdrR:2,veriBas:3,veriSon:2+L.length,toplamR:aoa.length-1,nC:11,tipC:null,durumC:null}); ws['!merges'].push({s:{r:0,c:0},e:{r:0,c:10}}); }catch(e){}
     XLSX.utils.book_append_sheet(wb,ws,String(F).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Firma');
   });
-  const adx='arac_mutabakat_'+_mutAy+'.xlsx';
+  const adx=_mutAy+'_arac_mutabakat.xlsx';
   XLSX.writeFile(wb,adx);
   showToast('Excel indirildi: '+adx+' — '+firmalar.length+' firma sayfası','success',6000);
 }
@@ -17671,7 +17671,7 @@ function thsExcel(){
     aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
   }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsisler');
-  XLSX.writeFile(wb,'Tahsisler_'+_opsToday()+'.xlsx');
+  XLSX.writeFile(wb,_opsToday()+'_tahsisler.xlsx');
   showToast('Tahsis listesi indirildi','success');
 }
 const _thsGun=t=>{ if(!t) return ''; const d=new Date(t+'T12:00:00'); return isNaN(d)?_fmtDateTR(t):(_fmtDateTR(t)+' '+d.toLocaleDateString('tr-TR',{weekday:'long'})); };
@@ -17772,8 +17772,7 @@ function thsTekExcel(gid,aid){
     aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
   }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Tahsis');
-  const _gg=D.bas?_fmtDateTR(D.bas).slice(0,5):'';
-  const _fn=[_gg?_gg+'_cikisli':'','tahsis',_moDosyaAd(D.tur).toLowerCase(),_moDosyaAd((D.reh||'').split(' ')[0]).toLowerCase()].filter(Boolean).join('_');
+  const _fn=[D.bas||'','tahsis',_moDosyaAd(D.tur).toLowerCase(),_moDosyaAd((D.reh||'').split(' ')[0]).toLowerCase()].filter(Boolean).join('_');
   XLSX.writeFile(wb,_fn+'.xlsx');
   showToast('Tahsis görev emri indirildi','success');
 }
@@ -18486,7 +18485,7 @@ function _trKlasikExcel(){
       alignment:{vertical:'center',horizontal:(c===0||c===4||c===6||c===7||c===8||c===9||c===11)?'center':'left'}});
   }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Is Listesi');
-  const ad='is_listesi_'+(_opsTrDate||'')+(_opsTrDate2?('_'+_opsTrDate2):'')+'.xlsx';
+  const ad=(_opsTrDate||_opsToday())+(_opsTrDate2?('_'+_opsTrDate2):'')+'_is_listesi.xlsx';
   XLSX.writeFile(wb,ad);
   showToast('Klasik iş listesi indirildi: '+L.length+' satır','success');
 }
@@ -18559,7 +18558,7 @@ function _trTasimaciExcel(secIds){
   }catch(e){}
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Transfer Listesi');
-  const adx=(secIds?'transfer_secili_':'tasimaci_'+String(V.firma).replace(/\s+/g,'')+'_')+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  const adx=_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'_'+(secIds?'transfer_secili':'tasimaci_'+String(V.firma).replace(/\s+/g,''))+'.xlsx';
   XLSX.writeFile(wb,adx);
   showToast('Taşımacı listesi indirildi: '+adx,'success',6000);
 }
@@ -18653,7 +18652,7 @@ function _trUetdsExcel(){
     }catch(e){}
     XLSX.utils.book_append_sheet(wb,ws,String(_trKodOf(kod)).slice(0,31));
   });
-  const adx='uetds_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  const adx=_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'_uetds.xlsx';
   XLSX.writeFile(wb,adx);
   let msg='UETDS indirildi: '+adx+' — '+Object.keys(gorevler).length+' görev, '+toplamYolcu+' yolcu';
   if(isimsizGorev.length) msg+=' · ⚠ isim bulunamayan: '+[...new Set(isimsizGorev)].slice(0,3).join(', ');
@@ -18677,7 +18676,7 @@ function _trExcelFirma(){
     const ws=_trExcelWsYap(L2,'DIOGENES TRAVEL — TRANSFER LİSTESİ · '+f,donemF+' · '+L2.length+' transfer · '+L2.reduce((t,x)=>t+(+x.r.pax||0),0)+' pax');
     XLSX.utils.book_append_sheet(wb,ws,String(f).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Sayfa');
   });
-  const adx='transfer_firmalar_'+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  const adx=_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'_transfer_firmalar.xlsx';
   XLSX.writeFile(wb,adx);
   showToast('Excel indirildi: '+adx+' — '+Object.keys(grupla).length+' sayfa (firma başına)','success',6000);
 }
@@ -18689,7 +18688,7 @@ function _trExcelDay(){
   const ws=_trExcelWsYap(list,'DIOGENES TRAVEL — TRANSFER LİSTESİ'+(_trUst.firma?' · '+_trUst.firma:''),donem+' · '+list.length+' transfer · '+list.reduce((t,x)=>t+(+x.r.pax||0),0)+' pax');
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Transferler');
-  const adx='transfer_'+(_trUst.firma?String(_trUst.firma).replace(/\s+/g,'')+'_':'')+_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'.xlsx';
+  const adx=_opsTrDate+(_opsTrDate2?'_'+_opsTrDate2:'')+'_transfer'+(_trUst.firma?'_'+String(_trUst.firma).replace(/\s+/g,''):'')+'.xlsx';
   XLSX.writeFile(wb,adx);
   showToast('Excel indirildi: '+adx,'success');
 }
