@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v572 · 24.09.2026';
+const APP_VER='v573 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15447,7 +15447,12 @@ function _tdAracOzetHtml(g){
     <span style="color:var(--muted);font-size:.66rem;margin-left:auto">fiyatlar kontrattan otomatik — elle ezilebilir, boşaltırsan otomatiğe döner</span></div>`;
 }
 function tdAracAdd(tip){ const g=_tdG(); if(!g)return; g.araclar.push({id:R_GID(),tip,ad:'',plaka:'',firma:'',bas:'',bit:'',tarih:'',saat:'',not:''}); _tdSave(); renderOpsGrup(); }
-function tdAracSet(i,f,v){ const g=_tdG(); if(!g||!g.araclar[i])return; g.araclar[i][f]=String(v).trim();
+function tdAracSet(i,f,v){ const g=_tdG(); if(!g||!g.araclar[i])return;
+  if(f==='bas'||f==='bit'){
+    const aday=Object.assign({},g.araclar[i]); aday[f]=String(v).trim();
+    if(!_basBitOk(aday.bas,aday.bit)){ renderOpsGrup(); return; }
+  }
+  g.araclar[i][f]=String(v).trim();
   let rerender=false;
   if(f==='plaka'){
     const p=String(v).trim().toUpperCase();
@@ -17550,6 +17555,11 @@ function thsPlakaSecildi(){
   thsFirmaDoldur();
 }
 function thsFormAc(enc){ window._thsAcik=(window._thsAcik===enc)?'':enc; renderOpsTahsis(); try{ thsFirmaDoldur(); }catch(e){} }
+function _basBitOk(bas,bit){
+  const a=_pdate(bas)||'', b=_pdate(bit)||'';
+  if(a&&b&&b<a){ showToast('⚠ Bitiş tarihi ('+_fmtDateTR(b)+') başlangıçtan ('+_fmtDateTR(a)+') ÖNCE olamaz — tarihi kontrol et','error',6000); return false; }
+  return true;
+}
 function thsKaydet(enc){
   const p=enc.split('|'); const t={pkgId:p[0],kalkis:p[1],birlesikGrupId:p[2]||''};
   let gid=_thsGidBul(t);
@@ -17571,9 +17581,11 @@ function thsKaydet(enc){
   if(!firma){ showToast('Firma seç ya da yaz','error'); return; }
   const S=getOpsGrup(); S.gruplar=S.gruplar||{}; const g=S.gruplar[gid];
   if(!g){ showToast('Grup kaydı bulunamadı','error'); return; }
+  const _bas=v('bas')||t.kalkis, _bit=v('bit')||v('bas')||t.kalkis;
+  if(!_basBitOk(_bas,_bit)) return;
   (g.araclar=g.araclar||[]).push({id:R_GID(),tip:'tahsis',firma,ad:v('arac'),arTip:v('tip').toUpperCase(),
     plaka:v('plaka').toUpperCase(),sofor:v('sofor'),stel:v('stel'),
-    bas:v('bas')||t.kalkis,bit:v('bit')||v('bas')||t.kalkis,basYer:v('basyer'),gorev:v('gorev'),program:v('program'),not:v('not'),fiyat:v('fiyat')});
+    bas:_bas,bit:_bit,basYer:v('basyer'),gorev:v('gorev'),program:v('program'),not:v('not'),fiyat:v('fiyat')});
   setOpsGrup(S); window._thsAcik='';
   renderOpsTahsis();
   showToast('Tahsis atandı — 📤 İş Gönderimi ile firmaya iletebilirsin','success',5000);
@@ -17583,8 +17595,10 @@ function thsGuncelle(gid,aid){
   const S=getOpsGrup(); const g=(S.gruplar||{})[gid]; if(!g) return;
   const a=(g.araclar||[]).find(x=>x.id===aid); if(!a) return;
   const v=id2=>((document.getElementById('the_'+id2)||{}).value||'').trim();
+  const _yBas=v('bas')||a.bas, _yBit=v('bit')||a.bit;
+  if(!_basBitOk(_yBas,_yBit)) return;
   a.firma=v('firma'); a.ad=v('arac'); a.arTip=v('tip').toUpperCase(); a.plaka=v('plaka').toUpperCase();
-  a.sofor=v('sofor'); a.stel=v('stel'); a.bas=v('bas')||a.bas; a.bit=v('bit')||a.bit;
+  a.sofor=v('sofor'); a.stel=v('stel'); a.bas=_yBas; a.bit=_yBit;
   a.basYer=v('basyer'); a.gorev=v('gorev'); a.program=v('program'); a.not=v('not'); a.fiyat=v('fiyat');
   setOpsGrup(S); window._thsEdit='';
   renderOpsTahsis();
