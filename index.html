@@ -2112,7 +2112,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v569 · 23.09.2026';
+const APP_VER='v570 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15008,7 +15008,7 @@ function renderOpsTurlar(){
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
       <input type="date" value="${_otBas}" onchange="_otBas=this.value;renderOpsTurlar()" style="${inp}"> ~
       <input type="date" value="${_otSon}" onchange="_otSon=this.value;renderOpsTurlar()" style="${inp}">
-      <input placeholder="Ara: kod, operatör, rehber…" value="${esc(_otAra)}" oninput="_otAra=this.value;renderOpsTurlar()" style="${inp};min-width:190px">
+      <input id="otAraInp" placeholder="Ara: kod, operatör, rehber…" value="${esc(_otAra)}" oninput="_otAra=this.value;clearTimeout(window._otAraT);window._otAraT=setTimeout(()=>{renderOpsTurlar();const e=document.getElementById('otAraInp');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},250)" style="${inp};min-width:190px">
       <span style="color:var(--muted);font-size:.74rem">· ${L.length} tur · ${topPax} pax</span>
       ${_gbSec.size?`<span style="margin-left:auto;background:var(--primary-soft);color:var(--primary);font-weight:800;font-size:.74rem;padding:4px 12px;border-radius:9px">${_gbSec.size} sefer seçili</span>
       <button class="btn btn-primary btn-sm" onclick="gbBirlestir()">🔗 Birleştir — TEK TUR yap</button>
