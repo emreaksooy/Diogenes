@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v591 · 24.09.2026';
+const APP_VER='v592 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13202,7 +13202,14 @@ function otBolDoldur(){
   const pk=getPackages().find(x=>x.id===C.pkgId)||{};
   const grid=getReservations().find(x=>x.pkgId===C.pkgId&&x.kalkis===C.kalkis);
   const ucusOf=v=>{ try{ const r=(grid&&grid.rows||[]).find(x=>String(x.resno||'').trim()===String(v||'').trim()&&((x.soyad||'')+(x.ad||'')).trim());
-    if(!r) return ''; return [r.g_u1,[r.g_k1,r.g_v1].filter(Boolean).join('–'),r.g_ks1].filter(Boolean).join(' · '); }catch(e){ return ''; } };
+    if(!r) return '';
+    const sonU=(r.g_u2||'').trim()||String(r.g_u1||'').trim();
+    const ucusStr=[String(r.g_u1||'').trim(),(r.g_u2||'').trim()].filter(Boolean).join('+');
+    const rotaP=[r.g_k1,r.g_v1,(r.g_v2||'').trim()].map(x=>String(x||'').trim()).filter(Boolean);
+    const rota=rotaP.filter((x,i)=>rotaP.indexOf(x)===i).join('–');
+    const inis=String((r.g_vs2||'').trim()||(r.g_vs1||'').trim()||'');
+    return [ucusStr,rota,inis?('iniş '+inis):''].filter(Boolean).join(' · ');
+  }catch(e){ return ''; } };
   const bilgi=r=>{
     const kisiler=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim()));
     const odalar=(r.kartlar||[]).filter(x=>x&&x.tip!=='ulasim');
@@ -13210,7 +13217,17 @@ function otBolDoldur(){
     return {kisiler,odaN:odalar.length,komp:Object.entries(komp).map(([t,n])=>n+'×'+t).join(' '),ucus:ucusOf(r.voucher)};
   };
   let secP=0,secO=0,kalP=0,kalO=0;
-  rzler.forEach(r=>{ const b=bilgi(r); if(C.sec.has(r.id)){ secP+=b.kisiler.length; secO+=b.odaN; } else { kalP+=b.kisiler.length; kalO+=b.odaN; } });
+  const ucusMap={};
+  rzler.forEach(r=>{ const b=bilgi(r); r._b=b;
+    if(C.sec.has(r.id)){ secP+=b.kisiler.length; secO+=b.odaN; } else { kalP+=b.kisiler.length; kalO+=b.odaN; }
+    const uk=b.ucus||'✈ uçuş kaydı yok';
+    (ucusMap[uk]=ucusMap[uk]||{ids:[],pax:0}).ids.push(r.id); ucusMap[uk].pax+=b.kisiler.length;
+  });
+  window._otBolUcusMap=ucusMap;
+  const ucusBtns=Object.entries(ucusMap).map(([uk,o])=>{
+    const hepsi=o.ids.every(id=>C.sec.has(id));
+    return `<button onclick="otBolUcusTog('${encodeURIComponent(uk)}')" style="border:1.5px solid ${hepsi?'#7c3aed':'var(--border)'};background:${hepsi?'#7c3aed':'#fff'};color:${hepsi?'#fff':'var(--navy)'};font-weight:700;font-size:.68rem;padding:5px 11px;border-radius:9px;cursor:pointer;font-family:inherit">✈ ${esc(uk.replace('✈ ',''))} · ${o.pax} pax</button>`;
+  }).join('');
   let ov=document.getElementById('otBolModal');
   if(!ov){ ov=document.createElement('div'); ov.id='otBolModal';
     ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;align-items:flex-start;justify-content:center;padding:26px 12px;overflow:auto';
@@ -13243,12 +13260,20 @@ function otBolDoldur(){
       <span style="background:var(--navy);color:#fff;font-weight:800;font-size:.72rem;padding:4px 12px;border-radius:10px">KALAN (Grup 01): ${kalP} pax · ${kalO} oda</span>
       <span style="font-size:.66rem;color:var(--muted);align-self:center">voucher bütündür — aile/oda bölünmez</span>
     </div>
+    ${ucusBtns?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center"><span style="font-size:.62rem;font-weight:800;color:var(--muted)">UÇUŞA GÖRE SEÇ:</span>${ucusBtns}</div>`:''}
     ${satirlar}
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-primary" onclick="otBolKaydet()">Kaydet — grubu böl</button>
       <button class="btn btn-outline" onclick="document.getElementById('otBolModal').remove();window._otBolCtx=null">Vazgeç</button>
     </div>
   </div>`;
+}
+function otBolUcusTog(enc){
+  const C=window._otBolCtx; if(!C) return;
+  const uk=decodeURIComponent(enc); const o=(window._otBolUcusMap||{})[uk]; if(!o) return;
+  const hepsi=o.ids.every(id=>C.sec.has(id));
+  o.ids.forEach(id=>{ hepsi?C.sec.delete(id):C.sec.add(id); });
+  otBolDoldur();
 }
 function otBolKaydet(){
   const C=window._otBolCtx; if(!C) return;
