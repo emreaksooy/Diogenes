@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v589 · 24.09.2026';
+const APP_VER='v590 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17183,7 +17183,11 @@ function renderMagMuh(){
   _mmZiyaretSenk();
   if(!_mmAy) _mmAy=_opsToday().slice(0,7);
   const firmalar=_moFirmalar();
-  let L=getMagMuhAktif().filter(k=>String(_pdate(k.tarih)||'').slice(0,7)===_mmAy);
+  window._mmBasF=window._mmBasF||''; window._mmBitF=window._mmBitF||'';
+  const _mmAralik=!!(window._mmBasF||window._mmBitF);
+  let L=getMagMuhAktif().filter(k=>{ const t=String(_pdate(k.tarih)||'');
+    if(_mmAralik) return (!window._mmBasF||t>=window._mmBasF)&&(!window._mmBitF||t<=window._mmBitF);
+    return t.slice(0,7)===_mmAy; });
   if(_mmFirmaF) L=L.filter(k=>k.firmaId===_mmFirmaF);
   if(_mmDurumF) L=L.filter(k=>(k.durum||'bekliyor')===_mmDurumF);
   window._mmBildKartHTML=_mmBildirimKart();
@@ -17192,7 +17196,9 @@ function renderMagMuh(){
   try{
     const bugun=_opsToday();
     const mev=new Set(getMagMuhAktif().map(k=>k.otoKey).filter(Boolean));
-    planL=(_moSatirlar(bugun)||[]).filter(r=>r.firmaId&&String(r.tarih||'').slice(0,7)===_mmAy&&String(r.tarih)>=bugun&&!mev.has(r.tarih+'|'+r.firmaId+'|'+r.kod))
+    planL=(_moSatirlar(bugun)||[]).filter(r=>{ const t=String(_pdate(r.tarih)||r.tarih||'');
+        const donem=_mmAralik?((!window._mmBasF||t>=window._mmBasF)&&(!window._mmBitF||t<=window._mmBitF)):(t.slice(0,7)===_mmAy);
+        return r.firmaId&&donem&&String(r.tarih)>=bugun&&!mev.has(r.tarih+'|'+r.firmaId+'|'+r.kod); })
       .map(r=>{ let ad='',sube=''; try{ const cz=_moAtaCoz(r.firmaId); ad=(cz.f&&cz.f.ad)||''; sube=cz.sube?(cz.sube.ad||cz.sube.sehir||''):''; }catch(e){}
         return {plan:true,planKey:r.tarih+'|'+r.firmaId+'|'+r.kod,tarih:r.tarih,kalkis:(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'',kod:r.kod,rehberAd:r.rehber||'',pax:r.pax||'',firmaAd:ad,magaza:sube,para:'EUR'}; });
     if(_mmFirmaF) planL=planL.filter(r=>{ try{ const cz=_moAtaCoz(r.planKey.split('|')[1]); return cz.f&&cz.f.id===_mmFirmaF; }catch(e){ return false; } });
@@ -17205,7 +17211,11 @@ function renderMagMuh(){
   const DAD={bekliyor:['Bekliyor','#fef3c7','#92400e'],mutabik:['Mutabık','#dcfce7','#166534'],bekleme:['Bekleme Satış','#ede9fe','#6d28d9'],tahsil:['Tahsil edildi','#e0f2fe','#0369a1']};
   let h=(window._mmBildKartHTML||'')+`<div class="card"><div class="card-title">🏬 Mağaza Muhasebesi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetim · mağaza bildirimi ↔ rehber bildirimi</span></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-      <input type="month" value="${_mmAy}" onchange="_mmAy=this.value;renderMagMuh()" style="${inp}">
+      <input type="month" value="${_mmAy}" ${_mmAralik?'disabled title="Tarih aralığı aktif — ay filtresi devre dışı"':''} onchange="_mmAy=this.value;renderMagMuh()" style="${inp};${_mmAralik?'opacity:.45':''}">
+      <input type="date" value="${window._mmBasF||''}" onchange="window._mmBasF=this.value;renderMagMuh()" title="Aralık başı" style="${inp};border-color:${window._mmBasF?'#2563eb':'var(--border)'}">
+      <span style="color:var(--muted)">~</span>
+      <input type="date" value="${window._mmBitF||''}" onchange="window._mmBitF=this.value;renderMagMuh()" title="Aralık sonu" style="${inp};border-color:${window._mmBitF?'#2563eb':'var(--border)'}">
+      ${_mmAralik?`<button class="btn btn-outline btn-sm" onclick="window._mmBasF='';window._mmBitF='';renderMagMuh()">✕</button>`:''}
       <select onchange="_mmFirmaF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm mağazalar</option>${firmalar.map(f=>`<option value="${f.id}" ${_mmFirmaF===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>
       <select onchange="_mmDurumF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm durumlar</option><option value="bekliyor" ${_mmDurumF==='bekliyor'?'selected':''}>Bekliyor</option><option value="mutabik" ${_mmDurumF==='mutabik'?'selected':''}>Mutabık</option><option value="bekleme" ${_mmDurumF==='bekleme'?'selected':''}>Bekleme Satış</option><option value="tahsil" ${_mmDurumF==='tahsil'?'selected':''}>Tahsil edildi</option></select>
       <span style="color:var(--muted);font-size:.74rem">· ${L.length} kayıt${planL.length?` · <b style="color:#0369a1">${planL.length} planlı</b>`:''}</span>
