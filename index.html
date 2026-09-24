@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v574 · 24.09.2026';
+const APP_VER='v575 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17703,6 +17703,10 @@ function _thsTek(gid,aid){
     (rz.musteriler||[]).forEach(m=>{ if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
       yolcular.push({voucher:rz.voucher||'',soyad:(m.soyad||'').trim(),ad:(m.ad||'').trim()}); }); }); }
   let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
+  if(!rehAd){ try{
+    const sefler=(uyeler||[]).length?[...new Set(uyeler.map(u=>u.pkgId+'|'+u.kalkis))]:(g2.sefer?[g2.sefer.pkgId+'|'+g2.sefer.kalkis]:[]);
+    for(const kk of sefler){ const p2=kk.split('|'); const rec=_opsGet(p2[0],p2[1])||{}; const ad2=(rec.rehberAd||'').trim(); if(ad2){ rehAd=ad2; break; } }
+  }catch(e){} }
   return {a,tur:(E2&&(E2.urunler||[]).join('+'))||(g2.ad||''),pax:(E2&&E2.pax)||yolcular.length,
     bas:_pdate(a.bas)||'',bit:_pdate(a.bit)||_pdate(a.bas)||'',reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',yolcular};
 }
@@ -17758,7 +17762,10 @@ function thsTekExcel(gid,aid){
     for(let r2=3;r2<=6;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:10,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:11,bold:true,color:{rgb:_XSC.maviK}},fill:{fgColor:{rgb:_XSC.mavi}},alignment:{vertical:'center'}}); ws['!rows'][r2]={hpt:18}; }
     for(let r2=7;r2<=11;r2++){ _xsSet(ws,r2,0,{font:{bold:true,sz:9,color:{rgb:_XSC.gri}},alignment:{horizontal:'right',vertical:'center'}}); _xsSet(ws,r2,1,{font:{sz:10,bold:true},alignment:{vertical:'center'}}); }
     _xsSatirStil(ws,12,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(_XSC.turuncu),alignment:{vertical:'center'}});
-    ws['!rows'][12]={hpt:22};
+    ws['!merges'].push({s:{r:12,c:1},e:{r:12,c:nC-1}});
+    _xsSet(ws,12,1,{font:{bold:true,sz:10,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(_XSC.turuncu),alignment:{vertical:'center',wrapText:true}});
+    const _isTxt=String((aoa[12]&&aoa[12][1])||'');
+    ws['!rows'][12]={hpt:Math.max(22,Math.ceil(_isTxt.length/52)*15+8)};
     const hdrR=14;
     _xsSatirStil(ws,hdrR,nC,{font:{bold:true,sz:9,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},border:_xsB(_XSC.beyaz)});
     for(let r2=hdrR+1;r2<hdrR+1+D.yolcular.length;r2++) _xsSatirStil(ws,r2,nC,{font:{sz:10},border:_xsB(),fill:(r2-hdrR)%2===0?{fgColor:{rgb:_XSC.zebra}}:undefined});
