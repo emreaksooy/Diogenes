@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v592 · 24.09.2026';
+const APP_VER='v593 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -12789,7 +12789,8 @@ function opsNavDate(d){ _opsDate=_isoAdd(_opsDate||_opsToday(),d); try{localStor
 function opsSetDate(v){ _opsDate=v||_opsToday(); try{localStorage.setItem('dmc_opsDate',_opsDate);}catch(e){} renderOperasyonPage(); }
 function _opsView(det){ const l=document.getElementById('opsListe'),d=document.getElementById('opsDetay'); if(l)l.style.display=det?'none':''; if(d)d.style.display=det?'':'none'; }
 function opsBack(){ _opsView(false); renderOperasyonPage(); window.scrollTo(0,0); }
-function opsOpen(pkgId,kalkis){
+function opsOpen(pkgId,kalkis,bolum){
+  window._tdBolumF=String(bolum||'');
   if(typeof _opsTab!=='undefined'&&_opsTab&&_opsTab!=='grup') window._tdDonus=_opsTab;
   // Artık ana ekran TUR DOSYASI: kalkışın grubunu bul/aç
   let gruplar=[];
@@ -15188,7 +15189,7 @@ function renderOpsTurlar(){
             <div><div style="font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Rehber</div>${reh}</div>
             <div><div style="font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Transferler</div>${trDurum(t)}${tahsisDurum(t)}</div>
             ${birlesikH?`<div><div style="font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:3px">Birleşik Grup</div>${birlesikH}</div>`:''}
-            <div style="margin-left:auto;display:flex;gap:6px;align-items:center">${t.birlesikGrupId?`<button class="btn btn-outline btn-sm" onclick="otGrupAc('${t.birlesikGrupId}')">📂 Dosya</button><button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button>`:`<button class="btn btn-outline btn-sm" onclick="opsOpen('${t.pkgId}','${t.kalkis}')">📂 Dosya</button>`}</div>
+            <div style="margin-left:auto;display:flex;gap:6px;align-items:center">${t.birlesikGrupId?`<button class="btn btn-outline btn-sm" onclick="otGrupAc('${t.birlesikGrupId}')">📂 Dosya</button><button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button>`:`<button class="btn btn-outline btn-sm" onclick="opsOpen('${t.pkgId}','${t.kalkis}','${t.bolum||''}')">📂 Dosya</button>`}</div>
           </div></td></tr>`;
       }).join('')}
     </table></div>
@@ -15363,7 +15364,7 @@ function renderOpsGrup(){
 }
 // ═══ TUR DOSYASI (grup kartı) ═══
 let _tdGid=null,_tdTab='yolcu';
-function opsTdAc(gid){ _navPush(); gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; try{localStorage.setItem('dmc_lastTd',gid);}catch(e){} renderOpsGrup(); }
+function opsTdAc(gid,bolum){ _navPush(); if(bolum!==undefined) window._tdBolumF=String(bolum||''); gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; try{localStorage.setItem('dmc_lastTd',gid);}catch(e){} renderOpsGrup(); }
 function moDosyaAc(pkgId,kalkis){
   try{ showPage('operasyon',document.querySelector('.nav-tab[data-page="operasyon"]')); }catch(e){ try{ showPage('operasyon'); }catch(e2){} }
   opsOpen(pkgId,kalkis);
@@ -15464,9 +15465,31 @@ function _tdKisiler(E){
       });
     });
   }catch(e){}
+  if(window._tdBolumF&&_tdBolumSayisi(E)>1){
+    const F=String(window._tdBolumF);
+    return out.filter(k=>_tdKisiBolumu(k)===F);
+  }
   return out;
 }
 function _tdRezv(resno){ return (getRezv()||[]).find(r=>String(r.voucher||'').trim()===String(resno||'').trim())||null; }
+function _tdKisiBolumu(k){
+  try{
+    const rz=_tdRezv(k.resno); if(!rz) return '01';
+    let m=null; try{ m=_tdMusteriBul(k); }catch(e){}
+    return String((m&&m.grupBolum)||rz.grupBolum||'01');
+  }catch(e){ return '01'; }
+}
+function _tdBolumSayisi(E){
+  try{
+    const seferler=new Set((E.uyeler||[]).map(u=>(u.pkgId||'')+'|'+(u.kalkis||'')));
+    const bols=new Set();
+    (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.durum!=='iptal'&&seferler.has((r.pkgId||'')+'|'+(r.kalkis||''))){
+      bols.add(String(r.grupBolum||'01'));
+      (r.musteriler||[]).forEach(m=>{ if(m.grupBolum) bols.add(String(m.grupBolum)); });
+    } });
+    return bols.size;
+  }catch(e){ return 1; }
+}
 function _tdKom(s){ const t=_tdN(s.satis)*(+s.pax||0); if(s.komTip==='%') return t*_tdN(s.komDeg)/100; if(s.komTip==='pax') return _tdN(s.komDeg)*(+s.pax||0); return 0; }
 function _tdTopla(g){ let ciro=0,ode=0,kom=0; (g.satislar||[]).forEach(x=>{ ciro+=_tdN(x.satis)*(+x.pax||0); ode+=_tdN(x.odeme); kom+=_tdKom(x); }); return {ciro,ode,teslim:ciro-ode,kom}; }
 function _tdMasrafEUR(g){ let e=0; (g.masraflar||[]).forEach(m=>{ e+=_tdN(m.eur); const u=_tdN(m.usd); if(u&&_tdN(g.kurUSD)) e+=u*_tdN(g.kurUSD); const t=_tdN(m.tl); if(t&&_tdN(g.kurTL)) e+=t/_tdN(g.kurTL); }); return e; }
@@ -15724,7 +15747,7 @@ function renderTurDosyasi(box){
   <div class="card" style="padding:.8rem 1.1rem;margin-bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
     <div style="background:var(--navy);color:#fff;border-radius:12px;padding:8px 14px;text-align:center"><b style="font-size:1.05rem;display:block">${E.pax}</b><span style="font-size:.58rem;opacity:.8">PAX</span></div>
     <div style="flex:1;min-width:220px">
-      <div style="font-weight:800;font-size:.95rem">${g.no?`<span style="background:var(--navy);color:#fff;border-radius:8px;padding:2px 9px;font-size:.7rem;font-weight:800;margin-right:7px">${esc(g.no)}</span>`:''}${esc(E.urunler.join(', ')||'—')} · ${_fmtDateTR(E.tarih)}</div>
+      <div style="font-weight:800;font-size:.95rem">${g.no?`<span style="background:var(--navy);color:#fff;border-radius:8px;padding:2px 9px;font-size:.7rem;font-weight:800;margin-right:7px">${esc(g.no)}</span>`:''}${esc(E.urunler.join(', ')||'—')} · ${_fmtDateTR(E.tarih)}${(window._tdBolumF&&_tdBolumSayisi(E)>1)?` <span onclick="window._tdBolumF='';renderOpsGrup()" title="Bu dosya yalnız G${esc(window._tdBolumF)} bölümünün misafirlerini gösterir — tümünü görmek için tıkla" style="background:#7c3aed;color:#fff;font-weight:800;font-size:.6rem;padding:2px 9px;border-radius:8px;cursor:pointer;vertical-align:middle">⑃ BÖLÜM G${esc(window._tdBolumF)}</span>`:''}</div>
       <div style="font-size:.74rem;color:var(--muted)">${esc(E.ops.join(', ')||'')} · ${E.uyeler.length} rezervasyon · ${kisiler.length} isim${(+E.pax>kisiler.length&&kisiler.length)?` <span style="background:#fef3c7;color:#b45309;font-weight:800;border-radius:8px;padding:1px 8px;font-size:.62rem">⚠ ${+E.pax-kisiler.length} kişi uçak listesinde yok</span>`:''}${reh?' · Rehber: <b>'+esc(reh.ad)+'</b>':''}</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -16210,6 +16233,7 @@ function _tdUcusSatirlar(E){
     const grid=getReservations().find(x=>x.pkgId===u.pkgId&&x.kalkis===u.kalkis); if(!grid||grid.iptal) return;
     if(_iptV.has(u.pkgId+'|'+u.kalkis+'|'+String(u.resno||'').trim())) return;
     (grid.rows||[]).filter(r=>_isim(r)&&(r.resno||'').trim()===u.resno&&_durumEff(r)!=='iptal').forEach(r=>{
+      if(window._tdBolumF&&_tdBolumSayisi(E)>1&&_tdKisiBolumu({resno:u.resno,soyad:r.soyad,ad:r.ad})!==String(window._tdBolumF)) return;
       const push=(yon,sira,tarih,hy,ucus,k,v,ks,vs,pnr)=>{
         if(!(String(ucus||'').trim()||String(k||'').trim()||String(ks||'').trim())) return;
         legs.push({yon,sira,tarih:String(tarih||'').trim(),hy:String(hy||'').trim(),ucus:String(ucus||'').trim(),
