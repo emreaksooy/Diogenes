@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Diogenes Travel · Yönetim Sistemi</title>
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
@@ -175,6 +175,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 
 /* ── NAVBAR ── */
 .navbar{background:var(--bg);color:var(--text);padding:0 1.4rem;height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 1px 0 var(--border),0 2px 14px rgba(16,24,40,.035);gap:10px}
+@media (display-mode: standalone){
+  .navbar{height:calc(var(--nav-h) + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
+  #loginOverlay .lg-form{padding-top:calc(40px + env(safe-area-inset-top))}
+}
 .brand{font-size:1.02rem;font-weight:800;display:flex;align-items:center;gap:9px;white-space:nowrap;color:var(--text);letter-spacing:-.3px}
 .brand em{font-style:normal;color:var(--primary)}
 .brand-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#f5793f,var(--primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.05rem;font-weight:800;flex-shrink:0}
@@ -1014,6 +1018,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
   <button class="theme-toggle" id="sbToggleBtn" onclick="_mobMenuToggle(event)" title="Menü">☰</button>
   <button class="nav-undo-btn" id="navUndoBtn" onclick="undoLast()" title="Geri alınacak işlem yok" disabled style="opacity:.4"><svg class="ic"><use href="#i-undo"/></svg></button>
   <button class="nav-save-btn" id="navSaveBtn" onclick="saveCurrentPackage()"><svg class="ic"><use href="#i-save"/></svg> <span id="navSaveTxt">Kaydet</span></button>
+  <button class="nav-save-btn" style="background:var(--navy)" title="Sayfayı yenile — buluttan güncel veriyi çeker" onclick="location.reload()"><svg class="ic"><use href="#i-refresh"/></svg> Yenile</button>
 </div>
 
 <div class="app-body">
@@ -2118,7 +2123,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v585 · 24.09.2026';
+const APP_VER='v586 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
