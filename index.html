@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v590 · 24.09.2026';
+const APP_VER='v591 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13186,6 +13186,84 @@ function rtOzetExcel(){
 }
 function rtBolAc(){ window._rtBolum=window._rtBolum?null:1; renderRehberTakvim(); }
 function rtBolSet(rzId,b,v){ window._rtBolSecim=window._rtBolSecim||{}; (window._rtBolSecim[rzId]=window._rtBolSecim[rzId]||{})[b]=Math.max(0,parseInt(v)||0); }
+function otBolPopup(){
+  if(_gbSec.size!==1) return;
+  const p=[..._gbSec][0].split('|');
+  window._otBolCtx={pkgId:p[0],kalkis:p[1],hedef:'02',sec:new Set()};
+  // mevcut bölünme: 01 dışındakiler seçili başlar
+  (getRezv()||[]).forEach(r=>{ if(r.tip==='urun'&&r.pkgId===p[0]&&r.kalkis===p[1]&&r.durum!=='iptal'&&String(r.grupBolum||'01')!=='01') window._otBolCtx.sec.add(r.id); });
+  otBolDoldur();
+}
+function otBolSecTog(rid,on){ const C=window._otBolCtx; if(!C) return; on?C.sec.add(rid):C.sec.delete(rid); otBolDoldur(); }
+function otBolDoldur(){
+  const C=window._otBolCtx; if(!C) return;
+  const rzler=(getRezv()||[]).filter(r=>r.tip==='urun'&&r.pkgId===C.pkgId&&r.kalkis===C.kalkis&&r.durum!=='iptal')
+    .sort((a,b)=>String(a.voucher||'').localeCompare(String(b.voucher||''),'tr',{numeric:true}));
+  const pk=getPackages().find(x=>x.id===C.pkgId)||{};
+  const grid=getReservations().find(x=>x.pkgId===C.pkgId&&x.kalkis===C.kalkis);
+  const ucusOf=v=>{ try{ const r=(grid&&grid.rows||[]).find(x=>String(x.resno||'').trim()===String(v||'').trim()&&((x.soyad||'')+(x.ad||'')).trim());
+    if(!r) return ''; return [r.g_u1,[r.g_k1,r.g_v1].filter(Boolean).join('–'),r.g_ks1].filter(Boolean).join(' · '); }catch(e){ return ''; } };
+  const bilgi=r=>{
+    const kisiler=(r.musteriler||[]).filter(m=>!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim()));
+    const odalar=(r.kartlar||[]).filter(x=>x&&x.tip!=='ulasim');
+    const komp={}; odalar.forEach(x=>{ const t=(x.tip||'ODA').toUpperCase(); komp[t]=(komp[t]||0)+1; });
+    return {kisiler,odaN:odalar.length,komp:Object.entries(komp).map(([t,n])=>n+'×'+t).join(' '),ucus:ucusOf(r.voucher)};
+  };
+  let secP=0,secO=0,kalP=0,kalO=0;
+  rzler.forEach(r=>{ const b=bilgi(r); if(C.sec.has(r.id)){ secP+=b.kisiler.length; secO+=b.odaN; } else { kalP+=b.kisiler.length; kalO+=b.odaN; } });
+  let ov=document.getElementById('otBolModal');
+  if(!ov){ ov=document.createElement('div'); ov.id='otBolModal';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;align-items:flex-start;justify-content:center;padding:26px 12px;overflow:auto';
+    ov.addEventListener('click',e=>{ if(e.target===ov){ ov.remove(); window._otBolCtx=null; } });
+    document.body.appendChild(ov); }
+  const satirlar=rzler.map(r=>{
+    const b=bilgi(r); const sec=C.sec.has(r.id);
+    const adlar=b.kisiler.map(m=>('<b>'+esc((m.soyad||'').trim())+'</b> '+esc((m.ad||'').trim())).trim()).join(', ');
+    return `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1.5px solid ${sec?'#7c3aed':'var(--border)'};border-radius:11px;margin-bottom:6px;background:${sec?'#f5f3ff':'#fff'};cursor:pointer" onclick="otBolSecTog('${r.id}',${sec?'false':'true'})">
+      <input type="checkbox" ${sec?'checked':''} onclick="event.stopPropagation()" onchange="otBolSecTog('${r.id}',this.checked)" style="margin-top:3px;width:15px;height:15px;accent-color:#7c3aed">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <b style="font-size:.8rem">${esc(r.voucher||'—')}</b>
+          <span style="background:#eef2f7;color:var(--navy);font-weight:700;font-size:.64rem;padding:1px 8px;border-radius:7px">${b.kisiler.length} pax</span>
+          ${b.komp?`<span style="background:#fef3c7;color:#92400e;font-weight:700;font-size:.64rem;padding:1px 8px;border-radius:7px">${esc(b.komp)}</span>`:''}
+          ${b.ucus?`<span style="color:#0369a1;font-size:.66rem;font-weight:700">✈ ${esc(b.ucus)}</span>`:''}
+          ${(r.not||'').trim()?`<span style="color:#b45309;font-size:.66rem" title="${esc(r.not)}">📝 ${esc(String(r.not).slice(0,40))}${String(r.not).length>40?'…':''}</span>`:''}
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${adlar||'—'}</div>
+      </div>
+    </div>`;
+  }).join('')||'<p style="font-size:.8rem;color:var(--muted)">Bu seferde rezervasyon yok — bölme rezervasyon bazlıdır.</p>';
+  ov.innerHTML=`<div style="width:min(680px,100%);background:#fff;border-radius:16px;padding:18px 20px;max-height:88vh;overflow:auto" onclick="event.stopPropagation()">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:4px">
+      <b style="font-size:.95rem">⑃ Grubu Böl — ${esc(pk.paketKodu||'')} · ${_fmtDateTR(C.kalkis)}</b>
+      <label style="margin-left:auto;font-size:.7rem;font-weight:700">Seçilenler → <select onchange="window._otBolCtx.hedef=this.value" style="padding:4px 8px;border:1.5px solid #ddd6fe;border-radius:8px;font-family:inherit">${['02','03','04'].map(b=>`<option value="${b}" ${C.hedef===b?'selected':''}>Grup ${b}</option>`).join('')}</select></label>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <span style="background:#7c3aed;color:#fff;font-weight:800;font-size:.72rem;padding:4px 12px;border-radius:10px">SEÇİLİ: ${secP} pax · ${secO} oda</span>
+      <span style="background:var(--navy);color:#fff;font-weight:800;font-size:.72rem;padding:4px 12px;border-radius:10px">KALAN (Grup 01): ${kalP} pax · ${kalO} oda</span>
+      <span style="font-size:.66rem;color:var(--muted);align-self:center">voucher bütündür — aile/oda bölünmez</span>
+    </div>
+    ${satirlar}
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-primary" onclick="otBolKaydet()">Kaydet — grubu böl</button>
+      <button class="btn btn-outline" onclick="document.getElementById('otBolModal').remove();window._otBolCtx=null">Vazgeç</button>
+    </div>
+  </div>`;
+}
+function otBolKaydet(){
+  const C=window._otBolCtx; if(!C) return;
+  const rez=getRezv(); let n=0;
+  rez.forEach(r=>{ if(!(r.tip==='urun'&&r.pkgId===C.pkgId&&r.kalkis===C.kalkis&&r.durum!=='iptal')) return;
+    const hedef=C.sec.has(r.id)?C.hedef:'01';
+    r.grupBolum=hedef; (r.musteriler||[]).forEach(m=>{ m.grupBolum=hedef; });
+    r.grupBolumM=true; n++;
+  });
+  rzSave();
+  const m0=document.getElementById('otBolModal'); if(m0)m0.remove(); window._otBolCtx=null;
+  try{ renderOpsTurlar(); }catch(e){}
+  try{ renderRehberTakvim(); }catch(e){}
+  showToast(C.sec.size?('Grup bölündü — '+C.sec.size+' voucher Grup '+C.hedef+"'e ayrıldı"):'Bölme kaldırıldı — herkes Grup 01','success',5000);
+}
 function _rtBolPanelHtml(pkgId,kalkis,geriFn){
   const rzler=(getRezv()||[]).filter(r=>r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis&&r.durum!=='iptal');
   window._rtBolSecim=window._rtBolSecim||{};
@@ -15037,12 +15115,11 @@ function renderOpsTurlar(){
       <span style="color:var(--muted);font-size:.74rem">· ${L.length} tur · ${topPax} pax</span>
       ${_gbSec.size?`<span style="margin-left:auto;background:var(--primary-soft);color:var(--primary);font-weight:800;font-size:.74rem;padding:4px 12px;border-radius:9px">${_gbSec.size} sefer seçili</span>
       <button class="btn btn-primary btn-sm" onclick="gbBirlestir()">🔗 Birleştir — TEK TUR yap</button>
-      ${(_gbSec.size===1&&![..._gbSec][0].startsWith('G:'))?`<button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="window._otBol=window._otBol?null:1;renderOpsTurlar()">⑃ Grubu Böl</button>`:''}
+      ${(_gbSec.size===1&&![..._gbSec][0].startsWith('G:'))?`<button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="otBolPopup()">⑃ Grubu Böl</button>`:''}
       <button class="btn btn-outline btn-sm" onclick="_gbSec.clear();window._otBol=null;renderOpsTurlar()">Vazgeç</button>`:''}
       <button class="btn btn-outline btn-sm" ${_gbSec.size?'':'style="margin-left:auto"'} onclick="opsTab('rehtak')">📅 Rehber Takvimi</button>
       <button class="btn btn-outline btn-sm" onclick="otExcel()">📥 Excel</button>
     </div>
-    ${(window._otBol&&_gbSec.size===1&&![..._gbSec][0].startsWith('G:'))?(()=>{ const p=[..._gbSec][0].split('|'); return _rtBolPanelHtml(p[0],p[1],'renderOpsTurlar'); })():''}
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
       <tr><th style="${th}" title="Birleştirmek için seç"></th><th style="${th}">Giriş</th><th style="${th}">Çıkış</th><th style="${th}">Tur</th><th style="${th}">Operatör</th><th style="${th}">Pax</th><th style="${th}">Rehber</th><th style="${th}">Transferler</th><th style="${th}"></th></tr>
       ${L.map(t=>{
