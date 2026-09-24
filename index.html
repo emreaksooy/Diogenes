@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v580 · 24.09.2026';
+const APP_VER='v581 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17188,46 +17188,47 @@ function renderMagMuh(){
   { const bekTum=getMagMuhAktif().filter(k=>{const c=_mmHesap(k); return (k.durum||'bekliyor')==='bekliyor'&&c.mag===0;});
     if(bekTum.length) h+=`<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:7px 12px;margin-bottom:10px;font-size:.78rem;color:#92400e"><b>⚠ ${bekTum.length} ziyaretin mağaza bildirimi bekleniyor</b>${bekTum.some(k=>String(_pdate(k.tarih)||'').slice(0,7)!==_mmAy)?' (bazıları başka aylarda — ay filtresini değiştir)':''}</div>`; }
   if(!L.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt yok — \'+ Bildirim Kaydı\' ile başla.</p></div>'; return; }
-  h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
-    <tr><th style="${th}"></th><th style="${th}">Tarih</th><th style="${th}">Mağaza</th><th style="${th}">Tur</th><th style="${th}">Rehber</th><th style="${th}">Pax</th><th style="${th}">Mağaza Ciro</th><th style="${th}">Rehber Ciro</th><th style="${th}">Fark</th><th style="${th}">Komisyon</th><th style="${th}">Durum</th><th style="${th}"></th></tr>`;
-  L.forEach(k=>{
-    const c=_mmHesap(k);
-    const fm=firmalar.find(x=>x.id===k.firmaId);
-    const acik=_mmAcik.has(k.id);
-    const dd=DAD[k.durum||'bekliyor'];
-    const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓ tutuyor</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')} (${Math.round(c.farkY)}%)</span>`):'<span style="color:var(--muted)">—</span>';
-    h+=`<tr>
-      <td style="${td}"><button onclick="mmAcKapa('${k.id}')" style="background:none;border:none;cursor:pointer">${acik?'▼':'▶'}</button></td>
-      <td style="${td}"><input type="date" value="${esc(_pdate(k.tarih)||'')}" onchange="mmSet('${k.id}','tarih',this.value)" style="${inp}"></td>
-      <td style="${td}"><select onchange="mmSet('${k.id}','firmaId',this.value)" style="${inp};min-width:120px"><option value="">seç…</option>${firmalar.map(f=>`<option value="${f.id}" ${k.firmaId===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>${k.magaza?`<div style="font-size:.62rem;color:var(--muted);white-space:nowrap">🏬 ${esc(k.magaza)}</div>`:''}</td>
-      <td style="${td}"><input value="${esc(k.kod||'')}" placeholder="CAP7…" onchange="mmSet('${k.id}','kod',this.value)" style="${inp};width:76px"></td>
-      <td style="${td}"><input value="${esc(k.rehberAd||'')}" list="mmRehL" onchange="mmSet('${k.id}','rehberAd',this.value)" style="${inp};width:110px"></td>
-      <td style="${td}"><input value="${esc(k.pax||'')}" inputmode="numeric" onchange="mmSet('${k.id}','pax',this.value)" style="${inp};width:44px;text-align:right"></td>
-      <td style="${td};white-space:nowrap"><b>${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')}</b> ${esc(k.para||'EUR')}</td>
-      <td style="${td}"><input value="${esc(k.rehCiro||'')}" inputmode="decimal" placeholder="—" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:84px;text-align:right">${(()=>{try{const bl=getRehBildirim().filter(x=>x.rehberAd&&_pdate(x.tarih)===_pdate(k.tarih)&&_rehbNrm(x.rehberAd)===_rehbNrm(k.rehberAd)&&(!x.magaza||!k.magaza||_rehbNrm(x.magaza)===_rehbNrm(k.magaza))); return bl.map(b=>`<div style="font-size:.62rem;color:var(--primary);cursor:pointer;white-space:nowrap" title="Rehber bildirimi${b.magaza?' — '+esc(b.magaza):''} — tıkla, rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">📲 ${esc(b.tutar)} ${esc(b.para||'')}</div>`).join('');}catch(e){return '';}})()}</td>
-      <td style="${td};white-space:nowrap">${farkHtml}</td>
-      <td style="${td};white-space:nowrap"><b style="color:var(--primary)">${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')}</b> ${esc(k.para||'EUR')}</td>
-      <td style="${td}"><select onchange="mmSet('${k.id}','durum',this.value)" style="${inp};background:${dd[1]};color:${dd[2]};font-weight:700">${Object.keys(DAD).map(d=>`<option value="${d}" ${(k.durum||'bekliyor')===d?'selected':''}>${DAD[d][0]}</option>`).join('')}</select></td>
-      <td style="${td}"><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmSil('${k.id}')">✕</button></td></tr>`;
-    if(acik){
-      h+=`<tr><td style="${td}"></td><td colspan="11" style="${td};background:var(--primary-soft)">
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
-          <b style="font-size:.74rem">MAĞAZA BİLDİRİMİ — kalemler</b>
-          <button class="btn btn-outline btn-sm" onclick="mmKalemAdd('${k.id}')">+ Kalem</button>
-          <button class="btn btn-outline btn-sm" onclick="mmSablonYap('${k.id}')" title="Bu kalem adları+oranları mağazanın şablonu olarak kaydedilir — sonraki kayıtlarda otomatik gelir">⭐ Şablon yap</button>
-          <label style="font-size:.7rem;font-weight:700;margin-left:auto">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp}">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
-        </div>
-        <table style="border-collapse:collapse">${(k.magKalemler||[]).map((x,i)=>{const kk=_tdN(x.ciro)*_tdN(x.oran)/100;return `<tr>
-          <td style="padding:2px 4px"><input value="${esc(x.ad||'')}" placeholder="Halı / Kuyum…" onchange="mmKalemSet('${k.id}',${i},'ad',this.value)" style="${inp};width:130px"></td>
-          <td style="padding:2px 4px"><input value="${esc(x.ciro||'')}" inputmode="decimal" placeholder="ciro" onchange="mmKalemSet('${k.id}',${i},'ciro',this.value)" style="${inp};width:100px;text-align:right"></td>
-          <td style="padding:2px 4px"><input value="${esc(x.oran||'')}" inputmode="decimal" placeholder="%" onchange="mmKalemSet('${k.id}',${i},'oran',this.value)" style="${inp};width:52px;text-align:right"> <span style="font-size:.68rem;color:var(--muted)">%</span></td>
-          <td style="padding:2px 6px;font-size:.72rem;color:var(--primary);font-weight:700">${(Math.round(kk*100)/100).toLocaleString('tr-TR')}</td>
-          <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmKalemDel('${k.id}',${i})">✕</button></td></tr>`;}).join('')}</table>
-        <div style="margin-top:6px"><input value="${esc(k.not||'')}" placeholder="not…" onchange="mmSet('${k.id}','not',this.value)" style="${inp};width:100%;max-width:480px"></div>
-      </td></tr>`;
-    }
+  h+=(()=>{
+  // ── TUR BAZLI GRUPLAMA (tıkla → mağazalar açılır) ──
+  const gruplar={};
+  L.forEach(k=>{ const key=(String(k.kod||'').trim().toUpperCase()||'—')+'|'+String(k.rehberAd||'').trim(); (gruplar[key]=gruplar[key]||[]).push(k); });
+  const GL=Object.entries(gruplar).map(([key,ks])=>{ ks.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
+    const kod=key.split('|')[0], reh=key.split('|').slice(1).join('|');
+    let mag=0,kom=0,bek=0; ks.forEach(k=>{const c=_mmHesap(k); mag+=c.mag; kom+=c.kom; if((k.durum||'bekliyor')==='bekliyor'&&c.mag===0) bek++;});
+    return {key,kod,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:(ks.find(k=>k.pax)||{}).pax||'',mag,kom,bek};
+  }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
+  window._mmTurAcik=window._mmTurAcik||new Set();
+  let g2h=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+    <tr><th style="${th};width:26px"></th><th style="${th}">Ziyaretler</th><th style="${th}">Tur</th><th style="${th}">Rehber</th><th style="${th}">Pax</th><th style="${th}">Mağazalar</th><th style="${th}">Ciro</th><th style="${th}">Komisyon</th><th style="${th}"></th></tr>`;
+  GL.forEach(g=>{
+    const acik=window._mmTurAcik.has(g.key);
+    g2h+=`<tr style="cursor:pointer;background:${acik?'var(--primary-soft)':'transparent'}" onclick="mmTurTog('${encodeURIComponent(g.key)}')">
+      <td style="${td}">${acik?'▼':'▶'}</td>
+      <td style="${td};white-space:nowrap"><b>${g.ilk?_fmtDateTR(g.ilk):'—'}</b>${g.son&&g.son!==g.ilk?' – '+_fmtDateTR(g.son):''}</td>
+      <td style="${td}"><b>${esc(g.kod)}</b></td>
+      <td style="${td}">${esc(g.reh||'—')}</td>
+      <td style="${td};text-align:right">${esc(String(g.pax||''))}</td>
+      <td style="${td};white-space:nowrap">${g.ks.length} ziyaret${g.bek?` <span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:1px 7px;border-radius:8px">${g.bek} bekliyor</span>`:' <span style="color:#166534;font-weight:800">✓</span>'}</td>
+      <td style="${td};white-space:nowrap"><b>${(Math.round(g.mag*100)/100).toLocaleString('tr-TR')}</b></td>
+      <td style="${td};white-space:nowrap;color:var(--primary);font-weight:800">${(Math.round(g.kom*100)/100).toLocaleString('tr-TR')}</td>
+      <td style="${td}"></td></tr>`;
+    if(acik) g.ks.forEach(k=>{
+      const c=_mmHesap(k);
+      const fm=firmalar.find(x=>x.id===k.firmaId);
+      const dd=DAD[k.durum||'bekliyor'];
+      const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')}</span>`):'—';
+      g2h+=`<tr style="background:#f8fafc">
+        <td style="${td}"></td>
+        <td style="${td};white-space:nowrap">${_fmtDateTR(_pdate(k.tarih)||'')}</td>
+        <td style="${td}" colspan="3">🏬 <b>${esc((fm&&fm.ad)||'mağaza seçilmedi')}</b>${k.magaza?` <span style="color:var(--muted);font-size:.68rem">${esc(k.magaza)}</span>`:''}</td>
+        <td style="${td};font-size:.72rem;white-space:nowrap">M: <b>${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')}</b> · R: <b>${(Math.round(c.reh*100)/100).toLocaleString('tr-TR')}</b> · ${farkHtml}</td>
+        <td style="${td};white-space:nowrap"><button class="btn btn-primary btn-sm" style="padding:3px 12px;font-size:.68rem" onclick="mmBildAc('${k.id}')">📝 Bildirim</button></td>
+        <td style="${td};white-space:nowrap;color:var(--primary);font-weight:700">${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')}</td>
+        <td style="${td};white-space:nowrap"><span style="background:${dd[1]};color:${dd[2]};font-weight:700;font-size:.62rem;padding:2px 8px;border-radius:8px">${dd[0]}</span> <button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmSil('${k.id}')">✕</button></td></tr>`;
+    });
   });
-  h+='</table></div>';
+  return g2h+'</table></div>';
+})();
   // ay özeti (firma bazlı)
   const oz={};
   L.forEach(k=>{ const c=_mmHesap(k); const ad=(firmalar.find(x=>x.id===k.firmaId)||{}).ad||'—'; const o=oz[ad]=oz[ad]||{ciro:0,kom:0,tahsil:0,n:0,para:k.para||'EUR'}; o.ciro+=c.mag; o.kom+=c.kom; o.n++; if(k.durum==='tahsil') o.tahsil+=c.kom; });
@@ -17238,6 +17239,55 @@ function renderMagMuh(){
   </div>`).join('')}</div>`;
   h+=`<datalist id="mmRehL">${(getTanimlar().rehberler||[]).map(r=>`<option value="${esc(r.ad)}">`).join('')}</datalist></div>`;
   box.innerHTML=h;
+  try{ if(window._mmBildId&&document.getElementById('mmBildModal')) mmBildDoldur(window._mmBildId); }catch(e){}
+}
+function mmTurTog(enc){ const k=decodeURIComponent(enc); const S=window._mmTurAcik=window._mmTurAcik||new Set(); S.has(k)?S.delete(k):S.add(k); renderMagMuh(); }
+function mmBildAc(id){ window._mmBildId=id; mmBildDoldur(id); }
+function mmBildDoldur(id){
+  const k=getMagMuh().find(x=>x.id===id); if(!k){ const m0=document.getElementById('mmBildModal'); if(m0)m0.remove(); window._mmBildId=null; return; }
+  const firmalar=_moFirmalar(); const fm=firmalar.find(x=>x.id===k.firmaId);
+  const c=_mmHesap(k);
+  const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
+  const DAD={bekliyor:['Bekliyor','#fef3c7','#92400e'],mutabik:['Mutabık','#dcfce7','#166534'],bekleme:['Bekleme Satış','#ede9fe','#6d28d9'],tahsil:['Tahsil edildi','#e0f2fe','#0369a1']};
+  const dd=DAD[k.durum||'bekliyor'];
+  let ov=document.getElementById('mmBildModal');
+  if(!ov){ ov=document.createElement('div'); ov.id='mmBildModal';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto';
+    ov.addEventListener('click',e=>{ if(e.target===ov){ ov.remove(); window._mmBildId=null; } });
+    document.body.appendChild(ov); }
+  let onerHtml=''; try{ const bl=getRehBildirim().filter(x=>x.rehberAd&&_pdate(x.tarih)===_pdate(k.tarih)&&_rehbNrm(x.rehberAd)===_rehbNrm(k.rehberAd)&&(!x.magaza||!k.magaza||_rehbNrm(x.magaza)===_rehbNrm(k.magaza)));
+    onerHtml=bl.map(b=>`<span style="font-size:.7rem;color:var(--primary);cursor:pointer;font-weight:700" title="Rehberin uygulamadan gönderdiği bildirim — tıkla, rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">📲 rehber bildirdi: ${esc(b.tutar)} ${esc(b.para||'')}</span>`).join(' '); }catch(e){}
+  const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓ tutuyor</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">fark ${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')} (%${Math.round(c.farkY)})</span>`):'';
+  ov.innerHTML=`<div style="width:min(580px,100%);background:#fff;border-radius:16px;padding:20px 22px" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <b style="font-size:.95rem">📝 Mağaza Bildirimi</b>
+      <span style="color:var(--muted);font-size:.74rem">${esc((fm&&fm.ad)||'')}${k.magaza?' · '+esc(k.magaza):''}</span>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="document.getElementById('mmBildModal').remove();window._mmBildId=null">✓ Tamam</button>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">${_fmtDateTR(_pdate(k.tarih)||'')} · ${esc(k.kod||'—')} · ${esc(k.rehberAd||'—')}${k.pax?' · '+esc(String(k.pax))+' pax':''}</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+      <b style="font-size:.74rem">KALEMLER</b>
+      <button class="btn btn-outline btn-sm" onclick="mmKalemAdd('${k.id}')">+ Kalem</button>
+      <button class="btn btn-outline btn-sm" onclick="mmSablonYap('${k.id}')" title="Kalem adları+oranları mağaza şablonu olur">⭐ Şablon yap</button>
+      <label style="font-size:.7rem;font-weight:700;margin-left:auto">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp}">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
+    </div>
+    <table style="border-collapse:collapse;width:100%">${(k.magKalemler||[]).map((x,i)=>{const kk=_tdN(x.ciro)*_tdN(x.oran)/100;return `<tr>
+      <td style="padding:2px 4px"><input value="${esc(x.ad||'')}" placeholder="Halı / Kuyum…" onchange="mmKalemSet('${k.id}',${i},'ad',this.value)" style="${inp};width:130px"></td>
+      <td style="padding:2px 4px"><input value="${esc(x.ciro||'')}" inputmode="decimal" placeholder="ciro" onchange="mmKalemSet('${k.id}',${i},'ciro',this.value)" style="${inp};width:104px;text-align:right"></td>
+      <td style="padding:2px 4px;white-space:nowrap"><input value="${esc(x.oran||'')}" inputmode="decimal" placeholder="%" onchange="mmKalemSet('${k.id}',${i},'oran',this.value)" style="${inp};width:52px;text-align:right"> %</td>
+      <td style="padding:2px 6px;font-size:.74rem;color:var(--primary);font-weight:700">${(Math.round(kk*100)/100).toLocaleString('tr-TR')}</td>
+      <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmKalemDel('${k.id}',${i})">✕</button></td></tr>`;}).join('')||'<tr><td style="font-size:.74rem;color:var(--muted);padding:4px">Kalem yok — "+ Kalem" ile ekle.</td></tr>'}</table>
+    <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 12px">
+      <b style="font-size:.76rem">Mağaza toplam: ${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</b>
+      <label style="font-size:.72rem;font-weight:700">Rehber bildirimi <input value="${esc(k.rehCiro||'')}" inputmode="decimal" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:104px;text-align:right"></label>
+      ${farkHtml} ${onerHtml}
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select onchange="mmSet('${k.id}','durum',this.value)" style="${inp};background:${dd[1]};color:${dd[2]};font-weight:700">${Object.keys(DAD).map(d=>`<option value="${d}" ${(k.durum||'bekliyor')===d?'selected':''}>${DAD[d][0]}</option>`).join('')}</select>
+      <input value="${esc(k.not||'')}" placeholder="not…" onchange="mmSet('${k.id}','not',this.value)" style="${inp};flex:1;min-width:180px">
+      <span style="font-size:.74rem;color:var(--primary);font-weight:800">Komisyon: ${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</span>
+    </div>
+  </div>`;
 }
 function mmExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
