@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v577 · 24.09.2026';
+const APP_VER='v578 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18516,8 +18516,8 @@ function _trTasimaciExcel(secIds){
       detaylar.push(aoa.length); aoa.push(['Detay',b.pax+' pax   ·   Araç: '+aracTxt+'   ·   Rehber: '+reh]);
       if(b.notlar&&b.notlar.size){ detaylar.push(aoa.length); aoa.push(['Not',[...b.notlar].join('  ·  ')]); }
       yolcuHdr.push(aoa.length);
-      aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Uçuş','Uçuş Saati','Operatör','Hat / Terminal']);
-      b.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.ucus,y.usaat,y.op,y.hat?(y.hat+(y.rt?' ('+y.rt+')':'')):'']));
+      aoa.push(['#','Unvan','Soyadı','Adı','Yaş','Uçuş','Uçuş Saati','Operatör','Hat / Terminal']);
+      b.yolcular.forEach((y,i)=>aoa.push([i+1,y.unvan,y.soyad,y.ad,y.yas,y.ucus,y.usaat,y.op,y.hat?(y.hat+(y.rt?' ('+y.rt+')':'')):'']));
       aoa.push([]);
     });
     const topP=L.reduce((t,b)=>t+b.pax,0);
@@ -18538,7 +18538,7 @@ function _trTasimaciExcel(secIds){
     aoa.push([]);
   }
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[10,15,8,32,7,10,9,16,10].map(w2=>({wch:w2}));
+  ws['!cols']=[6,8,22,20,7,11,10,16,12].map(w2=>({wch:w2}));
   try{
     const nC=9;
     ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
