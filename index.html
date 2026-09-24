@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v581 · 24.09.2026';
+const APP_VER='v582 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13817,13 +13817,20 @@ function renderMagazaOps(){
   const turler=[...new Set(tum.map(r=>r.tur).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   if(_moFltSehir&&!sehirler.includes(_moFltSehir)) _moFltSehir='';
   if(_moFltTur&&!turler.includes(_moFltTur)) _moFltTur='';
+  window._moFltBas=window._moFltBas||''; window._moFltBit=window._moFltBit||'';
   const rows=tum.filter(r=>(!_moFltSehir||r.sehir===_moFltSehir)&&(!_moFltTur||r.tur===_moFltTur)&&(!_moSadeceAcik||!r.firmaId)
     &&(!_moFltGrup||String(r.firmaId||'').split('|')[0]===_moFltGrup)
-    &&(!_moFltMag||r.firmaId===_moFltMag));
+    &&(!_moFltMag||r.firmaId===_moFltMag)
+    &&(!window._moFltBas||String(r.tarih||'')>=window._moFltBas)
+    &&(!window._moFltBit||String(r.tarih||'')<=window._moFltBit));
   const acikN=tum.filter(r=>!r.firmaId).length;
   let h='<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
    +'<b style="font-size:.95rem;color:#1a3c5e">🏬 Mağaza Operasyonu</b>'
    +'<span style="font-size:.76rem;color:var(--muted)">'+tum.length+' ziyaret · <b style="color:'+(acikN?'#b45309':'#065f46')+'">'+acikN+' atanmamış</b></span>'
+   +'<input type="date" value="'+(window._moFltBas||'')+'" onchange="window._moFltBas=this.value;renderMagazaOps()" title="Tarih aralığı başı" style="padding:6px 9px;border:1.5px solid '+(window._moFltBas?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit">'
+   +'<span style="color:var(--muted)">~</span>'
+   +'<input type="date" value="'+(window._moFltBit||'')+'" onchange="window._moFltBit=this.value;renderMagazaOps()" title="Tarih aralığı sonu" style="padding:6px 9px;border:1.5px solid '+(window._moFltBit?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit">'
+   +((window._moFltBas||window._moFltBit)?'<button class="btn btn-outline btn-sm" onclick="window._moFltBas=\'\';window._moFltBit=\'\';renderMagazaOps()">✕</button>':'')
    +'<select onchange="_moFltSehir=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltSehir?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm şehirler</option>'+sehirler.map(x=>'<option'+(x===_moFltSehir?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
    +'<select onchange="_moFltTur=this.value;renderMagazaOps()" style="padding:6px 9px;border:1.5px solid '+(_moFltTur?'#2563eb':'var(--border)')+';border-radius:8px;font-size:.78rem;font-family:inherit"><option value="">Tüm türler</option>'+turler.map(x=>'<option'+(x===_moFltTur?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'
    +'<label style="display:inline-flex;align-items:center;gap:5px;font-size:.78rem;cursor:pointer"><input type="checkbox" '+(_moSadeceAcik?'checked':'')+' onchange="_moSadeceAcik=this.checked;renderMagazaOps()"> Sadece atanmamış</label>'
