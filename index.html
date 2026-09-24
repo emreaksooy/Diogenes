@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v571 · 24.09.2026';
+const APP_VER='v572 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17600,21 +17600,29 @@ function thsSil(gid,aid){
 let _thsFirmaF='', _thsBasF='', _thsBitF='';
 function thsFiltre(f,v){ if(f==='firma')_thsFirmaF=v; else if(f==='bas')_thsBasF=v; else _thsBitF=v; renderOpsTahsis(); }
 function _thsListe(bugun){
-  const L=[]; const T=getTanimlar();
+  // Kayıtlı TÜM gruplardan (tur dosyasından ya da bu ekrandan atanmış fark etmez)
+  const L=[]; const T=getTanimlar(); const pkgs=getPackages();
   try{
-    _ogResolve().forEach(E2=>{
-      const g2=(getOpsGrup().gruplar||{})[E2.id]; if(!g2) return;
-      (g2.araclar||[]).filter(a=>a.tip==='tahsis').forEach(a=>{
+    const exp=getOpsGrup().gruplar||{};
+    let res=[]; try{ res=_ogResolve(); }catch(e){}
+    Object.values(exp).forEach(g2=>{
+      const tah=(g2.araclar||[]).filter(a=>a.tip==='tahsis'); if(!tah.length) return;
+      const E2=res.find(x=>x.id===g2.id)||null;
+      const urun=(E2&&(E2.urunler||[]).length)?E2.urunler.join('+')
+        :[...new Set((g2.uyeler||[]).map(u=>{ const p=pkgs.find(pp=>pp.id===u.pkgId); return p?(p.paketKodu||p.paketAdi||''):''; }).filter(Boolean))].join('+')||g2.ad||'';
+      const pax=E2?E2.pax:'';
+      let rehAd=''; try{ const rh=(T.rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
+      tah.forEach(a=>{
         const ab=_pdate(a.bas)||'', abit=_pdate(a.bit)||ab;
-        if(bugun&&abit&&abit<bugun) return;
+        const tarihFiltreli=!!(_thsBasF||_thsBitF);
+        if(!tarihFiltreli&&bugun&&abit&&abit<bugun) return; // tarih filtresi yoksa bitmişler gizli
         if(_thsFirmaF&&String(a.firma||'').trim()!==_thsFirmaF) return;
         if(_thsBasF&&abit&&abit<_thsBasF) return;
         if(_thsBitF&&ab&&ab>_thsBitF) return;
-        let rehAd=''; try{ const rh=(T.rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
         let gon='';
         if((a.firma||'').trim()){ const son=_trSonGonderim(String(a.firma).trim());
-          gon=(son&&(son.ids||[]).includes('TAH|'+E2.id+'|'+ab))?'✓':'YENI'; }
-        L.push({gid:E2.id,aid:a.id,bas:ab,bit:abit,tur:(E2.urunler||[]).join('+')||'',gorev:a.gorev||'',pax:E2.pax||'',
+          gon=(son&&(son.ids||[]).includes('TAH|'+g2.id+'|'+ab))?'✓':'YENI'; }
+        L.push({gid:g2.id,aid:a.id,bas:ab,bit:abit,tur:urun,gorev:a.gorev||'',pax:pax,
           firma:a.firma||'',arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
           reh:rehAd,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||'',basYer:a.basYer||''});
       });
