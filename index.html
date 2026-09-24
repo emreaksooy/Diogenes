@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v582 · 24.09.2026';
+const APP_VER='v583 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17178,6 +17178,17 @@ function renderMagMuh(){
   if(_mmFirmaF) L=L.filter(k=>k.firmaId===_mmFirmaF);
   if(_mmDurumF) L=L.filter(k=>(k.durum||'bekliyor')===_mmDurumF);
   window._mmBildKartHTML=_mmBildirimKart();
+  // planlı (gelecek) ziyaretler — kayıt henüz açılmadı, seçili ayda görünsün
+  let planL=[];
+  try{
+    const bugun=_opsToday();
+    const mev=new Set(getMagMuhAktif().map(k=>k.otoKey).filter(Boolean));
+    planL=(_moSatirlar(bugun)||[]).filter(r=>r.firmaId&&String(r.tarih||'').slice(0,7)===_mmAy&&String(r.tarih)>=bugun&&!mev.has(r.tarih+'|'+r.firmaId+'|'+r.kod))
+      .map(r=>{ let ad='',sube=''; try{ const cz=_moAtaCoz(r.firmaId); ad=(cz.f&&cz.f.ad)||''; sube=cz.sube?(cz.sube.ad||cz.sube.sehir||''):''; }catch(e){}
+        return {plan:true,planKey:r.tarih+'|'+r.firmaId+'|'+r.kod,tarih:r.tarih,kod:r.kod,rehberAd:r.rehber||'',pax:r.pax||'',firmaAd:ad,magaza:sube,para:'EUR'}; });
+    if(_mmFirmaF) planL=planL.filter(r=>{ try{ const cz=_moAtaCoz(r.planKey.split('|')[1]); return cz.f&&cz.f.id===_mmFirmaF; }catch(e){ return false; } });
+    if(_mmDurumF&&_mmDurumF!=='bekliyor') planL=[];
+  }catch(e){}
   L.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
   const th='background:var(--navy);color:#fff;padding:4px 8px;font-size:.62rem;text-align:left;white-space:nowrap';
   const td='padding:4px 8px;font-size:.76rem;border-bottom:1px solid var(--border)';
@@ -17188,21 +17199,21 @@ function renderMagMuh(){
       <input type="month" value="${_mmAy}" onchange="_mmAy=this.value;renderMagMuh()" style="${inp}">
       <select onchange="_mmFirmaF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm mağazalar</option>${firmalar.map(f=>`<option value="${f.id}" ${_mmFirmaF===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>
       <select onchange="_mmDurumF=this.value;renderMagMuh()" style="${inp}"><option value="">Tüm durumlar</option><option value="bekliyor" ${_mmDurumF==='bekliyor'?'selected':''}>Bekliyor</option><option value="mutabik" ${_mmDurumF==='mutabik'?'selected':''}>Mutabık</option><option value="bekleme" ${_mmDurumF==='bekleme'?'selected':''}>Bekleme Satış</option><option value="tahsil" ${_mmDurumF==='tahsil'?'selected':''}>Tahsil edildi</option></select>
-      <span style="color:var(--muted);font-size:.74rem">· ${L.length} kayıt</span>
+      <span style="color:var(--muted);font-size:.74rem">· ${L.length} kayıt${planL.length?` · <b style="color:#0369a1">${planL.length} planlı</b>`:''}</span>
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mmYeni()">+ Bildirim Kaydı</button>
       <button class="btn btn-outline btn-sm" onclick="mmExcel()">📥 Excel</button>
     </div>`;
   { const bekTum=getMagMuhAktif().filter(k=>{const c=_mmHesap(k); return (k.durum||'bekliyor')==='bekliyor'&&c.mag===0;});
     if(bekTum.length) h+=`<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:7px 12px;margin-bottom:10px;font-size:.78rem;color:#92400e"><b>⚠ ${bekTum.length} ziyaretin mağaza bildirimi bekleniyor</b>${bekTum.some(k=>String(_pdate(k.tarih)||'').slice(0,7)!==_mmAy)?' (bazıları başka aylarda — ay filtresini değiştir)':''}</div>`; }
-  if(!L.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt yok — \'+ Bildirim Kaydı\' ile başla.</p></div>'; return; }
+  if(!L.length&&!planL.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt/planlı ziyaret yok — \'+ Bildirim Kaydı\' ile başla.</p></div>'; return; }
   h+=(()=>{
   // ── TUR BAZLI GRUPLAMA (tıkla → mağazalar açılır) ──
   const gruplar={};
-  L.forEach(k=>{ const key=(String(k.kod||'').trim().toUpperCase()||'—')+'|'+String(k.rehberAd||'').trim(); (gruplar[key]=gruplar[key]||[]).push(k); });
+  L.concat(planL).forEach(k=>{ const key=(String(k.kod||'').trim().toUpperCase()||'—')+'|'+String(k.rehberAd||'').trim(); (gruplar[key]=gruplar[key]||[]).push(k); });
   const GL=Object.entries(gruplar).map(([key,ks])=>{ ks.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
     const kod=key.split('|')[0], reh=key.split('|').slice(1).join('|');
-    let mag=0,kom=0,bek=0; ks.forEach(k=>{const c=_mmHesap(k); mag+=c.mag; kom+=c.kom; if((k.durum||'bekliyor')==='bekliyor'&&c.mag===0) bek++;});
-    return {key,kod,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:(ks.find(k=>k.pax)||{}).pax||'',mag,kom,bek};
+    let mag=0,kom=0,bek=0,plan=0; ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag; kom+=c.kom; if((k.durum||'bekliyor')==='bekliyor'&&c.mag===0) bek++;});
+    return {key,kod,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:(ks.find(k=>k.pax)||{}).pax||'',mag,kom,bek,plan};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
   window._mmTurAcik=window._mmTurAcik||new Set();
   let g2h=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
@@ -17215,11 +17226,21 @@ function renderMagMuh(){
       <td style="${td}"><b>${esc(g.kod)}</b></td>
       <td style="${td}">${esc(g.reh||'—')}</td>
       <td style="${td};text-align:right">${esc(String(g.pax||''))}</td>
-      <td style="${td};white-space:nowrap">${g.ks.length} ziyaret${g.bek?` <span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:1px 7px;border-radius:8px">${g.bek} bekliyor</span>`:' <span style="color:#166534;font-weight:800">✓</span>'}</td>
+      <td style="${td};white-space:nowrap">${g.ks.length} ziyaret${g.bek?` <span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:1px 7px;border-radius:8px">${g.bek} bekliyor</span>`:''}${g.plan?` <span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.62rem;padding:1px 7px;border-radius:8px">📅 ${g.plan} planlı</span>`:''}${(!g.bek&&!g.plan)?' <span style="color:#166534;font-weight:800">✓</span>':''}</td>
       <td style="${td};white-space:nowrap"><b>${(Math.round(g.mag*100)/100).toLocaleString('tr-TR')}</b></td>
       <td style="${td};white-space:nowrap;color:var(--primary);font-weight:800">${(Math.round(g.kom*100)/100).toLocaleString('tr-TR')}</td>
       <td style="${td}"></td></tr>`;
     if(acik) g.ks.forEach(k=>{
+      if(k.plan){
+        g2h+=`<tr style="background:#f0f9ff">
+          <td style="${td}"></td>
+          <td style="${td};white-space:nowrap">${_fmtDateTR(_pdate(k.tarih)||'')}</td>
+          <td style="${td}" colspan="3">🏬 <b>${esc(k.firmaAd||'—')}</b>${k.magaza?` <span style="color:var(--muted);font-size:.68rem">${esc(k.magaza)}</span>`:''}</td>
+          <td style="${td};font-size:.72rem;color:#0369a1;font-weight:700">📅 planlandı — ziyaret günü kayda düşer</td>
+          <td style="${td}"><button class="btn btn-outline btn-sm" style="padding:3px 10px;font-size:.68rem;color:#0369a1;border-color:#7dd3fc" onclick="mmPlanKayitAc('${encodeURIComponent(k.planKey)}')">📝 Erken kayıt aç</button></td>
+          <td style="${td}"></td><td style="${td}"></td></tr>`;
+        return;
+      }
       const c=_mmHesap(k);
       const fm=firmalar.find(x=>x.id===k.firmaId);
       const dd=DAD[k.durum||'bekliyor'];
@@ -17249,6 +17270,24 @@ function renderMagMuh(){
   try{ if(window._mmBildId&&document.getElementById('mmBildModal')) mmBildDoldur(window._mmBildId); }catch(e){}
 }
 function mmTurTog(enc){ const k=decodeURIComponent(enc); const S=window._mmTurAcik=window._mmTurAcik||new Set(); S.has(k)?S.delete(k):S.add(k); renderMagMuh(); }
+function mmPlanKayitAc(enc){
+  try{
+    const key=decodeURIComponent(enc); const p=key.split('|');
+    const tarih=p[0], firmaIdRaw=p.slice(1,-1).join('|'), kod=p[p.length-1];
+    const L=getMagMuh();
+    let k=L.find(x=>x.otoKey===key);
+    if(!k){
+      const r=(_moSatirlar(_opsToday())||[]).find(x=>x.tarih===tarih&&String(x.firmaId)===firmaIdRaw&&x.kod===kod);
+      const cz=_moAtaCoz(firmaIdRaw); const fm=cz.f;
+      const sube=cz.sube||(fm?_moSubeBul(fm,(r&&r.sehir)||''):null);
+      const sablon=(sube&&(sube.kalemler||[]).length)?sube.kalemler:((fm&&fm.kalemler)||[]);
+      k={id:genId(),otoKey:key,tarih,firmaId:(fm?fm.id:String(firmaIdRaw).split('|')[0]),magaza:sube?(sube.ad||sube.sehir||''):'',kod,rehberAd:(r&&r.rehber)||'',pax:(r&&r.pax)||'',para:'EUR',
+        magKalemler:sablon.map(x=>({ad:x.ad,oran:x.oran,ciro:'',pay:x.pay||null})),rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()};
+      L.unshift(k); setMagMuh(L);
+    }
+    renderMagMuh(); mmBildAc(k.id);
+  }catch(e){ showToast('Kayıt açılamadı: '+e.message,'error'); }
+}
 function mmBildAc(id){ window._mmBildId=id; mmBildDoldur(id); }
 function mmBildDoldur(id){
   const k=getMagMuh().find(x=>x.id===id); if(!k){ const m0=document.getElementById('mmBildModal'); if(m0)m0.remove(); window._mmBildId=null; return; }
