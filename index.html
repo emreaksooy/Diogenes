@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v583 · 24.09.2026';
+const APP_VER='v584 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17207,55 +17207,78 @@ function renderMagMuh(){
     if(bekTum.length) h+=`<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:7px 12px;margin-bottom:10px;font-size:.78rem;color:#92400e"><b>⚠ ${bekTum.length} ziyaretin mağaza bildirimi bekleniyor</b>${bekTum.some(k=>String(_pdate(k.tarih)||'').slice(0,7)!==_mmAy)?' (bazıları başka aylarda — ay filtresini değiştir)':''}</div>`; }
   if(!L.length&&!planL.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt/planlı ziyaret yok — \'+ Bildirim Kaydı\' ile başla.</p></div>'; return; }
   h+=(()=>{
-  // ── TUR BAZLI GRUPLAMA (tıkla → mağazalar açılır) ──
+  // ── TUR BAZLI "BALON" KARTLAR ──
   const gruplar={};
   L.concat(planL).forEach(k=>{ const key=(String(k.kod||'').trim().toUpperCase()||'—')+'|'+String(k.rehberAd||'').trim(); (gruplar[key]=gruplar[key]||[]).push(k); });
+  const turSinif=ad=>{ const t=String(ad||'').toLocaleLowerCase('tr'); if(/hal[ıi]/.test(t))return 'hali'; if(/kuyum|alt[ıi]n|gold/.test(t))return 'kuyum'; if(/deri|leather/.test(t))return 'deri'; return 'diger'; };
+  const opBul=kod=>{ try{ for(const parca of String(kod||'').split('+')){ const pk=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(parca.replace(/×\d+$/,''))); if(pk){ const ad=_resOpAd(pk); if(ad) return ad; } } }catch(e){} return ''; };
   const GL=Object.entries(gruplar).map(([key,ks])=>{ ks.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
     const kod=key.split('|')[0], reh=key.split('|').slice(1).join('|');
-    let mag=0,kom=0,bek=0,plan=0; ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag; kom+=c.kom; if((k.durum||'bekliyor')==='bekliyor'&&c.mag===0) bek++;});
-    return {key,kod,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:(ks.find(k=>k.pax)||{}).pax||'',mag,kom,bek,plan};
+    let mag=0,kom=0,bek=0,plan=0; const tsat={hali:0,kuyum:0,deri:0,diger:0};
+    ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag; kom+=c.kom;
+      (k.magKalemler||[]).forEach(x=>{ tsat[turSinif(x.ad)]+=_tdN(x.ciro); });
+      if((k.durum||'bekliyor')==='bekliyor'&&c.mag===0) bek++; });
+    return {key,kod,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),mag,kom,bek,plan,tsat,op:opBul(kod)};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
   window._mmTurAcik=window._mmTurAcik||new Set();
-  let g2h=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
-    <tr><th style="${th};width:26px"></th><th style="${th}">Ziyaretler</th><th style="${th}">Tur</th><th style="${th}">Rehber</th><th style="${th}">Pax</th><th style="${th}">Mağazalar</th><th style="${th}">Ciro</th><th style="${th}">Komisyon</th><th style="${th}"></th></tr>`;
+  const F=n=>Math.round(n).toLocaleString('tr-TR');
+  const pill=(l,v,bg,fg)=>`<span style="display:inline-flex;flex-direction:column;align-items:center;gap:1px;background:${bg};color:${fg};border-radius:11px;padding:4px 12px;min-width:58px"><span style="font-size:.56rem;font-weight:700;letter-spacing:.4px;opacity:.75;text-transform:uppercase">${l}</span><b style="font-size:.8rem;line-height:1">${v}</b></span>`;
+  let g2h='';
   GL.forEach(g=>{
     const acik=window._mmTurAcik.has(g.key);
-    g2h+=`<tr style="cursor:pointer;background:${acik?'var(--primary-soft)':'transparent'}" onclick="mmTurTog('${encodeURIComponent(g.key)}')">
-      <td style="${td}">${acik?'▼':'▶'}</td>
-      <td style="${td};white-space:nowrap"><b>${g.ilk?_fmtDateTR(g.ilk):'—'}</b>${g.son&&g.son!==g.ilk?' – '+_fmtDateTR(g.son):''}</td>
-      <td style="${td}"><b>${esc(g.kod)}</b></td>
-      <td style="${td}">${esc(g.reh||'—')}</td>
-      <td style="${td};text-align:right">${esc(String(g.pax||''))}</td>
-      <td style="${td};white-space:nowrap">${g.ks.length} ziyaret${g.bek?` <span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:1px 7px;border-radius:8px">${g.bek} bekliyor</span>`:''}${g.plan?` <span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.62rem;padding:1px 7px;border-radius:8px">📅 ${g.plan} planlı</span>`:''}${(!g.bek&&!g.plan)?' <span style="color:#166534;font-weight:800">✓</span>':''}</td>
-      <td style="${td};white-space:nowrap"><b>${(Math.round(g.mag*100)/100).toLocaleString('tr-TR')}</b></td>
-      <td style="${td};white-space:nowrap;color:var(--primary);font-weight:800">${(Math.round(g.kom*100)/100).toLocaleString('tr-TR')}</td>
-      <td style="${td}"></td></tr>`;
-    if(acik) g.ks.forEach(k=>{
-      if(k.plan){
-        g2h+=`<tr style="background:#f0f9ff">
-          <td style="${td}"></td>
-          <td style="${td};white-space:nowrap">${_fmtDateTR(_pdate(k.tarih)||'')}</td>
-          <td style="${td}" colspan="3">🏬 <b>${esc(k.firmaAd||'—')}</b>${k.magaza?` <span style="color:var(--muted);font-size:.68rem">${esc(k.magaza)}</span>`:''}</td>
-          <td style="${td};font-size:.72rem;color:#0369a1;font-weight:700">📅 planlandı — ziyaret günü kayda düşer</td>
-          <td style="${td}"><button class="btn btn-outline btn-sm" style="padding:3px 10px;font-size:.68rem;color:#0369a1;border-color:#7dd3fc" onclick="mmPlanKayitAc('${encodeURIComponent(k.planKey)}')">📝 Erken kayıt aç</button></td>
-          <td style="${td}"></td><td style="${td}"></td></tr>`;
-        return;
-      }
-      const c=_mmHesap(k);
-      const fm=firmalar.find(x=>x.id===k.firmaId);
-      const dd=DAD[k.durum||'bekliyor'];
-      const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')}</span>`):'—';
-      g2h+=`<tr style="background:#f8fafc">
-        <td style="${td}"></td>
-        <td style="${td};white-space:nowrap">${_fmtDateTR(_pdate(k.tarih)||'')}</td>
-        <td style="${td}" colspan="3">🏬 <b>${esc((fm&&fm.ad)||'mağaza seçilmedi')}</b>${k.magaza?` <span style="color:var(--muted);font-size:.68rem">${esc(k.magaza)}</span>`:''}</td>
-        <td style="${td};font-size:.72rem;white-space:nowrap">M: <b>${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')}</b> · R: <b>${(Math.round(c.reh*100)/100).toLocaleString('tr-TR')}</b> · ${farkHtml}</td>
-        <td style="${td};white-space:nowrap"><button class="btn btn-primary btn-sm" style="padding:3px 12px;font-size:.68rem" onclick="mmBildAc('${k.id}')">📝 Bildirim</button></td>
-        <td style="${td};white-space:nowrap;color:var(--primary);font-weight:700">${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')}</td>
-        <td style="${td};white-space:nowrap"><span style="background:${dd[1]};color:${dd[2]};font-weight:700;font-size:.62rem;padding:2px 8px;border-radius:8px">${dd[0]}</span> <button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmSil('${k.id}')">✕</button></td></tr>`;
-    });
+    const ppax=g.pax>0?F(g.mag/g.pax):'—';
+    g2h+=`<div style="border:1.5px solid ${acik?'var(--primary)':'var(--border)'};border-radius:16px;margin-bottom:10px;overflow:hidden;background:#fff">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;cursor:pointer;user-select:none" onclick="mmTurTog('${encodeURIComponent(g.key)}')">
+        <span style="background:var(--navy);color:#fff;font-weight:800;font-size:.74rem;padding:5px 12px;border-radius:11px;white-space:nowrap">${g.ilk?_fmtDateTR(g.ilk):'—'}</span>
+        <span style="display:flex;flex-direction:column;min-width:120px"><b style="font-size:.86rem">${esc(g.kod)}</b><span style="font-size:.66rem;color:var(--muted)">${esc(g.op||'')}</span></span>
+        <span style="display:flex;flex-direction:column;min-width:110px"><span style="font-size:.56rem;font-weight:700;color:var(--muted);text-transform:uppercase">Rehber</span><b style="font-size:.74rem">${esc(g.reh||'—')}</b></span>
+        ${pill('Pax',g.pax||'—','#eef2f7','var(--navy)')}
+        ${pill('Halı',g.tsat.hali?F(g.tsat.hali):'—','#fef3c7','#92400e')}
+        ${pill('Kuyum',g.tsat.kuyum?F(g.tsat.kuyum):'—','#fef9c3','#a16207')}
+        ${pill('Deri',g.tsat.deri?F(g.tsat.deri):'—','#ede9e3','#57534e')}
+        ${pill('Ciro',F(g.mag),'var(--navy)','#fff')}
+        ${pill('Komisyon',F(g.kom),'var(--primary)','#fff')}
+        ${pill('P.Pax',ppax,'#dcfce7','#166534')}
+        <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
+          ${g.bek?`<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">${g.bek} bekliyor</span>`:''}
+          ${g.plan?`<span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">📅 ${g.plan} planlı</span>`:''}
+          ${(!g.bek&&!g.plan)?'<span style="color:#166534;font-weight:800">✓</span>':''}
+          <span style="color:var(--muted)">${acik?'▲':'▼'}</span>
+        </span>
+      </div>`;
+    if(acik){
+      g2h+='<div style="border-top:1px dashed var(--border);background:#f8fafc;padding:6px 14px 10px">';
+      g.ks.forEach(k=>{
+        if(k.plan){
+          g2h+=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #e2e8f0;font-size:.76rem">
+            <b style="min-width:78px">${_fmtDateTR(_pdate(k.tarih)||'')}</b>
+            <span>🏬 <b>${esc(k.firmaAd||'—')}</b>${k.magaza?` <span style="color:var(--muted);font-size:.68rem">${esc(k.magaza)}</span>`:''}</span>
+            <span style="color:#0369a1;font-weight:700;font-size:.7rem">📅 planlandı — ziyaret günü kayda düşer</span>
+            <button class="btn btn-outline btn-sm" style="margin-left:auto;padding:3px 10px;font-size:.68rem;color:#0369a1;border-color:#7dd3fc" onclick="mmPlanKayitAc('${encodeURIComponent(k.planKey)}')">📝 Erken kayıt aç</button>
+          </div>`;
+          return;
+        }
+        const c=_mmHesap(k);
+        const fm=firmalar.find(x=>x.id===k.firmaId);
+        const dd=DAD[k.durum||'bekliyor'];
+        const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')}</span>`):'—';
+        g2h+=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #e2e8f0;font-size:.76rem">
+          <b style="min-width:78px">${_fmtDateTR(_pdate(k.tarih)||'')}</b>
+          <span style="min-width:170px">🏬 <b>${esc((fm&&fm.ad)||'mağaza seçilmedi')}</b>${k.magaza?` <span style="color:var(--muted);font-size:.68rem">${esc(k.magaza)}</span>`:''}</span>
+          <span style="font-size:.72rem;white-space:nowrap">M: <b>${F(c.mag)}</b> · R: <b>${F(c.reh)}</b> · ${farkHtml}</span>
+          <span style="font-size:.72rem;color:var(--primary);font-weight:800;white-space:nowrap">Kom: ${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')}</span>
+          <span style="background:${dd[1]};color:${dd[2]};font-weight:700;font-size:.62rem;padding:2px 9px;border-radius:9px">${dd[0]}</span>
+          <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
+            <button class="btn btn-primary btn-sm" style="padding:3px 12px;font-size:.68rem" onclick="mmBildAc('${k.id}')">📝 Bildirim</button>
+            <button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmSil('${k.id}')">✕</button>
+          </span>
+        </div>`;
+      });
+      g2h+='</div>';
+    }
+    g2h+='</div>';
   });
-  return g2h+'</table></div>';
+  return g2h||'<p style="color:var(--muted);font-size:.85rem">Kayıt yok.</p>';
 })();
   // ay özeti (firma bazlı)
   const oz={};
