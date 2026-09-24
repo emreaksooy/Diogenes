@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v588 · 24.09.2026';
+const APP_VER='v589 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13830,8 +13830,8 @@ function renderMagazaOps(){
   const rows=tum.filter(r=>(!_moFltSehir||r.sehir===_moFltSehir)&&(!_moFltTur||r.tur===_moFltTur)&&(!_moSadeceAcik||!r.firmaId)
     &&(!_moFltGrup||String(r.firmaId||'').split('|')[0]===_moFltGrup)
     &&(!_moFltMag||r.firmaId===_moFltMag)
-    &&(!window._moFltBas||String(r.tarih||'')>=window._moFltBas)
-    &&(!window._moFltBit||String(r.tarih||'')<=window._moFltBit));
+    &&(!window._moFltBas||String(_pdate(r.tarih)||r.tarih||'')>=window._moFltBas)
+    &&(!window._moFltBit||String(_pdate(r.tarih)||r.tarih||'')<=window._moFltBit));
   const acikN=tum.filter(r=>!r.firmaId).length;
   let h='<div class="card" style="margin-bottom:12px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
    +'<b style="font-size:.95rem;color:#1a3c5e">🏬 Mağaza Operasyonu</b>'
