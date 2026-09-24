@@ -2118,7 +2118,7 @@ body.dark .otl-f input,body.dark .otl-f select{background:var(--card)}
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v578 · 24.09.2026';
+const APP_VER='v579 · 24.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17735,8 +17735,8 @@ function thsPrint(gid,aid){
       ${a.not?`<div style="font-size:.74rem;color:#555;margin-top:2px">Not: ${esc(a.not)}</div>`:''}
       ${(!a.gorev&&!a.program&&!a.not)?'<div style="font-size:.76rem;color:#888">—</div>':''}
     </div>
-    ${D.yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Voucher</th><th>Soyadı, Adı</th></tr>
-      ${D.yolcular.map((y,i)=>`<tr><td>${i+1}</td><td>${esc(y.voucher)}</td><td><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td></tr>`).join('')}</table>
+    ${D.yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Soyadı</th><th>Adı</th></tr>
+      ${D.yolcular.map((y,i)=>`<tr><td>${i+1}</td><td><b>${esc(y.soyad)}</b></td><td>${esc(y.ad)}</td></tr>`).join('')}</table>
       <div style="margin-top:5px;font-weight:700;font-size:10pt">TOPLAM: ${D.yolcular.length} kişi</div>`:'<p style="font-size:.78rem;color:#888">İsim listesi bulunamadı — rezervasyon/uçak listesi girildikçe oluşur.</p>'}
   </div>`;
   _trPrint(h);
@@ -17751,11 +17751,11 @@ function thsTekExcel(gid,aid){
     ['Araç',[a.ad,a.arTip].filter(Boolean).join(' · ')],['Plaka',a.plaka||''],['Şoför',[a.sofor,a.stel].filter(Boolean).join(' · ')],
     ['Rehber',D.reh?(D.reh+(D.rehTel?' · '+D.rehTel:'')):''],['Pax',D.pax||''],
     ['YAPILACAK İŞ',[a.gorev,a.program,a.not].filter(Boolean).join('  ·  ')||'—'],[],
-    ['#','Voucher','Soyadı, Adı']];
-  D.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.soyad+', '+y.ad]));
+    ['#','Soyadı','Adı']];
+  D.yolcular.forEach((y,i)=>aoa.push([i+1,y.soyad,y.ad]));
   aoa.push([]); aoa.push(['TOPLAM','',D.yolcular.length+' kişi']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[16,18,40].map(w2=>({wch:w2}));
+  ws['!cols']=[16,26,26].map(w2=>({wch:w2}));
   try{
     const nC=3; ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
     ws['!rows']=[{hpt:30},{hpt:16}];
@@ -18516,8 +18516,8 @@ function _trTasimaciExcel(secIds){
       detaylar.push(aoa.length); aoa.push(['Detay',b.pax+' pax   ·   Araç: '+aracTxt+'   ·   Rehber: '+reh]);
       if(b.notlar&&b.notlar.size){ detaylar.push(aoa.length); aoa.push(['Not',[...b.notlar].join('  ·  ')]); }
       yolcuHdr.push(aoa.length);
-      aoa.push(['#','Unvan','Soyadı','Adı','Yaş','Uçuş','Uçuş Saati','Operatör','Hat / Terminal']);
-      b.yolcular.forEach((y,i)=>aoa.push([i+1,y.unvan,y.soyad,y.ad,y.yas,y.ucus,y.usaat,y.op,y.hat?(y.hat+(y.rt?' ('+y.rt+')':'')):'']));
+      aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Uçuş','Uçuş Saati','Operatör','Hat / Terminal']);
+      b.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.ucus,y.usaat,y.op,y.hat?(y.hat+(y.rt?' ('+y.rt+')':'')):'']));
       aoa.push([]);
     });
     const topP=L.reduce((t,b)=>t+b.pax,0);
@@ -18538,7 +18538,7 @@ function _trTasimaciExcel(secIds){
     aoa.push([]);
   }
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[6,8,22,20,7,11,10,16,12].map(w2=>({wch:w2}));
+  ws['!cols']=[10,15,8,32,7,10,9,16,10].map(w2=>({wch:w2}));
   try{
     const nC=9;
     ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
