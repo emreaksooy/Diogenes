@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v620 · 29.09.2026';
+const APP_VER='v621 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17468,7 +17468,7 @@ function renderMagMuh(){
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mmYeniAc()">+ Bildirim Kaydı</button>
       <button class="btn btn-outline btn-sm" onclick="mmExcel()">📥 Excel</button>
     </div>`;
-  { const bekTum=getMagMuhAktif().filter(k=>_mmKayitDurum(k)==='bekliyor'&&!_mmGirildiMi(k));
+  { const bekTum=getMagMuhAktif().filter(k=>_mmKayitDurum(k)==='bekliyor');
     if(bekTum.length) h+=`<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:7px 12px;margin-bottom:10px;font-size:.78rem;color:#92400e"><b>⚠ ${bekTum.length} ziyaretin mağaza bildirimi bekleniyor</b>${bekTum.some(k=>String(_pdate(k.tarih)||'').slice(0,7)!==_mmAy)?' (bazıları başka aylarda — ay filtresini değiştir)':''}</div>`; }
   if(!L.length&&!planL.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt/planlı ziyaret yok — \'+ Bildirim Kaydı\' ile başla.</p></div>'; return; }
   h+=(()=>{
@@ -17483,7 +17483,7 @@ function renderMagMuh(){
     ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag;
       try{ kom+=_mmPaylar(k).acente; }catch(e){ kom+=c.kom; } // turuncu pill: yalnız ACENTE komisyonu
       (k.magKalemler||[]).forEach(x=>{ if(x.durum==='iptal') return; tsat[turSinif(x.ad)]+=_tdN(x.ciro); });
-      if(_mmKayitDurum(k)==='bekliyor'&&!_mmGirildiMi(k)) bek++; });
+      if(_mmKayitDurum(k)==='bekliyor') bek++; });
     return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),mag,kom,bek,plan,tsat,op:opBul(kod)};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
   window._mmTurAcik=window._mmTurAcik||new Set();
@@ -17619,7 +17619,7 @@ function mmBildKaydet(id,zorla){
   if(k&&t&&t.id===id){
     k.magKalemler=JSON.parse(JSON.stringify(t.magKalemler||[]));
     k.rehCiro=t.rehCiro; k.not=t.not; k.para=t.para;
-    k.magOnay=true;
+    k.magOnay=(k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!==''); // hepsi silindiyse tekrar 'girilmedi'
     setMagMuh(getMagMuh());
   }
   const m0=document.getElementById('mmBildModal'); if(m0)m0.remove();
