@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v605 · 29.09.2026';
+const APP_VER='v606 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17349,7 +17349,9 @@ function mmSet(id,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k
   setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmSil(id){ showConfirm('🗑️','Kaydı Sil','Bildirim kaydı silinecek (otomatik ziyaret senkronu geri getirmez).','Sil',()=>{ const k=getMagMuh().find(x=>x.id===id); if(k){ k.silindi=true; setMagMuh(getMagMuh()); } renderMagMuh(); showToast('Kayıt silindi','success'); }); }
 function mmKalemAdd(id){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; (k.magKalemler=k.magKalemler||[]).push({ad:'',ciro:'',oran:''}); setMagMuh(getMagMuh()); renderMagMuh(); }
-function mmKalemSet(id,i,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.magKalemler[i]) return; k.magKalemler[i][f]=String(v).trim(); setMagMuh(getMagMuh()); renderMagMuh(); }
+function mmKalemSet(id,i,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.magKalemler[i]) return; k.magKalemler[i][f]=String(v).trim();
+  if(f==='ciro') _mmKalemSablonTamamla(k,i);
+  setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmKalemDel(id,i){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k.magKalemler.splice(i,1); setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmSablonYap(id){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.firmaId) return;
   const t=getTanimlar(); const fm=(t.magazaFirmalari||[]).find(x=>x.id===k.firmaId); if(!fm) return;
@@ -17524,11 +17526,26 @@ function mmPlanKayitAc(enc){
     renderMagMuh(); mmBildAc(k.id);
   }catch(e){ showToast('Kayıt açılamadı: '+e.message,'error'); }
 }
+function mmKalemPay(kid,i,alan,v){
+  const k=getMagMuh().find(x=>x.id===kid); if(!k||!(k.magKalemler||[])[i]) return;
+  const x=k.magKalemler[i];
+  if(!x.pay||typeof x.pay!=='object') x.pay={acente:x.oran||'',rehber:'',ofis:'',sef:'',kaptan:''};
+  x.pay[alan]=String(v).trim();
+  x.oran=['acente','rehber','ofis','sef','kaptan'].reduce((t,p2)=>t+_tdN(x.pay[p2]),0); // toplam pay = etkin oran
+  setMagMuh(getMagMuh()); renderMagMuh();
+}
+function _mmKalemSablonTamamla(k,i){
+  try{ const x=(k.magKalemler||[])[i]; if(!x) return;
+    const sk=(window._mmSablonK||[]).find(z=>z.ad===x.ad); if(!sk) return;
+    if(sk.pay!=null&&x.pay==null) x.pay=JSON.parse(JSON.stringify(sk.pay));
+    if(!_tdN(x.oran)) x.oran=(x.pay&&typeof x.pay==='object')?['acente','rehber','ofis','sef','kaptan'].reduce((t,p2)=>t+_tdN(x.pay[p2]),0):sk.oran;
+  }catch(e){}
+}
 function mmKalemSecim(kid,i,ad){
   const k=getMagMuh().find(x=>x.id===kid); if(!k||!(k.magKalemler||[])[i]) return;
   k.magKalemler[i].ad=String(ad||'').trim();
   const sk=(window._mmSablonK||[]).find(x=>x.ad===ad);
-  if(sk){ k.magKalemler[i].oran=sk.oran; if(sk.pay!=null) k.magKalemler[i].pay=sk.pay; }
+  if(sk){ k.magKalemler[i].oran=sk.oran; k.magKalemler[i].pay=(sk.pay!=null)?JSON.parse(JSON.stringify(sk.pay)):null; }
   setMagMuh(getMagMuh()); renderMagMuh();
 }
 function mmBildAc(id){ window._mmBildId=id; mmBildDoldur(id); }
@@ -17577,13 +17594,20 @@ function mmBildDoldur(id){
       ${window._mmOranAc?`<td style="padding:2px 4px;white-space:nowrap"><input value="${esc(x.oran||'')}" inputmode="decimal" placeholder="%" onchange="mmKalemSet('${k.id}',${i},'oran',this.value)" style="${inp};width:50px;text-align:right"> %</td>`:''}
       <td style="padding:2px 6px;font-size:.74rem;color:var(--primary);font-weight:700;white-space:nowrap">${(Math.round(kk*100)/100).toLocaleString('tr-TR')}</td>
       <td style="padding:2px 4px"><select onchange="mmKalemSet('${k.id}',${i},'durum',this.value)" title="Bu kalemin durumu" style="${inp};width:auto;font-size:.66rem;font-weight:700;background:${xd[1]};color:${xd[2]}">${Object.keys(KDAD).map(d2=>`<option value="${d2}" ${kdN(x.durum)===d2?'selected':''}>${KDAD[d2][0]}</option>`).join('')}</select></td>
-      <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmKalemDel('${k.id}',${i})">✕</button></td></tr>`;}).join('')||'<tr><td style="font-size:.74rem;color:var(--muted);padding:4px">Kalem yok — "+ Kalem" ile ekle.</td></tr>'}</table>
+      <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmKalemDel('${k.id}',${i})">✕</button></td></tr>
+      ${window._mmOranAc?(()=>{ const px=(x.pay&&typeof x.pay==='object')?x.pay:{acente:x.oran||'',rehber:'',ofis:'',sef:'',kaptan:''};
+        const et={acente:'Acente',rehber:'Rehber',ofis:'Ofis',sef:'Şef',kaptan:'Kaptan'};
+        const top=['acente','rehber','ofis','sef','kaptan'].reduce((t,p2)=>t+_tdN(px[p2]),0);
+        return `<tr><td colspan="7" style="padding:2px 4px 8px 14px;background:#faf7ff">
+          <span style="display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap">
+          ${Object.keys(et).map(p2=>`<label style="font-size:.62rem;font-weight:700;color:#6d28d9;display:inline-flex;align-items:center;gap:3px">${et[p2]} <input value="${esc(px[p2]!=null?px[p2]:'')}" inputmode="decimal" onchange="mmKalemPay('${k.id}',${i},'${p2}',this.value)" style="${inp};width:46px;text-align:right;padding:3px 5px"> %</label>`).join('')}
+          <b style="font-size:.66rem;color:${Math.abs(top-_tdN(x.oran))<0.01?'#166534':'#6d28d9'}">Σ %${Math.round(top*100)/100}</b></span></td></tr>`; })():''}`;}).join('')||'<tr><td style="font-size:.74rem;color:var(--muted);padding:4px">Kalem yok — "+ Kalem" ile ekle.</td></tr>'}</table>
     <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 12px">
       <b style="font-size:.76rem">Mağaza toplam: ${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</b>
       <label style="font-size:.72rem;font-weight:700">Rehber bildirimi <input value="${esc(k.rehCiro||'')}" inputmode="decimal" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:104px;text-align:right"></label>
       ${farkHtml} ${onerHtml}
     </div>
-    ${window._mmOranAc?`<div style="font-size:.7rem;color:var(--muted);margin:-4px 0 10px;padding:0 4px">${(k.magKalemler||[]).filter(x=>(x.ad||'').trim()&&x.durum!=='iptal').map(x=>`${esc(x.ad)}: ${_tdN(x.ciro).toLocaleString('tr-TR')} × %${_tdN(x.oran)} = <b style="color:var(--primary)">${(Math.round(_tdN(x.ciro)*_tdN(x.oran))/100).toLocaleString('tr-TR')}</b>`).join(' &nbsp;·&nbsp; ')||'—'}</div>`:''}
+
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <input value="${esc(k.not||'')}" placeholder="not…" onchange="mmSet('${k.id}','not',this.value)" style="${inp};flex:1;min-width:180px">
       <span style="font-size:.74rem;color:var(--primary);font-weight:800">Komisyon: ${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</span>
