@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v623 · 29.09.2026';
+const APP_VER='v624 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17291,11 +17291,14 @@ function _mmZiyaretSenk(){
       const cz=_moAtaCoz(r.firmaId);
       const fm=cz.f;
       const sube=cz.sube||(fm?_moSubeBul(fm,r.sehir):null);
-      const sablon=(sube&&(sube.kalemler||[]).length)?sube.kalemler:((fm&&fm.kalemler)||[]);
       L.push({id:genId(),otoKey:zKey,tarih:r.tarih,kalkis:(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'',firmaId:(fm?fm.id:String(r.firmaId).split('|')[0]),magaza:sube?(sube.ad||sube.sehir||''):'',kod:r.kod,rehberAd:r.rehber||'',pax:r.pax||'',para:'EUR',
-        magKalemler:sablon.map(x=>({ad:x.ad,oran:x.oran,ciro:'',pay:x.pay||null})),rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()});
+        magKalemler:[],rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()});
       n++;
     });
+    // hazır gelmiş, hiç dokunulmamış şablon kalemleri boşaltılır (kalemi Emre girer)
+    try{ L.forEach(k=>{ if(k.silindi) return;
+      if((k.magKalemler||[]).length&&!k.magOnay&&k.magKalemler.every(x=>!String(x.ciro||'').trim()&&!x.durum)) k.magKalemler=[];
+    }); }catch(e){}
     // KALINTI TEMİZLİĞİ: mağaza programı değişince (örn. birleşik grupta tek yürüyüş seçildi)
     // artık programda karşılığı olmayan, DOKUNULMAMIŞ otomatik kayıtlar düşer.
     let temiz=0;
@@ -17375,9 +17378,7 @@ function mmYeniEkle(){
   const L=getMagMuh();
   const k={id:genId(),tarih,kalkis:t.kalkis,firmaId:'',magaza:'',kod:t.kod,rehberAd:(t.rehberAd||'').trim(),pax:t.pax||'',para:'EUR',magKalemler:[],rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()};
   if(fid){ const fm=_moFirmalar().find(x=>x.id===fid);
-    if(fm){ k.firmaId=fm.id; const sube=_moSubeBul(fm,''); k.magaza=sube?(sube.ad||sube.sehir||''):'';
-      const sablon=(sube&&(sube.kalemler||[]).length)?sube.kalemler:(fm.kalemler||[]);
-      k.magKalemler=sablon.map(x=>({ad:x.ad,oran:x.oran,ciro:'',pay:x.pay||null})); } }
+    if(fm){ k.firmaId=fm.id; const sube=_moSubeBul(fm,''); k.magaza=sube?(sube.ad||sube.sehir||''):''; } }
   L.unshift(k); setMagMuh(L);
   const m0=document.getElementById('mmYeniModal'); if(m0)m0.remove();
   window._mmTurAcik=window._mmTurAcik||new Set();
@@ -17390,7 +17391,7 @@ function mmYeni(){
   setMagMuh(L); _mmAcik.add(L[0].id); renderMagMuh();
 }
 function mmSet(id,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k[f]=v;
-  if(f==='firmaId'){ const fm=_moFirmalar().find(x=>x.id===v); if(fm&&!(k.magKalemler||[]).length){ const sube=_moSubeBul(fm,''); const sablon=(sube&&(sube.kalemler||[]).length)?sube.kalemler:(fm.kalemler||[]); if(sablon.length) k.magKalemler=sablon.map(x=>({ad:x.ad,oran:x.oran,ciro:''})); } }
+
   setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmSil(id){ showConfirm('🗑️','Kaydı Sil','Bildirim kaydı silinecek (otomatik ziyaret senkronu geri getirmez).','Sil',()=>{ const k=getMagMuh().find(x=>x.id===id); if(k){ k.silindi=true; setMagMuh(getMagMuh()); } renderMagMuh(); showToast('Kayıt silindi','success'); }); }
 function mmKalemAdd(id){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; (k.magKalemler=k.magKalemler||[]).push({ad:'',ciro:'',oran:''}); setMagMuh(getMagMuh()); renderMagMuh(); }
@@ -17570,9 +17571,8 @@ function mmPlanKayitAc(enc){
       const r=(_moSatirlar(_opsToday())||[]).find(x=>x.tarih===tarih&&String(x.firmaId)===firmaIdRaw&&x.kod===kod);
       const cz=_moAtaCoz(firmaIdRaw); const fm=cz.f;
       const sube=cz.sube||(fm?_moSubeBul(fm,(r&&r.sehir)||''):null);
-      const sablon=(sube&&(sube.kalemler||[]).length)?sube.kalemler:((fm&&fm.kalemler)||[]);
       k={id:genId(),otoKey:key,tarih,firmaId:(fm?fm.id:String(firmaIdRaw).split('|')[0]),magaza:sube?(sube.ad||sube.sehir||''):'',kod,rehberAd:(r&&r.rehber)||'',pax:(r&&r.pax)||'',para:'EUR',
-        magKalemler:sablon.map(x=>({ad:x.ad,oran:x.oran,ciro:'',pay:x.pay||null})),rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()};
+        magKalemler:[],rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()};
       L.unshift(k); setMagMuh(L);
     }
     renderMagMuh(); mmBildAc(k.id);
