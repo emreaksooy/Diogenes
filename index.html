@@ -806,6 +806,9 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   .trk-durum.yok{background:#fee2e2;color:#b91c1c}
   .trk-durum.ths{background:#e0f2fe;color:#0369a1}
   .trk-alt{font-size:.68rem;color:var(--muted);margin-top:4px;line-height:1.5}
+  .trk-cb{width:19px;height:19px;flex:0 0 auto;accent-color:var(--primary)}
+  .trk-eylem{display:flex;gap:6px;margin-top:8px}
+  .trk-eylem button{flex:1;background:var(--light,#f5f7fa);border:1.5px solid var(--border);border-radius:9px;padding:8px 4px;font-size:.7rem;font-weight:700;font-family:inherit;color:inherit;cursor:pointer;min-height:36px}
   .ucak-metrics{grid-template-columns:repeat(4,1fr)!important;gap:5px}
   .ucak-metric{padding:7px 4px}
   .ucak-metric .um-num{font-size:1.05rem}
@@ -814,7 +817,9 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
   #sbToggleBtn{display:none !important}
   body.mnavAcik .side-nav{bottom:calc(60px + env(safe-area-inset-bottom,0px))}
-  #trAtabar{bottom:calc(62px + env(safe-area-inset-bottom,0px))}
+  #trAtabar.show{position:fixed;left:8px;right:8px;top:auto;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:1500;max-height:62vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(16,24,40,.35)}
+  #trAtabar select,#trAtabar input{flex:1 1 44%;min-height:42px;min-width:0;width:auto!important}
+  #trAtabar .btn{flex:1 1 44%;min-height:42px;justify-content:center}
 }
 
 
@@ -2252,7 +2257,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v643 · 29.09.2026';
+const APP_VER='v644 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18199,8 +18204,9 @@ function renderOpsTransfer(){
         const rehTx=[...new Set(U.map(x=>(_trRehInfo(x.r).ad||'').trim()).filter(Boolean))].join(' + ');
         const ucTx=ucuslar.map(x=>((x.u||'')+' '+(x.s||'')).trim()).filter(Boolean).join(' · ');
         mh+=`<div class="trk" onclick="_trDetayCoklu('${_idsEnc}')">
-          <div class="trk-ust"><span class="trk-saat">${esc(dh0.saat||(ucuslar[0]&&ucuslar[0].s)||'—')}</span><span class="tipb tb-${r0.tip}">${tipAd[r0.tip]}</span><span style="background:var(--primary);color:#fff;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">🔗 ${U.length}</span><b>${u1(r=>r.urun).map(esc).join(' + ')}</b><span class="trk-durum${durumTx?'':' yok'}">${durumTx?esc(durumTx):'atanmadı'}</span></div>
+          <div class="trk-ust"><input type="checkbox" class="trk-cb" ${U.every(x=>_trSel.has(x.r.id))?'checked':''} onclick="event.stopPropagation()" onchange="_trSecCoklu('${_idsEnc}',this.checked)"><span class="trk-saat">${esc(dh0.saat||(ucuslar[0]&&ucuslar[0].s)||'—')}</span><span class="tipb tb-${r0.tip}">${tipAd[r0.tip]}</span><span style="background:var(--primary);color:#fff;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">🔗 ${U.length}</span><b>${u1(r=>r.urun).map(esc).join(' + ')}</b><span class="trk-durum${durumTx?'':' yok'}">${durumTx?esc(durumTx):'atanmadı'}</span></div>
           <div class="trk-alt">${u1(r=>r.nereden).map(esc).join(' / ')} → ${u1(r=>r.nereye).map(esc).join(' / ')} · <b>${paxT} pax</b>${rehTx?' · '+esc(rehTx):''}${ucTx?`<div>✈ ${esc(ucTx)}</div>`:''}</div>
+          <div class="trk-eylem" onclick="event.stopPropagation()"><button onclick="_trOnayCoklu('${_idsEnc}')">✓ Onayla</button><button onclick="_trAtamaKaldirCoklu('${_idsEnc}')">✕ Dağıt</button><button onclick="_trPrintGrup('${r0.grup}')">🖨 Liste</button><button onclick="trRehberWa('${r0.grup}')">📲 Rehber</button></div>
         </div>`;
       })();
       return;
@@ -18228,8 +18234,9 @@ function renderOpsTransfer(){
       const thsTx=(!gr&&r.tahsis)?[r.tahsis.firma,r.tahsis.arac].filter(Boolean).join(' · ')||'tahsis aracı':'';
       const ri=_trRehInfo(r);
       mh+=`<div class="trk" onclick="_trDetayAc('${r.id}')">
-        <div class="trk-ust"><span class="trk-saat">${esc(dh.saat||r.saat||'—')}</span><span class="tipb tb-${r.trf?'ARAD':r.tip}">${r.trf?'TRANSFER':tipAd[r.tip]}</span><b>${esc(r.urun)}${r.ucus?' · '+esc(r.ucus):''}</b><span class="trk-durum${durumTx?'':(thsTx?' ths':' yok')}">${durumTx?esc(durumTx):(thsTx?esc(thsTx):'atanmadı')}</span></div>
+        <div class="trk-ust"><input type="checkbox" class="trk-cb" ${_trSel.has(r.id)?'checked':''} onclick="event.stopPropagation()" onchange="_trSecToggle('${r.id}',this.checked)"><span class="trk-saat">${esc(dh.saat||r.saat||'—')}</span><span class="tipb tb-${r.trf?'ARAD':r.tip}">${r.trf?'TRANSFER':tipAd[r.tip]}</span><b>${esc(r.urun)}${r.ucus?' · '+esc(r.ucus):''}</b><span class="trk-durum${durumTx?'':(thsTx?' ths':' yok')}">${durumTx?esc(durumTx):(thsTx?esc(thsTx):'atanmadı')}</span></div>
         <div class="trk-alt">${esc(r.nereden)} → ${esc(r.nereye)} · <b>${r.pax} pax</b>${ri.ad?' · '+esc(ri.ad):''}${gece?' · <span style="color:#b45309;font-weight:800">GECE</span>':''}${_opsTrDate2?' · '+_fmtDateTR(r.tarih):''}</div>
+        ${r.grup?`<div class="trk-eylem" onclick="event.stopPropagation()">${r.onay?'':`<button onclick="_trOnay('${r.id}')">✓ Onayla</button>`}<button onclick="_trAtamaKaldir('${r.id}')">✕ Kaldır</button><button onclick="_trPrintGrup('${r.grup}')">🖨 Liste</button><button onclick="trRehberWa('${r.grup}')">📲 Rehber</button></div>`:(r.tip==='TUR'?`<div class="trk-eylem" onclick="event.stopPropagation()"><button onclick="_trTipTog('${r.id}')">⇄ ${r.trf?'Tur yürüyüşüne dön':'Transfer olarak işle'}</button></div>`:'')}
       </div>`;
     })();
   });
