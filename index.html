@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v624 · 29.09.2026';
+const APP_VER='v625 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17192,7 +17192,8 @@ function _mmGirildiMi(k){
 function _mmKayitDurum(k){
   const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekliyor',bekleme:'bekliyor'})[v]||'onay';
   const ks=(k.magKalemler||[]).filter(x=>(x.ad||'').trim());
-  if(!ks.length||!_mmGirildiMi(k)) return 'bekliyor';
+  if(!_mmGirildiMi(k)) return 'bekliyor';
+  if(!ks.length) return String(k.rehCiro||'').trim()!==''?'onay':'bekliyor'; // kalemsiz Kaydet = satış yok
   const dl=ks.map(x=>kd(x.durum));
   if(dl.every(d=>d==='iptal')) return 'iptal';
   if(dl.some(d=>d==='bekliyor')) return 'bekliyor';
@@ -17619,7 +17620,7 @@ function mmBildKaydet(id,zorla){
   if(k&&t&&t.id===id){
     k.magKalemler=JSON.parse(JSON.stringify(t.magKalemler||[]));
     k.rehCiro=t.rehCiro; k.not=t.not; k.para=t.para;
-    k.magOnay=(k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!==''); // hepsi silindiyse tekrar 'girilmedi'
+    k.magOnay=true; // Kaydet'e basmak bildirimdir — kalemsiz Kaydet 'satış yok (0)' demektir
     setMagMuh(getMagMuh());
   }
   const m0=document.getElementById('mmBildModal'); if(m0)m0.remove();
@@ -17706,7 +17707,7 @@ function mmBildDoldur(id){
         return `<tr><td colspan="7" style="padding:2px 4px 8px 14px;background:#faf7ff">
           <span style="display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap">
           ${Object.keys(et).map(p2=>`<label style="font-size:.62rem;font-weight:700;color:#6d28d9;display:inline-flex;align-items:center;gap:3px">${et[p2]} <input value="${esc(px[p2]!=null?px[p2]:'')}" inputmode="decimal" onchange="mmTKalemPay(${i},'${p2}',this.value)" style="${inp};width:46px;text-align:right;padding:3px 5px"> %</label>`).join('')}
-          <b style="font-size:.66rem;color:${Math.abs(top-_tdN(x.oran))<0.01?'#166534':'#6d28d9'}">Σ %${Math.round(top*100)/100}</b></span></td></tr>`; })():''}`;}).join('')||'<tr><td style="font-size:.74rem;color:var(--muted);padding:4px">Kalem yok — "+ Kalem" ile ekle.</td></tr>'}</table>
+          <b style="font-size:.66rem;color:${Math.abs(top-_tdN(x.oran))<0.01?'#166534':'#6d28d9'}">Σ %${Math.round(top*100)/100}</b></span></td></tr>`; })():''}`;}).join('')||'<tr><td style="font-size:.74rem;color:var(--muted);padding:4px">Kalem yok — satış olan türü "+ Kalem" ile ekle. Hiç satış yoksa kalem eklemeden 💾 Kaydet: <b>satış yok (0)</b> bildirimi sayılır.</td></tr>'}</table>
     <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 12px">
       <b style="font-size:.76rem">Mağaza toplam: ${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</b>
       <label style="font-size:.72rem;font-weight:700">Rehber bildirimi <input value="${esc(k.rehCiro||'')}" inputmode="decimal" onchange="mmTSet('rehCiro',this.value)" style="${inp};width:104px;text-align:right"></label>
