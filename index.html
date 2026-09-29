@@ -691,8 +691,10 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
   .sidebar-ctx .sidebar-header{display:none}
   .sidebar-ctx .sidebar-list{display:flex;flex-direction:row;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;padding:7px 8px;scrollbar-width:none}
   .sidebar-ctx .sidebar-list::-webkit-scrollbar{display:none}
-  .sidebar-ctx .sidebar-list .pkg-section-item{flex-shrink:0;white-space:nowrap;border:1.5px solid var(--border);border-radius:999px;padding:9px 15px;font-size:.82rem;background:var(--card)}
-  .sidebar-ctx .sidebar-list .pkg-section-item.active-ops{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .sidebar-ctx .sidebar-list .pkg-section-item{flex:0 0 auto;flex-direction:column;gap:3px;white-space:nowrap;border:none;border-radius:10px;padding:6px 9px;font-size:.6rem;font-weight:700;background:transparent;color:var(--muted);min-width:56px;text-align:center;justify-content:flex-start}
+  .sidebar-ctx .sidebar-list .pkg-section-item .ic{width:21px;height:21px;flex-shrink:0}
+  .sidebar-ctx .sidebar-list .pkg-section-item .eic{font-size:19px;line-height:1}
+  .sidebar-ctx .sidebar-list .pkg-section-item.active-ops{background:transparent;color:var(--primary);border:none}
   #sidebarPkg .sidebar-list{flex-direction:column;overflow:visible}
   #sidebarPkg .sidebar-list .pkg-section-item{border:none;border-radius:9px;white-space:normal}
   .current-pkg{display:none}
@@ -1266,7 +1268,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
         <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa</div>
         <div class="pkg-section-item ops-navitem" data-ot="turlar" onclick="opsTab('turlar')"><svg class="ic"><use href="#i-map"/></svg> Turlar</div>
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> Transfer</div>
-        <div class="pkg-section-item ops-navitem" data-ot="tahsis" onclick="opsTab('tahsis')">🚙 Tahsisler</div>
+        <div class="pkg-section-item ops-navitem" data-ot="tahsis" onclick="opsTab('tahsis')"><span class="eic">🚙</span> Tahsisler</div>
         <div class="pkg-section-item ops-navitem" data-ot="mutabakat" onclick="opsTab('mutabakat')"><svg class="ic"><use href="#i-coins"/></svg> Araç Mutabakatı</div>
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> Tanımlamalar</div>
       </div>
@@ -1275,11 +1277,11 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
     <div id="sidebarMagaza" style="display:none">
       <div class="sidebar-header"><h3>🏬 Mağazalar</h3></div>
       <div class="sidebar-list">
-        <div class="pkg-section-item mm-navitem active-ops" data-mt="firmalar" onclick="mmTab('firmalar')">🏬 Mağazalar</div>
-        <div class="pkg-section-item mm-navitem" data-mt="muh" onclick="mmTab('muh')">📒 Mağaza Muhasebesi</div>
-        <div class="pkg-section-item mm-navitem" data-mt="plan" onclick="mmTab('plan')">📅 Mağaza Operasyonu</div>
-        <div class="pkg-section-item mm-navitem" data-mt="tahsilat" onclick="mmTab('tahsilat')">💰 Tahsilatlar</div>
-        <div class="pkg-section-item mm-navitem" data-mt="ekstre" onclick="mmTab('ekstre')">🧾 Mağaza Ekstresi</div>
+        <div class="pkg-section-item mm-navitem active-ops" data-mt="firmalar" onclick="mmTab('firmalar')"><span class="eic">🏬</span> Mağazalar</div>
+        <div class="pkg-section-item mm-navitem" data-mt="muh" onclick="mmTab('muh')"><span class="eic">📒</span> Mağaza Muhasebesi</div>
+        <div class="pkg-section-item mm-navitem" data-mt="plan" onclick="mmTab('plan')"><span class="eic">📅</span> Mağaza Operasyonu</div>
+        <div class="pkg-section-item mm-navitem" data-mt="tahsilat" onclick="mmTab('tahsilat')"><span class="eic">💰</span> Tahsilatlar</div>
+        <div class="pkg-section-item mm-navitem" data-mt="ekstre" onclick="mmTab('ekstre')"><span class="eic">🧾</span> Mağaza Ekstresi</div>
       </div>
     </div>
     </div><!-- /sidebar-ctx -->
@@ -2300,7 +2302,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v652 · 30.09.2026';
+const APP_VER='v653 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
