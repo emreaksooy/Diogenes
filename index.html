@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v613 · 29.09.2026';
+const APP_VER='v614 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17183,6 +17183,9 @@ function _rehbBildEsle(b,k){
     return Math.abs(t1-t2)<=3*86400000;
   }catch(e){ return false; }
 }
+function _mmGirildiMi(k){
+  return String(k.rehCiro||'').trim()!==''||(k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!=='');
+}
 function _mmKayitDurum(k){
   const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal'})[v]||'bekliyor';
   const ks=(k.magKalemler||[]).filter(x=>(x.ad||'').trim());
@@ -17388,7 +17391,9 @@ function mmSet(id,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k
 function mmSil(id){ showConfirm('🗑️','Kaydı Sil','Bildirim kaydı silinecek (otomatik ziyaret senkronu geri getirmez).','Sil',()=>{ const k=getMagMuh().find(x=>x.id===id); if(k){ k.silindi=true; setMagMuh(getMagMuh()); } renderMagMuh(); showToast('Kayıt silindi','success'); }); }
 function mmKalemAdd(id){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; (k.magKalemler=k.magKalemler||[]).push({ad:'',ciro:'',oran:''}); setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmKalemSet(id,i,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.magKalemler[i]) return; k.magKalemler[i][f]=String(v).trim();
-  if(f==='ciro') _mmKalemSablonTamamla(k,i);
+  if(f==='ciro'){ _mmKalemSablonTamamla(k,i);
+    if(String(v).trim()!==''&&!k.magKalemler[i].durum) k.magKalemler[i].durum='onay'; // bildirim girildi → beklemeden çıkar (0 dahil)
+  }
   setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmKalemDel(id,i){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k.magKalemler.splice(i,1); setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmSablonYap(id){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.firmaId) return;
@@ -17458,7 +17463,7 @@ function renderMagMuh(){
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mmYeniAc()">+ Bildirim Kaydı</button>
       <button class="btn btn-outline btn-sm" onclick="mmExcel()">📥 Excel</button>
     </div>`;
-  { const bekTum=getMagMuhAktif().filter(k=>{const c=_mmHesap(k); return (k.durum||'bekliyor')==='bekliyor'&&c.mag===0;});
+  { const bekTum=getMagMuhAktif().filter(k=>_mmKayitDurum(k)==='bekliyor'&&!_mmGirildiMi(k));
     if(bekTum.length) h+=`<div style="background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:7px 12px;margin-bottom:10px;font-size:.78rem;color:#92400e"><b>⚠ ${bekTum.length} ziyaretin mağaza bildirimi bekleniyor</b>${bekTum.some(k=>String(_pdate(k.tarih)||'').slice(0,7)!==_mmAy)?' (bazıları başka aylarda — ay filtresini değiştir)':''}</div>`; }
   if(!L.length&&!planL.length){ box.innerHTML=h+'<p style="color:var(--muted);font-size:.85rem">Bu ayda kayıt/planlı ziyaret yok — \'+ Bildirim Kaydı\' ile başla.</p></div>'; return; }
   h+=(()=>{
@@ -17473,7 +17478,7 @@ function renderMagMuh(){
     ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag;
       try{ kom+=_mmPaylar(k).acente; }catch(e){ kom+=c.kom; } // turuncu pill: yalnız ACENTE komisyonu
       (k.magKalemler||[]).forEach(x=>{ if(x.durum==='iptal') return; tsat[turSinif(x.ad)]+=_tdN(x.ciro); });
-      if((k.durum||'bekliyor')==='bekliyor'&&c.mag===0) bek++; });
+      if(_mmKayitDurum(k)==='bekliyor'&&!_mmGirildiMi(k)) bek++; });
     return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),mag,kom,bek,plan,tsat,op:opBul(kod)};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
   window._mmTurAcik=window._mmTurAcik||new Set();
