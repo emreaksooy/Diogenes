@@ -855,7 +855,23 @@ tr.res-secili td{background:#dbeafe!important}
   #ynMap,#opsMap{max-width:100%}
   .yn-panel table{width:100%;table-layout:fixed}
   .yn-panel td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dash-hero-title{font-size:1.15rem}
+  /* v636: ana sayfa taslak diline çekildi — taşma sıfır hedefi */
+  .dash-hero{display:none}
+  #ynWrap,#panoWrap{min-width:0;max-width:100%}
+  #ynWrap *{min-width:0}
+  #ynWrap img,#ynWrap svg,#ynWrap canvas,#ynWrap iframe{max-width:100%!important}
+  #ynMap{width:100%!important;height:220px!important}
+  #ynWrap table{width:100%!important;table-layout:fixed}
+  #ynWrap td,#ynWrap th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.7rem;padding:4px 5px}
+  .yn-dikkat{padding:9px 11px}
+  .yn-dikkat .yn-chip{margin:4px 4px 0 0;font-size:.68rem}
+  .yn-kp .n{font-size:1.5rem}
+  .yn-gr{gap:4px}
+  .yn-gr .c{min-width:32px}
+  #panoWrap .card{min-width:0;overflow:hidden}
+  #panoWrap .btn{padding:8px 12px;font-size:.74rem}
+  #ynWrap .yn-panel>div{max-width:100%}
+  #ynWrap h3 span{font-size:.6rem}
   .rzmg{font-size:.72rem}
   .ops-ct{flex-wrap:wrap}
   #trAtabar .btn{flex:1 1 auto}
@@ -2185,7 +2201,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v635 · 29.09.2026';
+const APP_VER='v636 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
