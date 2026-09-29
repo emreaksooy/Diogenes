@@ -779,8 +779,16 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   .m-sadece-mobil{display:inline-flex!important}
   #trAksiyonBar .m-sheet-item{display:none!important}
   #trFiltrePanel:not(.msh-tasindi){display:none!important}
-  .ops-datebar .ops-date{width:96px!important}
-  .ops-datebar .btn{min-height:38px;padding:7px 10px}
+  #trTipPanel:not(.msh-tasindi){display:none!important}
+  .ops-datebar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:5px;scrollbar-width:none}
+  .ops-datebar::-webkit-scrollbar{display:none}
+  .ops-datebar .ops-date{width:92px!important;flex-shrink:0}
+  .ops-datebar .btn{min-height:36px;padding:6px 9px;font-size:.74rem;flex-shrink:0;white-space:nowrap}
+  .ucak-metrics{grid-template-columns:repeat(4,1fr)!important;gap:5px}
+  .ucak-metric{padding:7px 4px}
+  .ucak-metric .um-num{font-size:1.05rem}
+  .ucak-metric .um-lbl{font-size:.54rem}
+  #opsPane_transfer>div:first-child .btn:first-child{display:none} /* ← Ana Sayfa: alt çubuk varken gereksiz */
   body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
   #sbToggleBtn{display:none !important}
   body.mnavAcik .side-nav{bottom:calc(60px + env(safe-area-inset-bottom,0px))}
@@ -2222,7 +2230,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v639 · 29.09.2026';
+const APP_VER='v640 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -14266,11 +14274,13 @@ function mSheetKaynak(kaynakId,baslik){
     g.appendChild(k);
   });
 }
-function mSheetTasi(kaynakId,baslik){
-  // gerçek paneli sheet'e taşır (seçim yapılınca render sheet'i kapatır, panel yeniden çizilir)
-  const src=document.getElementById(kaynakId); if(!src) return;
-  const g=_mSheetKur(baslik);
-  g.appendChild(src); src.classList.add('msh-tasindi');
+function mSheetTasi(kaynakIdler,baslik){
+  // gerçek panel(ler)i sheet'e taşır (seçim yapılınca render sheet'i kapatır, panel yeniden çizilir)
+  const idler=String(kaynakIdler||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const g=_mSheetKur(baslik); let var_=false;
+  idler.forEach(id=>{ const src=document.getElementById(id); if(!src) return; var_=true;
+    g.appendChild(src); src.classList.add('msh-tasindi'); });
+  if(!var_) mSheetKapat();
 }
 function sbToggle(){
   if(window.matchMedia&&matchMedia('(max-width:980px)').matches){ document.body.classList.toggle('mnavAcik'); _mTabAktif(window._sonSayfa||''); return; }
@@ -18080,7 +18090,7 @@ function renderOpsTransfer(){
       <select onchange="_trUstSet('${k}',this.value)" style="padding:5px 7px;border:1.5px solid ${_trUst[k]?'var(--primary)':'var(--border)'};border-radius:8px;font-size:.76rem;font-family:inherit;min-width:120px">
       <option value="">Hepsi</option>${L.map(v=>`<option value="${esc(v)}" ${_trUst[k]===v?'selected':''}>${esc(v)}</option>`).join('')}</select></label>`;
     const aktifSay=Object.values(_trUst).filter(Boolean).length+((_trSaatB||_trSaatS)?1:0);
-    h+=`<button class="btn btn-sm m-sadece-mobil" style="background:var(--navy);color:#fff;margin-bottom:8px" onclick="mSheetTasi('trFiltrePanel','Filtreler')">⚙︎ Filtreler${aktifSay?' ('+aktifSay+')':''}</button>`;
+    h+=`<button class="btn btn-sm m-sadece-mobil" style="background:var(--navy);color:#fff;margin-bottom:8px" onclick="mSheetTasi('trFiltrePanel,trTipPanel','Filtreler')">⚙︎ Filtreler${aktifSay?' ('+aktifSay+')':''}</button>`;
     h+=`<div id="trFiltrePanel" class="card" style="padding:.55rem .8rem;margin-bottom:8px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
       ${sel('op','OPERATÖR',opL)}${sel('urun','ÜRÜN',urunL)}${sel('bolge','BÖLGE',bolgeL)}${sel('firma','ARAÇ FİRMASI',firmaL)}${sel('reh','REHBER',rehL)}
       <label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">DURUM
@@ -18097,7 +18107,7 @@ function renderOpsTransfer(){
   }
   if(_mutGun.length||_mutTum.length) h+=_mutPanel(_mutGun,'— '+(_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_fmtDateTR(_opsTrDate)),_mutTum.length-_mutGun.length);
   h+=`
-    <div class="tr-filtre">${cb('G','Uçuş Geliş','#fff')}${cb('D','Uçuş Dönüş','#fff')}${cb('ARAD','Ara depar','#cfe8dc')}${cb('ARAG','Ara varış','#e8f6ee')}${cb('TUR','Tur yürüyüşü','#e4ecf7')}${cb('UZT','Uzatma','#fde68a')}<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;font-weight:600;color:var(--muted);font-size:.75rem;margin-left:8px"><input type="checkbox" ${_trTipF.atanmamis?'checked':''} onchange="_trChk('atanmamis')"> Sadece atanmamış</label><label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;font-weight:600;color:var(--muted);font-size:.75rem"><input type="checkbox" ${_trTipF.gece?'checked':''} onchange="_trChk('gece')"> Ertesi gece alışlarını dahil et</label></div>
+    <div class="tr-filtre" id="trTipPanel">${cb('G','Uçuş Geliş','#fff')}${cb('D','Uçuş Dönüş','#fff')}${cb('ARAD','Ara depar','#cfe8dc')}${cb('ARAG','Ara varış','#e8f6ee')}${cb('TUR','Tur yürüyüşü','#e4ecf7')}${cb('UZT','Uzatma','#fde68a')}<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;font-weight:600;color:var(--muted);font-size:.75rem;margin-left:8px"><input type="checkbox" ${_trTipF.atanmamis?'checked':''} onchange="_trChk('atanmamis')"> Sadece atanmamış</label><label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;font-weight:600;color:var(--muted);font-size:.75rem"><input type="checkbox" ${_trTipF.gece?'checked':''} onchange="_trChk('gece')"> Ertesi gece alışlarını dahil et</label></div>
     <div class="ucak-metrics">
       <div class="ucak-metric"><div class="um-num">${tam.length}</div><div class="um-lbl">Transfer</div></div>
       <div class="ucak-metric ${atasiz?'warn':''}"><div class="um-num">${atasiz}</div><div class="um-lbl">Atanmamış</div></div>
