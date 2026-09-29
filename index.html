@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v599 · 29.09.2026';
+const APP_VER='v600 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17264,8 +17264,9 @@ function _mmZiyaretSenk(){
   }catch(e){}
 }
 function _mmHesap(k){
-  const mag=(k.magKalemler||[]).reduce((t,x)=>t+_tdN(x.ciro),0);
-  const kom=(k.magKalemler||[]).reduce((t,x)=>t+_tdN(x.ciro)*_tdN(x.oran)/100,0);
+  const akt=(k.magKalemler||[]).filter(x=>x.durum!=='iptal');
+  const mag=akt.reduce((t,x)=>t+_tdN(x.ciro),0);
+  const kom=akt.reduce((t,x)=>t+_tdN(x.ciro)*_tdN(x.oran)/100,0);
   const reh=_tdN(k.rehCiro);
   const fark=(reh>0||mag>0)?(mag-reh):0;
   const farkY=reh>0?Math.abs(fark)/reh*100:0;
@@ -17413,7 +17414,7 @@ function renderMagMuh(){
     const kod=key.split('|')[0], kalkis=key.split('|')[1]||'', reh=key.split('|').slice(2).join('|');
     let mag=0,kom=0,bek=0,plan=0; const tsat={hali:0,kuyum:0,deri:0,diger:0};
     ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag; kom+=c.kom;
-      (k.magKalemler||[]).forEach(x=>{ tsat[turSinif(x.ad)]+=_tdN(x.ciro); });
+      (k.magKalemler||[]).forEach(x=>{ if(x.durum==='iptal') return; tsat[turSinif(x.ad)]+=_tdN(x.ciro); });
       if((k.durum||'bekliyor')==='bekliyor'&&c.mag===0) bek++; });
     return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),mag,kom,bek,plan,tsat,op:opBul(kod)};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
@@ -17514,8 +17515,8 @@ function mmBildDoldur(id){
   const firmalar=_moFirmalar(); const fm=firmalar.find(x=>x.id===k.firmaId);
   const c=_mmHesap(k);
   const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
-  const DAD={bekliyor:['Bekliyor','#fef3c7','#92400e'],mutabik:['Mutabık','#dcfce7','#166534'],bekleme:['Bekleme Satış','#ede9fe','#6d28d9'],tahsil:['Tahsil edildi','#e0f2fe','#0369a1']};
-  const dd=DAD[k.durum||'bekliyor'];
+  const KDAD={onay:['Onaylandı','#dcfce7','#166534'],bekliyor:['Beklemede','#fef3c7','#92400e'],iptal:['İptal','#fee2e2','#b91c1c']};
+  const kdN=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal'})[v]||'bekliyor';
   let ov=document.getElementById('mmBildModal');
   if(!ov){ ov=document.createElement('div'); ov.id='mmBildModal';
     ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto';
@@ -17535,15 +17536,14 @@ function mmBildDoldur(id){
       <b style="font-size:.74rem">KALEMLER</b>
       <button class="btn btn-outline btn-sm" onclick="mmKalemAdd('${k.id}')">+ Kalem</button>
       <button class="btn btn-outline btn-sm" onclick="mmSablonYap('${k.id}')" title="Kalem adları+oranları mağaza şablonu olur">⭐ Şablon yap</button>
-      <select onchange="mmSet('${k.id}','durum',this.value)" style="${inp};margin-left:auto;background:${dd[1]};color:${dd[2]};font-weight:700;width:auto">${Object.keys(DAD).map(d2=>`<option value="${d2}" ${(k.durum||'bekliyor')===d2?'selected':''}>${DAD[d2][0]}</option>`).join('')}</select>
-      <label style="font-size:.7rem;font-weight:700">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp};width:auto">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
+      <label style="font-size:.7rem;font-weight:700;margin-left:auto">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp};width:auto">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
     </div>
-    <table style="border-collapse:collapse;width:100%">${(k.magKalemler||[]).map((x,i)=>{const kk=_tdN(x.ciro)*_tdN(x.oran)/100;const xd=DAD[x.durum||'bekliyor']||DAD.bekliyor;return `<tr>
+    <table style="border-collapse:collapse;width:100%">${(k.magKalemler||[]).map((x,i)=>{const kk=_tdN(x.ciro)*_tdN(x.oran)/100;const xd=KDAD[kdN(x.durum)];return `<tr>
       <td style="padding:2px 4px"><input value="${esc(x.ad||'')}" placeholder="Halı / Kuyum…" onchange="mmKalemSet('${k.id}',${i},'ad',this.value)" style="${inp};width:118px"></td>
       <td style="padding:2px 4px"><input value="${esc(x.ciro||'')}" inputmode="decimal" placeholder="ciro" onchange="mmKalemSet('${k.id}',${i},'ciro',this.value)" style="${inp};width:96px;text-align:right"></td>
       <td style="padding:2px 4px;white-space:nowrap"><input value="${esc(x.oran||'')}" inputmode="decimal" placeholder="%" onchange="mmKalemSet('${k.id}',${i},'oran',this.value)" style="${inp};width:50px;text-align:right"> %</td>
       <td style="padding:2px 6px;font-size:.74rem;color:var(--primary);font-weight:700;white-space:nowrap">${(Math.round(kk*100)/100).toLocaleString('tr-TR')}</td>
-      <td style="padding:2px 4px"><select onchange="mmKalemSet('${k.id}',${i},'durum',this.value)" title="Bu kalemin durumu" style="${inp};width:auto;font-size:.66rem;font-weight:700;background:${xd[1]};color:${xd[2]}">${Object.keys(DAD).map(d2=>`<option value="${d2}" ${(x.durum||'bekliyor')===d2?'selected':''}>${DAD[d2][0]}</option>`).join('')}</select></td>
+      <td style="padding:2px 4px"><select onchange="mmKalemSet('${k.id}',${i},'durum',this.value)" title="Bu kalemin durumu" style="${inp};width:auto;font-size:.66rem;font-weight:700;background:${xd[1]};color:${xd[2]}">${Object.keys(KDAD).map(d2=>`<option value="${d2}" ${kdN(x.durum)===d2?'selected':''}>${KDAD[d2][0]}</option>`).join('')}</select></td>
       <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmKalemDel('${k.id}',${i})">✕</button></td></tr>`;}).join('')||'<tr><td style="font-size:.74rem;color:var(--muted);padding:4px">Kalem yok — "+ Kalem" ile ekle.</td></tr>'}</table>
     <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 12px">
       <b style="font-size:.76rem">Mağaza toplam: ${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</b>
