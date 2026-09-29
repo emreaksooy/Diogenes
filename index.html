@@ -766,6 +766,7 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .msh-tasindi{display:flex!important;flex-wrap:wrap;gap:10px;border:none!important;box-shadow:none!important;margin:0!important;padding:4px 2px!important}
 .msh-tasindi select,.msh-tasindi input{min-height:42px}
 .m-sadece-mobil{display:none!important}
+.tr-kartlar{display:none}
 #sbKenarBtn{position:fixed;top:calc(var(--nav-h) + 14px);left:calc(var(--sidebar-w) - 13px);z-index:350;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:var(--card,#fff);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(16,24,40,.12);transition:left .25s ease,transform .25s ease}
 #sbKenarBtn:hover{color:var(--primary);border-color:var(--primary)}
 body.sb-kapali #sbKenarBtn{left:10px}
@@ -780,6 +781,12 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   #trAksiyonBar .m-sheet-item{display:none!important}
   #trFiltrePanel:not(.msh-tasindi){display:none!important}
   #trTipPanel:not(.msh-tasindi){display:none!important}
+  #ucAracPanel:not(.msh-tasindi){display:none!important}
+  #ucFiltrePanel:not(.msh-tasindi){display:none!important}
+  #ucakListe>.card:first-child{display:none!important}
+  .ucak-dep{flex-wrap:wrap;gap:5px 10px;padding:9px 10px}
+  .ucak-dep .ud-date{font-size:.78rem}
+  .ucak-folders{grid-template-columns:1fr 1fr;display:grid;gap:8px}
   .ops-datebar{flex-wrap:wrap;gap:5px}
   .ops-datebar .ops-date{width:92px!important;flex-shrink:0}
   .ops-datebar .btn{min-height:36px;padding:6px 9px;font-size:.74rem;flex-shrink:0;white-space:nowrap}
@@ -788,6 +795,17 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   #trAksiyonBar{display:flex!important;flex:1 1 100%;gap:7px;margin-top:2px}
   #trAksiyonBar .btn-primary{flex:1;margin-left:0!important;justify-content:center}
   #trAksiyonBar .m-sadece-mobil{flex:0 0 auto;justify-content:center}
+  #trTabloWrap{display:none!important}
+  .tr-kartlar{display:block;margin-top:4px}
+  .trk{background:var(--card,#fff);border:1.5px solid var(--border);border-radius:14px;padding:10px 12px;margin-top:8px;cursor:pointer}
+  .trk:active{background:var(--light,#f5f7fa)}
+  .trk-ust{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .trk-saat{background:#1e2a3a;color:#fff;font-weight:800;font-size:.72rem;padding:3px 9px;border-radius:8px;flex-shrink:0}
+  .trk-ust b{font-size:.8rem}
+  .trk-durum{margin-left:auto;font-size:.58rem;font-weight:800;padding:2px 8px;border-radius:7px;background:#dcfce7;color:#166534;text-align:right;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trk-durum.yok{background:#fee2e2;color:#b91c1c}
+  .trk-durum.ths{background:#e0f2fe;color:#0369a1}
+  .trk-alt{font-size:.68rem;color:var(--muted);margin-top:4px;line-height:1.5}
   .ucak-metrics{grid-template-columns:repeat(4,1fr)!important;gap:5px}
   .ucak-metric{padding:7px 4px}
   .ucak-metric .um-num{font-size:1.05rem}
@@ -2234,7 +2252,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v641 · 29.09.2026';
+const APP_VER='v643 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -7458,6 +7476,15 @@ function ucakSeferSilGeriAl(){
   const a=getReservations(); a.push(b); setReservations(a); window._ucakSilBackup=null;
   renderUcakGenel(); showToast('Silinen liste geri getirildi','success');
 }
+function _ucSheetAc(tur){ window._ucSheet=tur; _ucSheetYerles(); }
+function _ucSheetYerles(){
+  if(!window._ucSheet) return;
+  if(!(window.matchMedia&&matchMedia('(max-width:980px)').matches)){ window._ucSheet=null; return; }
+  const tur=window._ucSheet;
+  if(tur==='filtre') mSheetTasi('ucFiltrePanel','Filtreler');
+  else mSheetTasi('ucAracPanel','Araçlar');
+  window._ucSheet=tur; // mSheetTasi->_mSheetKur zinciri kapatirsa geri yaz
+}
 function renderUcakGenel(){
   const box=document.getElementById('ucakGenel'); if(!box) return;
   window._ucakGorunen=[];
@@ -7542,7 +7569,7 @@ function renderUcakGenel(){
   const fo=_uFold(_ucakFilter.op).trim(), fp=_uFold(_ucakFilter.pkg).trim(), ft=_uFold(_ucakFilter.tarih).trim();
   const anyF=fo||fp||ft||(_ucakFilter.voucher||'').trim();
   const tarihler=uniq(items.map(x=>x.kalkis).filter(Boolean)).sort();
-  const fltHtml=`<div class="ucak-filter">
+  const fltHtml=`<div class="ucak-filter" id="ucFiltrePanel">
     <span class="uf-lbl"><svg class="ic"><use href="#i-search"/></svg> Filtre</span>
     <input id="fltOp" value="${esc(_ucakFilter.op||'')}" oninput="_ucakFltLive('op',this)" list="fltOpL" placeholder="Operatör…" class="ops-jump" style="min-width:120px" autocomplete="off">
     <datalist id="fltOpL">${ops.map(o=>`<option value="${esc(o.ad||'')}">`).join('')}</datalist>
@@ -7603,7 +7630,11 @@ function renderUcakGenel(){
   box.innerHTML=_ucakIptalUyariHTML()+`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">
       <div class="card-title" style="margin:0"><svg class="ic"><use href="#i-plane"/></svg> Kalkışlar</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span class="m-sadece-mobil" style="display:none;gap:7px">
+        <button class="btn btn-sm" style="background:var(--navy);color:#fff" onclick="_ucSheetAc('filtre')">🔍 Filtre</button>
+        <button class="btn btn-sm btn-outline" onclick="_ucSheetAc('arac')">⚙︎ Araçlar</button>
+      </span>
+      <div id="ucAracPanel" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <div style="display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden">
           <button onclick="_ucakGorSet('liste')" style="padding:5px 12px;border:none;cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:600;${_ucakGor==='liste'?'background:var(--primary);color:#fff':'background:var(--card);color:var(--text)'}"><svg class="ic"><use href="#i-list"/></svg> Liste</button>
           <button onclick="_ucakGorSet('grid')" style="padding:5px 12px;border:none;border-left:1.5px solid var(--border);cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:600;${_ucakGor==='grid'?'background:var(--primary);color:#fff':'background:var(--card);color:var(--text)'}"><svg class="ic"><use href="#i-grid"/></svg> Grid</button>
@@ -7622,6 +7653,7 @@ function renderUcakGenel(){
     ${metrikBlok(scope)}
     ${inner}
   </div>`;
+  try{ _ucSheetYerles(); }catch(e){}
 }
 let _resHighlight='';
 function ucakOpen(pkgId,kalkis){
@@ -14259,7 +14291,7 @@ function _mobMenuToggle(ev){
   setTimeout(()=>{ document.addEventListener('click',function kapat(e){ const mm=document.getElementById('mobMenu'); if(mm&&!mm.contains(e.target)){ mm.remove(); } document.removeEventListener('click',kapat); },{once:false}); },10);
 }
 // ═══ MOBİL ORTAK ALTTAN PANEL (bottom sheet) ═══
-function mSheetKapat(){ const o=document.getElementById('mSheet'); if(o) o.remove(); }
+function mSheetKapat(){ window._ucSheet=null; const o=document.getElementById('mSheet'); if(o) o.remove(); }
 function _mSheetKur(baslik){
   mSheetKapat();
   const o=document.createElement('div'); o.id='mSheet';
@@ -18122,13 +18154,13 @@ function renderOpsTransfer(){
   if(!tam.length){ h+='<p style="color:var(--muted);font-size:.86rem;margin-top:10px">Bu tarihte transfer yok. Uçak listelerine yolcu/uçuş girildikçe (ve tur programı şehir geçişlerinde) burada otomatik oluşur.</p>'+_trTahsisBolumHTML(); box.innerHTML=h; _trRenderAtabar(); return; }
   const ok=c=>_trSort.col===c?`<span style="font-size:.6rem">${_trSort.dir>0?'▲':'▼'}</span>`:'';
   const COLS=_trCols();
-  h+=`<div class="gridwrap"><table class="tm tm-ince"><tr><th class="nosort" style="width:46px"></th>${COLS.map(c=>`<th onclick="_trSortBy('${c[0]}')">${c[1]}${ok(c[0])}</th>`).join('')}<th class="nosort" style="width:52px"></th></tr>`;
+  h+=`<div class="gridwrap" id="trTabloWrap"><table class="tm tm-ince"><tr><th class="nosort" style="width:46px"></th>${COLS.map(c=>`<th onclick="_trSortBy('${c[0]}')">${c[1]}${ok(c[0])}</th>`).join('')}<th class="nosort" style="width:52px"></th></tr>`;
   h+=`<tr class="filtrow"><td style="text-align:center"><button class="rowbtn" onclick="_trFiltClear()" title="Temizle">✕</button></td>`+COLS.map(c=>{ const cur=_trFilt[c[0]]||''; if(c[3]==='sel'){ const vals=[...new Set(tam.map(x=>String(c[2](x))).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')); return `<td><select data-fk="${c[0]}" onchange="_trFiltSet('${c[0]}',this.value,true)"><option value="">Hepsi</option>${vals.map(v=>`<option ${v===cur?'selected':''}>${esc(v)}</option>`).join('')}</select></td>`; } return `<td><input data-fk="${c[0]}" value="${esc(cur)}" oninput="_trFiltSet('${c[0]}',this.value,false)" placeholder="süz…"></td>`; }).join('')+`<td></td></tr>`;
   const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR',UZT:'UZATMA'};
   const _gonSet=(()=>{ if(!_trUst.firma) return null; const son=_trSonGonderim(_trUst.firma); return son?new Set(son.ids||[]):new Set(); })();
   const _yeniMi=r=>_gonSet!==null&&r.grup&&(_trGrupOf(r).firma||'')===_trUst.firma&&!_gonSet.has(r.id);
   // aynı göreve (grup) atanmış uçuş transferleri DIŞTAN TEK SATIR — uçuş saatleri içinde alt alta
-  const _cizim=[]; const _grupIdx={};
+  const _cizim=[]; const _grupIdx={}; let mh='';
   list.forEach(it=>{
     const g0=it.r.grup;
     if(g0&&it.r.tip!=='TUR'){
@@ -18162,6 +18194,15 @@ function renderOpsTransfer(){
       h+=`<td>${U.every(x=>x.r.onay)?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'}${U.some(x=>_yeniMi(x.r))?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
       h+=`<td><button class="rowbtn" onclick="_trOnayCoklu('${_idsEnc}')" title="Hepsini onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldirCoklu('${_idsEnc}')" title="Birleşiği dağıt — atamaları kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r0.grup}')" title="Görev listesi">🖨</button><button class="rowbtn" onclick="trRehberWa('${r0.grup}')" title="Rehbere WhatsApp: görev listesi PDF iner + sohbet açılır">📲</button></td>`;
       h+='</tr>';
+      (function(){
+        const durumTx=(gr.firma||gr.arac)?[gr.firma,gr.arac].filter(Boolean).join(' · '):'';
+        const rehTx=[...new Set(U.map(x=>(_trRehInfo(x.r).ad||'').trim()).filter(Boolean))].join(' + ');
+        const ucTx=ucuslar.map(x=>((x.u||'')+' '+(x.s||'')).trim()).filter(Boolean).join(' · ');
+        mh+=`<div class="trk" onclick="_trDetayCoklu('${_idsEnc}')">
+          <div class="trk-ust"><span class="trk-saat">${esc(dh0.saat||(ucuslar[0]&&ucuslar[0].s)||'—')}</span><span class="tipb tb-${r0.tip}">${tipAd[r0.tip]}</span><span style="background:var(--primary);color:#fff;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">🔗 ${U.length}</span><b>${u1(r=>r.urun).map(esc).join(' + ')}</b><span class="trk-durum${durumTx?'':' yok'}">${durumTx?esc(durumTx):'atanmadı'}</span></div>
+          <div class="trk-alt">${u1(r=>r.nereden).map(esc).join(' / ')} → ${u1(r=>r.nereye).map(esc).join(' / ')} · <b>${paxT} pax</b>${rehTx?' · '+esc(rehTx):''}${ucTx?`<div>✈ ${esc(ucTx)}</div>`:''}</div>
+        </div>`;
+      })();
       return;
     }
     const {r,dh,gece}=cz.uyeler[0];
@@ -18182,8 +18223,18 @@ function renderOpsTransfer(){
     h+=`<td><input class="notin" value="${esc(r.not||'')}" onchange="_trNotElle('${r.id}',this.value)" placeholder="—"></td>`;
     h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):(r.tahsis?'<span class="trchip" style="background:#e0f2fe;color:#0369a1">tahsis aracı</span>':'<span class="trchip c-yok">atanmadı</span>')}${_yeniMi(r)?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
     h+=`<td>${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button><button class="rowbtn" onclick="trRehberWa('${r.grup}')" title="Rehbere WhatsApp: görev listesi PDF iner + sohbet açılır">📲</button>`:''}</td></tr>`;
+    (function(){
+      const durumTx=(gr&&(gr.firma||gr.arac))?[gr.firma,gr.arac].filter(Boolean).join(' · '):'';
+      const thsTx=(!gr&&r.tahsis)?[r.tahsis.firma,r.tahsis.arac].filter(Boolean).join(' · ')||'tahsis aracı':'';
+      const ri=_trRehInfo(r);
+      mh+=`<div class="trk" onclick="_trDetayAc('${r.id}')">
+        <div class="trk-ust"><span class="trk-saat">${esc(dh.saat||r.saat||'—')}</span><span class="tipb tb-${r.trf?'ARAD':r.tip}">${r.trf?'TRANSFER':tipAd[r.tip]}</span><b>${esc(r.urun)}${r.ucus?' · '+esc(r.ucus):''}</b><span class="trk-durum${durumTx?'':(thsTx?' ths':' yok')}">${durumTx?esc(durumTx):(thsTx?esc(thsTx):'atanmadı')}</span></div>
+        <div class="trk-alt">${esc(r.nereden)} → ${esc(r.nereye)} · <b>${r.pax} pax</b>${ri.ad?' · '+esc(ri.ad):''}${gece?' · <span style="color:#b45309;font-weight:800">GECE</span>':''}${_opsTrDate2?' · '+_fmtDateTR(r.tarih):''}</div>
+      </div>`;
+    })();
   });
   h+='</table></div>';
+  h+='<div class="tr-kartlar">'+mh+'</div>';
   h+=_trTahsisBolumHTML();
   const ae=document.activeElement, fk=ae&&ae.dataset?ae.dataset.fk:null, ss=fk&&ae.selectionStart!=null?ae.selectionStart:null;
   box.innerHTML=h;
