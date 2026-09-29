@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v615 · 29.09.2026';
+const APP_VER='v616 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17184,7 +17184,9 @@ function _rehbBildEsle(b,k){
   }catch(e){ return false; }
 }
 function _mmGirildiMi(k){
-  return String(k.rehCiro||'').trim()!==''||(k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!=='');
+  // yalnız MAĞAZA bildirimi (kalem cirosu) girilmişse 'girildi' sayılır —
+  // rehberin otomatik işlenen bildirimi (rehCiro) beklemeyi düşürmez
+  return (k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!=='');
 }
 function _mmKayitDurum(k){
   const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekliyor',bekleme:'bekliyor'})[v]||'onay';
