@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v606 · 29.09.2026';
+const APP_VER='v607 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17610,7 +17610,11 @@ function mmBildDoldur(id){
 
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <input value="${esc(k.not||'')}" placeholder="not…" onchange="mmSet('${k.id}','not',this.value)" style="${inp};flex:1;min-width:180px">
-      <span style="font-size:.74rem;color:var(--primary);font-weight:800">Komisyon: ${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</span>
+      <span style="font-size:.74rem;font-weight:800;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        ${(()=>{ try{ const P2=_mmPaylar(k); const F2=n=>(Math.round(n*100)/100).toLocaleString('tr-TR');
+          return `<span style="color:#166534">Acente: ${F2(P2.acente)}</span><span style="color:#0369a1">Ofis: ${F2(P2.ofis)}</span><span style="color:#6d28d9">Şef: ${F2(P2.sef)}</span>`; }catch(e){ return ''; } })()}
+        <span style="color:var(--primary)">Toplam: ${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</span>
+      </span>
     </div>
   </div>`;
 }
