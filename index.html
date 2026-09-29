@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v627 · 29.09.2026';
+const APP_VER='v628 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8791,7 +8791,7 @@ function _applyRoleNav(){
   document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=(sbRol==='rehber')?'none':''; return; } t.style.display=(_acl(pg)==='-')?'none':''; });
   // Şirket rolü: Mağazalar bölümünde yalnız Muhasebe + Operasyon
   document.querySelectorAll('.mm-navitem').forEach(function(t){ const mt=t.getAttribute('data-mt');
-    t.style.display=(sbRol==='sirket'&&['firmalar','tahsilat','ekstre'].includes(mt))?'none':''; });
+    t.style.display=(sbRol==='sirket'&&['firmalar','tahsilat'].includes(mt))?'none':''; });
   document.querySelectorAll('.side-nav .nav-group').forEach(function(g2){
     let el=g2.nextElementSibling, vis=false;
     while(el&&!el.classList.contains('nav-group')){ if(el.classList&&el.classList.contains('nav-tab')&&el.style.display!=='none') vis=true; el=el.nextElementSibling; }
@@ -17214,7 +17214,7 @@ function _mmPaylar(k){
 }
 function renderMagEkstre(){
   const box=document.getElementById('magmuhEkstreWrap'); if(!box) return;
-  if(_cloudOn&&sbRol&&sbRol!=='yonetici'){ box.innerHTML='<div class="card"><b>Bu bölüm yalnız yönetime açıktır.</b></div>'; return; }
+  if(_cloudOn&&sbRol&&_acl('magmuh')==='-'){ box.innerHTML='<div class="card"><b>Bu bölüme erişim yetkiniz yok.</b></div>'; return; }
   const firmalar=_moFirmalar();
   const yilF=k=>!_meYil||String(_pdate(k.tarih)||'').slice(0,4)===_meYil;
   const Z=getMagMuhAktif().filter(yilF), T=getMagTahsilat().filter(yilF);
