@@ -805,12 +805,12 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   .ops-datebar>span:first-of-type{font-size:1.05rem;margin-top:4px}
   #opsPane_transfer .ops-datebar>.btn,#opsPane_transfer .ops-datebar>.ops-date,#opsPane_transfer .ops-datebar>span:not(#trAksiyonBar){display:none!important}
   .ops-datebar .m-tbar{display:flex;flex:1 1 100%;align-items:center;gap:6px;background:var(--card,#fff);border:1.5px solid var(--border);border-radius:13px;padding:6px 8px}
-  .m-tok{width:36px;height:40px;border-radius:9px;border:1.5px solid var(--border);background:var(--card,#fff);font-size:.8rem;color:inherit;cursor:pointer;flex:0 0 auto;font-family:inherit}
-  .m-tarihk{flex:1;text-align:center;font-weight:800;font-size:.8rem;position:relative;min-width:0}
+  .m-tok{width:31px;height:38px;border-radius:9px;border:1.5px solid var(--border);background:var(--card,#fff);font-size:.8rem;color:inherit;cursor:pointer;flex:0 0 auto;font-family:inherit}
+  .m-tarihk{flex:1;text-align:center;font-weight:800;font-size:.76rem;position:relative;min-width:0}
   .m-tarihk b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
   .m-tarihk small{display:block;font-weight:600;color:var(--muted);font-size:.6rem}
   .m-tarihk input[type=date]{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0}
-  .m-hzl{font-size:.62rem;font-weight:800;color:var(--primary);border:1.5px solid #fcd9c4;border-radius:8px;padding:6px 7px;background:var(--card,#fff);cursor:pointer;flex:0 0 auto}
+  .m-hzl{font-size:.58rem;font-weight:800;color:var(--primary);border:1.5px solid #fcd9c4;border-radius:8px;padding:6px 5px;background:var(--card,#fff);cursor:pointer;flex:0 0 auto}
   .m-hzl.on{background:var(--primary);color:#fff;border-color:var(--primary)}
   #trAksiyonBar{display:flex!important;flex:1 1 100%;gap:7px;margin-top:2px}
   #trAksiyonBar .btn-primary{flex:1;margin-left:0!important;justify-content:center}
@@ -2298,7 +2298,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v650 · 30.09.2026';
+const APP_VER='v651 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2696,6 +2696,7 @@ function _mTabAktif(id){
 }
 function showPage(id, tabEl) {
   _navPush();
+  try{ if(id!=='operasyon'){ const ab=document.querySelector('body>#trAtabar'); ab&&ab.remove(); } }catch(e){}
   try{ document.body.classList.remove('mnavAcik'); }catch(e){}
   window._sonSayfa=id;
   _mTabAktif(id);
@@ -14373,7 +14374,8 @@ try{ if(localStorage.getItem('dmc_sbKapali')==='1') document.body.classList.add(
 function opsTab(t,noPush){
   if(t==='birlestir') t='turlar';
   if(!noPush&&typeof _opsTab!=='undefined'&&t!==_opsTab) _navPush();
-  _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){} _rehEdit=null; _opsView(false);
+  _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){}
+  try{ if(t!=='transfer'){ const ab=document.querySelector('body>#trAtabar'); ab&&ab.remove(); } }catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
   ['anasayfa','gunluk','rehtak','grup','transfer','tahsis','tanim','mutabakat','birlestir','turlar'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
   if(t==='anasayfa') renderOpsAnasayfa();
@@ -18168,6 +18170,7 @@ function _trSatMigrate(){
 }
 function renderOpsTransfer(){
   const _shF=window._trSheetF; try{ mSheetKapat(); }catch(e){} window._trSheetF=_shF;
+  try{ document.querySelectorAll('body>#trAtabar').forEach(e=>e.remove()); }catch(e){}
   const box=document.getElementById('opsPane_transfer'); if(!box) return;
   try{ _trSatMigrate(); }catch(e){}
   window._trKod=_trKodMap();
@@ -18184,7 +18187,7 @@ function renderOpsTransfer(){
     <div class="ops-datebar">
       <div class="m-tbar">
         <button class="m-tok" onclick="opsTrNav(-1)">◀</button>
-        <div class="m-tarihk"><b>${_opsTrDate2?esc(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):esc(_trGunAd(_opsTrDate))}</b><small>${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</small><input type="date" value="${_opsTrDate}" onchange="opsTrSet(this.value)"></div>
+        <div class="m-tarihk"><b>${_opsTrDate2?esc((_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)).replace(/\.20\d\d/g,'')):esc(String(_trGunAd(_opsTrDate)).replace(/\s*20\d\d/,''))}</b><small>${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</small><input type="date" value="${_opsTrDate}" onchange="opsTrSet(this.value)"></div>
         <button class="m-tok" onclick="opsTrNav(1)">▶</button>
         <span class="m-hzl" onclick="opsTrSet('')">Bugün</span>
         <span class="m-hzl${_opsTrDate2&&_isoDiff(_opsTrDate,_opsTrDate2)===6?' on':''}" onclick="opsTrAralik(${_opsTrDate2&&_isoDiff(_opsTrDate,_opsTrDate2)===6?0:7})">7g</span>
@@ -18958,6 +18961,7 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
   _trAracDoldur();
   try{ const ilk=rows[0]; if(ilk){ const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,'01'); const el=document.getElementById('trRehber');
     if(el&&!el.value&&(sr.rehberAd||'').trim()){ const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(sr.rehberAd)); if(o) el.value=o.value||o.text; } } }catch(e){}
+  try{ if(window.matchMedia&&matchMedia('(max-width:980px)').matches&&bar.parentElement!==document.body) document.body.appendChild(bar); }catch(e){}
 }
 function _trKapKontrol(){ const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const L=_trFiloList((document.getElementById('trFirma')||{}).value); const a=L.find(x=>x.id===(document.getElementById('trArac')||{}).value); const a2=L.find(x=>x.id===(document.getElementById('trArac2')||{}).value); const kap=(a?a.kap:0)+(a2?a2.kap:0); const el=document.getElementById('trSecPax'); if(el){ el.textContent=pax+' pax'+(a?(a.tahsis?' / tur aracı':' / '+kap+' koltuk'):''); el.classList.toggle('asim',!!a&&!a.tahsis&&pax>kap); } }
 function _trAtama(birlesik){ if(birlesik===undefined) birlesik=true;
