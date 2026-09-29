@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v618 · 29.09.2026';
+const APP_VER='v619 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17601,13 +17601,47 @@ function mmKalemSecim(kid,i,ad){
   setMagMuh(getMagMuh()); renderMagMuh();
 }
 function mmBildKaydet(id){
-  const k=getMagMuh().find(x=>x.id===id); if(k){ k.magOnay=true; setMagMuh(getMagMuh()); }
-  const m0=document.getElementById('mmBildModal'); if(m0)m0.remove(); window._mmBildId=null;
+  const t=_mmT();
+  const k=getMagMuh().find(x=>x.id===id);
+  if(k&&t&&t.id===id){
+    k.magKalemler=JSON.parse(JSON.stringify(t.magKalemler||[]));
+    k.rehCiro=t.rehCiro; k.not=t.not; k.para=t.para;
+    k.magOnay=true;
+    setMagMuh(getMagMuh());
+  }
+  const m0=document.getElementById('mmBildModal'); if(m0)m0.remove();
+  window._mmBildId=null; window._mmBildTaslak=null;
   renderMagMuh(); showToast('Mağaza bildirimi kaydedildi','success');
 }
-function mmBildAc(id){ window._mmBildId=id; mmBildDoldur(id); }
+function mmBildVazgec(){
+  const m0=document.getElementById('mmBildModal'); if(m0)m0.remove();
+  window._mmBildId=null; window._mmBildTaslak=null;
+}
+function mmBildAc(id){
+  const k=getMagMuh().find(x=>x.id===id); if(!k) return;
+  window._mmBildId=id;
+  window._mmBildTaslak=JSON.parse(JSON.stringify(k)); // KAYDET'e basılmadıkça hiçbir şey kayda yazılmaz
+  mmBildDoldur(id);
+}
+function _mmT(){ return window._mmBildTaslak; }
+function mmTSet(f,v){ const t=_mmT(); if(!t) return; t[f]=String(v).trim(); mmBildDoldur(t.id); }
+function mmTKalemSet(i,f,v){ const t=_mmT(); if(!t||!(t.magKalemler||[])[i]) return; t.magKalemler[i][f]=String(v).trim();
+  if(f==='ciro'){ try{ const sk=(window._mmSablonK||[]).find(z=>z.ad===t.magKalemler[i].ad); if(sk){ if(!_tdN(t.magKalemler[i].oran)&&t.magKalemler[i].pay==null) t.magKalemler[i].oran=sk.oran; if(sk.pay!=null&&t.magKalemler[i].pay==null) t.magKalemler[i].pay=JSON.parse(JSON.stringify(sk.pay)); } }catch(e){}
+    if(String(v).trim()!==''&&!t.magKalemler[i].durum) t.magKalemler[i].durum='onay'; }
+  mmBildDoldur(t.id); }
+function mmTKalemSecim(i,ad){ const t=_mmT(); if(!t||!(t.magKalemler||[])[i]) return; t.magKalemler[i].ad=String(ad||'').trim();
+  const sk=(window._mmSablonK||[]).find(x=>x.ad===ad);
+  if(sk){ t.magKalemler[i].oran=sk.oran; t.magKalemler[i].pay=(sk.pay!=null)?JSON.parse(JSON.stringify(sk.pay)):null; }
+  mmBildDoldur(t.id); }
+function mmTKalemPay(i,alan,v){ const t=_mmT(); if(!t||!(t.magKalemler||[])[i]) return; const x=t.magKalemler[i];
+  if(!x.pay||typeof x.pay!=='object') x.pay={acente:x.oran||'',rehber:'',ofis:'',sef:'',kaptan:''};
+  x.pay[alan]=String(v).trim();
+  x.oran=['acente','rehber','ofis','sef','kaptan'].reduce((tt,p2)=>tt+_tdN(x.pay[p2]),0);
+  mmBildDoldur(t.id); }
+function mmTKalemAdd(){ const t=_mmT(); if(!t) return; (t.magKalemler=t.magKalemler||[]).push({ad:'',ciro:'',oran:''}); mmBildDoldur(t.id); }
+function mmTKalemDel(i){ const t=_mmT(); if(!t||!t.magKalemler) return; t.magKalemler.splice(i,1); mmBildDoldur(t.id); }
 function mmBildDoldur(id){
-  const k=getMagMuh().find(x=>x.id===id); if(!k){ const m0=document.getElementById('mmBildModal'); if(m0)m0.remove(); window._mmBildId=null; return; }
+  const k=(window._mmBildTaslak&&window._mmBildTaslak.id===id)?window._mmBildTaslak:getMagMuh().find(x=>x.id===id); if(!k){ const m0=document.getElementById('mmBildModal'); if(m0)m0.remove(); window._mmBildId=null; return; }
   const firmalar=_moFirmalar(); const fm=firmalar.find(x=>x.id===k.firmaId);
   const c=_mmHesap(k);
   const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
@@ -17622,51 +17656,52 @@ function mmBildDoldur(id){
   let ov=document.getElementById('mmBildModal');
   if(!ov){ ov=document.createElement('div'); ov.id='mmBildModal';
     ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto';
-    ov.addEventListener('click',e=>{ if(e.target===ov){ ov.remove(); window._mmBildId=null; } });
+    ov.addEventListener('click',e=>{ if(e.target===ov) mmBildVazgec(); });
     document.body.appendChild(ov); }
   let onerHtml=''; try{ const bl=getRehBildirim().filter(x=>x.rehberAd&&_rehbBildEsle(x,k));
-    onerHtml=bl.map(b=>`<span style="font-size:.7rem;color:var(--primary);cursor:pointer;font-weight:700" title="Rehberin uygulamadan gönderdiği bildirim — tıkla, rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">📲 rehber bildirdi: ${esc(b.tutar)} ${esc(b.para||'')}</span>`).join(' '); }catch(e){}
+    onerHtml=bl.map(b=>`<span style="font-size:.7rem;color:var(--primary);cursor:pointer;font-weight:700" title="Rehberin uygulamadan gönderdiği bildirim — tıkla, rehber cirosuna yaz" onclick="mmTSet('rehCiro','${esc(b.tutar)}')">📲 rehber bildirdi: ${esc(b.tutar)} ${esc(b.para||'')}</span>`).join(' '); }catch(e){}
   const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓ tutuyor</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">fark ${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')} (%${Math.round(c.farkY)})</span>`):'';
   ov.innerHTML=`<div style="width:min(580px,100%);background:#fff;border-radius:16px;padding:20px 22px" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
       <b style="font-size:.95rem">📝 Mağaza Bildirimi</b>
       <span style="color:var(--muted);font-size:.74rem">${esc((fm&&fm.ad)||'')}${k.magaza?' · '+esc(k.magaza):''}</span>
-      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mmBildKaydet('${k.id}')">💾 Kaydet</button>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="mmBildVazgec()">Vazgeç</button>
+      <button class="btn btn-primary btn-sm" onclick="mmBildKaydet('${k.id}')">💾 Kaydet</button>
     </div>
     <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">${_fmtDateTR(_pdate(k.tarih)||'')} · ${esc(k.kod||'—')} · ${esc(k.rehberAd||'—')}${k.pax?' · '+esc(String(k.pax))+' pax':''}</div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
       <b style="font-size:.74rem">KALEMLER</b>
-      <button class="btn btn-outline btn-sm" onclick="mmKalemAdd('${k.id}')">+ Kalem</button>
+      <button class="btn btn-outline btn-sm" onclick="mmTKalemAdd()">+ Kalem</button>
       <button class="btn btn-outline btn-sm" onclick="mmSablonYap('${k.id}')" title="Kalem adları+oranları mağaza şablonu olur">⭐ Şablon yap</button>
       <button class="btn btn-sm" style="${window._mmOranAc?'background:#7c3aed;color:#fff;border:1.5px solid #7c3aed':'background:#fff;color:#7c3aed;border:1.5px solid #ddd6fe'}" onclick="window._mmOranAc=!window._mmOranAc;mmBildDoldur('${k.id}')" title="Komisyon oranlarını göster/gizle — oranlar şablondan gelir, gerekirse burada değiştirilir">% Özel oran</button>
-      <label style="font-size:.7rem;font-weight:700;margin-left:auto">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp};width:auto">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
+      <label style="font-size:.7rem;font-weight:700;margin-left:auto">Para <select onchange="mmTSet('para',this.value)" style="${inp};width:auto">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
     </div>
     <table style="border-collapse:collapse;width:100%">${(k.magKalemler||[]).map((x,i)=>{const kk=_tdN(x.ciro)*_tdN(x.oran)/100;const xd=KDAD[kdN(x.durum)];return `<tr>
-      <td style="padding:2px 4px"><select onchange="mmKalemSecim('${k.id}',${i},this.value)" style="${inp};width:126px">
+      <td style="padding:2px 4px"><select onchange="mmTKalemSecim(${i},this.value)" style="${inp};width:126px">
         <option value="">— kalem seç —</option>
         ${sablonK.map(sk=>`<option value="${esc(sk.ad)}" ${(x.ad||'')===sk.ad?'selected':''}>${esc(sk.ad)}</option>`).join('')}
         ${(x.ad||'').trim()&&!sablonK.some(sk=>sk.ad===x.ad)?`<option value="${esc(x.ad)}" selected>${esc(x.ad)}</option>`:''}
       </select></td>
-      <td style="padding:2px 4px"><input value="${esc(x.ciro||'')}" inputmode="decimal" placeholder="ciro" onchange="mmKalemSet('${k.id}',${i},'ciro',this.value)" style="${inp};width:96px;text-align:right"></td>
-      ${window._mmOranAc?`<td style="padding:2px 4px;white-space:nowrap"><input value="${esc(x.oran||'')}" inputmode="decimal" placeholder="%" onchange="mmKalemSet('${k.id}',${i},'oran',this.value)" style="${inp};width:50px;text-align:right"> %</td>`:''}
+      <td style="padding:2px 4px"><input value="${esc(x.ciro||'')}" inputmode="decimal" placeholder="ciro" onchange="mmTKalemSet(${i},'ciro',this.value)" style="${inp};width:96px;text-align:right"></td>
+      ${window._mmOranAc?`<td style="padding:2px 4px;white-space:nowrap"><input value="${esc(x.oran||'')}" inputmode="decimal" placeholder="%" onchange="mmTKalemSet(${i},'oran',this.value)" style="${inp};width:50px;text-align:right"> %</td>`:''}
       <td style="padding:2px 6px;font-size:.74rem;color:var(--primary);font-weight:700;white-space:nowrap">${(Math.round(kk*100)/100).toLocaleString('tr-TR')}</td>
-      <td style="padding:2px 4px"><select onchange="mmKalemSet('${k.id}',${i},'durum',this.value)" title="Bu kalemin durumu" style="${inp};width:auto;font-size:.66rem;font-weight:700;background:${xd[1]};color:${xd[2]}">${Object.keys(KDAD).map(d2=>`<option value="${d2}" ${kdN(x.durum)===d2?'selected':''}>${KDAD[d2][0]}</option>`).join('')}</select></td>
-      <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmKalemDel('${k.id}',${i})">✕</button></td></tr>
+      <td style="padding:2px 4px"><select onchange="mmTKalemSet(${i},'durum',this.value)" title="Bu kalemin durumu" style="${inp};width:auto;font-size:.66rem;font-weight:700;background:${xd[1]};color:${xd[2]}">${Object.keys(KDAD).map(d2=>`<option value="${d2}" ${kdN(x.durum)===d2?'selected':''}>${KDAD[d2][0]}</option>`).join('')}</select></td>
+      <td><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="mmTKalemDel(${i})">✕</button></td></tr>
       ${window._mmOranAc?(()=>{ const px=(x.pay&&typeof x.pay==='object')?x.pay:{acente:x.oran||'',rehber:'',ofis:'',sef:'',kaptan:''};
         const et={acente:'Acente',rehber:'Rehber',ofis:'Ofis',sef:'Şef',kaptan:'Kaptan'};
         const top=['acente','rehber','ofis','sef','kaptan'].reduce((t,p2)=>t+_tdN(px[p2]),0);
         return `<tr><td colspan="7" style="padding:2px 4px 8px 14px;background:#faf7ff">
           <span style="display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap">
-          ${Object.keys(et).map(p2=>`<label style="font-size:.62rem;font-weight:700;color:#6d28d9;display:inline-flex;align-items:center;gap:3px">${et[p2]} <input value="${esc(px[p2]!=null?px[p2]:'')}" inputmode="decimal" onchange="mmKalemPay('${k.id}',${i},'${p2}',this.value)" style="${inp};width:46px;text-align:right;padding:3px 5px"> %</label>`).join('')}
+          ${Object.keys(et).map(p2=>`<label style="font-size:.62rem;font-weight:700;color:#6d28d9;display:inline-flex;align-items:center;gap:3px">${et[p2]} <input value="${esc(px[p2]!=null?px[p2]:'')}" inputmode="decimal" onchange="mmTKalemPay(${i},'${p2}',this.value)" style="${inp};width:46px;text-align:right;padding:3px 5px"> %</label>`).join('')}
           <b style="font-size:.66rem;color:${Math.abs(top-_tdN(x.oran))<0.01?'#166534':'#6d28d9'}">Σ %${Math.round(top*100)/100}</b></span></td></tr>`; })():''}`;}).join('')||'<tr><td style="font-size:.74rem;color:var(--muted);padding:4px">Kalem yok — "+ Kalem" ile ekle.</td></tr>'}</table>
     <div style="display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 12px">
       <b style="font-size:.76rem">Mağaza toplam: ${(Math.round(c.mag*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</b>
-      <label style="font-size:.72rem;font-weight:700">Rehber bildirimi <input value="${esc(k.rehCiro||'')}" inputmode="decimal" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:104px;text-align:right"></label>
+      <label style="font-size:.72rem;font-weight:700">Rehber bildirimi <input value="${esc(k.rehCiro||'')}" inputmode="decimal" onchange="mmTSet('rehCiro',this.value)" style="${inp};width:104px;text-align:right"></label>
       ${farkHtml} ${onerHtml}
     </div>
 
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <input value="${esc(k.not||'')}" placeholder="not…" onchange="mmSet('${k.id}','not',this.value)" style="${inp};flex:1;min-width:180px">
+      <input value="${esc(k.not||'')}" placeholder="not…" onchange="mmTSet('not',this.value)" style="${inp};flex:1;min-width:180px">
       <span style="font-size:.74rem;font-weight:800;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         ${(()=>{ try{ const P2=_mmPaylar(k); const F2=n=>(Math.round(n*100)/100).toLocaleString('tr-TR');
           return `<span style="color:#166534">Acente: ${F2(P2.acente)}</span><span style="color:#0369a1">Ofis: ${F2(P2.ofis)}</span><span style="color:#6d28d9">Şef: ${F2(P2.sef)}</span>`; }catch(e){ return ''; } })()}
