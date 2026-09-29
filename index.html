@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v610 · 29.09.2026';
+const APP_VER='v611 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17173,6 +17173,16 @@ function mtExcel(){
 }
 // ═══ MAĞAZA EKSTRESİ (Genel — onaylı satış → hakediş → tahsilat → kalan) ═══
 let _meYil='';
+function _rehbBildEsle(b,k){
+  // rehber bildirimi ↔ muhasebe kaydı: rehber eşit, mağaza içerme bazlı, tarih ±3 gün
+  try{
+    if(_rehbNrm(b.rehberAd)!==_rehbNrm(k.rehberAd)) return false;
+    const bm=_rehbNrm(b.magaza||''), km=_rehbNrm(k.magaza||'');
+    if(bm&&km&&!(bm.includes(km)||km.includes(bm))) return false;
+    const t1=new Date((_pdate(b.tarih)||'1970-01-01')+'T00:00:00'), t2=new Date((_pdate(k.tarih)||'1970-01-01')+'T00:00:00');
+    return Math.abs(t1-t2)<=3*86400000;
+  }catch(e){ return false; }
+}
 function _mmPaylar(k){
   // kalem pay'ları varsa paydaş bazlı; yoksa oran=acente
   const out={acente:0,rehber:0,ofis:0,sef:0,kaptan:0};
@@ -17373,7 +17383,7 @@ function _mmBildirimKart(){
   const B=getRehBildirim().filter(b=>String(b.tarih||'')>=_isoAdd(bugun,-14)).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
   if(!B.length) return '';
   const L=getMagMuhAktif();
-  const esik=b=>L.find(k=>_pdate(k.tarih)===_pdate(b.tarih)&&_rehbNrm(k.rehberAd)===_rehbNrm(b.rehberAd)&&(!b.magaza||!k.magaza||_rehbNrm(k.magaza)===_rehbNrm(b.magaza)));
+  const esik=b=>L.find(k=>_rehbBildEsle(b,k));
   const td='padding:4px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
   return `<div class="card" style="margin-bottom:12px"><div class="card-title">📲 Rehber Bildirimleri <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">son 14 gün · ${B.length} bildirim — WhatsApp yerine buradan takip</span></div>
     <table style="width:100%;border-collapse:collapse">
@@ -17578,7 +17588,7 @@ function mmBildDoldur(id){
     ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto';
     ov.addEventListener('click',e=>{ if(e.target===ov){ ov.remove(); window._mmBildId=null; } });
     document.body.appendChild(ov); }
-  let onerHtml=''; try{ const bl=getRehBildirim().filter(x=>x.rehberAd&&_pdate(x.tarih)===_pdate(k.tarih)&&_rehbNrm(x.rehberAd)===_rehbNrm(k.rehberAd)&&(!x.magaza||!k.magaza||_rehbNrm(x.magaza)===_rehbNrm(k.magaza)));
+  let onerHtml=''; try{ const bl=getRehBildirim().filter(x=>x.rehberAd&&_rehbBildEsle(x,k));
     onerHtml=bl.map(b=>`<span style="font-size:.7rem;color:var(--primary);cursor:pointer;font-weight:700" title="Rehberin uygulamadan gönderdiği bildirim — tıkla, rehber cirosuna yaz" onclick="mmSet('${k.id}','rehCiro','${esc(b.tutar)}')">📲 rehber bildirdi: ${esc(b.tutar)} ${esc(b.para||'')}</span>`).join(' '); }catch(e){}
   const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓ tutuyor</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">fark ${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')} (%${Math.round(c.farkY)})</span>`):'';
   ov.innerHTML=`<div style="width:min(580px,100%);background:#fff;border-radius:16px;padding:20px 22px" onclick="event.stopPropagation()">
