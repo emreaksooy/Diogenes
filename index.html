@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v603 · 29.09.2026';
+const APP_VER='v604 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2568,7 +2568,7 @@ function showPage(id, tabEl) {
   if(id==='operasyon') opsTab(_opsTab||'anasayfa');
   if(id==='cikti') renderBackupList();
   if(id==='rezervasyon') renderRezvPage();
-  document.body.classList.toggle('res-page', id==='ucak'||id==='magmuh');
+  document.body.classList.toggle('res-page', id==='ucak'||id==='magmuh'||id==='operasyon'||id==='opdetay'||id==='rezervasyon');
   // Sidebar modu: paket sayfalarında pkg sidebar göster
   const isPkgMode = ['paket','maliyet','harita','cikti','sunum'].includes(id);
   const sOps = document.getElementById('sidebarOps');
