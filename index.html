@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v612 · 29.09.2026';
+const APP_VER='v613 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17183,6 +17183,15 @@ function _rehbBildEsle(b,k){
     return Math.abs(t1-t2)<=3*86400000;
   }catch(e){ return false; }
 }
+function _mmKayitDurum(k){
+  const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal'})[v]||'bekliyor';
+  const ks=(k.magKalemler||[]).filter(x=>(x.ad||'').trim());
+  if(!ks.length) return 'bekliyor';
+  const dl=ks.map(x=>kd(x.durum));
+  if(dl.every(d=>d==='iptal')) return 'iptal';
+  if(dl.some(d=>d==='bekliyor')) return 'bekliyor';
+  return 'onay';
+}
 function _mmPaylar(k){
   // kalem pay'ları varsa paydaş bazlı; yoksa oran=acente
   const out={acente:0,rehber:0,ofis:0,sef:0,kaptan:0};
@@ -17296,9 +17305,8 @@ function _mmZiyaretSenk(){
     let oto=0;
     try{
       getRehBildirim().filter(b=>String(b.tarih||'')>=_isoAdd(bugun,-21)).forEach(b=>{
-        if(!_tdN(b.tutar)) return;
         const k2=L.find(k=>!k.silindi&&_rehbBildEsle(b,k));
-        if(k2&&!_tdN(k2.rehCiro)){ k2.rehCiro=String(b.tutar); oto++; }
+        if(k2&&!String(k2.rehCiro||'').trim()){ k2.rehCiro=String(_tdN(b.tutar)); oto++; }
       });
     }catch(e){}
     if(n||temiz||oto){ setMagMuh(L);
@@ -17390,10 +17398,12 @@ function mmSablonYap(id){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.firm
 function mmAcKapa(id){ _mmAcik.has(id)?_mmAcik.delete(id):_mmAcik.add(id); renderMagMuh(); }
 function _mmBildirimKart(){
   const bugun=_opsToday();
-  const B=getRehBildirim().filter(b=>String(b.tarih||'')>=_isoAdd(bugun,-14)).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
-  if(!B.length) return '';
   const L=getMagMuhAktif();
   const esik=b=>L.find(k=>_rehbBildEsle(b,k));
+  const B=getRehBildirim().filter(b=>String(b.tarih||'')>=_isoAdd(bugun,-14))
+    .filter(b=>{ const k=esik(b); return !(k&&String(k.rehCiro||'').trim()); }) // kayda işlenenler listeden düşer
+    .sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));
+  if(!B.length) return '';
   const td='padding:4px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
   return `<div class="card" style="margin-bottom:12px"><div class="card-title">📲 Rehber Bildirimleri <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">son 14 gün · ${B.length} bildirim — WhatsApp yerine buradan takip</span></div>
     <table style="width:100%;border-collapse:collapse">
@@ -17506,7 +17516,8 @@ function renderMagMuh(){
         }
         const c=_mmHesap(k);
         const fm=firmalar.find(x=>x.id===k.firmaId);
-        const dd=DAD[k.durum||'bekliyor'];
+        const _kdur=_mmKayitDurum(k);
+        const dd={onay:['Onaylandı','#dcfce7','#166534'],bekliyor:['Bekliyor','#fef3c7','#92400e'],iptal:['İptal','#fee2e2','#b91c1c']}[_kdur];
         const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')}</span>`):'—';
         g2h+=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #e2e8f0;font-size:.76rem">
           <b style="min-width:78px">${_fmtDateTR(_pdate(k.tarih)||'')}</b>
