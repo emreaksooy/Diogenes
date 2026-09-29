@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v611 · 29.09.2026';
+const APP_VER='v612 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17292,7 +17292,17 @@ function _mmZiyaretSenk(){
         k.silindi=true; temiz++;
       });
     }catch(e){}
-    if(n||temiz){ setMagMuh(L);
+    // REHBER BİLDİRİMİ OTOMATİK İŞLENİR: eşleşen kayıtta rehber cirosu boşsa elle 'kayda yaz' gerekmez
+    let oto=0;
+    try{
+      getRehBildirim().filter(b=>String(b.tarih||'')>=_isoAdd(bugun,-21)).forEach(b=>{
+        if(!_tdN(b.tutar)) return;
+        const k2=L.find(k=>!k.silindi&&_rehbBildEsle(b,k));
+        if(k2&&!_tdN(k2.rehCiro)){ k2.rehCiro=String(b.tutar); oto++; }
+      });
+    }catch(e){}
+    if(n||temiz||oto){ setMagMuh(L);
+      if(oto) showToast(oto+' rehber bildirimi kayda otomatik işlendi','success',4500);
       if(n) showToast(n+' geçmiş ziyaret muhasebeye taşındı — bildirimleri gir','success',5000);
       if(temiz) showToast(temiz+' kalıntı ziyaret düşürüldü (mağaza programı değişmiş)',null,4500);
     }
