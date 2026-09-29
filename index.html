@@ -829,6 +829,22 @@ tr.res-secili td{background:#dbeafe!important}
   .yn-gr{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .yn-gr .c{min-width:40px}
   .yn-kpi{grid-template-columns:1fr 1fr!important}
+  /* yönetici özeti: taşmalar bileşen içinde çözülür (v634) */
+  .yn-panel{overflow:hidden;min-width:0}
+  .yn-panel h3{flex-wrap:wrap;row-gap:2px}
+  .yn-oprow{gap:7px}
+  .yn-oprow .ad{width:auto;flex:0 0 88px;min-width:0}
+  .yn-oprow .cz{flex:1 1 auto;min-width:24px}
+  .yn-oprow .p{flex:0 0 auto;white-space:nowrap;font-size:.64rem}
+  .yn-saha{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .yn-saha .yn-sh{min-width:0;padding:8px 4px}
+  .yn-saha .yn-sh b{font-size:1.2rem}
+  .yn-saha .yn-sh span{font-size:.54rem}
+  .yn-yog{flex-wrap:wrap;row-gap:5px}
+  #ynMap,#opsMap{max-width:100%}
+  .yn-panel table{width:100%;table-layout:fixed}
+  .yn-panel td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dash-hero-title{font-size:1.15rem}
   .rzmg{font-size:.72rem}
   .ops-ct{flex-wrap:wrap}
   #trAtabar .btn{flex:1 1 auto}
@@ -2150,7 +2166,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v633 · 29.09.2026';
+const APP_VER='v634 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
