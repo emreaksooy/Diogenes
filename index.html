@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v614 · 29.09.2026';
+const APP_VER='v615 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17187,9 +17187,9 @@ function _mmGirildiMi(k){
   return String(k.rehCiro||'').trim()!==''||(k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!=='');
 }
 function _mmKayitDurum(k){
-  const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal'})[v]||'bekliyor';
+  const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekliyor',bekleme:'bekliyor'})[v]||'onay';
   const ks=(k.magKalemler||[]).filter(x=>(x.ad||'').trim());
-  if(!ks.length) return 'bekliyor';
+  if(!ks.length||!_mmGirildiMi(k)) return 'bekliyor';
   const dl=ks.map(x=>kd(x.durum));
   if(dl.every(d=>d==='iptal')) return 'iptal';
   if(dl.some(d=>d==='bekliyor')) return 'bekliyor';
@@ -17602,7 +17602,7 @@ function mmBildDoldur(id){
   const c=_mmHesap(k);
   const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
   const KDAD={onay:['Onaylandı','#dcfce7','#166534'],bekliyor:['Beklemede','#fef3c7','#92400e'],iptal:['İptal','#fee2e2','#b91c1c']};
-  const kdN=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal'})[v]||'bekliyor';
+  const kdN=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekliyor',bekleme:'bekliyor'})[v]||'onay';
   // mağazanın şablon kalemleri (şube öncelikli) — kalem adı buradan SEÇİLİR
   let sablonK=[];
   try{ const sube=fm?_moSubeBul(fm,k.magaza||''):null;
