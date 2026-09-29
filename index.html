@@ -756,6 +756,17 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
   .otl-f{min-width:46% !important}
 }
 .mm-tabbar{display:none !important}
+#mTabbar{display:none}
+@media(max-width:980px){
+  #mTabbar{position:fixed;left:0;right:0;bottom:0;z-index:1600;display:flex;background:var(--card,#fff);border-top:1px solid var(--border);padding:6px 4px calc(7px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 18px rgba(16,24,40,.06)}
+  #mTabbar button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:inherit;font-size:.58rem;font-weight:700;color:var(--muted);padding:4px 0;cursor:pointer}
+  #mTabbar button i{font-style:normal;font-size:1.3rem;line-height:1}
+  #mTabbar button.on{color:var(--primary)}
+  body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+  #sbToggleBtn{display:none !important}
+  body.mnavAcik .side-nav{bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+  #trAtabar{bottom:calc(62px + env(safe-area-inset-bottom,0px))}
+}
 
 
 /* Uçak v3 grid */
@@ -2160,13 +2171,21 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
   </div>
 </div>
 
+<div id="mTabbar">
+  <button data-page="paketlerim" onclick="showPage('paketlerim')"><i>🏠</i><span>Ana Sayfa</span></button>
+  <button data-page="operasyon" onclick="showPage('operasyon')"><i>📅</i><span>Operasyon</span></button>
+  <button data-page="ucak" onclick="showPage('ucak')"><i>✈️</i><span>Uçak</span></button>
+  <button data-page="magmuh" onclick="showPage('magmuh')"><i>🏬</i><span>Mağaza</span></button>
+  <button id="mTabMenu" onclick="sbToggle()"><i>☰</i><span>Menü</span></button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- dmcSeed kaldırıldı: veri artık Supabase bulutunda. Arşiv: dmc-gomulu-veri-arsivi.json -->
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v634 · 29.09.2026';
+const APP_VER='v635 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2555,9 +2574,18 @@ function navGeri(){
   }catch(e){}
   _navGeriModu=false;
 }
+function _mTabAktif(id){
+  try{
+    const menuAcik=document.body.classList.contains('mnavAcik');
+    document.querySelectorAll('#mTabbar button[data-page]').forEach(b=>b.classList.toggle('on',!menuAcik&&b.getAttribute('data-page')===id));
+    const m=document.getElementById('mTabMenu'); if(m) m.classList.toggle('on',menuAcik);
+  }catch(e){}
+}
 function showPage(id, tabEl) {
   _navPush();
   try{ document.body.classList.remove('mnavAcik'); }catch(e){}
+  window._sonSayfa=id;
+  _mTabAktif(id);
   // Stash'teki modalı kapat (sayfa değiştiğinde)
   closeSectionModal();
   window.scrollTo(0,0);
@@ -8833,6 +8861,15 @@ function _applyRoleNav(){
   // Şirket rolü: Mağazalar bölümünde yalnız Muhasebe + Operasyon
   document.querySelectorAll('.mm-navitem').forEach(function(t){ const mt=t.getAttribute('data-mt');
     t.style.display=(sbRol==='sirket'&&['firmalar','tahsilat'].includes(mt))?'none':''; });
+  // alt gezinme çubuğu (mobil): yetkisiz sayfalar gizli, rehber/beklemede rollerinde çubuk yok
+  try{
+    const mtb=document.getElementById('mTabbar');
+    if(mtb){
+      if(sbRol==='rehber'||sbRol==='beklemede'){ mtb.style.display='none'; }
+      else { mtb.style.display='';
+        mtb.querySelectorAll('button[data-page]').forEach(function(b){ b.style.display=(_acl(b.getAttribute('data-page'))==='-')?'none':''; }); }
+    }
+  }catch(e){}
   document.querySelectorAll('.side-nav .nav-group').forEach(function(g2){
     let el=g2.nextElementSibling, vis=false;
     while(el&&!el.classList.contains('nav-group')){ if(el.classList&&el.classList.contains('nav-tab')&&el.style.display!=='none') vis=true; el=el.nextElementSibling; }
@@ -14173,7 +14210,7 @@ function _mobMenuToggle(ev){
   setTimeout(()=>{ document.addEventListener('click',function kapat(e){ const mm=document.getElementById('mobMenu'); if(mm&&!mm.contains(e.target)){ mm.remove(); } document.removeEventListener('click',kapat); },{once:false}); },10);
 }
 function sbToggle(){
-  if(window.matchMedia&&matchMedia('(max-width:980px)').matches){ document.body.classList.toggle('mnavAcik'); return; }
+  if(window.matchMedia&&matchMedia('(max-width:980px)').matches){ document.body.classList.toggle('mnavAcik'); _mTabAktif(window._sonSayfa||''); return; }
   const kapali=document.body.classList.toggle('sb-kapali');
   try{ localStorage.setItem('dmc_sbKapali',kapali?'1':'0'); }catch(e){}
 }
