@@ -780,10 +780,14 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   #trAksiyonBar .m-sheet-item{display:none!important}
   #trFiltrePanel:not(.msh-tasindi){display:none!important}
   #trTipPanel:not(.msh-tasindi){display:none!important}
-  .ops-datebar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:5px;scrollbar-width:none}
-  .ops-datebar::-webkit-scrollbar{display:none}
+  .ops-datebar{flex-wrap:wrap;gap:5px}
   .ops-datebar .ops-date{width:92px!important;flex-shrink:0}
   .ops-datebar .btn{min-height:36px;padding:6px 9px;font-size:.74rem;flex-shrink:0;white-space:nowrap}
+  .ops-datebar>span{flex:1 1 100%;margin-left:0!important}
+  .ops-datebar>span:first-of-type{font-size:1.05rem;margin-top:4px}
+  #trAksiyonBar{display:flex!important;flex:1 1 100%;gap:7px;margin-top:2px}
+  #trAksiyonBar .btn-primary{flex:1;margin-left:0!important;justify-content:center}
+  #trAksiyonBar .m-sadece-mobil{flex:0 0 auto;justify-content:center}
   .ucak-metrics{grid-template-columns:repeat(4,1fr)!important;gap:5px}
   .ucak-metric{padding:7px 4px}
   .ucak-metric .um-num{font-size:1.05rem}
@@ -2230,7 +2234,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v640 · 29.09.2026';
+const APP_VER='v641 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
