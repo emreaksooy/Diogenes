@@ -679,7 +679,12 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 @media(max-width:980px){
   .app-body{flex-direction:column}
   .sidebar{width:100%;min-width:0;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border)}
-  .side-nav{flex-direction:row;overflow-x:auto;border-bottom:1px solid var(--border)}
+  /* ana menü telefonda gizli — ☰ ile tam ekran dikey menü açılır */
+  .side-nav{display:none}
+  #sbToggleBtn{display:inline-flex !important}
+  body.mnavAcik .side-nav{display:flex;flex-direction:column;position:fixed;left:0;right:0;bottom:0;top:0;padding-top:calc(var(--nav-h) + env(safe-area-inset-top,0px) + 8px);background:var(--card,#fff);z-index:1500;overflow-y:auto;padding-left:12px;padding-right:12px;gap:2px;border-bottom:none}
+  body.mnavAcik .side-nav .nav-tab{width:100%;white-space:nowrap;padding:14px 16px;font-size:1rem;border-radius:10px}
+  body.mnavAcik .side-nav .nav-group{margin-top:12px}
   .nav-tab{width:auto;white-space:nowrap}
   /* bölüm alt menüleri (Operasyon/Mağaza/Rezervasyon/Uçak) telefonda yatay chip şeridi */
   .sidebar-ctx{display:block;width:100%}
@@ -750,7 +755,7 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
   .tanim-cards{grid-template-columns:1fr}
   .otl-f{min-width:46% !important}
 }
-@media(min-width:641px){ .mm-tabbar{display:none !important} }
+.mm-tabbar{display:none !important}
 
 
 /* Uçak v3 grid */
@@ -813,7 +818,11 @@ tr.res-secili td{background:#dbeafe!important}
 .mmkart{display:grid;grid-template-columns:92px minmax(84px,1.1fr) minmax(96px,1.3fr) repeat(8,minmax(44px,1fr)) 128px;gap:6px;align-items:center;overflow:hidden;padding:9px 12px;cursor:pointer;user-select:none}
 @media(max-width:760px){
   /* ── mobil paket 2 (v632): yeni bileşenler ── */
-  .mmkart{overflow-x:auto;-webkit-overflow-scrolling:touch;grid-template-columns:84px 110px 110px repeat(8,72px) 110px;padding:8px 10px}
+  .mmkart{display:flex;flex-wrap:wrap;gap:6px 8px;overflow:visible;padding:9px 10px}
+  .mmkart>span:nth-child(2){flex:1 1 auto;min-width:0}
+  .mmkart>span:nth-child(3){flex:1 1 100%;order:3}
+  .mmkart>span:nth-child(n+4):nth-child(-n+11){order:4;flex:1 1 calc(25% - 8px);min-width:72px}
+  .mmkart>span:last-child{order:2;margin-left:auto}
   #mmBildModal>div,#otBolModal>div,#mmYeniModal>div,#ucCiftModal>div{padding:14px 12px!important;border-radius:14px!important}
   #mmBildModal,#otBolModal,#mmYeniModal,#ucCiftModal,#tdOnizleModal{padding:12px 6px!important}
   #tdOnizleModal>div:last-child{padding:14px 10px!important}
@@ -1170,7 +1179,6 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
       <button class="btn btn-sm" id="mmTabFirmaBtn" onclick="mmTab('firmalar')">🏬 Mağazalar</button>
       <button class="btn btn-sm" id="mmTabMuhBtn" onclick="mmTab('muh')">📒 Mağaza Muhasebesi</button>
       <button class="btn btn-sm" id="mmTabPlanBtn" onclick="mmTab('plan')">📅 Mağaza Operasyonu</button>
-      <span style="font-size:.68rem;color:var(--muted)">Mağaza sistemi yalnız yönetime açıktır</span>
     </div>
     <div id="magmuhFirmaWrap" style="display:none"><div id="magFirmaBox"></div></div>
     <div id="magmuhBody"></div>
@@ -2142,7 +2150,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v632 · 29.09.2026';
+const APP_VER='v633 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2533,6 +2541,7 @@ function navGeri(){
 }
 function showPage(id, tabEl) {
   _navPush();
+  try{ document.body.classList.remove('mnavAcik'); }catch(e){}
   // Stash'teki modalı kapat (sayfa değiştiğinde)
   closeSectionModal();
   window.scrollTo(0,0);
@@ -14148,6 +14157,7 @@ function _mobMenuToggle(ev){
   setTimeout(()=>{ document.addEventListener('click',function kapat(e){ const mm=document.getElementById('mobMenu'); if(mm&&!mm.contains(e.target)){ mm.remove(); } document.removeEventListener('click',kapat); },{once:false}); },10);
 }
 function sbToggle(){
+  if(window.matchMedia&&matchMedia('(max-width:980px)').matches){ document.body.classList.toggle('mnavAcik'); return; }
   const kapali=document.body.classList.toggle('sb-kapali');
   try{ localStorage.setItem('dmc_sbKapali',kapali?'1':'0'); }catch(e){}
 }
