@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v595 · 29.09.2026';
+const APP_VER='v596 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17373,7 +17373,7 @@ function renderMagMuh(){
     const acik=window._mmTurAcik.has(g.key);
     const ppax=g.pax>0?F(g.mag/g.pax):'—';
     g2h+=`<div style="border:1.5px solid ${acik?'var(--primary)':'var(--border)'};border-radius:16px;margin-bottom:10px;overflow:hidden;background:#fff">
-      <div style="display:grid;grid-template-columns:92px minmax(84px,1.1fr) minmax(96px,1.3fr) repeat(7,minmax(44px,1fr)) max-content;gap:6px;align-items:center;overflow:hidden;padding:9px 12px;cursor:pointer;user-select:none" onclick="mmTurTog('${encodeURIComponent(g.key)}')">
+      <div style="display:grid;grid-template-columns:92px minmax(84px,1.1fr) minmax(96px,1.3fr) repeat(7,minmax(44px,1fr)) 128px;gap:6px;align-items:center;overflow:hidden;padding:9px 12px;cursor:pointer;user-select:none" onclick="mmTurTog('${encodeURIComponent(g.key)}')">
         <span style="background:var(--navy);color:#fff;font-weight:800;font-size:.7rem;padding:4px 9px;border-radius:10px;white-space:nowrap;text-align:center" title="${g.kalkis?'Geliş (kalkış) tarihi':'İlk ziyaret tarihi'}">${g.kalkis?_fmtDateTR(g.kalkis):(g.ilk?_fmtDateTR(g.ilk):'—')}</span>
         <span style="display:flex;flex-direction:column;overflow:hidden"><b style="font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.kod)}</b><span style="font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.op||'')}</span></span>
         <span style="display:flex;flex-direction:column;overflow:hidden" title="${esc(g.reh||'')}"><span style="font-size:.56rem;font-weight:700;color:var(--muted);text-transform:uppercase">Rehber</span><b style="font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.reh||'—')}</b></span>
