@@ -694,6 +694,8 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
   .sidebar-ctx .sidebar-list .pkg-section-item{flex:0 0 auto;flex-direction:column;gap:2px;white-space:nowrap;border:none;border-radius:8px;padding:3px 6px;font-size:.53rem;font-weight:700;background:transparent;color:var(--muted);min-width:44px;text-align:center;justify-content:flex-start}
   .sidebar-ctx .sidebar-list .pkg-section-item .ic{width:16px;height:16px;flex-shrink:0}
   .sidebar-ctx .sidebar-list .pkg-section-item .eic{font-size:14px;line-height:1}
+  .sidebar-ctx .sidebar-list .pkg-section-item .nlbl{font-size:0}
+  .sidebar-ctx .sidebar-list .pkg-section-item .nlbl::after{content:attr(data-k);font-size:.55rem}
   .sidebar-ctx .sidebar-list .pkg-section-item.active-ops{background:transparent;color:var(--primary);border:none}
   #sidebarPkg .sidebar-list{flex-direction:column;overflow:visible}
   #sidebarPkg .sidebar-list .pkg-section-item{border:none;border-radius:9px;white-space:normal}
@@ -1256,32 +1258,32 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
     <div id="sidebarRezv" style="display:none">
       <div class="sidebar-header"><h3><svg class="ic"><use href="#i-users"/></svg> Rezervasyon</h3></div>
       <div class="sidebar-list">
-        <div class="pkg-section-item rz-navitem active-ops" data-rt="ekran" onclick="rzTab('ekran')"><svg class="ic"><use href="#i-list"/></svg> Rezervasyon Ekranı</div>
-        <div class="pkg-section-item rz-navitem" data-rt="oteller" onclick="rzTab('oteller')"><svg class="ic"><use href="#i-bed"/></svg> Oteller</div>
-        <div class="pkg-section-item rz-navitem" data-rt="monitor" onclick="rzTab('monitor')"><svg class="ic"><use href="#i-chart"/></svg> Rezervasyon Monitörü</div>
+        <div class="pkg-section-item rz-navitem active-ops" data-rt="ekran" onclick="rzTab('ekran')"><svg class="ic"><use href="#i-list"/></svg> <span class="nlbl" data-k="Rezerv.">Rezervasyon Ekranı</span></div>
+        <div class="pkg-section-item rz-navitem" data-rt="oteller" onclick="rzTab('oteller')"><svg class="ic"><use href="#i-bed"/></svg> <span class="nlbl" data-k="Oteller">Oteller</span></div>
+        <div class="pkg-section-item rz-navitem" data-rt="monitor" onclick="rzTab('monitor')"><svg class="ic"><use href="#i-chart"/></svg> <span class="nlbl" data-k="Monitör">Rezervasyon Monitörü</span></div>
       </div>
     </div>
     <!-- OPERASYON mode -->
     <div id="sidebarOperasyon" style="display:none">
       <div class="sidebar-header"><h3><svg class="ic"><use href="#i-calendar"/></svg> Operasyon</h3></div>
       <div class="sidebar-list">
-        <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa</div>
-        <div class="pkg-section-item ops-navitem" data-ot="turlar" onclick="opsTab('turlar')"><svg class="ic"><use href="#i-map"/></svg> Turlar</div>
-        <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> Transfer</div>
-        <div class="pkg-section-item ops-navitem" data-ot="tahsis" onclick="opsTab('tahsis')"><span class="eic">🚙</span> Tahsisler</div>
-        <div class="pkg-section-item ops-navitem" data-ot="mutabakat" onclick="opsTab('mutabakat')"><svg class="ic"><use href="#i-coins"/></svg> Araç Mutabakatı</div>
-        <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> Tanımlamalar</div>
+        <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> <span class="nlbl" data-k="Ana Sayfa">Ana Sayfa</span></div>
+        <div class="pkg-section-item ops-navitem" data-ot="turlar" onclick="opsTab('turlar')"><svg class="ic"><use href="#i-map"/></svg> <span class="nlbl" data-k="Turlar">Turlar</span></div>
+        <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> <span class="nlbl" data-k="Transfer">Transfer</span></div>
+        <div class="pkg-section-item ops-navitem" data-ot="tahsis" onclick="opsTab('tahsis')"><span class="eic">🚙</span> <span class="nlbl" data-k="Tahsisler">Tahsisler</span></div>
+        <div class="pkg-section-item ops-navitem" data-ot="mutabakat" onclick="opsTab('mutabakat')"><svg class="ic"><use href="#i-coins"/></svg> <span class="nlbl" data-k="Mutabakat">Araç Mutabakatı</span></div>
+        <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> <span class="nlbl" data-k="Tanımlar">Tanımlamalar</span></div>
       </div>
     </div>
     <!-- MAĞAZALAR mode -->
     <div id="sidebarMagaza" style="display:none">
       <div class="sidebar-header"><h3>🏬 Mağazalar</h3></div>
       <div class="sidebar-list">
-        <div class="pkg-section-item mm-navitem active-ops" data-mt="firmalar" onclick="mmTab('firmalar')"><span class="eic">🏬</span> Mağazalar</div>
-        <div class="pkg-section-item mm-navitem" data-mt="muh" onclick="mmTab('muh')"><span class="eic">📒</span> Mağaza Muhasebesi</div>
-        <div class="pkg-section-item mm-navitem" data-mt="plan" onclick="mmTab('plan')"><span class="eic">📅</span> Mağaza Operasyonu</div>
-        <div class="pkg-section-item mm-navitem" data-mt="tahsilat" onclick="mmTab('tahsilat')"><span class="eic">💰</span> Tahsilatlar</div>
-        <div class="pkg-section-item mm-navitem" data-mt="ekstre" onclick="mmTab('ekstre')"><span class="eic">🧾</span> Mağaza Ekstresi</div>
+        <div class="pkg-section-item mm-navitem active-ops" data-mt="firmalar" onclick="mmTab('firmalar')"><span class="eic">🏬</span> <span class="nlbl" data-k="Mağazalar">Mağazalar</span></div>
+        <div class="pkg-section-item mm-navitem" data-mt="muh" onclick="mmTab('muh')"><span class="eic">📒</span> <span class="nlbl" data-k="Muhasebe">Mağaza Muhasebesi</span></div>
+        <div class="pkg-section-item mm-navitem" data-mt="plan" onclick="mmTab('plan')"><span class="eic">📅</span> <span class="nlbl" data-k="Operasyon">Mağaza Operasyonu</span></div>
+        <div class="pkg-section-item mm-navitem" data-mt="tahsilat" onclick="mmTab('tahsilat')"><span class="eic">💰</span> <span class="nlbl" data-k="Tahsilat">Tahsilatlar</span></div>
+        <div class="pkg-section-item mm-navitem" data-mt="ekstre" onclick="mmTab('ekstre')"><span class="eic">🧾</span> <span class="nlbl" data-k="Ekstre">Mağaza Ekstresi</span></div>
       </div>
     </div>
     </div><!-- /sidebar-ctx -->
@@ -2302,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v654 · 30.09.2026';
+const APP_VER='v655 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
