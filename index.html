@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v617 · 29.09.2026';
+const APP_VER='v618 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17184,8 +17184,9 @@ function _rehbBildEsle(b,k){
   }catch(e){ return false; }
 }
 function _mmGirildiMi(k){
-  // yalnız MAĞAZA bildirimi (kalem cirosu) girilmişse 'girildi' sayılır —
-  // rehberin otomatik işlenen bildirimi (rehCiro) beklemeyi düşürmez
+  // mağaza bildirimi ancak popup'ta KAYDET'e basılınca girilmiş sayılır (k.magOnay);
+  // eski kayıtlar (bayrak hiç set edilmemiş) için ciro doluluğu geçerli
+  if(k.magOnay!==undefined) return !!k.magOnay;
   return (k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!=='');
 }
 function _mmKayitDurum(k){
@@ -17395,7 +17396,8 @@ function mmSil(id){ showConfirm('🗑️','Kaydı Sil','Bildirim kaydı silinece
 function mmKalemAdd(id){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; (k.magKalemler=k.magKalemler||[]).push({ad:'',ciro:'',oran:''}); setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmKalemSet(id,i,f,v){ const k=getMagMuh().find(x=>x.id===id); if(!k||!k.magKalemler[i]) return; k.magKalemler[i][f]=String(v).trim();
   if(f==='ciro'){ _mmKalemSablonTamamla(k,i);
-    if(String(v).trim()!==''&&!k.magKalemler[i].durum) k.magKalemler[i].durum='onay'; // bildirim girildi → beklemeden çıkar (0 dahil)
+    if(String(v).trim()!==''&&!k.magKalemler[i].durum) k.magKalemler[i].durum='onay';
+    k.magOnay=false; // değişiklik yapıldı → Kaydet'e basılınca işlenir
   }
   setMagMuh(getMagMuh()); renderMagMuh(); }
 function mmKalemDel(id,i){ const k=getMagMuh().find(x=>x.id===id); if(!k) return; k.magKalemler.splice(i,1); setMagMuh(getMagMuh()); renderMagMuh(); }
@@ -17598,6 +17600,11 @@ function mmKalemSecim(kid,i,ad){
   if(sk){ k.magKalemler[i].oran=sk.oran; k.magKalemler[i].pay=(sk.pay!=null)?JSON.parse(JSON.stringify(sk.pay)):null; }
   setMagMuh(getMagMuh()); renderMagMuh();
 }
+function mmBildKaydet(id){
+  const k=getMagMuh().find(x=>x.id===id); if(k){ k.magOnay=true; setMagMuh(getMagMuh()); }
+  const m0=document.getElementById('mmBildModal'); if(m0)m0.remove(); window._mmBildId=null;
+  renderMagMuh(); showToast('Mağaza bildirimi kaydedildi','success');
+}
 function mmBildAc(id){ window._mmBildId=id; mmBildDoldur(id); }
 function mmBildDoldur(id){
   const k=getMagMuh().find(x=>x.id===id); if(!k){ const m0=document.getElementById('mmBildModal'); if(m0)m0.remove(); window._mmBildId=null; return; }
@@ -17624,7 +17631,7 @@ function mmBildDoldur(id){
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
       <b style="font-size:.95rem">📝 Mağaza Bildirimi</b>
       <span style="color:var(--muted);font-size:.74rem">${esc((fm&&fm.ad)||'')}${k.magaza?' · '+esc(k.magaza):''}</span>
-      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="document.getElementById('mmBildModal').remove();window._mmBildId=null">✓ Tamam</button>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="mmBildKaydet('${k.id}')">💾 Kaydet</button>
     </div>
     <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">${_fmtDateTR(_pdate(k.tarih)||'')} · ${esc(k.kod||'—')} · ${esc(k.rehberAd||'—')}${k.pax?' · '+esc(String(k.pax))+' pax':''}</div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
