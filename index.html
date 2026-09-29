@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v597 · 29.09.2026';
+const APP_VER='v598 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17535,7 +17535,8 @@ function mmBildDoldur(id){
       <b style="font-size:.74rem">KALEMLER</b>
       <button class="btn btn-outline btn-sm" onclick="mmKalemAdd('${k.id}')">+ Kalem</button>
       <button class="btn btn-outline btn-sm" onclick="mmSablonYap('${k.id}')" title="Kalem adları+oranları mağaza şablonu olur">⭐ Şablon yap</button>
-      <label style="font-size:.7rem;font-weight:700;margin-left:auto">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp}">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
+      <select onchange="mmSet('${k.id}','durum',this.value)" style="${inp};margin-left:auto;background:${dd[1]};color:${dd[2]};font-weight:700;width:auto">${Object.keys(DAD).map(d2=>`<option value="${d2}" ${(k.durum||'bekliyor')===d2?'selected':''}>${DAD[d2][0]}</option>`).join('')}</select>
+      <label style="font-size:.7rem;font-weight:700">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp};width:auto">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
     </div>
     <table style="border-collapse:collapse;width:100%">${(k.magKalemler||[]).map((x,i)=>{const kk=_tdN(x.ciro)*_tdN(x.oran)/100;return `<tr>
       <td style="padding:2px 4px"><input value="${esc(x.ad||'')}" placeholder="Halı / Kuyum…" onchange="mmKalemSet('${k.id}',${i},'ad',this.value)" style="${inp};width:130px"></td>
@@ -17549,7 +17550,6 @@ function mmBildDoldur(id){
       ${farkHtml} ${onerHtml}
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <select onchange="mmSet('${k.id}','durum',this.value)" style="${inp};background:${dd[1]};color:${dd[2]};font-weight:700">${Object.keys(DAD).map(d=>`<option value="${d}" ${(k.durum||'bekliyor')===d?'selected':''}>${DAD[d][0]}</option>`).join('')}</select>
       <input value="${esc(k.not||'')}" placeholder="not…" onchange="mmSet('${k.id}','not',this.value)" style="${inp};flex:1;min-width:180px">
       <span style="font-size:.74rem;color:var(--primary);font-weight:800">Komisyon: ${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</span>
     </div>
