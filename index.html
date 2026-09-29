@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v604 · 29.09.2026';
+const APP_VER='v605 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17524,6 +17524,13 @@ function mmPlanKayitAc(enc){
     renderMagMuh(); mmBildAc(k.id);
   }catch(e){ showToast('Kayıt açılamadı: '+e.message,'error'); }
 }
+function mmKalemSecim(kid,i,ad){
+  const k=getMagMuh().find(x=>x.id===kid); if(!k||!(k.magKalemler||[])[i]) return;
+  k.magKalemler[i].ad=String(ad||'').trim();
+  const sk=(window._mmSablonK||[]).find(x=>x.ad===ad);
+  if(sk){ k.magKalemler[i].oran=sk.oran; if(sk.pay!=null) k.magKalemler[i].pay=sk.pay; }
+  setMagMuh(getMagMuh()); renderMagMuh();
+}
 function mmBildAc(id){ window._mmBildId=id; mmBildDoldur(id); }
 function mmBildDoldur(id){
   const k=getMagMuh().find(x=>x.id===id); if(!k){ const m0=document.getElementById('mmBildModal'); if(m0)m0.remove(); window._mmBildId=null; return; }
@@ -17532,6 +17539,12 @@ function mmBildDoldur(id){
   const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
   const KDAD={onay:['Onaylandı','#dcfce7','#166534'],bekliyor:['Beklemede','#fef3c7','#92400e'],iptal:['İptal','#fee2e2','#b91c1c']};
   const kdN=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal'})[v]||'bekliyor';
+  // mağazanın şablon kalemleri (şube öncelikli) — kalem adı buradan SEÇİLİR
+  let sablonK=[];
+  try{ const sube=fm?_moSubeBul(fm,k.magaza||''):null;
+    sablonK=((sube&&(sube.kalemler||[]).length)?sube.kalemler:((fm&&fm.kalemler)||[])).filter(x=>(x.ad||'').trim());
+  }catch(e){}
+  window._mmSablonK=sablonK;
   let ov=document.getElementById('mmBildModal');
   if(!ov){ ov=document.createElement('div'); ov.id='mmBildModal';
     ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:4000;display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto';
@@ -17555,7 +17568,11 @@ function mmBildDoldur(id){
       <label style="font-size:.7rem;font-weight:700;margin-left:auto">Para <select onchange="mmSet('${k.id}','para',this.value)" style="${inp};width:auto">${['EUR','USD','TRY'].map(p=>`<option ${(k.para||'EUR')===p?'selected':''}>${p}</option>`).join('')}</select></label>
     </div>
     <table style="border-collapse:collapse;width:100%">${(k.magKalemler||[]).map((x,i)=>{const kk=_tdN(x.ciro)*_tdN(x.oran)/100;const xd=KDAD[kdN(x.durum)];return `<tr>
-      <td style="padding:2px 4px"><input value="${esc(x.ad||'')}" placeholder="Halı / Kuyum…" onchange="mmKalemSet('${k.id}',${i},'ad',this.value)" style="${inp};width:118px"></td>
+      <td style="padding:2px 4px"><select onchange="mmKalemSecim('${k.id}',${i},this.value)" style="${inp};width:126px">
+        <option value="">— kalem seç —</option>
+        ${sablonK.map(sk=>`<option value="${esc(sk.ad)}" ${(x.ad||'')===sk.ad?'selected':''}>${esc(sk.ad)}</option>`).join('')}
+        ${(x.ad||'').trim()&&!sablonK.some(sk=>sk.ad===x.ad)?`<option value="${esc(x.ad)}" selected>${esc(x.ad)}</option>`:''}
+      </select></td>
       <td style="padding:2px 4px"><input value="${esc(x.ciro||'')}" inputmode="decimal" placeholder="ciro" onchange="mmKalemSet('${k.id}',${i},'ciro',this.value)" style="${inp};width:96px;text-align:right"></td>
       ${window._mmOranAc?`<td style="padding:2px 4px;white-space:nowrap"><input value="${esc(x.oran||'')}" inputmode="decimal" placeholder="%" onchange="mmKalemSet('${k.id}',${i},'oran',this.value)" style="${inp};width:50px;text-align:right"> %</td>`:''}
       <td style="padding:2px 6px;font-size:.74rem;color:var(--primary);font-weight:700;white-space:nowrap">${(Math.round(kk*100)/100).toLocaleString('tr-TR')}</td>
@@ -17566,6 +17583,7 @@ function mmBildDoldur(id){
       <label style="font-size:.72rem;font-weight:700">Rehber bildirimi <input value="${esc(k.rehCiro||'')}" inputmode="decimal" onchange="mmSet('${k.id}','rehCiro',this.value)" style="${inp};width:104px;text-align:right"></label>
       ${farkHtml} ${onerHtml}
     </div>
+    ${window._mmOranAc?`<div style="font-size:.7rem;color:var(--muted);margin:-4px 0 10px;padding:0 4px">${(k.magKalemler||[]).filter(x=>(x.ad||'').trim()&&x.durum!=='iptal').map(x=>`${esc(x.ad)}: ${_tdN(x.ciro).toLocaleString('tr-TR')} × %${_tdN(x.oran)} = <b style="color:var(--primary)">${(Math.round(_tdN(x.ciro)*_tdN(x.oran))/100).toLocaleString('tr-TR')}</b>`).join(' &nbsp;·&nbsp; ')||'—'}</div>`:''}
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <input value="${esc(k.not||'')}" placeholder="not…" onchange="mmSet('${k.id}','not',this.value)" style="${inp};flex:1;min-width:180px">
       <span style="font-size:.74rem;color:var(--primary);font-weight:800">Komisyon: ${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')} ${esc(k.para||'EUR')}</span>
