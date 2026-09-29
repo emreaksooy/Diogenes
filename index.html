@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v607 · 29.09.2026';
+const APP_VER='v608 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13924,7 +13924,9 @@ function mgMagSil(gid,si){
 function renderMagazaOps(){
   const box=document.getElementById('opsPane_magaza'); if(!box) return;
   const firmalar=_moFirmalar();
-  const tum=_moSatirlar();
+  // tarih aralığının başı geçmişteyse ziyaretler o tarihten itibaren üretilir (eski tarihler görünür)
+  const _bugun=_opsToday();
+  const tum=_moSatirlar((window._moFltBas&&window._moFltBas<_bugun)?window._moFltBas:undefined);
   const kumeler=window._moKumeListe||[];
   const sehirler=[...new Set(tum.map(r=>r.sehir).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   const turler=[...new Set(tum.map(r=>r.tur).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
