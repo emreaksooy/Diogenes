@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v616 · 29.09.2026';
+const APP_VER='v617 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17195,7 +17195,8 @@ function _mmKayitDurum(k){
   const dl=ks.map(x=>kd(x.durum));
   if(dl.every(d=>d==='iptal')) return 'iptal';
   if(dl.some(d=>d==='bekliyor')) return 'bekliyor';
-  return 'onay';
+  // ONAY şartı: mağaza bildirimi + REHBER bildirimi ikisi de girilmiş olmalı
+  return String(k.rehCiro||'').trim()!==''?'onay':'bekliyor';
 }
 function _mmPaylar(k){
   // kalem pay'ları varsa paydaş bazlı; yoksa oran=acente
