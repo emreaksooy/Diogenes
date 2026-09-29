@@ -787,9 +787,11 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   #mSheet #trFiltrePanel>label select{border:none!important;padding:3px 0!important;min-height:30px!important;font-size:.86rem!important;font-weight:700;width:100%;min-width:0!important;background:transparent}
   #mSheet #trFiltrePanel>label input{min-height:34px!important}
   #mSheet #trFiltrePanel>button{grid-column:1/-1;min-height:42px;justify-content:center}
-  #mSheet #trTipPanel{gap:10px 16px!important;padding:6px 2px!important}
-  #mSheet #trTipPanel label{font-size:.8rem!important}
-  #mSheet #trTipPanel input[type=checkbox]{width:18px;height:18px;accent-color:var(--primary)}
+  #mSheet #trTipPanel{gap:7px!important;padding:8px 2px!important}
+  #mSheet #trTipPanel label{border:1.5px solid var(--border);border-radius:999px;padding:7px 12px!important;font-size:.68rem!important;color:var(--muted);margin:0!important}
+  #mSheet #trTipPanel label:has(input:checked){border-color:var(--primary);color:var(--primary);background:#fff4ee}
+  #mSheet #trTipPanel input[type=checkbox]{display:none}
+  #mSheet #trTipPanel .lej i{display:none}
   #ucAracPanel:not(.msh-tasindi){display:none!important}
   #ucFiltrePanel:not(.msh-tasindi){display:none!important}
   #ucakListe>.card:first-child{display:none!important}
@@ -813,20 +815,32 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   #trAksiyonBar{display:flex!important;flex:1 1 100%;gap:7px;margin-top:2px}
   #trAksiyonBar .btn-primary{flex:1;margin-left:0!important;justify-content:center}
   #trAksiyonBar .m-sadece-mobil{flex:0 0 auto;justify-content:center}
+  #opsPane_transfer .ops-datebar{background:var(--card,#fff);border:1.5px solid var(--border);border-radius:16px;padding:8px;row-gap:0}
+  #opsPane_transfer .ops-datebar .m-tbar{border:none;padding:0;background:transparent}
+  .tr-ik{flex:0 0 46px!important;min-height:40px;font-size:1rem;position:relative;padding:6px 0!important}
+  .ikrz{position:absolute;top:-5px;right:-5px;background:#2563eb;color:#fff;font-size:.54rem;font-weight:800;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+  #opsPane_transfer .ucak-metrics{display:flex!important;background:var(--card,#fff);border:1.5px solid var(--border);border-radius:14px;padding:6px 2px;gap:0!important;margin:7px 0 2px}
+  #opsPane_transfer .ucak-metric{flex:1;padding:2px 4px!important;border:none;background:none!important;box-shadow:none!important;border-left:1px solid var(--light,#f5f7fa);border-radius:0}
+  #opsPane_transfer .ucak-metric:first-child{border-left:none}
+  #opsPane_transfer .ucak-metric .um-num{font-size:.95rem!important}
+  #opsPane_transfer .ucak-metric .um-lbl{font-size:.5rem!important}
   #trTabloWrap{display:none!important}
   .tr-kartlar{display:block;margin-top:4px}
-  .trk{background:var(--card,#fff);border:1.5px solid var(--border);border-radius:14px;padding:10px 12px;margin-top:8px;cursor:pointer}
+  .trk{background:var(--card,#fff);border:1.5px solid var(--border);border-radius:14px;padding:9px 11px;margin-top:7px;cursor:pointer;display:flex;gap:8px;align-items:flex-start}
   .trk:active{background:var(--light,#f5f7fa)}
-  .trk-ust{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-  .trk-saat{background:#1e2a3a;color:#fff;font-weight:800;font-size:.72rem;padding:3px 9px;border-radius:8px;flex-shrink:0}
-  .trk-ust b{font-size:.8rem}
-  .trk-durum{margin-left:auto;font-size:.58rem;font-weight:800;padding:2px 8px;border-radius:7px;background:#dcfce7;color:#166534;text-align:right;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trk.sec{border-color:var(--primary);background:#fff7f2}
+  .trk-gov{flex:1;min-width:0}
+  .trk-ust{display:flex;align-items:center;gap:6px}
+  .trk-saat{background:#1e2a3a;color:#fff;font-weight:800;font-size:.7rem;padding:3px 8px;border-radius:7px;flex-shrink:0}
+  .trk-ust b{font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .trk-link{background:var(--primary);color:#fff;font-weight:800;font-size:.56rem;padding:2px 6px;border-radius:7px;flex-shrink:0}
+  .trk-ucus{font-size:.66rem;font-weight:700;color:#0369a1;margin-top:3px}
+  .trk-durum{display:inline-block;font-size:.56rem;font-weight:800;padding:2px 7px;border-radius:7px;background:#dcfce7;color:#166534;margin-top:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .trk-durum.yok{background:#fee2e2;color:#b91c1c}
   .trk-durum.ths{background:#e0f2fe;color:#0369a1}
-  .trk-alt{font-size:.68rem;color:var(--muted);margin-top:4px;line-height:1.5}
-  .trk-cb{width:19px;height:19px;flex:0 0 auto;accent-color:var(--primary)}
-  .trk-eylem{display:flex;gap:6px;margin-top:8px}
-  .trk-eylem button{flex:1;background:var(--light,#f5f7fa);border:1.5px solid var(--border);border-radius:9px;padding:8px 4px;font-size:.7rem;font-weight:700;font-family:inherit;color:inherit;cursor:pointer;min-height:36px}
+  .trk-alt{font-size:.66rem;color:var(--muted);margin-top:3px;line-height:1.45}
+  .trk-cb{width:20px;height:20px;flex:0 0 auto;accent-color:var(--primary);margin-top:2px}
+  .trk-dots{flex:0 0 30px;height:30px;border:1.5px solid var(--border);border-radius:9px;background:var(--card,#fff);color:var(--muted);font-weight:800;font-size:.85rem;font-family:inherit;cursor:pointer;margin-top:2px}
   .ucak-metrics{grid-template-columns:repeat(4,1fr)!important;gap:5px}
   .ucak-metric{padding:7px 4px}
   .ucak-metric .um-num{font-size:1.05rem}
@@ -835,7 +849,7 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
   #sbToggleBtn{display:none !important}
   body.mnavAcik .side-nav{bottom:calc(60px + env(safe-area-inset-bottom,0px))}
-  #trAtabar.show{position:fixed;left:10px;right:10px;top:auto;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:1500;box-shadow:0 -6px 24px rgba(16,24,40,.35);padding:.5rem .8rem;border-radius:14px}
+  #trAtabar.show{position:fixed;left:0;right:0;top:auto;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:1500;box-shadow:0 -6px 24px rgba(16,24,40,.25);padding:9px 12px;border-radius:0;margin:0}
   #trAtaForm:not(.msh-tasindi){display:none!important}
   #trAtabar .m-sadece-mobil{margin-left:auto}
   #trAtabar .m-sadece-mobil+.m-sadece-mobil{margin-left:0}
@@ -2282,7 +2296,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v646 · 30.09.2026';
+const APP_VER='v647 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17097,6 +17111,38 @@ function opsTrAralik(gun){ if(!_opsTrDate) _opsTrDate=_opsToday(); _opsTrDate2=g
 let _trSaatB='', _trSaatS='';
 // ÜST FİLTRE PANELİ (Sejour tarzı): operatör / ürün / bölge / araç firması / rehber / durum
 let _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:''};
+function _trKartTik(k){ const c=k.querySelector('.trk-cb'); if(!c) return; c.checked=!c.checked; c.dispatchEvent(new Event('change')); }
+function _trBirlesikSec(enc,on){ _trIdsCoz(enc).forEach(id=>{ on?_trSel.add(id):_trSel.delete(id); }); _trRenderAtabar(); }
+function _trKartMenu(id,dep){
+  const r=_trGenRows().find(x=>x.id===id); if(!r) return;
+  const g=_mSheetKur([dep||r.saat||'',r.urun||'',r.ucus||''].filter(Boolean).join(' · '));
+  let m='';
+  m+=`<button class="msh-item" onclick="mSheetKapat();_trDetayAc('${id}')">🔍&nbsp; Detay — yolcular & uçuşlar</button>`;
+  m+=`<label class="msh-item" style="cursor:pointer">🕐&nbsp; Depar saati<input type="time" value="${esc(dep||'')}" onchange="_trDeparElle('${id}',this.value)" style="margin-left:auto;border:1.5px solid var(--border);border-radius:9px;padding:5px 8px;font-family:inherit;font-size:.85rem"></label>`;
+  if(r.tip==='TUR') m+=`<button class="msh-item" onclick="mSheetKapat();_trTipTog('${id}')">⇄&nbsp; ${r.trf?'Tur yürüyüşüne dön':'Transfer olarak işle'}</button>`;
+  if(r.grup){
+    if(!r.onay) m+=`<button class="msh-item" onclick="mSheetKapat();_trOnay('${id}')">✓&nbsp; Onayla</button>`;
+    m+=`<button class="msh-item" onclick="mSheetKapat();trGorevBilgiAc('${r.grup}')">🚌&nbsp; Araç bilgisi — plaka & şoför</button>`;
+    m+=`<button class="msh-item" onclick="mSheetKapat();_trPrintGrup('${r.grup}')">🖨&nbsp; Görev listesi (PDF)</button>`;
+    m+=`<button class="msh-item" onclick="mSheetKapat();trRehberWa('${r.grup}')">📲&nbsp; Rehbere WhatsApp</button>`;
+    m+=`<button class="msh-item" style="color:#b91c1c" onclick="mSheetKapat();_trAtamaKaldir('${id}')">✕&nbsp; Atamayı kaldır</button>`;
+  }
+  g.innerHTML=m;
+}
+function _trKartMenuCoklu(enc,dep,grup){
+  const g=_mSheetKur('Birleşik görev — '+_trIdsCoz(enc).length+' transfer');
+  let m='';
+  m+=`<button class="msh-item" onclick="mSheetKapat();_trDetayCoklu('${enc}')">🔍&nbsp; Detay — tüm uçuşlar & yolcular</button>`;
+  m+=`<label class="msh-item" style="cursor:pointer">🕐&nbsp; Depar saati<input type="time" value="${esc(dep||'')}" onchange="_trDeparBirlesik('${enc}',this.value)" style="margin-left:auto;border:1.5px solid var(--border);border-radius:9px;padding:5px 8px;font-family:inherit;font-size:.85rem"></label>`;
+  m+=`<button class="msh-item" onclick="mSheetKapat();_trOnayCoklu('${enc}')">✓&nbsp; Hepsini onayla</button>`;
+  if(grup){
+    m+=`<button class="msh-item" onclick="mSheetKapat();trGorevBilgiAc('${grup}')">🚌&nbsp; Araç bilgisi — plaka & şoför</button>`;
+    m+=`<button class="msh-item" onclick="mSheetKapat();_trPrintGrup('${grup}')">🖨&nbsp; Görev listesi (PDF)</button>`;
+    m+=`<button class="msh-item" onclick="mSheetKapat();trRehberWa('${grup}')">📲&nbsp; Rehbere WhatsApp</button>`;
+  }
+  m+=`<button class="msh-item" style="color:#b91c1c" onclick="mSheetKapat();_trAtamaKaldirCoklu('${enc}')">✕&nbsp; Birleşiği dağıt</button>`;
+  g.innerHTML=m;
+}
 function _trAtaSheetAc(){ mSheetTasi('trAtaForm','Araç Ata — '+_trSel.size+' transfer'); }
 function _trFiltreSheetAc(){ window._trSheetF=1; _trSheetYenile(); }
 function _trSheetYenile(){
@@ -18131,6 +18177,7 @@ function renderOpsTransfer(){
   if(_trSort.col){ const c=_trCols().find(x=>x[0]===_trSort.col); if(c) list.sort((p,q)=>{ let a=c[2](p),b=c[2](q); if(c[0]==='saat'||c[0]==='depar'){a=_dk(a)??9999;b=_dk(b)??9999;} if(typeof a==='number'&&typeof b==='number') return (a-b)*_trSort.dir; return String(a).localeCompare(String(b),'tr')*_trSort.dir; }); }
   const atasiz=tam.filter(x=>!x.r.grup&&!x.r.tahsis).length; const pax=tam.reduce((t,x)=>t+(+x.r.pax||0),0); const gruplar=new Set(tam.filter(x=>x.r.grup).map(x=>x.r.grup));
   const cb=(id,lbl,col)=>`<label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;font-weight:600;color:var(--muted);font-size:.75rem"><input type="checkbox" ${_trTipF[id]?'checked':''} onchange="_trChk('${id}')">${col?`<span class="lej"><i style="background:${col}"></i>${lbl}</span>`:lbl}</label>`;
+  const aktifSay=Object.values(_trUst).filter(Boolean).length+((_trSaatB||_trSaatS)?1:0);
   let h=`<div style="margin-bottom:8px"><button class="btn btn-outline btn-sm" onclick="opsTab('anasayfa')">← Ana Sayfa</button></div>
     <div class="ops-datebar">
       <div class="m-tbar">
@@ -18154,7 +18201,8 @@ function renderOpsTransfer(){
       <span style="color:var(--muted);font-size:.76rem">· ${tam.length} transfer · ${pax} pax${list.length!==tam.length?' · filtre: '+list.length:''}</span>
       <span id="trAksiyonBar" style="display:contents">
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="trGonderimAc()" title="Firmaya toplu iş paketi: aralıktaki transferler + tahsisler">📤 Firmaya İş Gönder</button>
-      <button class="btn btn-outline btn-sm m-sadece-mobil" onclick="mSheetKaynak('trAksiyonBar','Dışa Aktar — '+((_opsTrDate2?_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2):_fmtDateTR(_opsTrDate))))">⬇ Dışa Aktar</button>
+      <button class="btn btn-outline btn-sm m-sadece-mobil tr-ik" title="Dışa Aktar" onclick="mSheetKaynak('trAksiyonBar','Dışa Aktar — '+((_opsTrDate2?_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2):_fmtDateTR(_opsTrDate))))">⬇</button>
+      <button class="btn btn-outline btn-sm m-sadece-mobil tr-ik" title="Filtreler" onclick="_trFiltreSheetAc()">⚙︎${aktifSay?`<span class="ikrz">${aktifSay}</span>`:''}</button>
       <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trKlasikExcel()" title="Turkuaz satırlı klasik günlük iş listesi — aralıktaki transferler (ARR/DEP) + tahsis günleri (RENT)">📗 Klasik İş Listesi</button>
       <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trTasimaciExcel()" title="Seçili firmaya özel, yolcu isimli GELİŞ/DÖNÜŞ transfer listesi — üst filtreden firma seç">🚌 Taşımacı Excel</button>
       <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trTasimaciPdf()" title="Aynı listenin yazdırılabilir hali">🚌 Taşımacı PDF</button>
@@ -18174,8 +18222,6 @@ function renderOpsTransfer(){
     const sel=(k,lbl,L)=>`<label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">${lbl}
       <select onchange="_trUstSet('${k}',this.value)" style="padding:5px 7px;border:1.5px solid ${_trUst[k]?'var(--primary)':'var(--border)'};border-radius:8px;font-size:.76rem;font-family:inherit;min-width:120px">
       <option value="">Hepsi</option>${L.map(v=>`<option value="${esc(v)}" ${_trUst[k]===v?'selected':''}>${esc(v)}</option>`).join('')}</select></label>`;
-    const aktifSay=Object.values(_trUst).filter(Boolean).length+((_trSaatB||_trSaatS)?1:0);
-    h+=`<button class="btn btn-sm m-sadece-mobil" style="background:var(--navy);color:#fff;margin-bottom:8px" onclick="_trFiltreSheetAc()">⚙︎ Filtreler${aktifSay?' ('+aktifSay+')':''}</button>`;
     h+=`<div id="trFiltrePanel" class="card" style="padding:.55rem .8rem;margin-bottom:8px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
       ${sel('op','OPERATÖR',opL)}${sel('urun','ÜRÜN',urunL)}${sel('bolge','BÖLGE',bolgeL)}${sel('firma','ARAÇ FİRMASI',firmaL)}${sel('reh','REHBER',rehL)}
       <label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">DURUM
@@ -18247,10 +18293,16 @@ function renderOpsTransfer(){
         const durumTx=(gr.firma||gr.arac)?[gr.firma,gr.arac].filter(Boolean).join(' · '):'';
         const rehTx=[...new Set(U.map(x=>(_trRehInfo(x.r).ad||'').trim()).filter(Boolean))].join(' + ');
         const ucTx=ucuslar.map(x=>((x.u||'')+' '+(x.s||'')).trim()).filter(Boolean).join(' · ');
-        mh+=`<div class="trk" onclick="_trDetayCoklu('${_idsEnc}')">
-          <div class="trk-ust"><input type="checkbox" class="trk-cb" ${U.every(x=>_trSel.has(x.r.id))?'checked':''} onclick="event.stopPropagation()" onchange="_trSecCoklu('${_idsEnc}',this.checked)"><span class="trk-saat">${esc(dh0.saat||(ucuslar[0]&&ucuslar[0].s)||'—')}</span><span class="tipb tb-${r0.tip}">${tipAd[r0.tip]}</span><span style="background:var(--primary);color:#fff;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">🔗 ${U.length}</span><b>${u1(r=>r.urun).map(esc).join(' + ')}</b><span class="trk-durum${durumTx?'':' yok'}">${durumTx?esc(durumTx):'atanmadı'}</span></div>
-          <div class="trk-alt">${u1(r=>r.nereden).map(esc).join(' / ')} → ${u1(r=>r.nereye).map(esc).join(' / ')} · <b>${paxT} pax</b>${rehTx?' · '+esc(rehTx):''}${ucTx?`<div>✈ ${esc(ucTx)}</div>`:''}</div>
-          <div class="trk-eylem" onclick="event.stopPropagation()"><button onclick="_trOnayCoklu('${_idsEnc}')">✓ Onayla</button><button onclick="_trAtamaKaldirCoklu('${_idsEnc}')">✕ Dağıt</button><button onclick="_trPrintGrup('${r0.grup}')">🖨 Liste</button><button onclick="trRehberWa('${r0.grup}')">📲 Rehber</button></div>
+        const secOn=U.every(x=>_trSel.has(x.r.id));
+        mh+=`<div class="trk${secOn?' sec':''}" onclick="_trKartTik(this)">
+          <input type="checkbox" class="trk-cb" ${secOn?'checked':''} onclick="event.stopPropagation()" onchange="_trBirlesikSec('${_idsEnc}',this.checked);this.closest('.trk').classList.toggle('sec',this.checked)">
+          <div class="trk-gov">
+            <div class="trk-ust"><span class="trk-saat">${esc(dh0.saat||'—')}</span><span class="tipb tb-${r0.tip}">${tipAd[r0.tip]}</span><span class="trk-link">🔗 ${U.length}</span><b>${u1(r=>r.urun).map(esc).join(' + ')}</b></div>
+            ${ucTx?`<div class="trk-ucus">✈ ${esc(ucTx)}</div>`:''}
+            <div class="trk-alt">${u1(r=>r.nereden).map(esc).join(' / ')} → ${u1(r=>r.nereye).map(esc).join(' / ')} · <b>${paxT} pax</b>${rehTx?' · '+esc(rehTx):''}</div>
+            <span class="trk-durum${durumTx?'':' yok'}">${durumTx?esc(durumTx):'atanmadı'}</span>
+          </div>
+          <button class="trk-dots" onclick="event.stopPropagation();_trKartMenuCoklu('${_idsEnc}','${esc(dh0.saat||'')}','${r0.grup}')">⋯</button>
         </div>`;
       })();
       return;
@@ -18276,11 +18328,16 @@ function renderOpsTransfer(){
     (function(){
       const durumTx=(gr&&(gr.firma||gr.arac))?[gr.firma,gr.arac].filter(Boolean).join(' · '):'';
       const thsTx=(!gr&&r.tahsis)?[r.tahsis.firma,r.tahsis.arac].filter(Boolean).join(' · ')||'tahsis aracı':'';
-      const ri=_trRehInfo(r);
-      mh+=`<div class="trk" onclick="_trDetayAc('${r.id}')">
-        <div class="trk-ust"><input type="checkbox" class="trk-cb" ${_trSel.has(r.id)?'checked':''} onclick="event.stopPropagation()" onchange="_trSecToggle('${r.id}',this.checked)"><span class="trk-saat">${esc(dh.saat||r.saat||'—')}</span><span class="tipb tb-${r.trf?'ARAD':r.tip}">${r.trf?'TRANSFER':tipAd[r.tip]}</span><b>${esc(r.urun)}${r.ucus?' · '+esc(r.ucus):''}</b><span class="trk-durum${durumTx?'':(thsTx?' ths':' yok')}">${durumTx?esc(durumTx):(thsTx?esc(thsTx):'atanmadı')}</span></div>
-        <div class="trk-alt">${esc(r.nereden)} → ${esc(r.nereye)} · <b>${r.pax} pax</b>${ri.ad?' · '+esc(ri.ad):''}${gece?' · <span style="color:#b45309;font-weight:800">GECE</span>':''}${_opsTrDate2?' · '+_fmtDateTR(r.tarih):''}</div>
-        ${r.grup?`<div class="trk-eylem" onclick="event.stopPropagation()">${r.onay?'':`<button onclick="_trOnay('${r.id}')">✓ Onayla</button>`}<button onclick="_trAtamaKaldir('${r.id}')">✕ Kaldır</button><button onclick="_trPrintGrup('${r.grup}')">🖨 Liste</button><button onclick="trRehberWa('${r.grup}')">📲 Rehber</button></div>`:(r.tip==='TUR'?`<div class="trk-eylem" onclick="event.stopPropagation()"><button onclick="_trTipTog('${r.id}')">⇄ ${r.trf?'Tur yürüyüşüne dön':'Transfer olarak işle'}</button></div>`:'')}
+      const ri=_trRehInfo(r); const secOn=_trSel.has(r.id);
+      mh+=`<div class="trk${secOn?' sec':''}" onclick="_trKartTik(this)">
+        <input type="checkbox" class="trk-cb" ${secOn?'checked':''} onclick="event.stopPropagation()" onchange="_trSecToggle('${r.id}',this.checked);this.closest('.trk').classList.toggle('sec',this.checked)">
+        <div class="trk-gov">
+          <div class="trk-ust"><span class="trk-saat">${esc(dh.saat||r.saat||'—')}</span><span class="tipb tb-${r.trf?'ARAD':r.tip}">${r.trf?'TRANSFER':tipAd[r.tip]}</span><b>${esc(r.urun)}${r.ucus?' · '+esc(r.ucus):''}</b></div>
+          ${r.ucus&&r.saat?`<div class="trk-ucus">✈ ${esc(r.ucus)} · ${r.tip==='G'?'iniş':'uçuş'} <b>${esc(r.saat)}</b></div>`:''}
+          <div class="trk-alt">${esc(r.nereden)} → ${esc(r.nereye)} · <b>${r.pax} pax</b>${ri.ad?' · '+esc(ri.ad):''}${gece?' · <span style="color:#b45309;font-weight:800">GECE</span>':''}${_opsTrDate2?' · '+_fmtDateTR(r.tarih):''}</div>
+          <span class="trk-durum${durumTx?'':(thsTx?' ths':' yok')}">${durumTx?esc(durumTx):(thsTx?esc(thsTx):'atanmadı')}</span>
+        </div>
+        <button class="trk-dots" onclick="event.stopPropagation();_trKartMenu('${r.id}','${esc(dh.saat||'')}')">⋯</button>
       </div>`;
     })();
   });
@@ -18880,7 +18937,7 @@ function _trAracDoldur(){
 function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!bar) return; if(!_trSel.size){ bar.classList.remove('show'); bar.innerHTML=''; return; } bar.classList.add('show');
   const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const T=getTanimlar();
   bar.innerHTML=`<b>${rows.length} seçili</b><span class="cap" id="trSecPax">${pax} pax</span>
-    <button class="btn btn-s m-sadece-mobil" style="background:var(--primary);font-weight:800" onclick="_trAtaSheetAc()">🚌 Ata / Birleştir</button>
+    <button class="btn btn-s m-sadece-mobil" style="background:var(--primary);font-weight:800" onclick="_trAtaSheetAc()">🚌 Ata</button>
     <button class="btn btn-s m-sadece-mobil" style="background:rgba(255,255,255,.18)" onclick="_trSecTemizle()">✕</button>
     <span id="trAtaForm" style="display:contents">
     <select id="trRehber"><option value="">Rehber…</option>${(T.rehberler||[]).map(x=>`<option>${esc(x.ad)}</option>`).join('')}</select>
