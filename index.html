@@ -2127,7 +2127,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v626 · 29.09.2026';
+const APP_VER='v627 · 29.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8775,19 +8775,23 @@ const SB_URL='https://jyqwbzyevejyqxfafrtf.supabase.co';
 const SB_KEY='sb_publishable_65daq2tGCWi0fHcERLGwbQ_7zPH8TD2';
 let sb=null, sbUser=null, sbRol=null, _cloudOn=false;
 // ═══ ROL / YETKI ═══
-const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'yonetim',ekip:'yonetim',rehberim:'rehberim'};
+const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'magaza',ekip:'yonetim',rehberim:'rehberim'};
 const _ACL={
-  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e',rehberim:'e'},
-  rehber:      {home:'-',urun:'-',rezervasyon:'-',ucak:'-',operasyon:'-',rapor:'-',yonetim:'-',rehberim:'e'},
-  rezervasyon: {home:'e',urun:'v',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-',yonetim:'-',rehberim:'-'},
-  ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-',yonetim:'-',rehberim:'-'},
-  operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v',yonetim:'-',rehberim:'-'},
-  goruntuleme: {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v',yonetim:'-',rehberim:'-'},
-  urun:        {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v',yonetim:'-',rehberim:'-'}
+  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e',magaza:'e',rehberim:'e'},
+  rehber:      {home:'-',urun:'-',rezervasyon:'-',ucak:'-',operasyon:'-',rapor:'-',yonetim:'-',magaza:'-',rehberim:'e'},
+  rezervasyon: {home:'e',urun:'v',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-',yonetim:'-',magaza:'-',rehberim:'-'},
+  ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-',yonetim:'-',magaza:'-',rehberim:'-'},
+  operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v',yonetim:'-',magaza:'-',rehberim:'-'},
+  goruntuleme: {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v',yonetim:'-',magaza:'-',rehberim:'-'},
+  urun:        {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v',yonetim:'-',magaza:'-',rehberim:'-'},
+  sirket:      {home:'e',urun:'e',rezervasyon:'-',ucak:'-',operasyon:'-',rapor:'-',yonetim:'-',magaza:'v',rehberim:'-'}
 };
 function _acl(pageId){ if(!sbRol) return 'e'; const grp=_PAGEGRP[pageId]||'home'; const m=_ACL[sbRol]||_ACL.goruntuleme; return m[grp]||'-'; }
 function _applyRoleNav(){
   document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=(sbRol==='rehber')?'none':''; return; } t.style.display=(_acl(pg)==='-')?'none':''; });
+  // Şirket rolü: Mağazalar bölümünde yalnız Muhasebe + Operasyon
+  document.querySelectorAll('.mm-navitem').forEach(function(t){ const mt=t.getAttribute('data-mt');
+    t.style.display=(sbRol==='sirket'&&['firmalar','tahsilat','ekstre'].includes(mt))?'none':''; });
   document.querySelectorAll('.side-nav .nav-group').forEach(function(g2){
     let el=g2.nextElementSibling, vis=false;
     while(el&&!el.classList.contains('nav-group')){ if(el.classList&&el.classList.contains('nav-tab')&&el.style.display!=='none') vis=true; el=el.nextElementSibling; }
@@ -8796,7 +8800,7 @@ function _applyRoleNav(){
 }
 function _roBanner(show){ let b=document.getElementById('roBar'); if(show){ if(!b){ b=document.createElement('div'); b.id='roBar'; b.textContent='Salt-okunur — bu bölümde yalnızca görüntüleme yetkiniz var'; document.body.appendChild(b); } b.style.display=''; } else if(b){ b.style.display='none'; } }
 // ═══ ROL ÖNİZLEME (yönetici başka rolün gözünden bakar) ═══
-const _ROLAD={yonetici:'Yönetici',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',urun:'Ürün (eski)',rehber:'Rehber'};
+const _ROLAD={yonetici:'Yönetici',rezervasyon:'Rezervasyon',ucak:'Uçak',operasyon:'Operasyon',goruntuleme:'Görüntüleme',urun:'Ürün (eski)',rehber:'Rehber',sirket:'Şirket'};
 let _rolGercek=null,_rolOnizleKim='';
 function _rolOnizle(rol,kim){ if(_rolGercek==null && sbRol!=='yonetici'){ showToast('Yalnız yönetici önizleyebilir','error'); return; } if(_rolGercek==null) _rolGercek=sbRol; sbRol=rol||'goruntuleme'; _rolOnizleKim=kim||''; try{closeModal('modalUsers');}catch(e){} _applyRoleNav(); _rolOnizleBar(); try{showToast('"'+(_ROLAD[sbRol]||sbRol)+'" rolü gözünden önizleniyor','success');}catch(e){} try{showPage('paketlerim');}catch(e){} }
 function _rolOnizleCik(){ if(_rolGercek==null) return; sbRol=_rolGercek; _rolGercek=null; _rolOnizleKim=''; _applyRoleNav(); _rolOnizleBar(); try{_renderUserChip();}catch(e){} try{showPage('paketlerim');}catch(e){} }
@@ -12361,7 +12365,7 @@ function rehbBildirimSil(id){
   setRehBildirim(L); renderRehberim();
 }
 // ═══ EKİP PANELİ (yalnız yönetici) ═══
-const _ROLLER=[['yonetici','Yönetici'],['urun','Ürün'],['rezervasyon','Rezervasyon'],['ucak','Uçak'],['operasyon','Operasyon'],['rehber','Rehber'],['goruntuleme','Görüntüleme']];
+const _ROLLER=[['yonetici','Yönetici'],['urun','Ürün'],['rezervasyon','Rezervasyon'],['ucak','Uçak'],['operasyon','Operasyon'],['rehber','Rehber'],['sirket','Şirket (Ürün + Mağaza görüntüleme)'],['goruntuleme','Görüntüleme']];
 function _telWa(t){ let d=String(t||'').replace(/\D/g,''); if(!d) return ''; if(d.startsWith('0')) d='9'+d; else if(d.length===10&&d.startsWith('5')) d='90'+d; return d; }
 function _ekipAvatar(ad,email){ const src=(ad||email||'?').trim(); const par=src.split(/\s+/); const ini=(par.length>1?par[0][0]+par[par.length-1][0]:src.slice(0,2)).toLocaleUpperCase('tr'); let h=0; for(const c of (email||src)) h=(h*31+c.charCodeAt(0))>>>0; const renk=['#1F4E78','#C55A11','#166534','#7c3aed','#b91c1c','#0e7490'][h%6]; return `<div style="width:44px;height:44px;border-radius:50%;background:${renk};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0">${esc(ini)}</div>`; }
 function renderEkipPanel(){
@@ -17427,7 +17431,7 @@ function _mmBildirimKart(){
 }
 function renderMagMuh(){
   const box=document.getElementById('magmuhBody'); if(!box) return;
-  if(_cloudOn&&sbRol&&sbRol!=='yonetici'){ box.innerHTML='<div class="card"><b>Bu bölüm yalnız yönetime açıktır.</b></div>'; return; }
+  if(_cloudOn&&sbRol&&_acl('magmuh')==='-'){ box.innerHTML='<div class="card"><b>Bu bölüme erişim yetkiniz yok.</b></div>'; return; }
   _mmZiyaretSenk();
   if(!_mmAy) _mmAy=_opsToday().slice(0,7);
   const firmalar=_moFirmalar();
