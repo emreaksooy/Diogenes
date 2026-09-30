@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v657 · 30.09.2026';
+const APP_VER='v658 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17601,6 +17601,9 @@ function meExcel(){
 }
 // geçmiş ziyaretleri muhasebe kaydına dönüştür (idempotent — otoKey: tarih|firma|kod)
 function _mmZiyaretSenk(){
+  // YALNIZ yazma yetkisi olan çalıştırır — salt-okunur (şirket/görüntüleme) kullanıcının
+  // cihazı kayıt üretip buluta yazmasın (kullanıcılar arası tutarsızlık kaynağıydı)
+  if(_cloudOn&&sbRol&&_acl('magmuh')!=='e') return;
   try{
     const bugun=_opsToday();
     const rows=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.tarih<bugun&&r.firmaId);
