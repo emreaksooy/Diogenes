@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v659 · 30.09.2026';
+const APP_VER='v660 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17872,7 +17872,7 @@ function renderMagMuh(){
           <b style="min-width:78px">${_fmtDateTR(_pdate(k.tarih)||'')}</b>
           <span style="min-width:170px">🏬 <b>${esc((fm&&fm.ad)||'mağaza seçilmedi')}</b>${k.magaza?` <span style="color:var(--muted);font-size:.68rem">${esc(k.magaza)}</span>`:''}</span>
           <span style="font-size:.72rem;white-space:nowrap">M: <b>${F(c.mag)}</b> · R: <b>${F(c.reh)}</b> · ${farkHtml}</span>
-          <span style="font-size:.72rem;color:var(--primary);font-weight:800;white-space:nowrap">Kom: ${(Math.round(c.kom*100)/100).toLocaleString('tr-TR')}</span>
+          <span style="font-size:.72rem;color:var(--primary);font-weight:800;white-space:nowrap" title="Acente komisyonu — kart pilindeki Komisyon ile aynı mantık">Kom: ${(Math.round(((()=>{try{return _mmPaylar(k).acente}catch(e){return c.kom}})())*100)/100).toLocaleString('tr-TR')}</span>
           <span style="background:${dd[1]};color:${dd[2]};font-weight:700;font-size:.62rem;padding:2px 9px;border-radius:9px">${dd[0]}</span>
           <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
             ${_acl('magmuh')==='e'?`<button class="btn btn-primary btn-sm" style="padding:3px 12px;font-size:.68rem" onclick="mmBildAc('${k.id}')">📝 Bildirim</button>
