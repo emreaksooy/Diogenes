@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v664 · 30.09.2026';
+const APP_VER='v665 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17198,10 +17198,35 @@ function _trListRows(){
 }
 const _trGrupOf=r=>r.grup?((getTransfer().gruplar||{})[r.grup]||{}):{};
 function _rehTelBul(ad){ if(!(ad||'').trim()) return ''; const reh=(getTanimlar().rehberler||[]).find(x=>_norm(x.ad||'')===_norm(ad)); return reh?(reh.tel||''):''; }
+function _trVoucherBolumMap(pkgId,kalkis){
+  const key=pkgId+'|'+kalkis; const M=window._trVBolM=window._trVBolM||{};
+  if(M[key]) return M[key];
+  const m={};
+  try{ (getRezv()||[]).forEach(x=>{ if(x&&x.tip==='urun'&&x.pkgId===pkgId&&x.kalkis===kalkis&&x.durum!=='iptal'){
+    const rb=String(x.grupBolum||'01');
+    [x.voucher,x.asilVoucher].forEach(v=>{ v=String(v||'').trim(); if(v&&!m[v]) m[v]=rb; });
+    (x.musteriler||[]).forEach(mu=>{ const b=String(mu.grupBolum||rb); const v=String(x.voucher||'').trim(); if(v&&b!==rb) m[v]=b; });
+  } }); }catch(e){}
+  return M[key]=m;
+}
+function _trSatirBolum(r){
+  try{
+    if(!r.vlist||!r.vlist.length) return '01';
+    const m=_trVoucherBolumMap(r.pkgId,r.kalkis);
+    const bols=new Set(r.vlist.map(v=>m[String(v).trim()]).filter(Boolean));
+    if(bols.size===1) return [...bols][0];
+  }catch(e){}
+  return '01';
+}
 function _trRehInfo(r){
   const gr=_trGrupOf(r);
   if((gr.rehber||'').trim()) return {ad:gr.rehber.trim(),tel:_rehTelBul(gr.rehber),kaynak:'görev'};
-  try{ const sr=_opsRehGet(r.pkgId,r.kalkis,'01'); if((sr.rehberAd||'').trim()) return {ad:sr.rehberAd.trim(),tel:_rehTelBul(sr.rehberAd),kaynak:'grup'}; }catch(e){}
+  try{
+    const bl=_trSatirBolum(r);
+    let sr=_opsRehGet(r.pkgId,r.kalkis,bl);
+    if(!((sr.rehberAd||'').trim())&&bl!=='01') sr=_opsRehGet(r.pkgId,r.kalkis,'01');
+    if((sr.rehberAd||'').trim()) return {ad:sr.rehberAd.trim(),tel:_rehTelBul(sr.rehberAd),kaynak:bl!=='01'?('grup G'+bl):'grup'};
+  }catch(e){}
   return {ad:'',tel:'',kaynak:''};
 }
 // ═══ DİNAMİK GÖREV KODU: FirmaKodu + Tip harfi (A/D/M/T) + gün içi sıra — silinince otomatik kayar ═══
@@ -18238,6 +18263,7 @@ function _trSatMigrate(){
 }
 function renderOpsTransfer(){
   const _shF=window._trSheetF; try{ mSheetKapat(); }catch(e){} window._trSheetF=_shF;
+  window._trVBolM=null;
   try{ document.querySelectorAll('body>#trAtabar').forEach(e=>e.remove()); }catch(e){}
   const box=document.getElementById('opsPane_transfer'); if(!box) return;
   try{ _trSatMigrate(); }catch(e){}
