@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v661 · 30.09.2026';
+const APP_VER='v662 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17559,7 +17559,7 @@ function renderMagEkstre(){
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="meExcel()">📥 Excel</button>
     </div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
-    <tr><th style="${th};text-align:left">Mağaza</th><th style="${th}">Onaylı Satış</th><th style="${th}">Bekleme Satış</th><th style="${th}">Acente Hakediş</th><th style="${th}">Ofis Hakediş</th>${gizliKisi?'':`<th style="${th}">Rehber</th><th style="${th}">Şef</th>`}<th style="${th}">Acente Tahsilat</th><th style="${th}">Ofis Tahsilat</th><th style="${th}">Avans</th><th style="${th}">KALAN ACENTE</th><th style="${th}">KALAN OFİS</th></tr>`;
+    <tr><th style="${th};text-align:left">Mağaza</th><th style="${th}">Onaylı Satış</th><th style="${th}">Bekleme Satış</th><th style="${th}">Acente Hakediş</th><th style="${th}">Ofis Hakediş</th>${gizliKisi?'':`<th style="${th}">Şef</th>`}<th style="${th}">Acente Tahsilat</th><th style="${th}">Ofis Tahsilat</th><th style="${th}">Avans</th><th style="${th}">KALAN ACENTE</th><th style="${th}">KALAN OFİS</th></tr>`;
   const idler=Object.keys(M).sort((a,b)=>(((firmalar.find(f=>f.id===a)||{}).ad)||'').localeCompare(((firmalar.find(f=>f.id===b)||{}).ad)||'','tr'));
   const G={satis:0,bekleme:0,hakA:0,hakO:0,tahA:0,tahO:0,avans:0};
   idler.forEach(id=>{ const m=M[id]; const ad=(firmalar.find(f=>f.id===id)||{}).ad||'—';
@@ -17569,8 +17569,7 @@ function renderMagEkstre(){
       <td style="${td}"><b>${R(m.satis)}</b></td>
       <td style="${td};color:#6d28d9">${m.bekleme?R(m.bekleme):'—'}</td>
       <td style="${td}">${R(m.hak.acente)}</td><td style="${td}">${R(m.hak.ofis)}</td>
-      ${gizliKisi?'':`<td style="${td};color:var(--muted)">${m.hak.rehber?R(m.hak.rehber):'—'}</td>
-      <td style="${td};color:var(--muted)">${m.hak.sef?R(m.hak.sef):'—'}</td>`}
+      ${gizliKisi?'':`<td style="${td};color:var(--muted)">${m.hak.sef?R(m.hak.sef):'—'}</td>`}
       <td style="${td}">${R(m.tahA)}</td><td style="${td}">${R(m.tahO)}</td>
       <td style="${td};color:#92400e">${m.avans?R(m.avans):'—'}</td>
       <td style="${td};font-weight:800;color:${kalanA>0.01?'#b91c1c':'#166534'}">${R(kalanA)}</td>
@@ -17579,7 +17578,7 @@ function renderMagEkstre(){
   h+=`<tr><td style="${td};text-align:left;background:var(--primary-soft)"><b>TOPLAM</b></td>
     <td style="${td};background:var(--primary-soft)"><b>${R(G.satis)}</b></td><td style="${td};background:var(--primary-soft)">${R(G.bekleme)}</td>
     <td style="${td};background:var(--primary-soft)"><b>${R(G.hakA)}</b></td><td style="${td};background:var(--primary-soft)">${R(G.hakO)}</td>
-    ${gizliKisi?``:`<td style="${td};background:var(--primary-soft)"></td><td style="${td};background:var(--primary-soft)"></td>`}
+    ${gizliKisi?``:`<td style="${td};background:var(--primary-soft)"></td>`}
     <td style="${td};background:var(--primary-soft)"><b>${R(G.tahA)}</b></td><td style="${td};background:var(--primary-soft)">${R(G.tahO)}</td>
     <td style="${td};background:var(--primary-soft)">${R(G.avans)}</td>
     <td style="${td};background:var(--primary-soft)"><b>${R(G.hakA-G.tahA)}</b></td><td style="${td};background:var(--primary-soft)"><b>${R(G.hakO-G.tahO)}</b></td></tr>
