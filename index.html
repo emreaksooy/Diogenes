@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v663 · 30.09.2026';
+const APP_VER='v664 · 30.09.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17535,14 +17535,25 @@ function renderMagEkstre(){
     if(_meAralik) return (!window._meBas||t>=window._meBas)&&(!window._meBit||t<=window._meBit);
     return !_meYil||t.slice(0,4)===_meYil; };
   const gizliKisi=(typeof sbRol!=='undefined'&&sbRol==='sirket');
-  const Z=getMagMuhAktif().filter(yilF), T=getMagTahsilat().filter(yilF);
+  const firmalarOn=_moFirmalar();
+  const grupF=window._meGrupF||'', subeF=window._meSubeF||'', turF=window._meTurF||'';
+  const fTur=k=>{ const f=firmalarOn.find(x=>x.id===k.firmaId); if(!f) return '';
+    const sb=(f.subeler||[]).find(x=>String(x.ad||x.sehir||'')===String(k.magaza||''));
+    return String((sb&&sb.tur)||f.tur||'').trim(); };
+  const kayF=k=>(!grupF||k.firmaId===grupF)&&(!subeF||String(k.magaza||'')===subeF)&&(!turF||_norm(fTur(k))===_norm(turF));
+  const Z=getMagMuhAktif().filter(yilF).filter(kayF);
+  let T=getMagTahsilat().filter(yilF).filter(k=>!grupF||k.firmaId===grupF);
+  if(subeF||turF) T=[];
   const yillar=[...new Set(getMagMuhAktif().concat(getMagTahsilat()).map(k=>String(_pdate(k.tarih)||'').slice(0,4)).filter(Boolean))].sort().reverse();
-  const M={};
+  const M={}, MS={};
   Z.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
+    const skey=id+'\u0001'+String(k.magaza||'');
+    const ms=MS[skey]=MS[skey]||{satis:0,bekleme:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},n:0};
     const c=_mmHesap(k);
-    if((k.durum||'')==='bekleme'){ m.bekleme+=c.mag; return; }
+    if((k.durum||'')==='bekleme'){ m.bekleme+=c.mag; ms.bekleme+=c.mag; return; }
     m.satis+=c.mag; m.n++; m.pax+=_tdN(k.pax);
-    const p=_mmPaylar(k); ['acente','rehber','ofis','sef','kaptan'].forEach(x=>m.hak[x]+=p[x]); });
+    ms.satis+=c.mag; ms.n++; ms.pax+=_tdN(k.pax);
+    const p=_mmPaylar(k); ['acente','rehber','ofis','sef','kaptan'].forEach(x=>{ m.hak[x]+=p[x]; ms.hak[x]+=p[x]; }); });
   T.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
     const t2=_tdN(k.tutar);
     if(k.tur==='ofis') m.tahO+=t2; else if(k.tur==='avans') m.avans+=t2; else m.tahA+=t2; });
@@ -17556,6 +17567,10 @@ function renderMagEkstre(){
       <span style="color:var(--muted)">~</span>
       <input type="date" value="${window._meBit||''}" onchange="window._meBit=this.value;renderMagEkstre()" title="Aralık sonu" style="padding:4px 7px;border:1.5px solid ${window._meBit?'#2563eb':'var(--border)'};border-radius:7px;font-family:inherit;font-size:.76rem">
       ${_meAralik?`<button class="btn btn-outline btn-sm" onclick="window._meBas='';window._meBit='';renderMagEkstre()">✕</button>`:''}
+      <select onchange="window._meGrupF=this.value;window._meSubeF='';renderMagEkstre()" style="padding:4px 7px;border:1.5px solid ${grupF?'#2563eb':'var(--border)'};border-radius:7px;font-family:inherit;font-size:.76rem;max-width:150px"><option value="">Tüm gruplar</option>${firmalarOn.map(f=>`<option value="${f.id}" ${grupF===f.id?'selected':''}>${esc(f.ad)}</option>`).join('')}</select>
+      <select onchange="window._meSubeF=this.value;renderMagEkstre()" ${grupF?'':'disabled title="Önce grup seç"'} style="padding:4px 7px;border:1.5px solid ${subeF?'#2563eb':'var(--border)'};border-radius:7px;font-family:inherit;font-size:.76rem;max-width:150px;${grupF?'':'opacity:.45'}"><option value="">Tüm mağazalar</option>${(()=>{const f=firmalarOn.find(x=>x.id===grupF);return f?(f.subeler||[]).map(sb=>{const ad=String(sb.ad||sb.sehir||'');return `<option value="${esc(ad)}" ${subeF===ad?'selected':''}>${esc(ad)}</option>`;}).join(''):''})()}</select>
+      <select onchange="window._meTurF=this.value;renderMagEkstre()" style="padding:4px 7px;border:1.5px solid ${turF?'#2563eb':'var(--border)'};border-radius:7px;font-family:inherit;font-size:.76rem;max-width:120px"><option value="">Tüm türler</option>${[...new Set(firmalarOn.flatMap(f=>[f.tur].concat((f.subeler||[]).map(sb=>sb.tur))).map(x=>String(x||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')).map(t2=>`<option ${_norm(turF)===_norm(t2)?'selected':''}>${esc(t2)}</option>`).join('')}</select>
+      ${(grupF||subeF||turF)?`<button class="btn btn-outline btn-sm" onclick="window._meGrupF='';window._meSubeF='';window._meTurF='';renderMagEkstre()">✕ Filtre</button>`:''}
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="meExcel()">📥 Excel</button>
     </div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
@@ -17576,6 +17591,21 @@ function renderMagEkstre(){
       <td style="${td};color:#92400e">${m.avans?R(m.avans):'—'}</td>
       <td style="${td};font-weight:800;color:${kalanA>0.01?'#b91c1c':'#166534'}">${R(kalanA)}</td>
       <td style="${td};font-weight:800;color:${kalanO>0.01?'#b91c1c':'#166534'}">${R(kalanO)}</td></tr>`;
+    const subeKeys=Object.keys(MS).filter(x=>x.split('\u0001')[0]===id);
+    const cokSube=subeKeys.length>1||(subeKeys.length===1&&subeKeys[0].split('\u0001')[1]);
+    if(cokSube) subeKeys.sort((a,b)=>a.localeCompare(b,'tr')).forEach(sk=>{
+      const sm=MS[sk]; const sad=sk.split('\u0001')[1]||'şube belirtilmemiş';
+      const tds='padding:3px 9px;font-size:.7rem;border-bottom:1px solid var(--light);text-align:right;white-space:nowrap;color:var(--muted)';
+      h+=`<tr><td style="${tds};text-align:left;padding-left:26px">↳ ${esc(sad)} <span style="font-size:.58rem">${sm.n} ziyaret</span></td>
+        <td style="${tds}">${sm.pax||'—'}</td>
+        <td style="${tds}">${sm.satis?R(sm.satis):'—'}</td>
+        <td style="${tds}">${sm.pax>0?R(sm.satis/sm.pax):'—'}</td>
+        <td style="${tds}">${sm.bekleme?R(sm.bekleme):'—'}</td>
+        <td style="${tds}">${sm.hak.acente?R(sm.hak.acente):'—'}</td>
+        <td style="${tds}">${sm.hak.ofis?R(sm.hak.ofis):'—'}</td>
+        ${gizliKisi?'':`<td style="${tds}">${sm.hak.sef?R(sm.hak.sef):'—'}</td>`}
+        <td style="${tds}">—</td><td style="${tds}">—</td><td style="${tds}">—</td><td style="${tds}">—</td><td style="${tds}">—</td></tr>`;
+    });
   });
   h+=`<tr><td style="${td};text-align:left;background:var(--primary-soft)"><b>TOPLAM</b></td>
     <td style="${td};background:var(--primary-soft)"><b>${G.pax||'—'}</b></td>
