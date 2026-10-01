@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v672 · 01.10.2026';
+const APP_VER='v673 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17080,7 +17080,12 @@ function _trGenRowsHesap(){
     for(const v of o.vlist){ const b=o.pkgId+'|'+o.kalkis+'|'+o.vseg+'|'+v; const e=vsat[b+uk]||vsat[b]; if(e){ m=e; break; } }
     if(!m) m=sat[o.id]||{};
     o.grup=m.grup||null; o.onay=!!m.onay; o.depar=m.depar||''; o.deparMan=!!m.deparMan; o.not=m.not!=null?m.not:'';
-    o.tipOvr=m.tipOvr||''; o.trf=(o.tip==='TUR'&&o.tipOvr==='TRF'); return o; };
+    o.tipOvr=m.tipOvr||''; o.trf=(o.tip==='TUR'&&o.tipOvr==='TRF');
+    o.nereden0=o.nereden; o.nereye0=o.nereye;
+    o.ovrNereden=String(m.ovrNereden||'').trim(); o.ovrNereye=String(m.ovrNereye||'').trim();
+    if(o.ovrNereden){ o.nereden=o.ovrNereden; o.yerMan=true; }
+    if(o.ovrNereye){ o.nereye=o.ovrNereye; o.yerMan=true; }
+    return o; };
   getReservations().forEach(g=>{
     const pkg=pkgs.find(p=>p.id===g.pkgId)||{}; const op=_resOpAd(pkg)||''; const urun=pkg.paketKodu||pkg.paketAdi||'';
     if(pkg.opsDisAcente) return; // operasyon dış acentede — transferleri biz ayarlamıyoruz
@@ -17227,6 +17232,7 @@ function _trKartMenu(id,dep){
   let m='';
   m+=`<button class="msh-item" onclick="mSheetKapat();_trDetayAc('${id}')">🔍&nbsp; Detay — yolcular & uçuşlar</button>`;
   m+=`<label class="msh-item" style="cursor:pointer">🕐&nbsp; Depar saati<input type="time" value="${esc(dep||'')}" onchange="_trDeparElle('${id}',this.value)" style="margin-left:auto;border:1.5px solid var(--border);border-radius:9px;padding:5px 8px;font-family:inherit;font-size:.85rem"></label>`;
+  m+=`<button class="msh-item" onclick="mSheetKapat();_trYerAc('${id}')">📍&nbsp; Yer düzelt — alınış / bırakış</button>`;
   if(r.tip==='TUR') m+=`<button class="msh-item" onclick="mSheetKapat();_trTipTog('${id}')">⇄&nbsp; ${r.trf?'Tur yürüyüşüne dön':'Transfer olarak işle'}</button>`;
   if(r.grup){
     if(!r.onay) m+=`<button class="msh-item" onclick="mSheetKapat();_trOnay('${id}')">✓&nbsp; Onayla</button>`;
@@ -18511,7 +18517,7 @@ function renderOpsTransfer(){
     if(_opsTrDate2) h+=`<td style="white-space:nowrap"><b>${_fmtDateTR(r.tarih)}</b></td>`;
     h+=`<td style="white-space:nowrap"><span class="tipb tb-${r.trf?'ARAD':r.tip}">${r.trf?'TRANSFER':tipAd[r.tip]}</span>${r.tip==='TUR'?`<button class="rowbtn" style="margin-left:3px" title="${r.trf?'Transfer işaretini kaldır — tur yürüyüşüne dön':'Bu satırı TRANSFER olarak işle — taşımacı excel/PDF listelerine girer'}" onclick="_trTipTog('${r.id}')">⇄</button>`:''}${gece?' <span class="gecechip">GECE</span>':''}</td>`;
     h+=`<td>${esc(r.op)}</td><td><b>${esc(r.urun)}</b></td>`;
-    h+=`<td>${esc(r.nereden)}</td><td>${esc(r.nereye)}</td><td>${esc(r.ucus||'—')}${r.rota&&r.rota.includes('→')?`<div style="font-size:.62rem;color:#0369a1;font-weight:700;white-space:nowrap">${esc(r.rota)} ${_trHatRozet(r.rota)}</div>${r.akt?`<div style="font-size:.56rem;color:var(--muted);white-space:nowrap">✈ aktarmalı · ${esc(r.akt)}</div>`:''}`:''}</td><td>${esc(r.saat||'—')}</td>`;
+    h+=`<td ondblclick="_trYerAc('${r.id}')" title="Çift tık: bu transfere özel alınış yeri">${r.yerMan?'<span style="color:var(--primary)" title="Özel yer girildi">📍</span> ':''}${esc(r.nereden)}</td><td ondblclick="_trYerAc('${r.id}')" title="Çift tık: bu transfere özel bırakış yeri">${r.ovrNereye?'<span style="color:var(--primary)">📍</span> ':''}${esc(r.nereye)}</td><td>${esc(r.ucus||'—')}${r.rota&&r.rota.includes('→')?`<div style="font-size:.62rem;color:#0369a1;font-weight:700;white-space:nowrap">${esc(r.rota)} ${_trHatRozet(r.rota)}</div>${r.akt?`<div style="font-size:.56rem;color:var(--muted);white-space:nowrap">✈ aktarmalı · ${esc(r.akt)}</div>`:''}`:''}</td><td>${esc(r.saat||'—')}</td>`;
     h+=`<td><input class="saatin${r.deparMan?' man':''}" value="${esc(dh.saat)}" onchange="_trDeparElle('${r.id}',this.value)" title="${r.deparMan?'Elle girildi':'Bölgeden otomatik'}"></td>`;
     h+=`<td><b>${r.pax}</b></td>`;
     h+=`<td>${esc(r.bolge||'—')}</td>`;
@@ -19241,6 +19247,42 @@ function _trDeparElle(id,v){ v=_saatNorm((v||'').trim());
   if(!_saatGecerli(v)){ showToast('Geçersiz saat: "'+v+'" — ss:dd biçiminde gir (ör. 16, 1615, 16:15)','error',4000); renderOpsTransfer(); return; }
   _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
 function _trNotElle(id,v){ _trSatKaydet(id,{not:(v||'').trim()}); }
+function _trYerAc(id){
+  const r=_trGenRows().find(x=>x.id===id); if(!r) return;
+  const eski=document.getElementById('trYerModal'); if(eski) eski.remove();
+  const ov=document.createElement('div'); ov.id='trYerModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:6000;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
+  const inp='width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.86rem;box-sizing:border-box';
+  ov.innerHTML=`<div style="width:min(440px,100%);background:var(--card,#fff);border-radius:16px;padding:18px 20px" onclick="event.stopPropagation()">
+    <b style="font-size:.92rem">📍 Yer Düzelt — ${esc(r.urun)}${r.ucus?' · '+esc(r.ucus):''}</b>
+    <p style="font-size:.7rem;color:var(--muted);margin:4px 0 12px">Yalnız BU transfer için geçerli. Boş bırakılan alan otomatik yere döner.<br>Otomatik: ${esc(r.nereden0||'—')} → ${esc(r.nereye0||'—')}</p>
+    <label style="font-size:.64rem;font-weight:800;color:var(--muted)">NEREDEN (alınış yeri)</label>
+    <input id="trYerN1" value="${esc(r.ovrNereden||'')}" placeholder="${esc(r.nereden0||'')}" style="${inp};margin:3px 0 10px">
+    <label style="font-size:.64rem;font-weight:800;color:var(--muted)">NEREYE (bırakış yeri)</label>
+    <input id="trYerN2" value="${esc(r.ovrNereye||'')}" placeholder="${esc(r.nereye0||'')}" style="${inp};margin:3px 0 14px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="_trYerKaydet('${id}')">Kaydet</button>
+      ${(r.ovrNereden||r.ovrNereye)?`<button class="btn btn-outline" style="color:#dc2626" onclick="_trYerSifirla('${id}')">↺ Otomatiğe dön</button>`:''}
+      <button class="btn btn-outline" style="margin-left:auto" onclick="document.getElementById('trYerModal').remove()">Vazgeç</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  try{ document.getElementById('trYerN1').focus(); }catch(e){}
+}
+function _trYerKaydet(id){
+  const n1=((document.getElementById('trYerN1')||{}).value||'').trim();
+  const n2=((document.getElementById('trYerN2')||{}).value||'').trim();
+  _trSatKaydet(id,{ovrNereden:n1,ovrNereye:n2});
+  const m=document.getElementById('trYerModal'); if(m) m.remove();
+  window._trRowsMemo=null; renderOpsTransfer();
+  showToast(n1||n2?'Yer kaydedildi — yalnız bu transfer için':'Yer otomatiğe döndü','success');
+}
+function _trYerSifirla(id){
+  _trSatKaydet(id,{ovrNereden:'',ovrNereye:''});
+  const m=document.getElementById('trYerModal'); if(m) m.remove();
+  window._trRowsMemo=null; renderOpsTransfer(); showToast('Yer otomatiğe döndü','success');
+}
 // ── PDF ──
 function _trGorevHtml(kod){ const T=getTransfer(); const gr=T.gruplar[kod]; if(!gr)return''; const rowsAll=_trGenRows(); const rows=rowsAll.filter(r=>r.grup===kod).sort((a,b)=>(_dk(_trDeparHesap(a).saat)??9999)-(_dk(_trDeparHesap(b).saat)??9999)); if(!rows.length)return''; const tarih=_trGunAd(rows[0].tarih); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0);
   return `<div class="gorev"><h1>Araç Görev Listesi — ${esc(_trKodOf(kod))}</h1><h2>${esc(tarih)} · Rehber: ${esc(gr.rehber||'—')}${gr.rehber&&_rehTelBul(gr.rehber)?' ('+esc(_rehTelBul(gr.rehber))+')':''} · Firma: ${esc(gr.firma||'—')} · Araç: ${esc(gr.arac||'—')}${gr.arac2?' + '+esc(gr.arac2):''}${gr.sofor?' · Şoför: '+esc(gr.sofor)+(gr.stel?' ('+esc(gr.stel)+')':''):''} · Toplam ${pax} pax${gr.guzergah?' · '+esc(gr.guzergah):''}</h2>
