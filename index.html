@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v675 · 01.10.2026';
+const APP_VER='v676 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -12549,9 +12549,10 @@ function _rehbTurlar(){
   let L=[]; try{ L=_rtTurlar(_isoAdd(bugun,-45),_isoAdd(bugun,15)); }catch(e){}
   return L.filter(t=>_rehbNrm(t.rehberAd)===_rehbNrm(ad)&&t.kalkis<=_isoAdd(bugun,15)&&_isoAdd(t.end,1)>=bugun);
 }
-function rehbTurAc(pkgId,kalkis,gid){
+function rehbTurAc(pkgId,kalkis,gid,bolum){
   const ok=_rehbTurlar().some(t=>(gid&&t.birlesikGrupId===gid)||(t.pkgId===pkgId&&t.kalkis===kalkis));
   if(!ok){ showToast('Bu tur artık erişimine kapalı','error'); return; }
+  window._tdBolumF=String(bolum||'01');
   let hedef=gid||null;
   if(!hedef){ try{
     let gruplar=_ogResolve().filter(x=>(x.uyeler||[]).some(u=>u.pkgId===pkgId&&u.kalkis===kalkis)||(x.sefer&&x.sefer.pkgId===pkgId&&x.sefer.kalkis===kalkis));
@@ -12592,8 +12593,8 @@ function renderRehberim(){
   const durum=t=>{ if(t.kalkis>bugun) return '<span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">YAKLAŞAN</span>'; if(_isoAdd(t.end,1)===bugun) return '<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">SON GÜN — bildirimleri tamamla</span>'; return '<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.62rem;padding:2px 9px;border-radius:9px">AKTİF</span>'; };
   let h=`<div class="card"><div class="card-title">🎤 Rehber Panelim <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${esc(ad)} · Turlar başlangıçtan 15 gün önce açılır, bitişten 1 gün sonra kapanır</span></div>
     ${L.length?L.map(t=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid var(--border);flex-wrap:wrap">
-      <div style="min-width:0;flex:1"><b style="font-size:.9rem">${esc(t.kod)}</b> ${durum(t)}<div style="font-size:.72rem;color:var(--muted)">${_fmtDateTR(t.kalkis)} – ${_fmtDateTR(t.end)} · ${t.pax} pax · ${esc(t.op||'')}</div></div>
-      <button class="btn btn-primary btn-sm" onclick="rehbTurAc('${t.pkgId}','${t.kalkis}','${t.birlesikGrupId||''}')">📂 Tur Dosyam</button>
+      <div style="min-width:0;flex:1"><b style="font-size:.9rem">${esc(t.kod)}</b>${t.bolum&&t.bolum!=='01'?` <span style="background:#7c3aed;color:#fff;font-weight:800;font-size:.58rem;padding:2px 8px;border-radius:8px">BÖLÜM G${esc(t.bolum)}</span>`:''} ${durum(t)}<div style="font-size:.72rem;color:var(--muted)">${_fmtDateTR(t.kalkis)} – ${_fmtDateTR(t.end)} · ${t.pax} pax · ${esc(t.op||'')}</div></div>
+      <button class="btn btn-primary btn-sm" onclick="rehbTurAc('${t.pkgId}','${t.kalkis}','${t.birlesikGrupId||''}','${t.bolum||'01'}')">📂 Tur Dosyam</button>
     </div>`).join(''):'<p class="section-tip">Şu an erişime açık turun yok. Turlar başlangıçtan 15 gün önce burada görünür.</p>'}
   </div>`;
   box.innerHTML=h;
@@ -15869,6 +15870,14 @@ function _tdKisiler(E){
   return out;
 }
 function _tdRezv(resno){ return (getRezv()||[]).find(r=>String(r.voucher||'').trim()===String(resno||'').trim())||null; }
+function _tdUyeFiltre(E){
+  const U=(E&&E.uyeler)||[];
+  try{
+    if(!(window._tdBolumF&&_tdBolumSayisi(E)>1)) return U;
+    const F=String(window._tdBolumF);
+    return U.filter(u=>{ try{ return _tdKisiBolumu({resno:u.resno})===F; }catch(e){ return true; } });
+  }catch(e){ return U; }
+}
 function _tdKisiBolumu(k){
   try{
     const rz=_tdRezv(k.resno); if(!rz) return '01';
@@ -16442,7 +16451,7 @@ function renderTurDosyasi(box){
   // ═ OTELLER ═
   if(_tdTab==='otel'){
     const satir=[];
-    (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
+    _tdUyeFiltre(E).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
       (rz.kartlar||[]).filter(k=>k.tip!=='ulasim').forEach(k=>{
         const gece=+k.gece||0, bas=_pdate(k.baslangic)||'';
         satir.push({resno:u.resno,otel:(k.otel||'').trim()||('('+(k.sehir||'?')+' — otel seçilmedi)'),bas,bit:bas?_isoAdd(bas,gece):'',gece,oda:(k.oda||'')+(k.odaT?('/'+k.odaT):''),pans:k.pansiyon||'',pax:+u.pax||0});
@@ -16599,7 +16608,7 @@ function _tdDocIsim(g,E){ const K=_tdKisiler(E);
   return _tdDocBas('İsim Listesi',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">#</th><th style="${_tdTh}">Voucher</th><th style="${_tdTh}">Operatör</th><th style="${_tdTh}">Mr./Mrs.</th><th style="${_tdTh}">Soyadı, Adı</th><th style="${_tdTh}">Doğum Tarihi</th><th style="${_tdTh}">Oda</th><th style="${_tdTh}">Not</th></tr>${K.map((k,i)=>`<tr><td style="${_tdTd};${stil(k)}">${i+1}</td><td style="${_tdTd};${stil(k)}">${esc(k.resno)}</td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${esc(opAd(k))}</td><td style="${_tdTd};${stil(k)};text-align:center;font-size:8.5pt">${esc(_tdUnvan(k))}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.soyad)}</b>, ${esc(k.ad)}</td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${(function(){const d=_pdate(k.dogum||'');return d?_fmtDateTR(d):'';})()}</td><td style="${_tdTd};${stil(k)}"><b>${esc(k.oda)}</b></td><td style="${_tdTd};${stil(k)};font-size:8.5pt">${esc(_tdTrfNot(k))}</td></tr>`).join('')}</table><p style="font-size:9pt;margin-top:4mm">Toplam: ${K.length} kişi · dolgu değişimi = ayrı voucher/oda</p></div>`; }
 function _tdDocOtel(g,E){
   const satir=[];
-  (E.uyeler||[]).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
+  _tdUyeFiltre(E).forEach(u=>{ const rz=_tdRezv(u.resno); if(!rz||rz.durum==='iptal') return;
     (rz.kartlar||[]).filter(k=>k.tip!=='ulasim').forEach(k=>{ satir.push({resno:u.resno,otel:k.otel||('('+(k.sehir||'?')+' — otel seçilmedi)'),bas:k.baslangic||'',gece:k.gece||'',pans:k.pansiyon||''}); });
   });
   // aynı otel+giriş+gece+pansiyonda TÜM voucherlar kalıyorsa tek satır (TÜM GRUP)
