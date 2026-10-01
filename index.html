@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v676 · 01.10.2026';
+const APP_VER='v677 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18549,7 +18549,7 @@ function renderOpsTransfer(){
     if(_opsTrDate2) h+=`<td style="white-space:nowrap"><b>${_fmtDateTR(r.tarih)}</b></td>`;
     h+=`<td style="white-space:nowrap"><span class="tipb tb-${r.trf?'ARAD':r.tip}">${r.trf?'TRANSFER':tipAd[r.tip]}</span>${r.tip==='TUR'?`<button class="rowbtn" style="margin-left:3px" title="${r.trf?'Transfer işaretini kaldır — tur yürüyüşüne dön':'Bu satırı TRANSFER olarak işle — taşımacı excel/PDF listelerine girer'}" onclick="_trTipTog('${r.id}')">⇄</button>`:''}${gece?' <span class="gecechip">GECE</span>':''}</td>`;
     h+=`<td>${esc(r.op)}</td><td><b>${esc(r.urun)}</b></td>`;
-    h+=`<td ondblclick="_trYerAc('${r.id}')" title="Çift tık: bu transfere özel alınış yeri">${r.yerMan?'<span style="color:var(--primary)" title="Özel yer girildi">📍</span> ':''}${esc(r.nereden)}</td><td ondblclick="_trYerAc('${r.id}')" title="Çift tık: bu transfere özel bırakış yeri">${r.ovrNereye?'<span style="color:var(--primary)">📍</span> ':''}${esc(r.nereye)}</td><td>${esc(r.ucus||'—')}${r.rota&&r.rota.includes('→')?`<div style="font-size:.62rem;color:#0369a1;font-weight:700;white-space:nowrap">${esc(r.rota)} ${_trHatRozet(r.rota)}</div>${r.akt?`<div style="font-size:.56rem;color:var(--muted);white-space:nowrap">✈ aktarmalı · ${esc(r.akt)}</div>`:''}`:''}</td><td>${esc(r.saat||'—')}</td>`;
+    h+=`<td title="Bu transfere özel alınış yeri için 📍 butonuna bas">${r.yerMan?'<span style="color:var(--primary)" title="Özel yer girildi">●</span> ':''}${esc(r.nereden)} <button class="rowbtn" style="opacity:.55" onclick="_trYerAc('${r.id}')" title="Yer düzelt — alınış/bırakış (yalnız bu transfer)">📍</button></td><td>${r.ovrNereye?'<span style="color:var(--primary)">●</span> ':''}${esc(r.nereye)}</td><td>${esc(r.ucus||'—')}${r.rota&&r.rota.includes('→')?`<div style="font-size:.62rem;color:#0369a1;font-weight:700;white-space:nowrap">${esc(r.rota)} ${_trHatRozet(r.rota)}</div>${r.akt?`<div style="font-size:.56rem;color:var(--muted);white-space:nowrap">✈ aktarmalı · ${esc(r.akt)}</div>`:''}`:''}</td><td>${esc(r.saat||'—')}</td>`;
     h+=`<td><input class="saatin${r.deparMan?' man':''}" value="${esc(dh.saat)}" onchange="_trDeparElle('${r.id}',this.value)" title="${r.deparMan?'Elle girildi':'Bölgeden otomatik'}"></td>`;
     h+=`<td><b>${r.pax}</b></td>`;
     h+=`<td>${esc(r.bolge||'—')}</td>`;
