@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v669 · 01.10.2026';
+const APP_VER='v670 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2753,7 +2753,7 @@ function showPage(id, tabEl) {
     // yenilemede (sidebar tıkı değilse) son açık sefer geri yüklenir
     if(!tabEl){ try{ const lu=localStorage.getItem('dmc_lastUcak');
       if(lu){ const p=lu.split('|'); if(p[0]&&p[1]&&getPackages().some(x=>x.id===p[0])) setTimeout(()=>{ try{ucakOpen(p[0],p[1]);}catch(e){} },60); } }catch(e){} } }
-  if(id==='urun'){ if(_cloudOn&&sbRol==='rezervasyon'){ try{ _uoUrunSayfasinaCiz(); }catch(e){} } else renderUrunPage(); }
+  if(id==='urun'){ if(_cloudOn&&sbRol==='rezervasyon'){ try{ _uoUrunSayfasinaCiz(); }catch(e){} } else { try{ _uoUrunSayfasiGeri(); }catch(e){} renderUrunPage(); } }
   if(id==='operasyon') opsTab(_opsTab||'anasayfa');
   if(id==='cikti') renderBackupList();
   if(id==='rezervasyon') renderRezvPage();
@@ -7356,12 +7356,18 @@ async function _renderSunumHarita(){
 let _resPkgId='', _resKalkis='';
 window._uoSecili=window._uoSecili||null; window._uoAra=window._uoAra||'';
 function _uoUrunSayfasinaCiz(){
-  // rezervasyon rolu: Urun sekmesi = fiyatsiz ozet listesi (ayri sekme yok)
+  // rezervasyon rolu: Urun sekmesi = fiyatsiz ozet listesi (orijinal icerik SILINMEZ, gizlenir)
   const pg=document.getElementById('page-urun'); if(!pg) return;
-  if(!document.getElementById('urunOzetWrap')||document.getElementById('urunOzetWrap').parentElement!==pg){
-    pg.innerHTML='<div id="urunOzetWrap"></div>';
-  }
+  let w=document.getElementById('urunOzetWrap');
+  if(!w||w.parentElement!==pg){ w=document.createElement('div'); w.id='urunOzetWrap'; pg.appendChild(w); }
+  [...pg.children].forEach(c=>{ if(c!==w) c.style.display='none'; });
+  w.style.display='';
   renderUrunOzet();
+}
+function _uoUrunSayfasiGeri(){
+  const pg=document.getElementById('page-urun'); if(!pg) return;
+  const w=document.getElementById('urunOzetWrap');
+  if(w&&w.parentElement===pg){ w.style.display='none'; [...pg.children].forEach(c=>{ if(c!==w) c.style.display=''; }); }
 }
 function renderUrunOzet(){
   const box=document.getElementById('urunOzetWrap'); if(!box) return;
