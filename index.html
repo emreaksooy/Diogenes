@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v682 · 01.10.2026';
+const APP_VER='v683 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19355,11 +19355,11 @@ function _trInfoBolum(U,L){
     </div>`:''}
     <div style="margin-top:12px;font-weight:800;font-size:9.5pt;letter-spacing:1px;color:#1e2a3a;border-bottom:2px solid #f26522;padding-bottom:3px;${PCA}">${L.pers} · ${kisiler.length}</div>
     <table style="width:100%;margin-top:5px;font-size:9pt;border-collapse:collapse">
-      <tr style="color:#6b7280;font-size:6.8pt;font-weight:700"><td style="padding:2px 7px">#</td><td style="padding:2px 7px">${L.name}</td><td style="padding:2px 7px;text-align:right">${L.vch}</td>${ucuslar.length>1?`<td style="padding:2px 7px;text-align:center">${L.flug}</td><td style="padding:2px 7px;text-align:center">${anreise?L.saatG:L.saatD}</td>`:''}</tr>
+      <tr style="color:#6b7280;font-size:6.8pt;font-weight:700"><td style="padding:2px 7px">#</td><td style="padding:2px 7px">${L.vch}</td><td style="padding:2px 7px">${L.name}</td>${ucuslar.length>1?`<td style="padding:2px 7px;text-align:center">${L.flug}</td><td style="padding:2px 7px;text-align:center">${anreise?L.saatG:L.saatD}</td>`:''}</tr>
       ${kisiler.map((k,i)=>{ const c=_trInfoRenk[k.ui%_trInfoRenk.length];
         return `<tr style="${i%2===0?'background:#f5f7fa;'+PCA:''}"><td style="padding:3.5px 7px;font-weight:700">${i+1}</td>
+        <td style="padding:3.5px 7px;color:#6b7280">${esc(String(k.x.resno||''))}</td>
         <td style="padding:3.5px 7px;font-weight:700">${esc(unv(k.x))} ${esc(((k.x.soyad||'')+' '+(k.x.ad||'')).trim().toUpperCase())}</td>
-        <td style="padding:3.5px 7px;text-align:right;color:#6b7280">${esc(String(k.x.resno||''))}</td>
         ${ucuslar.length>1?`<td style="padding:3.5px 7px;text-align:center"><b style="color:${c[0]}">${esc(k.ucus||'—')}</b></td><td style="padding:3.5px 7px;text-align:center;font-weight:700">${esc(k.saat)}</td>`:''}</tr>`; }).join('')}
     </table>
     <div style="margin-top:11px;background:#f5f7fa;border-radius:8px;padding:6px 12px;font-size:7.8pt;color:#6b7280;${PCA}">ℹ ${L.not} · Diogenes Travel · www.diogenestravel.com</div>
