@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v678 · 01.10.2026';
+const APP_VER='v679 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18644,7 +18644,7 @@ function _basBitOk(bas,bit){
   return true;
 }
 function thsKaydet(enc){
-  const p=enc.split('|'); const t={pkgId:p[0],kalkis:p[1],birlesikGrupId:p[2]||''};
+  const p=enc.split('|'); const t={pkgId:p[0],kalkis:p[1],birlesikGrupId:p[2]||''}; const _thsBolum=p[3]||'';
   let gid=_thsGidBul(t);
   if(gid) gid=_ogMaterialize(gid);
   if(!gid){
@@ -18666,7 +18666,7 @@ function thsKaydet(enc){
   if(!g){ showToast('Grup kaydı bulunamadı','error'); return; }
   const _bas=v('bas')||t.kalkis, _bit=v('bit')||v('bas')||t.kalkis;
   if(!_basBitOk(_bas,_bit)) return;
-  (g.araclar=g.araclar||[]).push({id:R_GID(),tip:'tahsis',firma,ad:v('arac'),arTip:v('tip').toUpperCase(),
+  (g.araclar=g.araclar||[]).push({id:R_GID(),tip:'tahsis',bolum:_thsBolum,firma,ad:v('arac'),arTip:v('tip').toUpperCase(),
     plaka:v('plaka').toUpperCase(),sofor:v('sofor'),stel:v('stel'),
     bas:_bas,bit:_bit,basYer:v('basyer'),gorev:v('gorev'),program:v('program'),not:v('not'),fiyat:v('fiyat')});
   setOpsGrup(S); window._thsAcik='';
@@ -18916,9 +18916,9 @@ function renderOpsTahsis(){
     h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
       <tr><th style="${th2};background:var(--navy)">Kalkış</th><th style="${th2};background:var(--navy)">Bitiş</th><th style="${th2};background:var(--navy)">Tur</th><th style="${th2};background:var(--navy)">Pax</th><th style="${th2};background:var(--navy)">Rehber</th><th style="${th2};background:var(--navy)">Tahsis</th><th style="${th2};background:var(--navy)"></th></tr>`;
     turlar.forEach(t=>{
-      const enc=t.pkgId+'|'+t.kalkis+'|'+(t.birlesikGrupId||'');
+      const enc=t.pkgId+'|'+t.kalkis+'|'+(t.birlesikGrupId||'')+'|'+(t.bolum||'');
       const gid=_thsGidBul(t);
-      const mev=gid?_thsTahsisleri(gid):[];
+      const mev=(gid?_thsTahsisleri(gid):[]).filter(a=>!a.bolum||String(a.bolum)===String(t.bolum||'01'));
       const acik=window._thsAcik===enc;
       h+=`<tr><td style="${td2}"><b>${_fmtDateTR(t.kalkis)}</b></td><td style="${td2}">${_fmtDateTR(t.end)}</td>
         <td style="${td2}"><b>${esc(t.kod)}</b>${(t.uyeSeferler&&t.uyeSeferler.length)?' <span style="background:#ede9fe;color:#6d28d9;border-radius:5px;font-size:.58rem;font-weight:800;padding:1px 5px">BİRLEŞİK</span>':''} <span style="color:var(--muted);font-size:.68rem">${esc(t.op||'')}</span></td>
