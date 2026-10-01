@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v683 · 01.10.2026';
+const APP_VER='v684 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19378,7 +19378,14 @@ function _trInfoCok(ids,dil){
     return String(ra.tarih+(ra.saat||'')).localeCompare(String(rb.tarih+(rb.saat||''))); });
   const govde=sira.map((gk,i)=>`<div style="${i<sira.length-1?'page-break-after:always;':''}margin-bottom:6mm">${_trInfoBolum(grupMap[gk],L)}</div>`).join('');
   const w=window.open('','_blank'); if(!w){ showToast('Açılır pencere engellendi — tarayıcı izni ver','error'); return; }
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Transfer Info · ${sira.length}</title>
+  // dosya adı: Tarih-Departure List-Otel Adı
+  const _r0=grupMap[sira[0]][0];
+  const _hepsiD=sira.every(k=>grupMap[k][0].tip==='D'), _hepsiG=sira.every(k=>grupMap[k][0].tip==='G');
+  const _listeAd=_hepsiD?'Departure List':(_hepsiG?'Arrival List':'Transfer List');
+  const _oteller=[...new Set(sira.map(k=>{ const r=grupMap[k][0]; return String((r.tip==='G'?(r.nereye0||r.nereye):(r.nereden0||r.nereden))||'').trim(); }).filter(Boolean))];
+  const _otelTx=(_oteller[0]||'')+(_oteller.length>1?' +'+(_oteller.length-1):'');
+  const _dosyaAd=[_fmtDateTR(_r0.tarih),_listeAd,_otelTx].filter(Boolean).join('-');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(_dosyaAd)}</title>
   <style>body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:11mm;font-size:10pt}
   @media print{.noprint{display:none}}</style></head><body>${govde}
   <button class="noprint" onclick="print()" style="margin-top:6mm;padding:6px 14px">🖨 PDF</button>
