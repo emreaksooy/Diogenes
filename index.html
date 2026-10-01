@@ -2307,7 +2307,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v667 · 01.10.2026';
+const APP_VER='v668 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -7385,11 +7385,7 @@ function _uoOzetHTML(p){
   const bolum=(bas,ic)=>ic?`<div style="margin-top:13px"><div style="font-weight:800;font-size:.78rem;color:#C55A11;border-bottom:1.5px solid #e5e9f0;padding-bottom:3px;margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">${bas}</div>${ic}</div>`:'';
   let tarihTx='';
   try{
-    const set=new Set();
-    try{ (_resDepartureDates(p)||[]).forEach(t=>{ const x=_pdate(t); if(x) set.add(x); }); }catch(e){}
-    try{ getReservations().forEach(g2=>{ if(g2&&g2.pkgId===p.id&&g2.kalkis&&!g2.iptal){ const x=_pdate(g2.kalkis); if(x) set.add(x); } }); }catch(e){}
-    try{ (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&r.pkgId===p.id&&r.kalkis&&r.durum!=='iptal'){ const x=_pdate(r.kalkis); if(x) set.add(x); } }); }catch(e){}
-    const T=[...set].sort();
+    const T=[...new Set((_resDepartureDates(p)||[]).map(t=>_pdate(t)).filter(Boolean))].sort();
     const AY=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
     const g={}; T.forEach(t=>{ const k=t.slice(0,7); (g[k]=g[k]||[]).push(String(+t.slice(8,10))); });
     tarihTx=Object.keys(g).sort().map(k=>`<b>${AY[+k.slice(5,7)-1]} ${k.slice(0,4)}:</b> ${g[k].join(', ')}`).join(' &nbsp;·&nbsp; ');
