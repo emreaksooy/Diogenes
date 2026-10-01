@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v681 · 01.10.2026';
+const APP_VER='v682 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19287,9 +19287,9 @@ function _trNotElle(id,v){ _trSatKaydet(id,{not:(v||'').trim()}); }
 const _trApAd={VIE:'VIENNA',ZRH:'ZURICH',MUC:'MUNICH',FRA:'FRANKFURT',DUS:'DUESSELDORF',BER:'BERLIN',HAM:'HAMBURG',STR:'STUTTGART',SZG:'SALZBURG',GRZ:'GRAZ',LNZ:'LINZ',INN:'INNSBRUCK',KLU:'KLAGENFURT',GVA:'GENEVA',BSL:'BASEL',AYT:'ANTALYA AIRPORT',ADB:'IZMIR',IST:'ISTANBUL',SAW:'ISTANBUL SABIHA GOKCEN',ASR:'KAYSERI',NAV:'NEVSEHIR',DLM:'DALAMAN',BJV:'BODRUM'};
 function _trApAdi(kod){ kod=String(kod||'').toUpperCase().trim(); return _trApAd[kod]||kod; }
 const _trInfoL={
- de:{bas:'ABREISE INFORMATION',basG:'ANREISE INFORMATION',datum:'DATUM',otel:'HOTEL · TRANSFER VOM',otelG:'HOTEL · TRANSFER NACH',abhol:'ABHOLZEIT',anzeit:'ANKUNFT',pers:'ANGEMELDETE PERSONEN',name:'NAME',vch:'VOUCHER',flug:'FLUG',saatD:'ABFLUG',saatG:'ANKUNFT',not:'Bitte seien Sie <b>10 Minuten</b> vor der Abholzeit an der Rezeption.',rec:'RECEPTION',gun:['So','Mo','Di','Mi','Do','Fr','Sa']},
- en:{bas:'DEPARTURE INFORMATION',basG:'ARRIVAL INFORMATION',datum:'DATE',otel:'HOTEL · TRANSFER FROM',otelG:'HOTEL · TRANSFER TO',abhol:'PICK-UP TIME',anzeit:'ARRIVAL',pers:'REGISTERED PASSENGERS',name:'NAME',vch:'VOUCHER',flug:'FLIGHT',saatD:'DEPARTURE',saatG:'ARRIVAL',not:'Please be at the reception <b>10 minutes</b> before the pick-up time.',rec:'RECEPTION',gun:['Su','Mo','Tu','We','Th','Fr','Sa']},
- tr:{bas:'DÖNÜŞ BİLGİLENDİRME',basG:'GELİŞ BİLGİLENDİRME',datum:'TARİH',otel:'OTEL · ALINIŞ YERİ',otelG:'OTEL · BIRAKIŞ',abhol:'ALINIŞ SAATİ',anzeit:'İNİŞ',pers:'KAYITLI YOLCULAR',name:'İSİM',vch:'VOUCHER',flug:'UÇUŞ',saatD:'KALKIŞ',saatG:'İNİŞ',not:'Lütfen alınış saatinden <b>10 dakika</b> önce resepsiyonda hazır olun.',rec:'RESEPSİYON',gun:['Paz','Pzt','Sal','Çar','Per','Cum','Cmt']}};
+ de:{bas:'ABREISE INFORMATION',basG:'ANREISE INFORMATION',datum:'DATUM',otel:'HOTEL · TRANSFER VOM',otelG:'HOTEL · TRANSFER NACH',abhol:'ABHOLZEIT',anzeit:'ANKUNFT',pers:'ANGEMELDETE PERSONEN',name:'NAME',vch:'VOUCHER',flug:'FLUG',saatD:'ABFLUG',saatG:'ANKUNFT',not:'Bitte seien Sie <b>10 Minuten</b> vor der Abholzeit an der Rezeption.',rec:'RECEPTION',fAb:'Abflug ab',fZiel:'Zielflughafen',fAbz:'Abflugzeit',fAnz:'Ankunftzeit',gun:['So','Mo','Di','Mi','Do','Fr','Sa']},
+ en:{bas:'DEPARTURE INFORMATION',basG:'ARRIVAL INFORMATION',datum:'DATE',otel:'HOTEL · TRANSFER FROM',otelG:'HOTEL · TRANSFER TO',abhol:'PICK-UP TIME',anzeit:'ARRIVAL',pers:'REGISTERED PASSENGERS',name:'NAME',vch:'VOUCHER',flug:'FLIGHT',saatD:'DEPARTURE',saatG:'ARRIVAL',not:'Please be at the reception <b>10 minutes</b> before the pick-up time.',rec:'RECEPTION',fAb:'Departure from',fZiel:'Destination',fAbz:'Departure time',fAnz:'Arrival time',gun:['Su','Mo','Tu','We','Th','Fr','Sa']},
+ tr:{bas:'DÖNÜŞ BİLGİLENDİRME',basG:'GELİŞ BİLGİLENDİRME',datum:'TARİH',otel:'OTEL · ALINIŞ YERİ',otelG:'OTEL · BIRAKIŞ',abhol:'ALINIŞ SAATİ',anzeit:'İNİŞ',pers:'KAYITLI YOLCULAR',name:'İSİM',vch:'VOUCHER',flug:'UÇUŞ',saatD:'KALKIŞ',saatG:'İNİŞ',not:'Lütfen alınış saatinden <b>10 dakika</b> önce resepsiyonda hazır olun.',rec:'RESEPSİYON',fAb:'Kalkış Havalimanı',fZiel:'Varış Havalimanı',fAbz:'Kalkış Saati',fAnz:'Varış Saati',gun:['Paz','Pzt','Sal','Çar','Per','Cum','Cmt']}};
 const _trInfoRenk=[['#1d4ed8','#eff6ff','#bfdbfe'],['#c2410c','#fff4ee','#fcd9c4'],['#15803d','#f0fdf4','#bbf7d0'],['#7c3aed','#f5f3ff','#ddd6fe'],['#0e7490','#ecfeff','#a5f3fc']];
 function _trInfoBolum(U,L){
   // U: ayni gorevin D/G satirlari (1+) — TEK sayfa
@@ -19302,13 +19302,18 @@ function _trInfoBolum(U,L){
   // ucuslar (renk kodlu) + yolcular
   const ucuslar=[]; const ucIdx={}; const kisiler=[];
   U.forEach(r=>{
-    const uKey=(r.ucus||'')+'|'+(r.saat||'');
-    if(ucIdx[uKey]===undefined){ ucIdx[uKey]=ucuslar.length;
-      ucuslar.push({no:r.ucus||'',saat:r.saat||'',rota:String(r.rota||'').trim()}); }
     const g=getReservations().find(x=>x.pkgId===r.pkgId&&x.kalkis===r.kalkis);
     const vset=new Set((r.vlist||[]).map(v=>String(v).trim()));
-    ((g&&g.rows)||[]).filter(x=>vset.has(String(x.resno||'').trim())&&_isim(x)&&_durumEff(x)!=='iptal')
-      .forEach(x=>kisiler.push({x,ui:ucIdx[uKey],ucus:r.ucus||'',saat:r.saat||''}));
+    const rws=((g&&g.rows)||[]).filter(x=>vset.has(String(x.resno||'').trim())&&_isim(x)&&_durumEff(x)!=='iptal');
+    const y0=rws[0]||{};
+    const uKey=(r.ucus||'')+'|'+(r.saat||'');
+    if(ucIdx[uKey]===undefined){ ucIdx[uKey]=ucuslar.length;
+      const rp=String(r.rota||'').split('→');
+      ucuslar.push({no:r.ucus||'',saat:r.saat||'',rota:String(r.rota||'').trim(),
+        ab:_trApAdi(rp[0]||''),ziel:_trApAdi(rp[1]||''),
+        kalk:anreise?String(y0.g_ks1||''):(r.saat||''),
+        varis:anreise?(r.saat||''):String(y0.d_vs2||y0.d_vs1||'')}); }
+    rws.forEach(x=>kisiler.push({x,ui:ucIdx[uKey],ucus:r.ucus||'',saat:r.saat||''}));
   });
   kisiler.sort((p,q)=>p.ui-q.ui||String(p.x.soyad||'').localeCompare(String(q.x.soyad||''),'tr'));
   let gun=''; try{ gun=L.gun[new Date((r0.tarih||'')+'T12:00:00').getDay()]||''; }catch(e){}
@@ -19335,14 +19340,18 @@ function _trInfoBolum(U,L){
         <div style="font-size:6.5pt;color:#6b7280;font-weight:700">${anreise?L.otelG:L.otel}</div>
         <div style="font-weight:800;font-size:10pt">${esc(String(otelAd).toUpperCase())}${anreise?'':' · '+esc(vomTx)}</div>
       </div>
-      <div style="border:1.5px solid #e5e9f0;border-radius:9px;padding:7px 14px;text-align:center">
-        <div style="font-size:6.5pt;color:#6b7280;font-weight:700">${L.datum}</div>
-        <div style="font-weight:800;font-size:10pt">${esc(tarihTx)}${gun?' '+gun:''}</div>
+      <div style="border:1.5px solid #e5e9f0;border-radius:9px;padding:8px 20px;text-align:center">
+        <div style="font-size:7pt;color:#6b7280;font-weight:700">${L.datum}</div>
+        <div style="font-weight:800;font-size:14.5pt;white-space:nowrap">${esc(tarihTx)}${gun?' <span style="font-size:10pt;color:#6b7280">'+gun+'</span>':''}</div>
       </div>
     </div>
     ${ucuslar.length?`<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
       ${ucuslar.map((u,i)=>{ const c=_trInfoRenk[i%_trInfoRenk.length];
-        return `<div style="flex:1;min-width:150px;background:${c[1]};border:1.5px solid ${c[2]};border-radius:9px;padding:6px 11px;font-size:8.5pt;${PCA}"><b style="color:${c[0]}">${esc(u.no||'—')}</b>${u.rota?' · '+esc(u.rota):''} · ${anreise?L.saatG:L.saatD} <b>${esc(u.saat)}</b></div>`; }).join('')}
+        const et=(l,v,b)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:1px 0"><span style="color:#6b7280">${l}:</span><b style="${b?'font-size:9pt':''}">${esc(v||'—')}</b></div>`;
+        return `<div style="flex:1;min-width:180px;background:${c[1]};border:1.5px solid ${c[2]};border-radius:9px;padding:7px 12px;font-size:7.9pt;${PCA}">
+          <div style="font-weight:800;color:${c[0]};font-size:10pt;margin-bottom:3px;border-bottom:1px solid ${c[2]};padding-bottom:2px">✈ ${esc(u.no||'—')}</div>
+          ${et(L.fAb,u.ab)}${et(L.fZiel,u.ziel)}${et(L.fAbz,u.kalk,1)}${et(L.fAnz,u.varis,1)}
+        </div>`; }).join('')}
     </div>`:''}
     <div style="margin-top:12px;font-weight:800;font-size:9.5pt;letter-spacing:1px;color:#1e2a3a;border-bottom:2px solid #f26522;padding-bottom:3px;${PCA}">${L.pers} · ${kisiler.length}</div>
     <table style="width:100%;margin-top:5px;font-size:9pt;border-collapse:collapse">
