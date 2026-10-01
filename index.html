@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v671 · 01.10.2026';
+const APP_VER='v672 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8391,7 +8391,7 @@ function _ucakDosyaCoz(yol){
   }
   return null;
 }
-function _ucakOpSecim(adaylar,ipuclari){
+function _ucakOpSecim(adaylar,ipuclari,kalkis){
   const ops=getOperators();
   const duz=t=>_norm(String(t||'')).replace(/ /g,'');
   const uyum=(op,h)=>{ const on=duz(op&&op.ad), hn=duz(h); return !!(on&&hn&&hn.length>=3&&(on===hn||on.includes(hn)||hn.includes(on))); };
@@ -8410,7 +8410,16 @@ function _ucakOpSecim(adaylar,ipuclari){
     if((ipuclari||[]).some(h=>uyum(op,h))) uyan.push(aday);
   }
   if(uyan.length===1) return uyan[0];
-  return null; // 0: ipucu eşleşmedi, 2+: AYNI operatörde AYNI kodlu birden çok ürün — panelde seçtir, yanlışa yazma
+  if(uyan.length>1&&kalkis){
+    // aynı operatörde aynı kod (sezon sürümleri: 2025/2026) — kalkış YILI hangi ürünün tarihlerine uyuyorsa o
+    const yil=String(kalkis).slice(0,4);
+    const tarihli=uyan.filter(a=>{ try{ return (_resDepartureDates(a)||[]).some(t=>String(_pdate(t)||'').slice(0,4)===yil); }catch(e){ return false; } });
+    if(tarihli.length===1) return tarihli[0];
+    // tam tarih eşleşmesi daha da kesin
+    const tamT=uyan.filter(a=>{ try{ return (_resDepartureDates(a)||[]).some(t=>_pdate(t)===kalkis); }catch(e){ return false; } });
+    if(tamT.length===1) return tamT[0];
+  }
+  return null; // ayırt edilemedi — panelde seçtir, yanlışa yazma
 }
 async function ucakTopluImport(evt){
   const files=[...(evt.target.files||[])].filter(f=>/\.xlsx?$/i.test(f.name)&&!f.name.startsWith('~'));
@@ -8480,7 +8489,7 @@ async function ucakTopluImport(evt){
       { const hIdx2=rows.findIndex((r2,i2)=>i2<10&&Array.isArray(r2)&&r2.some(c=>/reservation\s*no/i.test(String(c||''))));
         if(hIdx2>=0){ const oi=(rows[hIdx2]||[]).findIndex(h=>/operat/i.test(String(h||'')));
           if(oi>=0){ const ov=(rows.slice(hIdx2+1).find(r2=>r2&&String(r2[oi]||'').trim())||[])[oi]; if(ov) ipuclari.push(String(ov)); } } }
-      const pkg=_ucakOpSecim(adaylar,ipuclari);
+      const pkg=_ucakOpSecim(adaylar,ipuclari,kalkis);
       if(!pkg){
         // aynı kod birden çok operatörde ve ipuçları yetersiz → panelde operatör+ürün seçtir (kalıcı öğrenme YOK — tarihe göre değişebilir)
         (window._ucakBekleyen=window._ucakBekleyen||[]).push({kod:coz.kod,kalkis,rows,wb,ad:f.name,tanimli:true,cxx:_cxxMi});
