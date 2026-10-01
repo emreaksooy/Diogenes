@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v673 · 01.10.2026';
+const APP_VER='v674 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17233,6 +17233,7 @@ function _trKartMenu(id,dep){
   m+=`<button class="msh-item" onclick="mSheetKapat();_trDetayAc('${id}')">🔍&nbsp; Detay — yolcular & uçuşlar</button>`;
   m+=`<label class="msh-item" style="cursor:pointer">🕐&nbsp; Depar saati<input type="time" value="${esc(dep||'')}" onchange="_trDeparElle('${id}',this.value)" style="margin-left:auto;border:1.5px solid var(--border);border-radius:9px;padding:5px 8px;font-family:inherit;font-size:.85rem"></label>`;
   m+=`<button class="msh-item" onclick="mSheetKapat();_trYerAc('${id}')">📍&nbsp; Yer düzelt — alınış / bırakış</button>`;
+  if((r.tip==='D'||r.tip==='G')&&r.ucus) m+=`<button class="msh-item" onclick="mSheetKapat();_trAbreisePrint('${id}')">🏨&nbsp; ${r.tip==='D'?'Abreise':'Anreise'} Information (PDF)</button>`;
   if(r.tip==='TUR') m+=`<button class="msh-item" onclick="mSheetKapat();_trTipTog('${id}')">⇄&nbsp; ${r.trf?'Tur yürüyüşüne dön':'Transfer olarak işle'}</button>`;
   if(r.grup){
     if(!r.onay) m+=`<button class="msh-item" onclick="mSheetKapat();_trOnay('${id}')">✓&nbsp; Onayla</button>`;
@@ -18527,7 +18528,7 @@ function renderOpsTransfer(){
     h+=`<td>${gr&&gr.firma?esc(gr.firma):(r.tahsis&&r.tahsis.firma?`<span style="color:#0369a1;font-weight:700">${esc(r.tahsis.firma)}</span>`:'<span style="color:var(--muted)">—</span>')}</td>`;
     h+=`<td><input class="notin" value="${esc(r.not||'')}" onchange="_trNotElle('${r.id}',this.value)" placeholder="—"></td>`;
     h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):(r.tahsis?'<span class="trchip" style="background:#e0f2fe;color:#0369a1">tahsis aracı</span>':'<span class="trchip c-yok">atanmadı</span>')}${_yeniMi(r)?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
-    h+=`<td>${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button><button class="rowbtn" onclick="trRehberWa('${r.grup}')" title="Rehbere WhatsApp: görev listesi PDF iner + sohbet açılır">📲</button>`:''}</td></tr>`;
+    h+=`<td>${(r.tip==='D'||r.tip==='G')&&r.ucus?`<button class="rowbtn" onclick="_trAbreisePrint('${r.id}')" title="${r.tip==='D'?'Abreise':'Anreise'} Information — otele/misafire bilgilendirme (PDF)">🏨</button>`:''}${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button><button class="rowbtn" onclick="trRehberWa('${r.grup}')" title="Rehbere WhatsApp: görev listesi PDF iner + sohbet açılır">📲</button>`:''}</td></tr>`;
     (function(){
       const durumTx=(gr&&(gr.firma||gr.arac))?[gr.firma,gr.arac].filter(Boolean).join(' · '):'';
       const thsTx=(!gr&&r.tahsis)?[r.tahsis.firma,r.tahsis.arac].filter(Boolean).join(' · ')||'tahsis aracı':'';
@@ -19247,6 +19248,63 @@ function _trDeparElle(id,v){ v=_saatNorm((v||'').trim());
   if(!_saatGecerli(v)){ showToast('Geçersiz saat: "'+v+'" — ss:dd biçiminde gir (ör. 16, 1615, 16:15)','error',4000); renderOpsTransfer(); return; }
   _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
 function _trNotElle(id,v){ _trSatKaydet(id,{not:(v||'').trim()}); }
+const _trApAd={VIE:'VIENNA',ZRH:'ZURICH',MUC:'MUNICH',FRA:'FRANKFURT',DUS:'DUESSELDORF',BER:'BERLIN',HAM:'HAMBURG',STR:'STUTTGART',SZG:'SALZBURG',GRZ:'GRAZ',LNZ:'LINZ',INN:'INNSBRUCK',KLU:'KLAGENFURT',GVA:'GENEVA',BSL:'BASEL',AYT:'ANTALYA AIRPORT',ADB:'IZMIR',IST:'ISTANBUL',SAW:'ISTANBUL SABIHA GOKCEN',ASR:'KAYSERI',NAV:'NEVSEHIR',DLM:'DALAMAN',BJV:'BODRUM'};
+function _trApAdi(kod){ kod=String(kod||'').toUpperCase().trim(); return _trApAd[kod]||kod; }
+function _trAbreisePrint(id){
+  const r=_trGenRows().find(x=>x.id===id); if(!r){ showToast('Satır bulunamadı','error'); return; }
+  const g=getReservations().find(x=>x.pkgId===r.pkgId&&x.kalkis===r.kalkis);
+  const vset=new Set((r.vlist||[]).map(v=>String(v).trim()));
+  const rows=((g&&g.rows)||[]).filter(x=>vset.has(String(x.resno||'').trim())&&_isim(x)&&_durumEff(x)!=='iptal');
+  const rz=(getRezv()||[]).filter(z=>z&&z.tip==='urun'&&z.pkgId===r.pkgId&&z.kalkis===r.kalkis);
+  const unv=x=>{ try{ const z=rz.find(z2=>[z2.voucher,z2.asilVoucher].some(v=>String(v||'').trim()===String(x.resno||'').trim()));
+    const mu=z&&(z.musteriler||[]).find(m=>_norm(m.soyad||'')===_norm(x.soyad||'')); const u=String((mu&&mu.unvan)||'').trim();
+    return u?u.replace(/\.*$/,'.'):''; }catch(e){ return ''; } };
+  const yasH=x=>{ if(String(x.yas||'').trim()) return String(x.yas).trim();
+    const d=_pdate(x.dogum); if(d){ const y=new Date(r.tarih||undefined).getFullYear()-(+d.slice(0,4)); if(y>0&&y<110) return String(y); } return ''; };
+  const dh=_trDeparHesap(r);
+  const GUN=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  let gun=''; try{ gun=GUN[new Date((r.tarih||'')+'T12:00:00').getDay()]||''; }catch(e){}
+  const rp=String(r.rota||'').split('→');
+  const abflug=_trApAdi(rp[0]||'AYT'), hedefAp=_trApAdi(rp[1]||'');
+  const ankunft=(rows[0]&&(rows[0].d_vs1||rows[0].d_vs2))||'';
+  const tarihTx=(()=>{ const p=String(r.tarih||'').split('-'); return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):''; })();
+  let logo=''; try{ logo=(document.querySelector('.brand img')||{}).src||''; }catch(e){}
+  const anreise=r.tip==='G';
+  const satir=(l,v,b)=>`<tr><td style="text-align:right;padding:1px 10px 1px 0;white-space:nowrap;font-weight:600">${l}</td><td style="font-weight:${b?'800':'700'}">${v||''}</td></tr>`;
+  const html=`<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><title>${esc(r.urun)} ${anreise?'Anreise':'Abreise'} ${esc(tarihTx)}</title>
+  <style>body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:14mm;font-size:11pt}
+  .ust{text-align:center}
+  h2{font-size:14pt;margin:5mm 0 2mm;text-align:center;letter-spacing:1px}
+  h1{font-size:19pt;margin:2mm 0 6mm;text-align:center;letter-spacing:6px;font-style:italic}
+  table.bilgi{margin:0 auto;font-size:11pt;border-collapse:collapse}
+  .plist{width:100%;border-collapse:collapse;margin-top:4mm;font-size:9.5pt}
+  .plist td{padding:1.2mm 2mm}
+  .pbas{text-align:center;font-weight:800;border-bottom:2px solid #111;padding-bottom:1.5mm;margin-top:8mm;font-size:11pt}
+  @media print{.noprint{display:none}}</style></head><body>
+  <div class="ust">${logo?`<img src="${logo}" style="height:52px">`:''}<div style="font-size:8pt;color:#1a6fb5;font-weight:700">DIOGENES TRAVEL · www.diogenestravel.com</div></div>
+  <h2>${esc((r.op||'').toUpperCase())}</h2>
+  <h1>${anreise?'A N R E I S E':'A B R E I S E'}&nbsp;&nbsp;I N F O R M A T I O N</h1>
+  <table class="bilgi">
+    ${satir('ABFLUG AB :',esc(abflug))}
+    ${satir('ZIELFLUGHAFEN :',esc(hedefAp))}
+    ${satir('FLUG DATUM :',esc(tarihTx)+(gun?' &nbsp;<b>'+gun+'</b>':''),1)}
+    ${satir('FLUG NR :',esc(r.ucus||''),1)}
+    ${satir('ABFLUGZEIT :',esc(r.saat||''),1)}
+    ${satir('ANKUNFTZEIT :',esc(ankunft))}
+    ${satir('HOTEL NAME :',esc((r.nereden0||r.nereden||'').toUpperCase()))}
+    ${satir('TRANSFER VOM :',esc((r.ovrNereden||'RECEPTION').toUpperCase()),1)}
+    ${satir('ABHOLZEIT :','<span style="font-size:13pt">'+esc(dh.saat||'')+'</span>',1)}
+  </table>
+  <div class="pbas">ANGEMELDETE PERSONEN</div>
+  <table class="plist">
+    ${rows.map((x,i)=>`<tr><td style="width:9mm;font-weight:700">${i+1}-</td><td style="width:13mm;font-weight:700">${esc(unv(x))}</td><td style="font-weight:700">${esc(((x.soyad||'')+' '+(x.ad||'')).trim().toUpperCase())}</td><td style="width:14mm;text-align:right;font-weight:700">${esc(yasH(x))}</td></tr>`).join('')}
+  </table>
+  <div style="margin-top:5mm;font-size:8.5pt;color:#555">${rows.length} Personen · Voucher: ${esc((r.vlist||[]).join(', '))}</div>
+  <button class="noprint" onclick="print()" style="margin-top:8mm;padding:6px 14px">🖨 Drucken / PDF</button>
+  <script>setTimeout(function(){try{print()}catch(e){}},400)<\/script></body></html>`;
+  const w=window.open('','_blank'); if(!w){ showToast('Açılır pencere engellendi — tarayıcı izni ver','error'); return; }
+  w.document.write(html); w.document.close();
+}
 function _trYerAc(id){
   const r=_trGenRows().find(x=>x.id===id); if(!r) return;
   const eski=document.getElementById('trYerModal'); if(eski) eski.remove();
