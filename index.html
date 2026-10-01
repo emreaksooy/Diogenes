@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v674 · 01.10.2026';
+const APP_VER='v675 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13133,6 +13133,13 @@ function opsSetDate(v){ _opsDate=v||_opsToday(); try{localStorage.setItem('dmc_o
 function _opsView(det){ const l=document.getElementById('opsListe'),d=document.getElementById('opsDetay'); if(l)l.style.display=det?'none':''; if(d)d.style.display=det?'':'none'; }
 function opsBack(){ _opsView(false); renderOperasyonPage(); window.scrollTo(0,0); }
 function opsOpen(pkgId,kalkis,bolum){
+  // BOLUNMUS grup + bolum belirtilmemis -> hangi bolumun dosyasi acilacak, SOR
+  if(bolum===undefined){
+    try{
+      const bols=[...new Set((getRezv()||[]).filter(r=>r&&r.tip==='urun'&&r.pkgId===pkgId&&r.kalkis===kalkis&&r.durum!=='iptal').map(r=>String(r.grupBolum||'01')))].sort();
+      if(bols.length>1){ _opsBolumSor(pkgId,kalkis,bols); return; }
+    }catch(e){}
+  }
   window._tdBolumF=String(bolum||'');
   if(typeof _opsTab!=='undefined'&&_opsTab&&_opsTab!=='grup') window._tdDonus=_opsTab;
   // Artık ana ekran TUR DOSYASI: kalkışın grubunu bul/aç
@@ -15739,6 +15746,21 @@ function renderOpsGrup(){
 }
 // ═══ TUR DOSYASI (grup kartı) ═══
 let _tdGid=null,_tdTab='yolcu';
+function _opsBolumSor(pkgId,kalkis,bols){
+  const eski=document.getElementById('opsBolumModal'); if(eski) eski.remove();
+  const bilgi=b=>{ try{ const t=_rtTurlar(kalkis,kalkis).find(x=>x.pkgId===pkgId&&x.kalkis===kalkis&&String(x.bolum||'01')===b);
+    return t?(t.pax+' pax · '+(t.rehberAd||'rehber yok')):''; }catch(e){ return ''; } };
+  const ov=document.createElement('div'); ov.id='opsBolumModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:6000;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.remove(); });
+  ov.innerHTML=`<div style="width:min(390px,100%);background:var(--card,#fff);border-radius:16px;padding:18px 20px" onclick="event.stopPropagation()">
+    <b style="font-size:.92rem">⑃ Bölünmüş grup — hangi dosya açılsın?</b>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">
+      ${bols.map(b=>`<button class="btn btn-outline" style="justify-content:flex-start;gap:8px" onclick="document.getElementById('opsBolumModal').remove();opsOpen('${pkgId}','${kalkis}','${b}')"><b>G${b}</b> <span style="color:var(--muted);font-size:.76rem">${esc(bilgi(b))}</span></button>`).join('')}
+      <button class="btn btn-outline" style="justify-content:flex-start" onclick="document.getElementById('opsBolumModal').remove();opsOpen('${pkgId}','${kalkis}','')">👥 Tümü — bölümsüz dosya</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
 function opsTdAc(gid,bolum){ _navPush(); if(bolum!==undefined) window._tdBolumF=String(bolum||''); gid=_ogMaterialize(gid); _tdGid=gid; _tdTab='yolcu'; try{localStorage.setItem('dmc_lastTd',gid);}catch(e){} renderOpsGrup(); }
 function moDosyaAc(pkgId,kalkis){
   try{ showPage('operasyon',document.querySelector('.nav-tab[data-page="operasyon"]')); }catch(e){ try{ showPage('operasyon'); }catch(e2){} }
