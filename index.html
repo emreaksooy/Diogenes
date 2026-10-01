@@ -1201,6 +1201,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
       <button class="nav-tab active" data-page="paketlerim" onclick="showPage('paketlerim',this)"><svg class="ic"><use href="#i-home"/></svg> Ana Sayfa <span id="panoBadge" style="display:none;margin-left:auto;background:var(--primary);color:#fff;border-radius:10px;font-size:.62rem;font-weight:800;padding:1px 7px"></span></button>
       <div class="nav-group">Departmanlar</div>
       <button class="nav-tab" data-page="urun" onclick="showPage('urun',this)"><svg class="ic"><use href="#i-box"/></svg> Ürün</button>
+      <button class="nav-tab" data-page="urunozet" onclick="showPage('urunozet',this)">📄 Ürün Özetleri</button>
       <button class="nav-tab" data-page="rezervasyon" onclick="showPage('rezervasyon',this)"><svg class="ic"><use href="#i-users"/></svg> Rezervasyon</button>
       <button class="nav-tab" data-page="ucak" onclick="showPage('ucak',this)"><svg class="ic"><use href="#i-plane"/></svg> Uçak / Bilet</button>
       <button class="nav-tab" data-page="operasyon" onclick="showPage('operasyon',this)"><svg class="ic"><use href="#i-calendar"/></svg> Operasyon</button>
@@ -1783,6 +1784,8 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
   </div>
 
   <!-- PAGE: REZERVASYON / UÇAK -->
+  <div id="page-urunozet" class="page"><div id="urunOzetWrap"></div></div>
+
   <div id="page-ucak" class="page">
     <div id="ucakListe">
       <div class="card" style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -2304,7 +2307,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v665 · 30.09.2026';
+const APP_VER='v666 · 01.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2756,6 +2759,7 @@ function showPage(id, tabEl) {
   if(id==='operasyon') opsTab(_opsTab||'anasayfa');
   if(id==='cikti') renderBackupList();
   if(id==='rezervasyon') renderRezvPage();
+  if(id==='urunozet') renderUrunOzet();
   document.body.classList.toggle('res-page', id==='ucak'||id==='magmuh'||id==='operasyon'||id==='opdetay'||id==='rezervasyon');
   // Sidebar modu: paket sayfalarında pkg sidebar göster
   const isPkgMode = ['paket','maliyet','harita','cikti','sunum'].includes(id);
@@ -7353,6 +7357,78 @@ async function _renderSunumHarita(){
 
 // ══════════════ REZERVASYON / UÇAK MODÜLÜ ══════════════
 let _resPkgId='', _resKalkis='';
+window._uoSecili=window._uoSecili||null; window._uoAra=window._uoAra||'';
+function renderUrunOzet(){
+  const box=document.getElementById('urunOzetWrap'); if(!box) return;
+  if(_cloudOn&&sbRol&&_acl('urunozet')==='-'){ box.innerHTML='<div class="card"><b>Bu bölüme erişim yetkiniz yok.</b></div>'; return; }
+  const pkgs=getPackages().filter(p=>{ try{return pkgDurum(p)!=='arsiv';}catch(e){return true;} })
+    .sort((a,b)=>String(a.paketKodu||a.paketAdi||'').localeCompare(String(b.paketKodu||b.paketAdi||''),'tr'));
+  const q=_norm(window._uoAra||'');
+  const list=q?pkgs.filter(p=>_norm((p.paketKodu||'')+' '+(p.paketAdi||'')+' '+(_resOpAd(p)||'')).includes(q)):pkgs;
+  let h=`<div class="card"><div class="card-title">📄 Ürün Özetleri <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">fiyatsız program özeti — yazdırılabilir</span></div>
+    <input value="${esc(window._uoAra||'')}" oninput="window._uoAra=this.value;renderUrunOzet();setTimeout(()=>{const i=document.querySelector('#urunOzetWrap input');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},0)" placeholder="Ara: kod, ad, operatör…" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.82rem;width:min(340px,100%);margin-bottom:10px">
+    <div style="display:flex;flex-direction:column;gap:6px">`;
+  list.forEach(p=>{ const sec=window._uoSecili===p.id;
+    h+=`<div onclick="window._uoSecili=${sec?'null':`'${p.id}'`};renderUrunOzet()" style="border:1.5px solid ${sec?'var(--primary)':'var(--border)'};border-radius:11px;padding:9px 13px;cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:${sec?'#fff7f2':'var(--card,#fff)'}">
+      <b>${esc(p.paketKodu||'—')}</b><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.paketAdi||'')}</span>
+      <span style="color:var(--muted);font-size:.74rem">${esc(_resOpAd(p)||'')}</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:.72rem">${(p.gunler||[]).length} gün</span>
+      ${sec?`<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();uoPrint('${p.id}')">🖨 PDF / Yazdır</button>`:''}
+    </div>`;
+    if(sec) h+=`<div style="border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;background:var(--card,#fff)">${_uoOzetHTML(p)}</div>`;
+  });
+  if(!list.length) h+='<p style="color:var(--muted);font-size:.84rem">Eşleşen ürün yok.</p>';
+  h+='</div></div>';
+  box.innerHTML=h;
+}
+function _uoOzetHTML(p){
+  const bolum=(bas,ic)=>ic?`<div style="margin-top:13px"><div style="font-weight:800;font-size:.78rem;color:#C55A11;border-bottom:1.5px solid #e5e9f0;padding-bottom:3px;margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px">${bas}</div>${ic}</div>`:'';
+  let tarihTx='';
+  try{
+    const T=[...new Set((_resDepartureDates(p)||[]).map(t=>_pdate(t)).filter(Boolean))].sort();
+    const AY=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+    const g={}; T.forEach(t=>{ const k=t.slice(0,7); (g[k]=g[k]||[]).push(String(+t.slice(8,10))); });
+    tarihTx=Object.keys(g).sort().map(k=>`<b>${AY[+k.slice(5,7)-1]} ${k.slice(0,4)}:</b> ${g[k].join(', ')}`).join(' &nbsp;·&nbsp; ');
+  }catch(e){}
+  const gunler=(p.gunler||[]).map((gd,gi)=>{
+    const rota=(gd.noktalar||[]).filter(Boolean).join(' → ');
+    const konak=[gd.konaklamaAd,gd.konaklamaBolge,gd.konaklamaPansiyon].filter(Boolean).join(' · ');
+    const prog=String(gd.program||'').trim();
+    return `<div style="margin-bottom:9px;font-size:.8rem;line-height:1.5">
+      <b>Gün ${gd.no||gi+1}${gd.baslik?' — '+esc(gd.baslik):''}</b>${rota?` <span style="color:#1F4E78;font-weight:700;font-size:.74rem">${esc(rota)}</span>`:''}
+      ${prog?`<div style="color:#333">${esc(prog)}</div>`:''}
+      ${konak?`<div style="color:var(--muted);font-size:.72rem">🛏 Konaklama: ${esc(konak)}</div>`:''}
+    </div>`;
+  }).join('');
+  const oteller=[...new Set((p.gunler||[]).map(gd=>[gd.konaklamaAd,gd.konaklamaBolge,gd.konaklamaPansiyon].filter(Boolean).join(' · ')).filter(Boolean))];
+  const opsT=[...new Set((p.gunler||[]).flatMap(gd=>(gd.opsiyonelTurlar||[]).map(o=>String(o.ad||'').trim())).filter(Boolean))];
+  const li=a=>`<ul style="margin:0;padding-left:18px;font-size:.8rem;line-height:1.6">${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+  let h='';
+  h+=`<div style="font-size:.8rem;color:var(--muted)">${esc(_resOpAd(p)||'')}${p.gece?' · '+esc(String(p.gece))+' gece':''}${(p.gunler||[]).length?' · '+(p.gunler||[]).length+' gün':''}</div>`;
+  if(String(p.paketAciklama||'').trim()) h+=`<div style="font-size:.8rem;margin-top:6px;line-height:1.5">${esc(String(p.paketAciklama).trim())}</div>`;
+  h+=bolum('Kalkış Tarihleri',tarihTx||'<span style="color:var(--muted);font-size:.78rem">tanımlı sefer tarihi yok</span>');
+  h+=bolum('Tur Programı',gunler);
+  h+=bolum('Oteller',oteller.length?li(oteller):'');
+  h+=bolum('Dahil Hizmetler',(p.dahil||[]).filter(x=>String(x||'').trim()).length?li(p.dahil.filter(x=>String(x||'').trim())):'');
+  h+=bolum('Dahil Olmayan Hizmetler',(p.dahilDegil||[]).filter(x=>String(x||'').trim()).length?li(p.dahilDegil.filter(x=>String(x||'').trim())):'');
+  h+=bolum('Opsiyonel Turlar',opsT.length?li(opsT):'');
+  return h;
+}
+function uoPrint(pid){
+  const p=getPackages().find(x=>x.id===pid); if(!p) return;
+  const w=window.open('','_blank'); if(!w){ showToast('Açılır pencere engellendi — tarayıcı izni ver','error'); return; }
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><title>${esc(p.paketKodu||'')} — Ürün Özeti</title>
+  <style>body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#222;margin:13mm;--muted:#6b7280;--border:#e5e9f0;--card:#fff}
+  h1{font-size:15pt;color:#C55A11;margin:0}
+  ul{margin:0}
+  @media print{.noprint{display:none}}</style></head><body>
+  <h1>${esc((p.paketKodu||'')+(p.paketAdi?' — '+p.paketAdi:''))}</h1>
+  <div style="font-size:8pt;color:#6b7280;margin:2mm 0 4mm">Diogenes Travel · Ürün Özeti (fiyat içermez)</div>
+  ${_uoOzetHTML(p)}
+  <button class="noprint" onclick="print()" style="margin-top:8mm;padding:6px 14px">🖨 Yazdır / PDF</button>
+  <script>setTimeout(function(){try{print()}catch(e){}},400)<\/script></body></html>`);
+  w.document.close();
+}
 function _resDepartureDates(pkg){
   const set=new Set();
   (pkg.havalimanSuppleri||[]).forEach(h=>(h.tarihler||[]).forEach(t=>{ if(typeof t==='string') set.add(t); else if(t&&t.tarih) set.add(t.tarih); }));
@@ -8977,11 +9053,11 @@ const SB_URL='https://jyqwbzyevejyqxfafrtf.supabase.co';
 const SB_KEY='sb_publishable_65daq2tGCWi0fHcERLGwbQ_7zPH8TD2';
 let sb=null, sbUser=null, sbRol=null, _cloudOn=false;
 // ═══ ROL / YETKI ═══
-const _PAGEGRP={paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'magaza',ekip:'yonetim',rehberim:'rehberim'};
+const _PAGEGRP={urunozet:'urunpdf',paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'magaza',ekip:'yonetim',rehberim:'rehberim'};
 const _ACL={
-  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e',magaza:'e',rehberim:'-'},
+  yonetici:    {home:'e',urun:'e',rezervasyon:'e',ucak:'e',operasyon:'e',rapor:'e',yonetim:'e',magaza:'e',rehberim:'-',urunpdf:'e'},
   rehber:      {home:'-',urun:'-',rezervasyon:'-',ucak:'-',operasyon:'-',rapor:'-',yonetim:'-',magaza:'-',rehberim:'e'},
-  rezervasyon: {home:'e',urun:'v',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-',yonetim:'-',magaza:'-',rehberim:'-'},
+  rezervasyon: {home:'e',urun:'-',rezervasyon:'e',ucak:'v',operasyon:'v',rapor:'-',yonetim:'-',magaza:'-',rehberim:'-',urunpdf:'e'},
   ucak:        {home:'e',urun:'-',rezervasyon:'v',ucak:'e',operasyon:'-',rapor:'-',yonetim:'-',magaza:'-',rehberim:'-'},
   operasyon:   {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'e',rapor:'v',yonetim:'-',magaza:'-',rehberim:'-'},
   goruntuleme: {home:'e',urun:'-',rezervasyon:'v',ucak:'v',operasyon:'v',rapor:'v',yonetim:'-',magaza:'-',rehberim:'-'},
