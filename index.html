@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v684 · 01.10.2026';
+const APP_VER='v685 · 02.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16050,7 +16050,8 @@ function tdSatisPaketleriGetir(sessiz){
       // mevcut satırın fiyat/komisyonunu tanımla eşitle (pax/ödeme korunur)
       const st=g.satislar.find(x=>!x.ozel&&String(x.ad||'').trim().toLocaleUpperCase('tr')===anah);
       if(st){
-        const yeniSatis=String(a.fiyat||''), yeniTip=a.komTip||st.komTip||'%', yeniDeg=(a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'', yeniIc=String(a.icerik||'');
+        // tanımdaki fiyat/değer BOŞSA hesaplaşmada elle girilen KORUNUR (Ausflugpaket vakası — v685)
+        const yeniSatis=String(a.fiyat||'')||String(st.satis||''), yeniTip=a.komTip||st.komTip||'%', yeniDeg=((a.komDeg!=null&&a.komDeg!=='')?String(a.komDeg):'')||String(st.komDeg||''), yeniIc=String(a.icerik||'');
         if(st.satis!==yeniSatis||st.komTip!==yeniTip||st.komDeg!==yeniDeg||(!!st.fiyatGizli)!==(!!a.fiyatGizli)||String(st.icerik||'')!==yeniIc){ st.satis=yeniSatis; st.komTip=yeniTip; st.komDeg=yeniDeg; st.fiyatGizli=!!a.fiyatGizli; st.icerik=yeniIc; guncel++; }
       }
       return;
