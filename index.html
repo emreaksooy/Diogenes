@@ -2304,7 +2304,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v685 · 02.10.2026';
+const APP_VER='v686 · 02.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15114,7 +15114,7 @@ function tdMxExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
   const kisiler=_tdKisiler(E); const satislar=(g.satislar||[]);
-  const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  const reh=_tdBolumReh(g,E)||(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
   const aoa=[[(reh?reh.ad:'')||'', _fmtDateTR(E.tarih), (E.ops||[]).join(', '), (E.urunler||[]).join(', ')],
     ['GASTNAMEN','Voucher No','KUR TAX'].concat(satislar.map(x=>x.ad+(_tdN(x.satis)?(' ('+_tdN(x.satis)+' €)'):'')+(x.icerik?('\n'+x.icerik):'')))];
   let ktTop=0;
@@ -15870,6 +15870,17 @@ function _tdKisiler(E){
   return out;
 }
 function _tdRezv(resno){ return (getRezv()||[]).find(r=>String(r.voucher||'').trim()===String(resno||'').trim())||null; }
+function _tdBolumReh(g,E){
+  // dosya BÖLÜM filtresiyle açıksa (G02 vb.) o bölümün rehberi — başlık ve belgeler bunu kullanır
+  try{
+    const F=String(window._tdBolumF||''); if(!F||F==='01'||_tdBolumSayisi(E)<2) return null;
+    const sf=((E&&E.uyeler)&&E.uyeler[0])||(g&&g.sefer); if(!sf) return null;
+    const br=_opsRehGet(sf.pkgId,sf.kalkis,F);
+    if(!br||!(((br.rehberAd||'').trim())||br.rehberId)) return null;
+    const t=(getTanimlar().rehberler||[]);
+    return t.find(r=>r.id===br.rehberId)||t.find(r=>_norm(r.ad||'')===_norm(br.rehberAd||''))||{id:br.rehberId||'',ad:(br.rehberAd||'').trim()};
+  }catch(e){ return null; }
+}
 function _tdUyeFiltre(E){
   const U=(E&&E.uyeler)||[];
   try{
@@ -16139,7 +16150,7 @@ function renderTurDosyasi(box){
   const g=_tdG(), E=_tdE();
   if(!g||!E){ _tdGid=null; renderOpsGrup(); return; }
   _tdInit(g,E);
-  const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  const reh=_tdBolumReh(g,E)||(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
   const kisiler=_tdKisiler(E);
   const T=_tdTopla(g);
   const rehMod=(sbRol==='rehber');
@@ -16817,7 +16828,7 @@ function _tdDocMasraf(g,E){
 }
 function _tdDocSozlesme(g,E){
   const t=getTanimlar();
-  const reh=(t.rehberler||[]).find(r=>r.id===g.rehberId)||{};
+  const reh=_tdBolumReh(g,E)||(t.rehberler||[]).find(r=>r.id===g.rehberId)||{};
   const pk=(E.uyeler[0]||g.sefer)?getPackages().find(p=>p.id===(E.uyeler[0]?E.uyeler[0].pkgId:g.sefer.pkgId)):null;
   const gun=+g.gunSay||((pk&&+pk.gece)?(+pk.gece+1):0);
   const bit=E.tarih&&gun?_rzGun(E.tarih,Math.max(0,gun-1)):'';
@@ -16892,7 +16903,7 @@ function _tdDocAcente(g,E){ const t=getTanimlar();
   return _tdDocBas('Seyahat Acente Belgesi',E)+`<div style="font-size:10pt">${govde}</div></div>`; }
 function _tdDocHesap(g,E){
   const T=_tdTopla(g), mas=_tdMasrafEUR(g), yev=_tdYevToplam(g);
-  const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  const reh=_tdBolumReh(g,E)||(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
   const ktO=_tdKurTaxOzet(E);
   const teslimHedef=Math.round((T.teslim+ktO.toplam)*100)/100;
   const teslimA=_tdN(g.teslimAlinan);
