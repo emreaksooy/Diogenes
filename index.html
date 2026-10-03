@@ -1845,6 +1845,11 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
         <b style="font-size:.82rem;color:#1d4ed8"><span id="rzSecN">0</span> seçili</b>
         <select id="rzTopluAks" onchange="rzTopluAksiyon()" style="padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit">
           <option value="">Toplu işlem seç…</option>
+          <option value="otel">🏨 Otele yerleştir (şablon/bölge kartı → gerçek otel)</option>
+          <option value="konfirme">✓ Otel konfirmesi gir (ortak no + tarih)</option>
+          <option value="gonderildi">✉ Otele gönderildi işaretle</option>
+          <option value="oprKonf">☑ Operatör konfirmesi işaretle</option>
+          <option value="tarihKaydir">📅 Tarihleri kaydır (± gün)</option>
           <option value="urun">Ürüne bağla</option>
           <option value="kalkis">Giriş tarihi ata</option>
           <option value="operator">Operatör ata</option>
@@ -1857,6 +1862,11 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
         <input id="rzTopluUrun" list="rzTopluUrunL" placeholder="Ürün kodu…" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit;width:150px"><datalist id="rzTopluUrunL"></datalist>
         <input id="rzTopluKalkis" type="date" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit">
         <input id="rzTopluOp" list="rzTopluOpL" placeholder="Operatör…" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit;width:150px"><datalist id="rzTopluOpL"></datalist>
+        <input id="rzTopluOtelEski" list="rzTopluOtelL" placeholder="Hangi kartlar? (otel adı / boş = oteli boş kartlar)" title="Boş bırakırsan yalnız oteli seçilmemiş (bölge şablonu) kartlar değişir; otel adı yazarsan o oteldeki kartlar" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit;width:230px">
+        <input id="rzTopluOtelYeni" list="rzTopluOtelL" placeholder="Yeni otel…" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit;width:190px"><datalist id="rzTopluOtelL"></datalist>
+        <input id="rzTopluKonfNo" placeholder="Konfirme no (ortak, boş olabilir)" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit;width:200px">
+        <input id="rzTopluTarih" type="date" title="Tarih" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit">
+        <input id="rzTopluGun" type="number" placeholder="± gün" title="Pozitif ileri, negatif geri" style="display:none;padding:6px 9px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.8rem;font-family:inherit;width:90px">
         <button class="btn btn-primary btn-sm" onclick="rzTopluUygula()">Uygula</button>
         <button class="btn btn-outline btn-sm" onclick="window._rzSec.clear();renderRezvListe()">Seçimi temizle</button>
       </div>
@@ -2337,7 +2347,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v691 · 03.10.2026';
+const APP_VER='v692 · 03.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -12030,6 +12040,10 @@ function rzTopluAksiyon(){
   document.getElementById('rzTopluUrun').style.display=a==='urun'?'':'none';
   document.getElementById('rzTopluKalkis').style.display=(a==='urun'||a==='kalkis')?'':'none';
   document.getElementById('rzTopluOp').style.display=a==='operator'?'':'none';
+  const g=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display=v?'':'none'; };
+  g('rzTopluOtelEski',a==='otel'||a==='konfirme'||a==='gonderildi'); g('rzTopluOtelYeni',a==='otel'); g('rzTopluKonfNo',a==='konfirme'); g('rzTopluTarih',a==='konfirme'||a==='gonderildi'||a==='oprKonf'); g('rzTopluGun',a==='tarihKaydir');
+  if(a==='otel'||a==='konfirme'||a==='gonderildi'){ const dl=document.getElementById('rzTopluOtelL'); if(dl) dl.innerHTML=_rzOtelOpts(''); const e=document.getElementById('rzTopluOtelEski'); if(e) e.placeholder=a==='otel'?'Hangi kartlar? (boş = oteli boş kartlar)':'Yalnız bu otel (boş = tüm kartlar)'; }
+  if(a==='konfirme'||a==='gonderildi'||a==='oprKonf'){ const t=document.getElementById('rzTopluTarih'); if(t&&!t.value) t.value=new Date().toISOString().slice(0,10); }
   if(a==='urun'){ const dl=document.getElementById('rzTopluUrunL'); if(dl) dl.innerHTML=getPackages().filter(p=>pkgDurum(p)!=='arsiv').map(p=>`<option value="${esc(p.paketKodu||'')}">${esc(p.paketAdi||'')}</option>`).join(''); }
   if(a==='operator'){ const dl=document.getElementById('rzTopluOpL'); if(dl) dl.innerHTML=_rzOpAdlar().map(o=>`<option value="${esc(o)}">`).join(''); }
 }
@@ -12059,6 +12073,28 @@ function rzTopluUygula(){
       const op=(document.getElementById('rzTopluOp').value||'').trim();
       if(!op){ showToast('Operatör adı girin','error'); return; }
       hedef.forEach(r=>{ r.operator=op; n++; });
+    } else if(a==='otel'){
+      const nrm=t=>String(t||'').toLocaleLowerCase('tr').trim();
+      const eski=nrm(document.getElementById('rzTopluOtelEski').value), yeni=(document.getElementById('rzTopluOtelYeni').value||'').trim();
+      if(!yeni){ showToast('Yeni otel adı girin','error'); return; }
+      const ot=_rzOteller().find(o=>nrm(o.ad)===nrm(yeni));
+      hedef.forEach(r=>(r.kartlar||[]).forEach(k=>{ if(!k||k.tip==='ulasim') return; const uy=eski?nrm(k.otel)===eski:!nrm(k.otel); if(!uy) return;
+        k.otel=ot?ot.ad:yeni; if(ot){ k.sehir=ot.sehir||k.sehir||''; k.yildiz=ot.yildiz||''; } if(k.konfirme==='Evet'){ k.konfirme='Gönderilmedi'; k.konfirmeNo=''; k.konfirmeTarih=''; } n++; }));
+      if(!n){ showToast(eski?'Seçili kayıtlarda "'+eski+'" otelli kart yok':'Seçili kayıtlarda oteli boş kart yok','error',4500); return; }
+    } else if(a==='konfirme'||a==='gonderildi'){
+      const nrm=t=>String(t||'').toLocaleLowerCase('tr').trim();
+      const filt=nrm(document.getElementById('rzTopluOtelEski').value); const no=(document.getElementById('rzTopluKonfNo').value||'').trim(); const tarih=document.getElementById('rzTopluTarih').value||new Date().toISOString().slice(0,10);
+      hedef.forEach(r=>(r.kartlar||[]).forEach(k=>{ if(!k||k.tip==='ulasim') return; if(filt&&nrm(k.otel)!==filt) return;
+        if(a==='konfirme'){ if(k.konfirme==='Evet'&&!no) return; k.konfirme='Evet'; k.konfirmeTarih=tarih; if(!k.gonderimTarih) k.gonderimTarih=tarih; if(no) k.konfirmeNo=no; n++; }
+        else { if(k.konfirme==='Evet'||k.konfirme==='Gönderildi') return; k.konfirme='Gönderildi'; k.gonderimTarih=tarih; n++; } }));
+      if(!n){ showToast('Değişecek kart yok (zaten işaretli ya da otel eşleşmedi)','error',4500); return; }
+    } else if(a==='oprKonf'){
+      const tarih=document.getElementById('rzTopluTarih').value||new Date().toISOString().slice(0,10);
+      hedef.forEach(r=>{ if(!_rzOprKonfGerekli(r)) return; r.oprKonf=true; r.oprKonfTarih=tarih; n++; });
+    } else if(a==='tarihKaydir'){
+      const g=parseInt(document.getElementById('rzTopluGun').value); if(!g){ showToast('Gün sayısı girin (ör. 1 veya -1)','error'); return; }
+      hedef.forEach(r=>{ if(r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) r.kalkis=_rzGun(r.kalkis,g); if(r.opsKalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.opsKalkis)) r.opsKalkis=_rzGun(r.opsKalkis,g);
+        (r.kartlar||[]).forEach(k=>{ ['baslangic','opsiyon','maxIptal','odeme'].forEach(f=>{ if(k[f]&&/^\d{4}-\d{2}-\d{2}$/.test(k[f])) k[f]=_rzGun(k[f],g); }); }); n++; });
     } else if(a==='personel'){
       hedef.forEach(r=>{ r.personel=true; n++; });
     } else if(a==='personelKaldir'){
@@ -12072,9 +12108,11 @@ function rzTopluUygula(){
       for(let i=rez.length-1;i>=0;i--) if(sec.includes(rez[i].id)){ rez.splice(i,1); n++; }
     }
     rzSave(); window._rzSec.clear(); renderRezvListe();
-    showToast(n+' rezervasyon güncellendi','success');
+    showToast(n+(['otel','konfirme','gonderildi'].includes(a)?' kart':' rezervasyon')+' güncellendi','success');
   };
   if(a==='sil') showConfirm('⚠️','Toplu Silme',sec.length+' rezervasyon kalıcı olarak silinecek. Emin misiniz?','Sil',yap);
+  else if(a==='tarihKaydir') showConfirm('📅','Tarihleri Kaydır',sec.length+' kaydın giriş, kart ve deadline tarihleri '+(document.getElementById('rzTopluGun').value||'?')+' gün kaydırılacak.','Kaydır',yap);
+  else if(a==='otel') showConfirm('🏨','Otele Yerleştir',sec.length+' kayıtta eşleşen kartların oteli "'+(document.getElementById('rzTopluOtelYeni').value||'')+'" olacak (konfirmeli kartlar yeniden Gönderilmedi olur).','Yerleştir',yap);
   else yap();
 }
 function rzKodEsle(){
