@@ -620,7 +620,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)
 
 /* ── REZERVASYON INTAKE ── */
 .rztipb{font-size:.62rem;font-weight:800;border-radius:6px;padding:2px 8px;white-space:nowrap}
-.rztb-urun{background:#E1F5EE;color:#085041}.rztb-otel{background:#fde8d4;color:#7c3a0b}.rzkchip{display:inline-block;font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:6px;margin-left:4px;white-space:nowrap;vertical-align:middle}.rzopsbag{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:9px;padding:4px 10px;font-size:.74rem;color:#1e3a8a;font-weight:700;cursor:pointer}.rzopsbag:hover{background:#dbeafe}.rzyf{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}.rzyf .field{margin-bottom:0}.rzyf .ftam{grid-column:1/-1}.rztb-transfer{background:#FAEEDA;color:#633806}
+.rztb-urun{background:#E1F5EE;color:#085041}.rztb-otel{background:#fde8d4;color:#7c3a0b}.rzdch{display:inline-block;font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:7px;white-space:nowrap;vertical-align:middle}.rzd-yeni{background:#f1f5f9;color:#475569}.rzd-ilet{background:#fef3c7;color:#92400e}.rzd-konf{background:#dcfce7;color:#166534}.rzd-deg{background:#e0f2fe;color:#075985}.rzd-ipt{background:#fee2e2;color:#b91c1c}.rzd-tik{cursor:pointer;opacity:.55;border:1.5px solid transparent}.rzd-tik.on{opacity:1;border-color:currentColor}.rzkz{display:flex;align-items:center;gap:0;margin-top:2px}.rzkz-ad{flex:1;text-align:center;font-size:.6rem;font-weight:800;padding:5px 6px;border:1.5px solid var(--border);background:#fff;color:#94a3b8;cursor:pointer;white-space:nowrap}.rzkz-ad:first-child{border-radius:8px 0 0 8px}.rzkz-ad:last-child{border-radius:0 8px 8px 0}.rzkz-ad+.rzkz-ad{margin-left:-1.5px}.rzkz-ad.ok{background:#dcfce7;color:#166534;border-color:#86efac}.rzkz-ad.on{background:var(--primary);color:#fff;border-color:var(--primary);position:relative;z-index:1}.rzkz-ad.ok.on{background:#16a34a;border-color:#16a34a}body.dark .rzkz-ad{background:var(--card)}.rzkchip{display:inline-block;font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:6px;margin-left:4px;white-space:nowrap;vertical-align:middle}.rzopsbag{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:9px;padding:4px 10px;font-size:.74rem;color:#1e3a8a;font-weight:700;cursor:pointer}.rzopsbag:hover{background:#dbeafe}.rzyf{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}.rzyf .field{margin-bottom:0}.rzyf .ftam{grid-column:1/-1}.rztb-transfer{background:#FAEEDA;color:#633806}
 .rzchip{font-size:.62rem;font-weight:700;border-radius:9px;padding:1px 7px;white-space:nowrap}
 .rzc-bek{background:#fee2e2;color:#b91c1c}.rzc-ok{background:#d1fae5;color:#065f46}
 .rzlst{width:100%;border-collapse:collapse;font-size:.8rem}
@@ -1887,6 +1887,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:.8rem">
         <button class="btn btn-outline btn-sm" onclick="rzListeGoster()">← Liste</button>
         <span id="rzTipBadge"></span>
+        <span id="rzRezTipWrap" style="display:inline-flex;gap:4px;align-items:center;margin-left:6px" title="Rez. tipi: Yeni / Değişiklik / İptal"></span>
         <span style="flex:1"></span>
         <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="rzSil()"><svg class="ic"><use href="#i-trash"/></svg> Sil</button>
       </div>
@@ -1897,6 +1898,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
         <div class="field" id="rzFKalkis" style="margin-bottom:0"><label>Giriş Tarihi</label><input type="date" id="rzKalkis" list="rzKalkisListesi" onchange="rzDSet('kalkis',this.value)"><datalist id="rzKalkisListesi"></datalist></div>
         <div class="field" id="rzFCikis" style="margin-bottom:0"><label>Çıkış Tarihi</label><input type="date" id="rzCikis" disabled title="Konaklama kartlarından / ürün gece sayısından otomatik" style="background:var(--primary-soft);border-style:dashed"></div>
         <div class="field" style="margin-bottom:0"><label>Satış Tarihi</label><input type="date" id="rzSatis" onchange="rzDSet('satisTarihi',this.value)"></div>
+        <div class="field" id="rzFOprKonf" style="margin-bottom:0"><label title="Operatöre/acenteye konfirmasyon verildi mi">Operatör konf.</label><span style="display:inline-flex;align-items:center;gap:6px;height:34px"><input type="checkbox" id="rzOprKonf" onchange="rzOprKonf(this.checked)" style="width:18px;height:18px"><input type="date" id="rzOprKonfT" onchange="rzDSet('oprKonfTarih',this.value)" style="display:none"></span></div>
       </div>
 
       <div class="card">
@@ -2323,7 +2325,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v687 · 03.10.2026';
+const APP_VER='v688 · 03.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -10691,7 +10693,7 @@ function renderRezvListe(){
   const tumSecili=list.length&&list.every(r=>window._rzSec.has(r.id));
   const kfi='style="width:100%;box-sizing:border-box;padding:4px 6px;border:1.2px solid var(--border);border-radius:6px;font-size:.72rem;font-family:inherit;background:#fff"';
   const kfAktif=Object.values(kf).some(v=>v);
-  let h='<thead><tr><th style="width:30px"><input type="checkbox" '+(tumSecili?'checked ':'')+'onclick="event.stopPropagation()" onchange="rzSecTum(this.checked)" title="Filtredeki tümünü seç"></th><th>Tip</th><th>Operatör</th><th>Voucher</th><th>Ürün</th><th>Giriş</th><th>Müşteriler</th><th>Pax</th><th>Satış T.</th><th>Durum</th><th>Konfirme</th></tr>'
+  let h='<thead><tr><th style="width:30px"><input type="checkbox" '+(tumSecili?'checked ':'')+'onclick="event.stopPropagation()" onchange="rzSecTum(this.checked)" title="Filtredeki tümünü seç"></th><th>Tip</th><th>Operatör</th><th>Voucher</th><th>Ürün</th><th>Giriş</th><th>Müşteriler</th><th>Pax</th><th>Satış T.</th><th>Durum</th><th>Otel konf.</th><th>Opr. konf.</th></tr>'
    +'<tr class="rzkolf">'
    +'<th>'+(kfAktif?'<button onclick="window._rzKolF={};renderRezvListe()" title="Kolon filtrelerini temizle" style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;cursor:pointer;font-size:.7rem;padding:3px 5px">✕</button>':'')+'</th>'
    +'<th><select id="rzKF_tip" '+kfi+' onchange="rzKolF(\'tip\',this.value)"><option value="">—</option><option value="urun"'+(kf.tip==='urun'?' selected':'')+'>Ürün</option><option value="otel"'+(kf.tip==='otel'?' selected':'')+'>Otel</option><option value="transfer"'+(kf.tip==='transfer'?' selected':'')+'>Transfer</option></select></th>'
@@ -10703,14 +10705,16 @@ function renderRezvListe(){
    +'<th><input id="rzKF_pax" '+kfi+' value="'+esc(kf.pax||'')+'" placeholder="≥" inputmode="numeric" style="width:44px;padding:4px 4px;border:1.2px solid var(--border);border-radius:6px;font-size:.72rem;font-family:inherit" oninput="rzKolF(\'pax\',this.value)"></th>'
    +'<th><input id="rzKF_satis" '+kfi+' value="'+esc(kf.satis||'')+'" placeholder="GG.AA…" oninput="rzKolF(\'satis\',this.value)"></th>'
    +'<th><select id="rzKF_durum" '+kfi+' onchange="rzKolF(\'durum\',this.value)"><option value="">—</option><option value="aktif"'+(kf.durum==='aktif'?' selected':'')+'>Aktif</option><option value="iptal"'+(kf.durum==='iptal'?' selected':'')+'>İptal</option><option value="bekliyor"'+(kf.durum==='bekliyor'?' selected':'')+'>Açılım bekliyor</option><option value="acildi"'+(kf.durum==='acildi'?' selected':'')+'>Açıldı</option></select></th>'
-   +'<th></th></tr></thead><tbody>';
+   +'<th></th><th></th></tr></thead><tbody>';
   list.forEach(r=>{
     const d=rzDurum(r);
     const hk=(r.kartlar||[]).filter(k=>k.tip!=='ulasim');
-    const konf=hk.length?`${hk.filter(k=>k.konfirme==='Evet').length}/${hk.length}`:'—';
+    const konfN=hk.filter(k=>k.konfirme==='Evet').length, gonN=hk.filter(k=>k.konfirme==='Gönderildi').length;
+    const konf=!hk.length?'<span style="color:var(--muted)">—</span>':(konfN===hk.length?`<span class="rzdch rzd-konf">${hk.length===1&&hk[0].konfirmeNo?'#'+esc(hk[0].konfirmeNo):'KONFİRME '+konfN+'/'+hk.length}</span>`:(konfN||gonN)?`<span class="rzdch rzd-ilet">${konfN}/${hk.length}${gonN?' · '+gonN+' gönd.':''}</span>`:`<span class="rzdch rzd-yeni">GÖNDERİLMEDİ 0/${hk.length}</span>`);
+    const oprK=!_rzOprKonfGerekli(r)?'<span style="color:var(--muted)">—</span>':(r.oprKonf?`<span class="rzdch rzd-konf" title="Operatör konfirmesi">✓ ${_rzTrT(r.oprKonfTarih)||''}</span>`:'<span class="rzdch rzd-yeni" title="Operatöre konfirme verilmedi">OPR —</span>');
     h+=`<tr onclick="rzAc('${r.id}')"${r.durum==='iptal'?' style="background:#fef2f2"':''}>
       <td onclick="event.stopPropagation()"><input type="checkbox" ${window._rzSec.has(r.id)?'checked ':''}onchange="rzSecTog('${r.id}',this.checked)"></td>
-      <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span>${r.tip==='otel'?_rzKaynakChip(r):(r.personel?' <span style="background:#7e22ce;color:#fff;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 6px">PERSONEL</span>':'')}${r.durum==='iptal'?' <span style="background:#dc2626;color:#fff;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">İPTAL</span>':''}</td>
+      <td><span class="rztipb rztb-${r.tip}">${tipAd[r.tip]||r.tip}</span>${r.tip==='otel'?_rzKaynakChip(r):(r.personel?' <span style="background:#7e22ce;color:#fff;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 6px">PERSONEL</span>':'')}${r.durum!=='iptal'&&r.rezTip==='degisiklik'?' <span class="rzdch rzd-deg">DEĞİŞİKLİK</span>':''}${r.durum==='iptal'?' <span style="background:#dc2626;color:#fff;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">İPTAL</span>':''}</td>
       <td>${_rzKaynak(r)==='operasyon'?`<span class="rzopsbag" onclick="event.stopPropagation();rzOpsDosyaAc('${r.opsPkgId||''}','${esc(r.opsKalkis||'')}')">⇢ ${esc(_rzOpsBag(r)||'tur seçilmedi')}</span>`:_rzKaynak(r)==='sirket'?'<span style="color:var(--muted)">Şirket</span>':esc(r.operator||'—')}</td><td><b>${esc(r.voucher||(r.tip==='otel'&&(r.musteriler||[])[0]?((r.musteriler[0].soyad||'')+' '+(r.musteriler[0].ad||'')).trim():'')||'—')}</b></td>
       <td>${(()=>{ const pkgVar=r.pkgId&&getPackages().some(p=>p.id===r.pkgId);
         if(r.tip==='urun'||(r.urunKod&&!pkgVar)) return `<b>${esc(r.urunKod||'?')}</b>${(!pkgVar)?' <span style="background:#fef3c7;color:#92400e;border-radius:5px;font-size:.6rem;font-weight:800;padding:1px 5px" title="Bu kod üründe tanımlı değil — ürünü tanımlayıp Sejour dosyasını yeniden yükleyin">KOD EŞLEŞMEDİ</span>':''}`;
@@ -10719,10 +10723,10 @@ function renderRezvListe(){
       <td>${(r.musteriler||[]).slice(0,2).map(m=>esc(m.soyad||'')).join(', ')}${(r.musteriler||[]).length>2?' +'+(r.musteriler.length-2):''}</td>
       <td><b>${(r.musteriler||[]).length}</b></td><td>${_rzTrT(r.satisTarihi)}</td>
       <td>${r.tip==='urun'?(d==='acildi'?'<span class="rzchip rzc-ok">açıldı</span>':'<span class="rzchip rzc-bek">açılım bekliyor</span>'):'<span class="rzchip" style="background:#e5e7eb;color:#4b5563">—</span>'}</td>
-      <td>${konf}</td></tr>`;
+      <td>${konf}</td><td>${oprK}</td></tr>`;
   });
   h+='</tbody>';
-  if(!list.length) h+='<tbody><tr><td colspan="11" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
+  if(!list.length) h+='<tbody><tr><td colspan="12" style="text-align:center;color:var(--muted);padding:18px">Kayıt yok</td></tr></tbody>';
   document.getElementById('rzLst').innerHTML=h;
   try{ const ub=document.getElementById('rzUyariBand'); if(ub) ub.innerHTML=_rzPersonelBant()+_rzYanlisUrunBant()+_rzIptalUyariHTML(); }catch(e){}
   rzTopluBarGuncel();
@@ -11440,6 +11444,8 @@ function rzDetay(){
       ${r.tip!=='otel'?'<option value="otel">→ Otel kartı</option>':''}
       ${r.tip!=='transfer'?'<option value="transfer">→ Sadece Transfer</option>':''}
     </select>`;
+  { const el=document.getElementById('rzRezTipWrap'); if(el){ const t=_rzRezTip(r); el.innerHTML=[['yeni','YENİ','rzd-yeni'],['degisiklik','DEĞİŞİKLİK','rzd-deg'],['iptal','İPTAL','rzd-ipt']].map(x=>`<span class="rzdch rzd-tik ${x[2]}${t===x[0]?' on':''}" onclick="rzRezTipSet('${x[0]}')" title="Rez. tipi">${x[1]}</span>`).join('')+(r.durum==='iptal'&&r.iptalTarihi?`<span style="font-size:.62rem;color:#b91c1c;margin-left:4px">${_rzTrT(r.iptalTarihi)}</span>`:''); } }
+  { const f=document.getElementById('rzFOprKonf'); if(f){ f.style.display=_rzOprKonfGerekli(r)?'':'none'; const c=document.getElementById('rzOprKonf'), d=document.getElementById('rzOprKonfT'); if(c) c.checked=!!r.oprKonf; if(d){ d.value=r.oprKonfTarih||''; d.style.display=r.oprKonf?'':'none'; } } }
   rzOp.value=r.operator||''; document.getElementById('rzOpListesi').innerHTML=_rzOpAdlar().map(o=>`<option value="${esc(o)}">`).join('');
   rzVoucher.value=r.voucher||''; rzSatis.value=r.satisTarihi||''; rzNot.value=r.not||'';
   document.getElementById('rzOpUcusSatir').textContent=r.opUcusNot?('Operatör uçuş beyanı: '+r.opUcusNot):'';
@@ -11697,6 +11703,7 @@ function rzKartlar(){
         <input value="${(k.otel||'').replace(/"/g,'&quot;')}" list="rzOtelList_${i}" placeholder="${bolgeli?'OTEL SEÇ — şablon: '+esc(k.sehir||'')+' · '+esc(k.pansiyon||''):''}" onchange="rzKOtel(${i},this)">
         <datalist id="rzOtelList_${i}">${_rzOtelOpts(k.sehir)}</datalist>
         <span class="sab">${esc(k.sehir||'')}${k.yildiz?' · '+esc(k.yildiz):''} · ${esc(k.pansiyon||'')}</span>
+        ${_rzKonfChip(k)}
         <button class="btn btn-outline btn-sm" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35)" onclick="rzRooming(${i})">İsim Listesi</button>
         <button style="background:none;border:none;color:#fca5a5;cursor:pointer;font-size:.85rem" onclick="rzKSil(${i})">✕</button>
       </div>
@@ -11706,7 +11713,10 @@ function rzKartlar(){
         <div class="field"><label>Bitiş</label><input value="${_rzTrT(bitis)}" disabled style="background:var(--light);width:96px"></div>
         <div class="field" style="min-width:120px"><label>Oda(lar)</label><input value="${String(k.oda||'').replace(/"/g,'&quot;')}" placeholder="1×DBL" list="rzOdaTipL_${i}" onchange="rzKSet(${i},'oda',this.value)"><datalist id="rzOdaTipL_${i}">${odaTL.map(x=>`<option value="1×${esc(x.kod)}">${esc(x.ad||'')}${(x.maxPax||x.kap)?' (max '+(x.maxPax||x.kap)+' pax)':''}</option>`).join('')}</datalist></div>
         <div class="field"><label>Pansiyon</label><select onchange="rzKSet(${i},'pansiyon',this.value)">${pansL.map(o=>`<option ${k.pansiyon===o?'selected':''}>${o}</option>`).join('')}</select></div>
-        <div class="field"><label>Konfirme</label><select onchange="rzKSet(${i},'konfirme',this.value)" style="font-weight:700;color:${k.konfirme==='Evet'?'#065f46':k.konfirme==='Gönderildi'?'#92400e':'#b91c1c'}">${['Gönderilmedi','Gönderildi','Evet'].map(o=>`<option ${k.konfirme===o?'selected':''}>${o}</option>`).join('')}</select></div>
+        <div class="field" style="min-width:250px"><label>Otel konfirmesi</label><div class="rzkz">${(()=>{ const st=_rzKonfSira(k); return [['Gönderilmedi','Gönderilmedi'],['Gönderildi','Gönderildi'],['Evet','Konfirme']].map((o,oi)=>`<span class="rzkz-ad${oi<st?' ok':''}${oi===st?' on':''}${oi<st?' ok':''}" onclick="rzKonfAdim(${i},'${o[0]}')">${o[1]}</span>`).join(''); })()}</div></div>
+        <div class="field"><label>Konfirme No</label><input value="${esc(k.konfirmeNo||'')}" placeholder="otelin no'su" style="width:110px;font-weight:700" onchange="rzKSet(${i},'konfirmeNo',this.value.trim())"></div>
+        <div class="field"><label>Konf. tarihi</label><input type="date" value="${esc(k.konfirmeTarih||'')}" onchange="rzKSet(${i},'konfirmeTarih',this.value)"></div>
+        <div class="field"><label>Gönderim</label><input type="date" value="${esc(k.gonderimTarih||'')}" title="Otele talep gönderildiği tarih" onchange="rzKSet(${i},'gonderimTarih',this.value)"></div>
         <div class="field" style="flex:1;min-width:140px"><label>Kart Notu</label><input value="${(k.not||'').replace(/"/g,'&quot;')}" onchange="rzKSet(${i},'not',this.value)"></div>
       </div>
       <div class="rzuyeler" style="display:${kacik?'flex':'none'}"><span class="t">Üyeler (${(k.uyeler||[]).length}/${(r.musteriler||[]).length}):</span>
@@ -11715,6 +11725,23 @@ function rzKartlar(){
     </div>`;
   }).join('');
 }
+function _rzKonfSira(k){ return k.konfirme==='Evet'?2:k.konfirme==='Gönderildi'?1:0; }
+function _rzKonfChip(k){ const st=_rzKonfSira(k); if(st===2) return `<span class="rzdch rzd-konf" title="Otel konfirmesi">KONFİRME${k.konfirmeNo?' #'+esc(k.konfirmeNo):''}</span>`; if(st===1) return `<span class="rzdch rzd-ilet" title="Otele gönderildi${k.gonderimTarih?' · '+_rzTrT(k.gonderimTarih):''}">GÖNDERİLDİ</span>`; return `<span class="rzdch rzd-yeni" title="Otele henüz gönderilmedi">GÖNDERİLMEDİ</span>`; }
+function rzKonfAdim(i,v){ const r=rzR(); if(!r||!r.kartlar[i]) return; const k=r.kartlar[i]; const bugun=new Date().toISOString().slice(0,10);
+  k.konfirme=v;
+  if(v==='Gönderildi'&&!k.gonderimTarih) k.gonderimTarih=bugun;
+  if(v==='Evet'){ if(!k.konfirmeTarih) k.konfirmeTarih=bugun; if(!k.gonderimTarih) k.gonderimTarih=bugun; if(!k.konfirmeNo) showToast('Konfirme işaretlendi — otelin konfirme numarasını da girin','success',3500); }
+  rzSave(); rzKartlar(); rzMusteriler(); renderRzUrunKarti(); }
+// Rez. tipi (Yeni / Değişiklik / İptal) — iptal = r.durum
+function _rzRezTip(r){ return r.durum==='iptal'?'iptal':(r.rezTip==='degisiklik'?'degisiklik':'yeni'); }
+function _rzRezTipChip(r){ const t=_rzRezTip(r); return t==='iptal'?'<span class="rzdch rzd-ipt">İPTAL</span>':t==='degisiklik'?'<span class="rzdch rzd-deg">DEĞİŞİKLİK</span>':'<span class="rzdch rzd-yeni">YENİ</span>'; }
+function rzRezTipSet(t){ const r=rzR(); if(!r) return; const bugun=new Date().toISOString().slice(0,10);
+  const yap=()=>{ if(t==='iptal'){ r.durum='iptal'; if(!r.iptalTarihi) r.iptalTarihi=bugun; } else { if(r.durum==='iptal'){ r.durum=''; r.iptalTarihi=''; } r.rezTip=(t==='degisiklik'?'degisiklik':''); if(t==='degisiklik'&&!r.degisiklikTarihi) r.degisiklikTarihi=bugun; } rzSave(); rzDetay(); try{renderRezvListe();}catch(e){} };
+  if(t==='iptal'&&r.durum!=='iptal') showConfirm('✕','Rezervasyonu iptal et','Kayıt İPTAL olarak işaretlenecek; yolcu sayımlarından düşer, uçak listesinde bilet iptali uyarısı üretir.','İptal et',yap);
+  else if(t!=='iptal'&&r.durum==='iptal') showConfirm('↺','İptali kaldır','Kayıt yeniden aktif olacak.','Aktif et',yap);
+  else yap(); }
+function _rzOprKonfGerekli(r){ return r&&(r.tip==='urun'||(r.tip==='otel'&&_rzKaynak(r)==='operator')); }
+function rzOprKonf(v){ const r=rzR(); if(!r) return; r.oprKonf=!!v; if(v&&!r.oprKonfTarih) r.oprKonfTarih=new Date().toISOString().slice(0,10); if(!v) r.oprKonfTarih=''; rzSave(); rzDetay(); }
 function _rzOteller(){ try{ const t=getTanimlar()||{}; return Array.isArray(t.oteller)?t.oteller:[]; }catch(e){ return []; } }
 function _rzOtelOpts(sehir){
   const list=_rzOteller();
