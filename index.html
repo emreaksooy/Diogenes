@@ -665,6 +665,12 @@ body.dark .rzkart-head input,body.dark .rzkart-head select,body.dark .rzkart-hea
 .rzmet .l{font-size:.66rem;color:var(--muted);font-weight:600}
 .rzmodal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:none;align-items:center;justify-content:center;padding:20px}
 .rzmodal.open{display:flex}
+#rzVDetay.rzpanel{position:fixed;top:var(--nav-h);right:0;bottom:0;width:min(84vw,1280px);background:var(--bg);box-shadow:-18px 0 44px rgba(16,24,40,.22);border-left:1.5px solid var(--border);overflow:auto;z-index:850;padding:12px 18px 60px;-webkit-overflow-scrolling:touch}
+.rzpanel-karart{position:fixed;left:0;right:0;bottom:0;top:var(--nav-h);background:rgba(15,23,42,.28);z-index:849}
+#rzPanelBar{position:sticky;top:-12px;z-index:5;background:var(--bg);margin:-12px -18px 10px;padding:10px 18px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#rzPanelNav{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;color:var(--muted);font-weight:700}
+#rzPanelNav button{min-width:30px}
+@media(max-width:980px){#rzVDetay.rzpanel{width:100%;left:0;border-left:none;padding:8px 10px 96px}#rzPanelBar{margin:-8px -10px 8px;padding:8px 10px;top:-8px}}
 .rzbox{background:#fff;border-radius:16px;padding:1.4rem;max-width:680px;width:100%;box-shadow:0 24px 64px rgba(16,24,40,.26)}
 .rzbox h3{font-size:.95rem;margin-bottom:1rem}
 .rzsec{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
@@ -1883,9 +1889,10 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
       <div class="card" style="padding:.4rem .6rem"><table class="rzlst" id="rzMonTbl"></table></div>
     </div>
 
-    <div id="rzVDetay" style="display:none">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:.8rem">
-        <button class="btn btn-outline btn-sm" onclick="rzListeGoster()">← Liste</button>
+    <div id="rzVDetay" class="rzpanel" style="display:none">
+      <div id="rzPanelBar">
+        <button class="btn btn-outline btn-sm" onclick="rzListeGoster()" title="Kapat (Esc) — liste olduğu gibi kalır">✕ Kapat</button>
+        <span id="rzPanelNav"><button class="btn btn-outline btn-sm" onclick="rzOnceki()" title="Önceki kayıt">◀</button><span id="rzPanelIdx"></span><button class="btn btn-outline btn-sm" onclick="rzSonraki()" title="Sonraki kayıt">▶</button></span>
         <span id="rzTipBadge"></span>
         <span id="rzRezTipWrap" style="display:inline-flex;gap:4px;align-items:center;margin-left:6px" title="Rez. tipi: Yeni / Değişiklik / İptal"></span>
         <span style="flex:1"></span>
@@ -2325,7 +2332,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v688 · 03.10.2026';
+const APP_VER='v689 · 03.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2725,6 +2732,7 @@ function showPage(id, tabEl) {
   if(_cloudOn&&sbRol==='rezervasyon'&&['paket','maliyet','harita','cikti','sunum','opdetay'].includes(id)) id='urun';
   _navPush();
   try{ if(id!=='operasyon'){ const ab=document.querySelector('body>#trAtabar'); ab&&ab.remove(); } }catch(e){}
+  try{ if(id!=='rezervasyon') rzPanelKapat(); }catch(e){}
   try{ document.body.classList.remove('mnavAcik'); }catch(e){}
   window._sonSayfa=id;
   _mTabAktif(id);
@@ -9663,18 +9671,38 @@ const rzDurum=r=>r.tip!=='urun'?'—':((r.kartlar||[]).length?'acildi':'bekliyor
 const _rzOpAdlar=()=>getOperators().map(o=>o.ad).filter(Boolean);
 
 function renderRezvPage(){
-  if(_rzCur&&rzR()) rzDetay();
+  if(_rzCur&&rzR()){ _rzViewShow('rzVListe'); try{ renderRezvListe(); }catch(e){} _rzPanelAc(); rzDetay(); }
   else rzListeGoster();
 }
 function rzTab(t){
   document.querySelectorAll('.rz-navitem').forEach(el=>el.classList.toggle('active-ops',el.getAttribute('data-rt')===t));
+  if(_rzCur){ _rzCur=null; try{localStorage.removeItem('dmc_lastRezv');}catch(e){} } rzPanelKapat();
   if(t==='ekran') rzListeGoster();
   else if(t==='oteller') rzOtelGoster();
   else if(t==='monitor') rzMonGoster();
 }
 function _rzViewShow(id){
-  ['rzVListe','rzVDetay','rzVOtel','rzVOtelDet','rzVMon'].forEach(x=>{ const el=document.getElementById(x); if(el) el.style.display=(x===id)?'':'none'; });
+  ['rzVListe','rzVOtel','rzVOtelDet','rzVMon'].forEach(x=>{ const el=document.getElementById(x); if(el) el.style.display=(x===id)?'':'none'; });
 }
+// ── DETAY PANELİ (monitör mantığı): liste arkada filtresi/kaydırmasıyla durur, detay üstüne açılır ──
+function _rzPanelAc(){
+  const d=document.getElementById('rzVDetay'); if(!d) return;
+  if(d.parentNode!==document.body) document.body.appendChild(d); // iOS: transform'lu ata fixed'i hapseder
+  let k=document.getElementById('rzPanelKarart'); if(!k){ k=document.createElement('div'); k.id='rzPanelKarart'; k.className='rzpanel-karart'; k.onclick=()=>rzListeGoster(); document.body.appendChild(k); }
+  const altta=['rzVListe','rzVMon','rzVOtel','rzVOtelDet'].some(x=>{ const el=document.getElementById(x); return el&&el.style.display!=='none'; });
+  if(!altta){ _rzViewShow('rzVListe'); try{ renderRezvListe(); }catch(e){} }
+  k.style.display=''; d.style.display=''; d.scrollTop=0;
+  _rzPanelNavGuncelle();
+}
+function rzPanelKapat(){ const d=document.getElementById('rzVDetay'); if(d) d.style.display='none'; const k=document.getElementById('rzPanelKarart'); if(k) k.style.display='none'; }
+function _rzPanelNavGuncelle(){
+  const ids=window._rzSonListe||[]; const i=ids.indexOf(_rzCur); const el=document.getElementById('rzPanelIdx'); if(!el) return;
+  el.textContent=i>=0?((i+1)+' / '+ids.length):'';
+  const nav=document.getElementById('rzPanelNav'); if(nav) nav.style.display=ids.length>1&&i>=0?'':'none';
+}
+function rzOnceki(){ const ids=window._rzSonListe||[]; const i=ids.indexOf(_rzCur); if(i>0) rzAc(ids[i-1]); }
+function rzSonraki(){ const ids=window._rzSonListe||[]; const i=ids.indexOf(_rzCur); if(i>=0&&i<ids.length-1) rzAc(ids[i+1]); }
+document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; const d=document.getElementById('rzVDetay'); if(!d||d.style.display==='none') return; if(document.querySelector('.rzmodal.open')) return; const co=document.getElementById('confirmOverlay'); if(co&&co.style.display&&co.style.display!=='none') return; const t=e.target; if(t&&['INPUT','TEXTAREA','SELECT'].includes(t.tagName)) return; rzListeGoster(); });
 function rzMonGoster(){
   _rzCur=null; _rzViewShow('rzVMon');
   const gruplar={};
@@ -9718,7 +9746,11 @@ function _rzIptalUyariHTML(){
     </div>`; }).join('')}`}
   </div>`;
 }
-function rzListeGoster(){ _rzCur=null; try{localStorage.removeItem('dmc_lastRezv');}catch(e){} _rzViewShow('rzVListe'); renderRezvListe(); }
+function rzListeGoster(){ const acikti=_rzCur; _rzCur=null; try{localStorage.removeItem('dmc_lastRezv');}catch(e){} rzPanelKapat();
+  const mon=document.getElementById('rzVMon'); const monAcik=mon&&mon.style.display!=='none';
+  if(monAcik){ try{ rzMonGoster(); }catch(e){} return; }
+  const sy=window.scrollY; _rzViewShow('rzVListe'); renderRezvListe();
+  if(acikti){ try{ window.scrollTo(0,sy); }catch(e){} } }
 function rzOtelGoster(){ _rzCur=null; _otlPopAcik=null; _rzViewShow('rzVOtel'); rzOtelRender(); }
 function rzOtelRender(){
   const t=getTanimlar()||{}; const list=Array.isArray(t.oteller)?t.oteller:[];
@@ -11218,7 +11250,7 @@ function rzYeniTip(tip){
   const r={id:genId(),tip,operator:'',voucher:'',pkgId:'',urunKod:'',kalkis:'',satisTarihi:new Date().toISOString().slice(0,10),not:'',odaKomp:'',ukartlar:[],opUcusNot:'',musteriler:[],kartlar:[],transferler:[]};
   getRezv().push(r); rzSave(); rzAc(r.id);
 }
-function rzAc(id){ _navPush(); _rzCur=id; try{localStorage.setItem('dmc_lastRezv',id);}catch(e){} _rzViewShow('rzVDetay'); document.querySelectorAll('.rz-navitem').forEach(el=>el.classList.toggle('active-ops',el.getAttribute('data-rt')==='ekran')); rzDetay(); }
+function rzAc(id){ _navPush(); _rzCur=id; try{localStorage.setItem('dmc_lastRezv',id);}catch(e){} _rzPanelAc(); document.querySelectorAll('.rz-navitem').forEach(el=>el.classList.toggle('active-ops',el.getAttribute('data-rt')==='ekran')); rzDetay(); }
 function rzSil(){
   const r=rzR(); if(!r) return;
   showConfirm('🗑️','Rezervasyonu Sil',(r.operator||'')+' / '+(r.voucher||'—')+' silinecek.','Evet, Sil',()=>{
@@ -11465,6 +11497,7 @@ function rzDetay(){
   { const _uzP=(r.tip==='urun')?getPackages().find(p=>p.id===r.pkgId):null; const _w=document.getElementById('rzUzatmaWrap');
     if(_w){ if(_uzP&&_uzP.uzatma&&_uzP.uzatma.aktif){ _w.style.display='inline-flex'; const _sel=document.getElementById('rzUzatma'); if(_sel)_sel.value=String(+r.uzatmaHafta||0); } else _w.style.display='none'; } }
   rzMusteriler(); rzKartlar(); rzTrf(); renderRzUrunKarti(); rzFiyatOzet();
+  try{ _rzPanelNavGuncelle(); }catch(e){}
 }
 function rzTipDegistir(v){
   const r=rzR(); if(!r||!v||v===r.tip){ rzDetay(); return; }
