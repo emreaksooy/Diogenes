@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v694 · 03.10.2026';
+const APP_VER='v695 · 03.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18019,7 +18019,7 @@ function _trSatirBolum(r){
 }
 function _trRehInfo(r){
   const gr=_trGrupOf(r);
-  if((gr.rehber||'').trim()) return {ad:gr.rehber.trim(),tel:_rehTelBul(gr.rehber),kaynak:'görev'};
+  if((gr.rehber||'').trim()){ let uyar=''; try{ const bl=_trSatirBolum(r); if(bl!=='01'){ const sr=_opsRehGet(r.pkgId,r.kalkis,bl); if(sr&&(sr.rehberAd||'').trim()&&_norm(sr.rehberAd)!==_norm(gr.rehber)) uyar=sr.rehberAd.trim(); } }catch(e){} return {ad:gr.rehber.trim(),tel:_rehTelBul(gr.rehber),kaynak:'görev',bolumFark:uyar}; }
   try{
     const bl=_trSatirBolum(r);
     let sr=_opsRehGet(r.pkgId,r.kalkis,bl);
@@ -19027,6 +19027,32 @@ function _mutAracExcel(){
   showToast('Excel indirildi: '+adx+' — '+firmalar.length+' firma sayfası','success',6000);
 }
 // ESKİ (PNR bazlı) atama kayıtlarını yeni uçuş-bazlı kimliklere taşı — idempotent, tek seferlik
+// Aynı görev id'sine (A93 gibi) farklı günlerin işleri bağlanmışsa (eski paylaşımlı sayaç çakışması) güne göre ayır.
+function _trGrupCakismaOnar(){
+  try{
+    if(_cloudOn&&sbRol&&_acl('operasyon')!=='e') return;
+    const Tr=getTransfer(); const G=Tr.gruplar||{}; if(!Object.keys(G).length) return;
+    const rows=_trGenRows().filter(r=>r.grup&&G[r.grup]);
+    const byG={}; rows.forEach(r=>{ (byG[r.grup]=byG[r.grup]||[]).push(r); });
+    let deg=0; const rapor=[];
+    Object.keys(byG).forEach(gid=>{
+      const L=byG[gid]; const tarihler=[...new Set(L.map(r=>r.tarih))].sort(); if(tarihler.length<2) return;
+      // birden çok gün: ilk gün grubu id'yi korur, diğer günler yeni id alır (meta kopyalanır)
+      tarihler.slice(1).forEach(t=>{
+        let yeni; do{ yeni='A'+String(Tr.seq||1).padStart(2,'0')+'-'+Date.now().toString(36).slice(-4)+Math.random().toString(36).slice(2,4); Tr.seq=(Tr.seq||1)+1; }while(G[yeni]);
+        G[yeni]=Object.assign({},G[gid],{ts:Date.now(),onarildi:gid}); delete G[yeni].onay;
+        const alt=L.filter(r=>r.tarih===t);
+        // rehber: satırların bölümüne göre yeniden öner (tek sefer + bölümü belliyse)
+        try{ const r0=alt[0]; const bl=_trSatirBolum(r0); const sr=_opsRehGet(r0.pkgId,r0.kalkis,bl); if(sr&&(sr.rehberAd||'').trim()) G[yeni].rehber=sr.rehberAd.trim(); }catch(e){}
+        alt.forEach(r=>{ if((r.vlist||[]).length){ const uk='|u:'+String(r.ucus||''); r.vlist.forEach(v=>{ const b=r.pkgId+'|'+r.kalkis+'|'+r.vseg+'|'+v; const e=Tr.vsat[b+uk]||Tr.vsat[b]; if(e&&e.grup===gid){ e.grup=yeni; e.onay=false; if(!Tr.vsat[b+uk]) Tr.vsat[b+uk]=e; } }); } else if(Tr.sat[r.id]&&Tr.sat[r.id].grup===gid){ Tr.sat[r.id].grup=yeni; Tr.sat[r.id].onay=false; } });
+        deg++; rapor.push(_fmtDateTR(t)+' '+[...new Set(alt.map(r=>r.urun))].join('/')+' ('+alt.length+' trf)');
+      });
+      // kalan ilk gün grubunun rehberini de bölüme göre düzelt (satırlar tek bölümse ve grup rehberi 01'in rehberiyse)
+      try{ const ilk=L.filter(r=>r.tarih===tarihler[0]); const r0=ilk[0]; const bl=_trSatirBolum(r0); if(bl!=='01'){ const sr=_opsRehGet(r0.pkgId,r0.kalkis,bl); const s1=_opsRehGet(r0.pkgId,r0.kalkis,'01'); if(sr&&(sr.rehberAd||'').trim()&&s1&&_norm(G[gid].rehber||'')===_norm(s1.rehberAd||'')&&_norm(sr.rehberAd)!==_norm(s1.rehberAd||'')){ G[gid].rehber=sr.rehberAd.trim(); deg++; rapor.push(_fmtDateTR(tarihler[0])+' rehber → '+sr.rehberAd); } } }catch(e){}
+    });
+    if(deg){ setTransfer(Tr); window._trKod=null; window._trVBolM=null; console.warn('Görev çakışması onarıldı:',rapor); showToast('⚠ '+deg+' görev çakışması onarıldı — farklı günlerin işleri aynı görev koduna bağlanmıştı, güne göre ayrıldı. Kontrol et: '+rapor.slice(0,4).join(' · ')+(rapor.length>4?' …':''),'error',12000); }
+  }catch(e){ console.warn('_trGrupCakismaOnar',e); }
+}
 function _trSatMigrate(){
   try{
     const T=getTransfer(); const sat=T.sat||{}; let deg=0;
@@ -19066,6 +19092,7 @@ function renderOpsTransfer(){
   try{ document.querySelectorAll('body>#trAtabar').forEach(e=>e.remove()); }catch(e){}
   const box=document.getElementById('opsPane_transfer'); if(!box) return;
   try{ _trSatMigrate(); }catch(e){}
+  try{ _trGrupCakismaOnar(); }catch(e){}
   window._trKod=_trKodMap();
   if(!_opsTrDate) _opsTrDate=_opsDate||_opsToday();
   const _mutTum=_mutIssues();
@@ -19217,7 +19244,7 @@ function renderOpsTransfer(){
     h+=`<td><b>${r.pax}</b></td>`;
     h+=`<td>${esc(r.bolge||'—')}</td>`;
     h+=`<td>${r.grup?`<span class="grupb">${_trKodOf(r.grup)}</span>`:'<span style="color:#b91c1c;font-weight:700">—</span>'}</td>`;
-    h+=`<td>${(function(){ const ri=_trRehInfo(r); if(!ri.ad) return '<span style="color:var(--muted)">—</span>'; const t=ri.tel?` title="${esc(ri.tel)}"`:''; return ri.kaynak==='görev'?`<span${t}>${esc(ri.ad)}</span>`:`<span style="color:var(--muted);font-style:italic"${t}>${esc(ri.ad)} <span style="font-size:.58rem">(grup)</span></span>`; })()}</td>`;
+    h+=`<td>${(function(){ const ri=_trRehInfo(r); if(!ri.ad) return '<span style="color:var(--muted)">—</span>'; const t=ri.tel?` title="${esc(ri.tel)}"`:''; return ri.kaynak==='görev'?`<span${t}>${esc(ri.ad)}</span>${ri.bolumFark?`<span style="display:block;font-size:.58rem;color:#b91c1c;font-weight:800" title="Bu satırın bölüm rehberi farklı — görevdeki rehberi kontrol et">⚠ bölüm rehberi: ${esc(ri.bolumFark)}</span>`:''}`:`<span style="color:var(--muted);font-style:italic"${t}>${esc(ri.ad)} <span style="font-size:.58rem">(grup)</span></span>`; })()}</td>`;
     h+=`<td>${gr&&(gr.arac||gr.arac2)?esc([gr.arac,gr.arac2].filter(Boolean).join(' + ')):(r.tahsis&&r.tahsis.arac?`<span style="color:#0369a1;font-weight:700">🚙 ${esc(r.tahsis.arac)}</span>`:'<span style="color:var(--muted)">—</span>')}${gr&&gr.plaka?`<div style="font-size:.64rem;font-weight:700">${esc(gr.plaka)}</div>`:(r.tahsis&&r.tahsis.plaka?`<div style="font-size:.64rem;font-weight:700">${esc(r.tahsis.plaka)}</div>`:'')}${gr&&(gr.soforAd||gr.soforTel)?`<div style="font-size:.62rem;color:var(--muted)">${esc(gr.soforAd||'')} ${esc(gr.soforTel||'')}</div>`:(r.tahsis&&(r.tahsis.sofor||r.tahsis.stel)?`<div style="font-size:.62rem;color:var(--muted)">${esc(r.tahsis.sofor||'')} ${esc(r.tahsis.stel||'')}</div>`:'')}${!gr&&r.tahsis&&r.tahsis.gorev?`<div style="font-size:.62rem;color:#0369a1">${esc(r.tahsis.gorev)}</div>`:''}${r.grup?` <button class="rowbtn" onclick="trGorevBilgiAc('${r.grup}')" title="Araç bilgisi: plaka + şoför">🚌</button>`:''}</td>`;
     h+=`<td>${gr&&gr.firma?esc(gr.firma):(r.tahsis&&r.tahsis.firma?`<span style="color:#0369a1;font-weight:700">${esc(r.tahsis.firma)}</span>`:'<span style="color:var(--muted)">—</span>')}</td>`;
     h+=`<td><input class="notin" value="${esc(r.not||'')}" onchange="_trNotElle('${r.id}',this.value)" placeholder="—"></td>`;
@@ -19853,7 +19880,7 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
     <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trNotToplu()" title="Araç atamadan yalnız not yazar — satırın Not kolonuna işlenir">📝 Sadece Notu Kaydet</button>
     <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trSecTemizle()">Vazgeç</button></span>`;
   _trAracDoldur();
-  try{ const ilk=rows[0]; if(ilk){ const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,'01'); const el=document.getElementById('trRehber');
+  try{ const ilk=rows[0]; if(ilk){ const bl=_trSatirBolum(ilk); const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,bl); const el=document.getElementById('trRehber');
     if(el&&!el.value&&(sr.rehberAd||'').trim()){ const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(sr.rehberAd)); if(o) el.value=o.value||o.text; } } }catch(e){}
   try{ if(window.matchMedia&&matchMedia('(max-width:980px)').matches&&bar.parentElement!==document.body) document.body.appendChild(bar); }catch(e){}
 }
@@ -19866,7 +19893,7 @@ function _trAtama(birlesik){ if(birlesik===undefined) birlesik=true;
   }
   const dep=_saatNorm((document.getElementById('trDepar')||{}).value.trim()); if(dep&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(dep)){ showToast('Depar SS:DD olmalı (ör. 06:30)','error'); return; }
   const Tr=getTransfer(); Tr.gruplar=Tr.gruplar||{}; Tr.sat=Tr.sat||{}; Tr.vsat=Tr.vsat||{};
-  const grupYap=()=>{ const kod='A'+String(Tr.seq||1).padStart(2,'0'); Tr.seq=(Tr.seq||1)+1;
+  const grupYap=()=>{ let kod; do{ kod='A'+String(Tr.seq||1).padStart(2,'0')+'-'+Date.now().toString(36).slice(-4)+Math.random().toString(36).slice(2,4); Tr.seq=(Tr.seq||1)+1; }while(Tr.gruplar[kod]);
     Tr.gruplar[kod]={tip:'nokta',rehber:(document.getElementById('trRehber')||{}).value,
       arac:a.ad+(a.kap?' ('+a.kap+')':''),arac2:a2?(a2.ad+(a2.kap?' ('+a2.kap+')':'')):'',
       firma:firmaSec||a.firma||'',sofor:[a.sofor,a2&&a2.sofor].filter(Boolean).join(' / '),stel:[a.stel,a2&&a2.stel].filter(Boolean).join(' / '),
