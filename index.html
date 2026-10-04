@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v695 · 03.10.2026';
+const APP_VER='v696 · 04.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20255,7 +20255,18 @@ function _trYolcular(r){
   const g=getReservations().find(x=>x.pkgId===r.pkgId&&x.kalkis===r.kalkis); if(!g) return [];
   const rows=(g.rows||[]).filter(_isim);
   let secilen;
-  if(r.tip==='TUR') secilen=rows;
+  if(r.tip==='TUR'){
+    // TUR/otel geçişi satırı belirli voucher'lara aitse (alt grup, ör. otel uzatması yapan 8 kişi) yalnız onlar;
+    // voucher listesi boşsa tüm sefer (eski davranış)
+    const vl=(r.vlist||[]).map(v=>String(v||'').trim()).filter(Boolean);
+    if(vl.length){
+      secilen=rows.filter(y=>{ const rv=String(y.resno||'').trim(); return vl.some(v=>_vEsit(rv,v)); });
+      if(!secilen.length){ // uçak listesinde bu voucher'lar yoksa rezervasyon müşterilerinden kur
+        (getRezv()||[]).filter(x=>x&&x.tip==='urun'&&x.pkgId===r.pkgId&&x.kalkis===r.kalkis&&x.durum!=='iptal'&&vl.some(v=>_vEsit(String(x.voucher||'').trim(),v)||(x.asilVoucher&&_vEsit(String(x.asilVoucher).trim(),v))))
+          .forEach(x=>(x.musteriler||[]).filter(m=>m&&!m.iptal&&(m.soyad||m.ad)).forEach(m=>secilen.push({resno:x.voucher||'',voucher:x.voucher||'',soyad:m.soyad||'',ad:m.ad||'',dogum:m.dogum||'',uyruk:m.milliyet||'',_rezv:true})));
+      }
+    } else secilen=rows;
+  }
   else{
     const p=r.tip==='G'?'g':((r.tip==='D'||r.tip==='UZT')?'d':'a');
     const hedefKey=String(r.id||'').split('|')[3]||'';
