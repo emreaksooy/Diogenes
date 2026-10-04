@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v696 · 04.10.2026';
+const APP_VER='v697 · 04.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19383,9 +19383,15 @@ function thsSil(gid,aid){
 }
 let _thsFirmaF='', _thsBasF='', _thsBitF='';
 function thsFiltre(f,v){ if(f==='firma')_thsFirmaF=v; else if(f==='bas')_thsBasF=v; else _thsBitF=v; renderOpsTahsis(); }
+function _thsBolumHarita(bugun){
+  const M={}; try{ _rtTurlar(_isoAdd(bugun||_opsToday(),-90),_isoAdd(bugun||_opsToday(),180)).forEach(t=>{ const k=t.pkgId+'|'+t.kalkis; (M[k]=M[k]||{}); M[k][String(t.bolum||'01')]={pax:t.pax,rehberAd:t.rehberAd||''}; }); }catch(e){}
+  return M;
+}
+function thsBolumSet(gid,aid,b){ const S=getOpsGrup(); const g=(S.gruplar||{})[gid]; if(!g) return; const a=(g.araclar||[]).find(x=>x.id===aid); if(!a) return; a.bolum=String(b||''); setOpsGrup(S); renderOpsTahsis(); showToast(b?('Tahsis G'+b+' bölümüne bağlandı'):'Bölüm kaldırıldı','success'); }
 function _thsListe(bugun){
   // Kayıtlı TÜM gruplardan (tur dosyasından ya da bu ekrandan atanmış fark etmez)
   const L=[]; const T=getTanimlar(); const pkgs=getPackages();
+  const BH=_thsBolumHarita(bugun);
   try{
     const exp=getOpsGrup().gruplar||{};
     let res=[]; try{ res=_ogResolve(); }catch(e){}
@@ -19410,9 +19416,15 @@ function _thsListe(bugun){
         let gon='';
         if((a.firma||'').trim()){ const son=_trSonGonderim(String(a.firma).trim());
           gon=(son&&(son.ids||[]).includes('TAH|'+g2.id+'|'+ab))?'✓':'YENI'; }
-        L.push({gid:g2.id,aid:a.id,bas:ab,bit:abit,tur:urun,gorev:a.gorev||'',pax:pax,
+        // BÖLÜM: tahsis bir bölüme bağlıysa pax/rehber o bölümden; sefer bölünmüş ama tahsis bölümsüzse işaretle
+        let paxB=pax, rehB=rehAd, bolumler=[], bolumUyar=false; const bl=String(a.bolum||'');
+        try{ const sefler=(g2.uyeler||[]).length?[...new Set(g2.uyeler.map(u=>u.pkgId+'|'+u.kalkis))]:(g2.sefer?[g2.sefer.pkgId+'|'+g2.sefer.kalkis]:[]);
+          if(sefler.length===1){ const bm=BH[sefler[0]]||{}; bolumler=Object.keys(bm).sort();
+            if(bl&&bm[bl]){ paxB=bm[bl].pax; rehB=bm[bl].rehberAd||rehB; }
+            else if(!bl&&bolumler.length>1){ bolumUyar=true; } } }catch(e){}
+        L.push({gid:g2.id,aid:a.id,bas:ab,bit:abit,tur:urun+(bl?' G'+bl:''),gorev:a.gorev||'',pax:paxB,bolum:bl,bolumler,bolumUyar,
           firma:a.firma||'',arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehAd,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||'',basYer:a.basYer||''});
+          reh:rehB,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||'',basYer:a.basYer||''});
       });
     });
   }catch(e){}
@@ -19575,7 +19587,7 @@ function renderOpsTahsis(){
       <td style="${td2}"><b>${esc(t.tur)}</b>${t.gorev?`<div style="font-size:.66rem;color:#0369a1;font-weight:700">${esc(t.gorev)}</div>`:''}${t.prog?`<div style="font-size:.62rem;color:var(--muted)">${esc(t.prog)}</div>`:''}</td>
       <td style="${td2}">${esc(t.firma)||'<span style="color:#b45309;font-weight:700">firma yok</span>'}</td><td style="${td2}">${esc(t.arac)}</td>
       <td style="${td2}">${t.plaka?`<b>${esc(t.plaka)}</b>`:'<span style="color:#b45309;font-size:.68rem">plaka bekliyor</span>'}${t.sofor?` · ${esc(t.sofor)}`:''}${t.stel?` <span style="color:var(--muted);font-size:.68rem">${esc(t.stel)}</span>`:''}</td>
-      <td style="${td2}"><b>${esc(String(t.pax||''))}</b></td><td style="${td2}">${esc(t.reh)||'—'}</td>
+      <td style="${td2}">${t.bolumUyar?`<span style="color:#b91c1c;font-weight:800" title="Sefer bölünmüş (G01/G02…) ama bu tahsis bir bölüme bağlı değil — pax ve rehber tüm seferden görünüyor">⚠ ${esc(String(t.pax||''))}</span><div><select onchange="thsBolumSet('${t.gid}','${t.aid}',this.value)" style="font-size:.66rem;padding:2px 4px;border:1.5px solid #fca5a5;border-radius:6px;color:#b91c1c;font-family:inherit"><option value="">bölüm seç…</option>${t.bolumler.map(b=>`<option value="${b}">G${b}</option>`).join('')}</select></div>`:`<b>${esc(String(t.pax||''))}</b>${t.bolum?` <span style="background:#e0e7ff;color:#3730a3;font-size:.58rem;font-weight:800;padding:1px 6px;border-radius:6px" title="Bölüm">G${esc(t.bolum)}</span>`:''}`}</td><td style="${td2}">${esc(t.reh)||'—'}${t.bolumUyar?'<div style="font-size:.6rem;color:#b91c1c">bölüm 01 rehberi</div>':''}</td>
       <td style="${td2};white-space:nowrap">${t.gon==='YENI'?'<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.6rem;padding:1px 7px;border-radius:7px">YENİ</span>':t.gon==='✓'?'<span style="background:#dcfce7;color:#166534;font-weight:800;font-size:.6rem;padding:1px 7px;border-radius:7px">✓ gönderildi</span>':'—'}</td>
       <td style="${td2};white-space:nowrap"><button class="btn ${window._thsEdit===(t.gid+'|'+t.aid)?'btn-primary':'btn-outline'} btn-sm" onclick="thsEditAc('${t.gid}','${t.aid}')" title="Araç bilgilerini burada düzenle — rehberin ekranına düşer">✏️</button> <button class="btn btn-outline btn-sm" onclick="thsPrint('${t.gid}','${t.aid}')" title="Görev emri: isim listesi + yapılacak iş (yazdır/PDF)">🖨</button> <button class="btn btn-outline btn-sm" onclick="thsTekExcel('${t.gid}','${t.aid}')" title="Görev emri Excel">📥</button> <button class="btn btn-outline btn-sm" onclick="trTahsisDosya('${t.gid}')" title="Tur dosyasının Araçlar sekmesi">🔧</button> <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="thsSil('${t.gid}','${t.aid}')">🗑</button></td></tr>${window._thsEdit===(t.gid+'|'+t.aid)?(function(){
         const a=((getOpsGrup().gruplar||{})[t.gid]||{araclar:[]}).araclar.find(x=>x.id===t.aid)||{};
