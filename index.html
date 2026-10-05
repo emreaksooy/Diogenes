@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v698 · 05.10.2026';
+const APP_VER='v699 · 05.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17359,7 +17359,17 @@ function _tdDocUcus(g,E){
   const h2s='font-size:11pt;margin:5mm 0 2mm;border-bottom:2px solid #333;padding-bottom:1mm';
   let h=_tdDocBas('Uçuş Bilgileri',E);
   ['G','A','D'].forEach(yon=>{
-    const yl=legs.filter(l=>l.yon===yon); if(!yl.length) return;
+    const yl0=legs.filter(l=>l.yon===yon); if(!yl0.length) return;
+    const _byK={}; yl0.forEach(l=>{ const kk=[l.resno,l.soyad,l.ad,l.dogum].join('|'); (_byK[kk]=_byK[kk]||[]).push(l); });
+    const yl=[];
+    Object.values(_byK).forEach(L=>{
+      L.sort((a,b)=>(a.sira||1)-(b.sira||1)); const f0=L[0];
+      if(L.length>1){ const son=L[L.length-1]; const rotalar=[]; L.forEach(x=>{ String(x.rota||'').split('–').forEach(p=>{ if(p&&rotalar[rotalar.length-1]!==p) rotalar.push(p); }); });
+        yl.push(Object.assign({},f0,{sira:1,ucus:L.map(x=>x.ucus).filter(Boolean).join(' + '),rota:rotalar.join('–'),
+          saat:[String(f0.saat||'').split('-')[0]||'',(String(son.saat||'').split('-')[1]||String(son.saat||'').split('-')[0]||'')].filter(Boolean).join('-'),
+          bacaklar:L.map(x=>({tarih:x.tarih,hy:x.hy,ucus:x.ucus,rota:x.rota,saat:x.saat}))}));
+      } else yl.push(f0);
+    });
     const gr={};
     yl.forEach(l=>{ const k=[l.sira,l.tarih,l.hy,l.ucus,l.rota,l.saat].join('|'); (gr[k]=gr[k]||[]).push(l); });
     const kl=Object.values(gr).sort((a,b)=>{
@@ -17370,6 +17380,7 @@ function _tdDocUcus(g,E){
     kl.forEach(grp=>{
       const f=grp[0];
       const bas=[f.tarih,f.hy,f.ucus,f.rota,f.saat].filter(Boolean).join(' · ');
+      const bacakH=(f.bacaklar&&f.bacaklar.length>1)?`<div style="font-size:9pt;font-weight:normal;color:#222;margin-top:1px">${f.bacaklar.map((b,bi)=>`${bi===0?'':'&nbsp;→&nbsp;'}<b>${esc(b.ucus)}</b> ${esc(b.rota)} <b>${esc(b.saat)}</b>${bi<f.bacaklar.length-1&&b.saat&&b.saat.includes('-')?` <span style="color:#555">(ara iniş ${esc(b.saat.split('-')[1])})</span>`:''}`).join('')}</div>`:'';
       const tekil=[]; const seen=new Set();
       grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad+'|'+(x.dogum||''); if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
       // VOUCHER GRUPLAMA: aynı voucher'ın yolcuları birleşik blok — voucher bir kez yazılır (Sejour listesi düzeni)
@@ -17383,7 +17394,7 @@ function _tdDocUcus(g,E){
         return G.map((x,i)=>`<tr><td style="${_tdTd};width:26px;text-align:right">${++kn}</td>${i===0?`<td style="${_tdTd};width:110px;vertical-align:top" rowspan="${G.length}"><b>${esc(v)}</b>${G.length>1?`<br><span style="font-size:8pt;color:#555">${G.length} kişi</span>`:''}</td>`:''}<td style="${_tdTd}"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td></tr>`).join('');
       }).join('');
       h+=`<div style="margin:0 0 3mm">
-        <div style="background:#e8e8e8;border:1px solid #999;border-bottom:none;padding:2px 7px;font-size:10pt"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi · ${vSira.length} voucher</div>
+        <div style="background:#e8e8e8;border:1px solid #999;border-bottom:none;padding:2px 7px;font-size:10pt"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi · ${vSira.length} voucher${bacakH}</div>
         <table style="width:100%;border-collapse:collapse">${satirlar}</table>
       </div>`;
     });
