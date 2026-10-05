@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v697 · 04.10.2026';
+const APP_VER='v698 · 05.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17050,7 +17050,8 @@ function renderTurDosyasi(box){
           ucus:L.map(x=>x.ucus).filter(Boolean).join(' + '),
           rota:rotalar.join('–'),
           saat:[String(f0.saat||'').split('-')[0]||'',(String(son.saat||'').split('-')[1]||String(son.saat||'').split('-')[0]||'')].filter(Boolean).join('-'),
-          ucusList:L.map(x=>({ucus:x.ucus,tarih:x.tarih}))}));
+          ucusList:L.map(x=>({ucus:x.ucus,tarih:x.tarih})),
+          bacaklar:L.map(x=>({tarih:x.tarih,hy:x.hy,ucus:x.ucus,rota:x.rota,saat:x.saat}))}));
       } else yl.push(Object.assign({},f0,{ucusList:[{ucus:f0.ucus,tarih:f0.tarih}]}));
     });
     if(!yl.length) h+='<p style="color:var(--muted);font-size:.85rem">Bu yönde uçuş kaydı yok — uçak listesi import edilmemiş olabilir.</p>';
@@ -17072,7 +17073,7 @@ function renderTurDosyasi(box){
         const gr2=tr&&tr.grup?_trGrupOf(tr):null;
         _blk.push({gid:(tr&&tr.grup)||null,kisi:tekil.length,gr2:gr2||{},dep:(tr&&tr.grup)?(_trDeparHesap(tr).saat||''):'',mk:(ic,hideDep)=>`<div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">
           <div style="background:${ic?'var(--navy)':'var(--primary-soft)'};color:${ic?'#fff':'inherit'};padding:6px 12px;font-size:.8rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <b>✈ ${[_fmtDateTR(f.tarih),f.hy,f.ucus,f.rota,f.saat].filter(Boolean).map(esc).join(' · ')}</b>
+            ${(f.bacaklar&&f.bacaklar.length>1)?`<div style="display:flex;flex-direction:column;gap:1px"><b>✈ ${[_fmtDateTR(f.tarih),f.hy].filter(Boolean).map(esc).join(' · ')} · ${esc(f.rota)}</b>${f.bacaklar.map((b,bi)=>`<span style="font-size:.74rem;font-weight:700;opacity:.92">${bi===0?'🛫':'🔁'} ${[b.ucus,b.rota,b.saat].filter(Boolean).map(esc).join(' · ')}${bi<f.bacaklar.length-1&&b.saat&&b.saat.includes('-')?`<span style="opacity:.7;font-weight:600"> · ara iniş ${esc(b.saat.split('-')[1])}</span>`:''}</span>`).join('')}</div>`:`<b>✈ ${[_fmtDateTR(f.tarih),f.hy,f.ucus,f.rota,f.saat].filter(Boolean).map(esc).join(' · ')}</b>`}
             <span style="color:${ic?'rgba(255,255,255,.75)':'var(--muted)'}">· ${tekil.length} kişi</span>
             ${(!ic&&tr&&tr.grup&&(gr2.plaka||gr2.soforAd||gr2.soforTel))?`<span style="font-size:.7rem;font-weight:700;color:#0369a1">🚐 ${esc(gr2.plaka||'')}${gr2.soforAd?' · '+esc(gr2.soforAd):''}${gr2.soforTel?` · <a href="tel:${esc(gr2.soforTel)}" style="color:inherit">${esc(gr2.soforTel)}</a>`:''}</span>`:''}
             ${ic?((tr&&tr.grup&&!hideDep)?`<span style="margin-left:auto;font-size:.72rem;font-weight:800;color:#fbbf24">Depar ${esc(_trDeparHesap(tr).saat||'—')}</span>`:''):(tr?(tr.grup?`<span style="margin-left:auto;font-size:.7rem;font-weight:700;color:#166534">🚌 ${esc(_trKodOf(tr.grup))} · ${esc([gr2.arac,gr2.arac2].filter(Boolean).join(' + ')||'—')} · Depar ${esc(_trDeparHesap(tr).saat||'—')}</span>`:'<span style="margin-left:auto;font-size:.7rem;font-weight:800;color:#b91c1c">🚌 transfer atanmamış</span>'):'')}
