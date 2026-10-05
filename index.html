@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v699 · 05.10.2026';
+const APP_VER='v700 · 05.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17176,16 +17176,19 @@ function renderTurDosyasi(box){
       ['otel','Otel Listesi','rezervasyon açılımlarından'],
       ['ucus','Uçuş Bilgileri','geliş/dönüş uçuşları'],
       ['cizelge','Paket Satış Çizelgesi','yolcu × paket boş tablo'],
-      ['satmx','Yolcu Satış Tablosu','işaretli satışlar + kur tax — dolu'],
       ['masraf','Masraf Formu','boş form — turda doldurulur'],
       ['sozlesme','Rehber Sözleşmesi','şablon (Tanımlamalar > Şablonlar)']];
-    h+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:11px">
-      ${belgeler.map(b=>`<div style="border:1.5px solid var(--border);border-radius:13px;padding:12px;display:flex;gap:10px;align-items:center">
-        <div style="width:36px;height:36px;border-radius:10px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;color:var(--primary)"><svg class="ic"><use href="#i-file"/></svg></div>
-        <div style="flex:1"><b style="font-size:.76rem;display:block">${b[1]}</b><span style="font-size:.62rem;color:var(--muted)">${b[2]}</span></div>
-        <button class="btn btn-outline btn-sm" onclick="tdOnizle('${b[0]}')" title="Belgeyi ekranda gör">👁</button>
-        <button class="btn btn-outline btn-sm" onclick="tdYazdir('${b[0]}')">Yazdır</button>
-        <button class="btn btn-outline btn-sm" onclick="tdPdf('${b[0]}')" title="Doğrudan .pdf dosyası indirir">📄 PDF</button>
+    h+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px">
+      ${belgeler.map((b,bi)=>`<div style="border:1.5px solid var(--border);border-radius:13px;padding:12px;display:flex;flex-direction:column;gap:9px;min-width:0">
+        <div style="display:flex;gap:10px;align-items:center;min-width:0">
+          <div style="width:34px;height:34px;flex:none;border-radius:10px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:800;font-size:.72rem">${bi+1}</div>
+          <div style="flex:1;min-width:0"><b style="font-size:.78rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${b[1]}">${b[1]}</b><span style="font-size:.64rem;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${b[2]}">${b[2]}</span></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" style="flex:1" onclick="tdOnizle('${b[0]}')" title="Belgeyi ekranda gör">👁 Gör</button>
+          <button class="btn btn-outline btn-sm" style="flex:1" onclick="tdYazdir('${b[0]}')">🖨 Yazdır</button>
+          <button class="btn btn-outline btn-sm" style="flex:1" onclick="tdPdf('${b[0]}')" title="Doğrudan .pdf dosyası indirir">📄 PDF</button>
+        </div>
       </div>`).join('')}
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="tdYazdirHepsi()"><svg class="ic"><use href="#i-printer"/></svg> Tümünü Yazdır (7 belge)</button>
