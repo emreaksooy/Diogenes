@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v705 · 05.10.2026';
+const APP_VER='v706 · 05.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17426,13 +17426,7 @@ function _tdDocUcus(g,E){
       const TDc='border:1px solid #999;padding:1px 5px;font-size:8.5pt;line-height:1.25';
       const satirOf=v=>{ const G=vg[v];
         return G.map((x,i)=>`<tr><td style="${TDc};width:22px;text-align:right;color:#555">${++kn}</td>${i===0?`<td style="${TDc};width:78px;vertical-align:top" rowspan="${G.length}"><b>${esc(v)}</b>${G.length>1?` <span style="font-size:7.5pt;color:#555">(${G.length})</span>`:''}</td>`:''}<td style="${TDc}"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td></tr>`).join(''); };
-      let govde;
-      if(tekil.length>=6&&vSira.length>=2){
-        // voucher grupları iki sütuna dengeli dağıt (kişi sayısına göre)
-        const sol=[], sag=[]; let sp=0, tp=0;
-        vSira.forEach(v=>{ if(sp<=tp){ sol.push(v); sp+=vg[v].length; } else { sag.push(v); tp+=vg[v].length; } });
-        govde=`<table style="width:100%;border-collapse:collapse"><tr><td style="padding:0;vertical-align:top;width:50%;border:none"><table style="width:100%;border-collapse:collapse">${sol.map(satirOf).join('')}</table></td><td style="padding:0 0 0 4px;vertical-align:top;width:50%;border:none"><table style="width:100%;border-collapse:collapse">${sag.map(satirOf).join('')}</table></td></tr></table>`;
-      } else govde=`<table style="width:100%;border-collapse:collapse">${vSira.map(satirOf).join('')}</table>`;
+      const govde=`<table style="width:100%;border-collapse:collapse">${vSira.map(satirOf).join('')}</table>`;
       h+=`<div style="margin:0 0 1.6mm;page-break-inside:avoid;break-inside:avoid">
         <div style="background:${RY.bg};border:1px solid #999;border-left:4px solid ${RY.bd};border-bottom:none;padding:1px 6px;font-size:9.5pt;color:${RY.tx};-webkit-print-color-adjust:exact;print-color-adjust:exact"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi · ${vSira.length} voucher${bacakH}</div>
         ${govde}
