@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v703 · 05.10.2026';
+const APP_VER='v704 · 05.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16993,7 +16993,7 @@ function renderTurDosyasi(box){
     const araVar=legs.some(l=>l.yon==='A');
     if(!window._tdUcakYon) window._tdUcakYon='G';
     if(window._tdUcakYon==='A'&&!araVar) window._tdUcakYon='G';
-    const yonBtn=(y,ad)=>`<button class="btn btn-sm ${window._tdUcakYon===y?'btn-primary':'btn-outline'}" onclick="window._tdUcakYon='${y}';renderOpsGrup()">${ad}</button>`;
+    const yonBtn=(y,ad)=>{ const R=_TD_YON_RENK[y]; const sec=window._tdUcakYon===y; return `<button class="btn btn-sm" style="${sec?`background:${R.bd};color:#fff;border-color:${R.bd}`:`background:${R.bg};color:${R.tx};border-color:${R.bd}`}" onclick="window._tdUcakYon='${y}';renderOpsGrup()">${ad}</button>`; };
     // ── TRANSFER GÖREVLERİ ÖZETİ: Taşımacı · Kaptan · Numara · Plaka ──
     (function(){
       let trTum=[]; try{ trTum=_trGenRows().filter(r=>r.tip!=='TUR'&&r.grup&&((E.uyeler||[]).some(u=>u.pkgId===r.pkgId&&u.kalkis===r.kalkis)||(E.sefer&&E.sefer.pkgId===r.pkgId&&E.sefer.kalkis===r.kalkis))); }catch(e){}
@@ -17072,7 +17072,7 @@ function renderTurDosyasi(box){
           return trRows.find(r=>String(f.ucus||'').includes(String(r.ucus||'').trim())&&r.tarih===_pdate(f.tarih))||null; })();
         const gr2=tr&&tr.grup?_trGrupOf(tr):null;
         _blk.push({gid:(tr&&tr.grup)||null,kisi:tekil.length,gr2:gr2||{},dep:(tr&&tr.grup)?(_trDeparHesap(tr).saat||''):'',mk:(ic,hideDep)=>`<div style="border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden">
-          <div style="background:${ic?'var(--navy)':'var(--primary-soft)'};color:${ic?'#fff':'inherit'};padding:6px 12px;font-size:.8rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div style="background:${ic?'var(--navy)':(_TD_YON_RENK[f.yon]||_TD_YON_RENK.A).bg};color:${ic?'#fff':(_TD_YON_RENK[f.yon]||_TD_YON_RENK.A).tx};border-left:${ic?'none':'5px solid '+(_TD_YON_RENK[f.yon]||_TD_YON_RENK.A).bd};padding:6px 12px;font-size:.8rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             ${(f.bacaklar&&f.bacaklar.length>1)?`<div style="display:flex;flex-direction:column;gap:1px"><b>✈ ${[_fmtDateTR(f.tarih),f.hy].filter(Boolean).map(esc).join(' · ')} · ${esc(f.rota)}</b>${f.bacaklar.map((b,bi)=>`<span style="font-size:.74rem;font-weight:700;opacity:.92">${bi===0?'🛫':'🔁'} ${[b.ucus,b.rota,b.saat].filter(Boolean).map(esc).join(' · ')}${bi<f.bacaklar.length-1&&b.saat&&b.saat.includes('-')?`<span style="opacity:.7;font-weight:600"> · ara iniş ${esc(b.saat.split('-')[1])}</span>`:''}</span>`).join('')}</div>`:`<b>✈ ${[_fmtDateTR(f.tarih),f.hy,f.ucus,f.rota,f.saat].filter(Boolean).map(esc).join(' · ')}</b>`}
             <span style="color:${ic?'rgba(255,255,255,.75)':'var(--muted)'}">· ${tekil.length} kişi</span>
             ${(!ic&&tr&&tr.grup&&(gr2.plaka||gr2.soforAd||gr2.soforTel))?`<span style="font-size:.7rem;font-weight:700;color:#0369a1">🚐 ${esc(gr2.plaka||'')}${gr2.soforAd?' · '+esc(gr2.soforAd):''}${gr2.soforTel?` · <a href="tel:${esc(gr2.soforTel)}" style="color:inherit">${esc(gr2.soforTel)}</a>`:''}</span>`:''}
@@ -17357,6 +17357,7 @@ function _tdDocProgram(g,E){
   return h+'</div>';
 }
 // Uçuş bloğu sıralama saati: geliş (G) varış saatine, dönüş/ara (D/A) kalkış saatine göre
+const _TD_YON_RENK={G:{bg:'#ffedd5',bd:'#f26522',tx:'#9a3412',ad:'GELİŞ'},D:{bg:'#dbeafe',bd:'#1d4ed8',tx:'#1e3a8a',ad:'DÖNÜŞ'},A:{bg:'#e5e7eb',bd:'#6b7280',tx:'#374151',ad:'ARA'}};
 function _tdUcusSiraSaat(f){
   const sa=String(f.saat||''); const p=sa.split('-');
   if(f.yon==='G') return (p[1]||p[0]||'99').trim();
@@ -17387,7 +17388,8 @@ function _tdUcusSiraKey(f){
 function _tdDocUcus(g,E){
   const legs=_tdUcusSatirlar(E), K=_tdKisiler(E);
   const YON={G:'GELİŞ UÇUŞLARI',A:'ARA UÇUŞLAR',D:'DÖNÜŞ UÇUŞLARI'};
-  const h2s='font-size:11pt;margin:5mm 0 2mm;border-bottom:2px solid #333;padding-bottom:1mm';
+  const h2sY=y=>{ const R=_TD_YON_RENK[y]||_TD_YON_RENK.A; return `font-size:11pt;margin:5mm 0 2mm;border-bottom:2.5px solid ${R.bd};padding-bottom:1mm;color:${R.tx}`; };
+  const h2s=h2sY('A');
   let h=_tdDocBas('Uçuş Bilgileri',E);
   ['G','A','D'].forEach(yon=>{
     const yl0=legs.filter(l=>l.yon===yon); if(!yl0.length) return;
@@ -17407,7 +17409,8 @@ function _tdDocUcus(g,E){
       const t=x=>_tdUcusSiraKey(x[0])+'|'+x[0].sira;
       return t(a)<t(b)?-1:1;
     });
-    h+=`<h2 style="${h2s}">${YON[yon]}</h2>`;
+    h+=`<h2 style="${h2sY(yon)}">${yon==='G'?'🛬 ':yon==='D'?'🛫 ':''}${YON[yon]}</h2>`;
+    const RY=_TD_YON_RENK[yon]||_TD_YON_RENK.A;
     kl.forEach(grp=>{
       const f=grp[0];
       const bas=[f.tarih,f.hy,f.ucus,f.rota,f.saat].filter(Boolean).join(' · ');
@@ -17425,7 +17428,7 @@ function _tdDocUcus(g,E){
         return G.map((x,i)=>`<tr><td style="${_tdTd};width:26px;text-align:right">${++kn}</td>${i===0?`<td style="${_tdTd};width:110px;vertical-align:top" rowspan="${G.length}"><b>${esc(v)}</b>${G.length>1?`<br><span style="font-size:8pt;color:#555">${G.length} kişi</span>`:''}</td>`:''}<td style="${_tdTd}"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td></tr>`).join('');
       }).join('');
       h+=`<div style="margin:0 0 3mm">
-        <div style="background:#e8e8e8;border:1px solid #999;border-bottom:none;padding:2px 7px;font-size:10pt"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi · ${vSira.length} voucher${bacakH}</div>
+        <div style="background:${RY.bg};border:1px solid #999;border-left:4px solid ${RY.bd};border-bottom:none;padding:2px 7px;font-size:10pt;color:${RY.tx};-webkit-print-color-adjust:exact;print-color-adjust:exact"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi · ${vSira.length} voucher${bacakH}</div>
         <table style="width:100%;border-collapse:collapse">${satirlar}</table>
       </div>`;
     });
