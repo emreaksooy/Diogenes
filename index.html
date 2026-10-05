@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v700 · 05.10.2026';
+const APP_VER='v701 · 05.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17062,7 +17062,7 @@ function renderTurDosyasi(box){
       // transfer görev eşleşmesi
       let trRows=[]; try{ trRows=_trGenRows().filter(r=>r.tip!=='TUR'&&(E.uyeler||[]).some(u=>u.pkgId===r.pkgId&&u.kalkis===r.kalkis)); }catch(e){}
       const _blk=[];
-      Object.values(gr).sort((a,b)=>{ const t=x=>((_pdate(x[0].tarih))||'9999')+'T'+(x[0].saat||'99'); return t(a)<t(b)?-1:1; }).forEach(grp=>{
+      Object.values(gr).sort((a,b)=>{ const t=x=>((_pdate(x[0].tarih))||'9999')+'T'+_tdUcusSiraSaat(x[0]); return t(a)<t(b)?-1:1; }).forEach(grp=>{
         const f=grp[0];
         const tekil=[]; const seen=new Set();
         grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad+'|'+(x.dogum||''); if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
@@ -17356,6 +17356,12 @@ function _tdDocProgram(g,E){
   });
   return h+'</div>';
 }
+// Uçuş bloğu sıralama saati: geliş (G) varış saatine, dönüş/ara (D/A) kalkış saatine göre
+function _tdUcusSiraSaat(f){
+  const sa=String(f.saat||''); const p=sa.split('-');
+  if(f.yon==='G') return (p[1]||p[0]||'99').trim();
+  return (p[0]||'99').trim();
+}
 function _tdDocUcus(g,E){
   const legs=_tdUcusSatirlar(E), K=_tdKisiler(E);
   const YON={G:'GELİŞ UÇUŞLARI',A:'ARA UÇUŞLAR',D:'DÖNÜŞ UÇUŞLARI'};
@@ -17376,7 +17382,7 @@ function _tdDocUcus(g,E){
     const gr={};
     yl.forEach(l=>{ const k=[l.sira,l.tarih,l.hy,l.ucus,l.rota,l.saat].join('|'); (gr[k]=gr[k]||[]).push(l); });
     const kl=Object.values(gr).sort((a,b)=>{
-      const t=x=>((typeof _pdate==='function'&&_pdate(x[0].tarih))||'9999')+'T'+(x[0].saat||'99')+'|'+x[0].sira;
+      const t=x=>((typeof _pdate==='function'&&_pdate(x[0].tarih))||'9999')+'T'+_tdUcusSiraSaat(x[0])+'|'+x[0].sira;
       return t(a)<t(b)?-1:1;
     });
     h+=`<h2 style="${h2s}">${YON[yon]}</h2>`;
