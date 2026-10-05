@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v701 · 05.10.2026';
+const APP_VER='v702 · 05.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17062,7 +17062,7 @@ function renderTurDosyasi(box){
       // transfer görev eşleşmesi
       let trRows=[]; try{ trRows=_trGenRows().filter(r=>r.tip!=='TUR'&&(E.uyeler||[]).some(u=>u.pkgId===r.pkgId&&u.kalkis===r.kalkis)); }catch(e){}
       const _blk=[];
-      Object.values(gr).sort((a,b)=>{ const t=x=>((_pdate(x[0].tarih))||'9999')+'T'+_tdUcusSiraSaat(x[0]); return t(a)<t(b)?-1:1; }).forEach(grp=>{
+      Object.values(gr).sort((a,b)=>{ const t=x=>_tdUcusSiraKey(x[0]); return t(a)<t(b)?-1:1; }).forEach(grp=>{
         const f=grp[0];
         const tekil=[]; const seen=new Set();
         grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad+'|'+(x.dogum||''); if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
@@ -17362,6 +17362,26 @@ function _tdUcusSiraSaat(f){
   if(f.yon==='G') return (p[1]||p[0]||'99').trim();
   return (p[0]||'99').trim();
 }
+// Gece aşan uçuş: varış < kalkış ise (23:50-01:30) varış ertesi gün. Sıralama anahtarı = tarih(+gün)T saat.
+// Aktarmalıda bacak bacak ilerlenir: bir bacağın varışı kalkışından küçükse +1 gün, sonraki bacağın kalkışı öncekinin varışından küçükse +1 gün.
+function _tdUcusSiraKey(f){
+  const tarih=(typeof _pdate==='function'&&_pdate(f.tarih))||'';
+  if(!tarih) return '9999T99';
+  const dk=t=>{ const m=/^(\d{1,2}):(\d{2})/.exec(String(t||'').trim()); return m?(+m[1])*60+(+m[2]):null; };
+  const bacaklar=(f.bacaklar&&f.bacaklar.length)?f.bacaklar:[{saat:f.saat}];
+  let gun=0, onceki=null, kalkisGun=0, kalkisSaat='', varisSaat='';
+  bacaklar.forEach((b,i)=>{
+    const p=String(b.saat||'').split('-'); const ks=dk(p[0]), vs=dk(p[1]);
+    if(onceki!==null&&ks!==null&&ks<onceki) gun++;
+    if(i===0){ kalkisGun=gun; kalkisSaat=(p[0]||'').trim(); }
+    if(ks!==null&&vs!==null&&vs<ks) gun++;
+    if(vs!==null) onceki=vs; else if(ks!==null) onceki=ks;
+    varisSaat=(p[1]||p[0]||'').trim();
+  });
+  const g=f.yon==='G'?gun:kalkisGun, saat=f.yon==='G'?varisSaat:kalkisSaat;
+  const t=(typeof _isoAdd==='function'&&g)?_isoAdd(tarih,g):tarih;
+  return t+'T'+(saat||'99');
+}
 function _tdDocUcus(g,E){
   const legs=_tdUcusSatirlar(E), K=_tdKisiler(E);
   const YON={G:'GELİŞ UÇUŞLARI',A:'ARA UÇUŞLAR',D:'DÖNÜŞ UÇUŞLARI'};
@@ -17382,7 +17402,7 @@ function _tdDocUcus(g,E){
     const gr={};
     yl.forEach(l=>{ const k=[l.sira,l.tarih,l.hy,l.ucus,l.rota,l.saat].join('|'); (gr[k]=gr[k]||[]).push(l); });
     const kl=Object.values(gr).sort((a,b)=>{
-      const t=x=>((typeof _pdate==='function'&&_pdate(x[0].tarih))||'9999')+'T'+_tdUcusSiraSaat(x[0])+'|'+x[0].sira;
+      const t=x=>_tdUcusSiraKey(x[0])+'|'+x[0].sira;
       return t(a)<t(b)?-1:1;
     });
     h+=`<h2 style="${h2s}">${YON[yon]}</h2>`;
