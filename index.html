@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v704 · 05.10.2026';
+const APP_VER='v705 · 05.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17259,7 +17259,7 @@ function renderTurDosyasi(box){
   box.innerHTML=h;
 }
 // ── yazdırma belgeleri ──
-function _tdDocBas(baslik,E){ const g=_tdG()||{}; return `<div style="font-family:Arial,sans-serif;padding:6mm"><h1 style="font-size:15pt;margin:0 0 1mm">${baslik}</h1><div style="font-size:9.5pt;color:#555;margin-bottom:4mm">${g.no?('<b>'+esc(g.no)+'</b> · '):''}${esc(E.urunler.join(', '))} · ${_fmtDateTR(E.tarih)} · ${esc(E.ad)} · ${E.pax} pax · Diogenes Travel</div>`; }
+function _tdDocBas(baslik,E){ const g=_tdG()||{}; return `<div style="font-family:Arial,sans-serif;padding:3mm 3mm 2mm"><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 2mm;border-bottom:1px solid #ccc;padding-bottom:1mm"><h1 style="font-size:14pt;margin:0;white-space:nowrap">${baslik}</h1><div style="font-size:9pt;color:#555;margin-left:auto;white-space:nowrap">${g.no?('<b>'+esc(g.no)+'</b> · '):''}${esc(E.urunler.join(', '))} · ${_fmtDateTR(E.tarih)} · ${esc(E.ad)} · ${E.pax} pax · Diogenes Travel</div></div>`; }
 const _tdTh='border:1px solid #999;padding:3px 7px;text-align:left;font-size:9.5pt';
 const _tdTd='border:1px solid #999;padding:3px 7px;font-size:9.5pt';
 function _tdDocIsim(g,E){ const K=_tdKisiler(E);
@@ -17388,7 +17388,7 @@ function _tdUcusSiraKey(f){
 function _tdDocUcus(g,E){
   const legs=_tdUcusSatirlar(E), K=_tdKisiler(E);
   const YON={G:'GELİŞ UÇUŞLARI',A:'ARA UÇUŞLAR',D:'DÖNÜŞ UÇUŞLARI'};
-  const h2sY=y=>{ const R=_TD_YON_RENK[y]||_TD_YON_RENK.A; return `font-size:11pt;margin:5mm 0 2mm;border-bottom:2.5px solid ${R.bd};padding-bottom:1mm;color:${R.tx}`; };
+  const h2sY=y=>{ const R=_TD_YON_RENK[y]||_TD_YON_RENK.A; return `font-size:10.5pt;margin:2.5mm 0 1.2mm;border-bottom:2px solid ${R.bd};padding-bottom:.5mm;color:${R.tx}`; };
   const h2s=h2sY('A');
   let h=_tdDocBas('Uçuş Bilgileri',E);
   ['G','A','D'].forEach(yon=>{
@@ -17414,7 +17414,7 @@ function _tdDocUcus(g,E){
     kl.forEach(grp=>{
       const f=grp[0];
       const bas=[f.tarih,f.hy,f.ucus,f.rota,f.saat].filter(Boolean).join(' · ');
-      const bacakH=(f.bacaklar&&f.bacaklar.length>1)?`<div style="font-size:9pt;font-weight:normal;color:#222;margin-top:1px">${f.bacaklar.map((b,bi)=>`${bi===0?'':'&nbsp;→&nbsp;'}<b>${esc(b.ucus)}</b> ${esc(b.rota)} <b>${esc(b.saat)}</b>${bi<f.bacaklar.length-1&&b.saat&&b.saat.includes('-')?` <span style="color:#555">(ara iniş ${esc(b.saat.split('-')[1])})</span>`:''}`).join('')}</div>`:'';
+      const bacakH=(f.bacaklar&&f.bacaklar.length>1)?`<div style="font-size:8.5pt;font-weight:normal;color:#222;margin-top:0">${f.bacaklar.map((b,bi)=>`${bi===0?'':'&nbsp;→&nbsp;'}<b>${esc(b.ucus)}</b> ${esc(b.rota)} <b>${esc(b.saat)}</b>${bi<f.bacaklar.length-1&&b.saat&&b.saat.includes('-')?` <span style="color:#555">(ara iniş ${esc(b.saat.split('-')[1])})</span>`:''}`).join('')}</div>`:'';
       const tekil=[]; const seen=new Set();
       grp.forEach(x=>{ const kk=x.resno+'|'+x.soyad+'|'+x.ad+'|'+(x.dogum||''); if(seen.has(kk))return; seen.add(kk); tekil.push(x); });
       // VOUCHER GRUPLAMA: aynı voucher'ın yolcuları birleşik blok — voucher bir kez yazılır (Sejour listesi düzeni)
@@ -17423,13 +17423,19 @@ function _tdDocUcus(g,E){
       vSira.forEach(v=>vg[v].sort((a,b)=>(a.soyad+a.ad).localeCompare(b.soyad+b.ad,'tr')));
       vSira.sort((a,b)=>(vg[a][0].soyad+vg[a][0].ad).localeCompare(vg[b][0].soyad+vg[b][0].ad,'tr'));
       let kn=0;
-      const satirlar=vSira.map(v=>{
-        const G=vg[v];
-        return G.map((x,i)=>`<tr><td style="${_tdTd};width:26px;text-align:right">${++kn}</td>${i===0?`<td style="${_tdTd};width:110px;vertical-align:top" rowspan="${G.length}"><b>${esc(v)}</b>${G.length>1?`<br><span style="font-size:8pt;color:#555">${G.length} kişi</span>`:''}</td>`:''}<td style="${_tdTd}"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td></tr>`).join('');
-      }).join('');
-      h+=`<div style="margin:0 0 3mm">
-        <div style="background:${RY.bg};border:1px solid #999;border-left:4px solid ${RY.bd};border-bottom:none;padding:2px 7px;font-size:10pt;color:${RY.tx};-webkit-print-color-adjust:exact;print-color-adjust:exact"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi · ${vSira.length} voucher${bacakH}</div>
-        <table style="width:100%;border-collapse:collapse">${satirlar}</table>
+      const TDc='border:1px solid #999;padding:1px 5px;font-size:8.5pt;line-height:1.25';
+      const satirOf=v=>{ const G=vg[v];
+        return G.map((x,i)=>`<tr><td style="${TDc};width:22px;text-align:right;color:#555">${++kn}</td>${i===0?`<td style="${TDc};width:78px;vertical-align:top" rowspan="${G.length}"><b>${esc(v)}</b>${G.length>1?` <span style="font-size:7.5pt;color:#555">(${G.length})</span>`:''}</td>`:''}<td style="${TDc}"><b>${esc(x.soyad)}</b>, ${esc(x.ad)}</td></tr>`).join(''); };
+      let govde;
+      if(tekil.length>=6&&vSira.length>=2){
+        // voucher grupları iki sütuna dengeli dağıt (kişi sayısına göre)
+        const sol=[], sag=[]; let sp=0, tp=0;
+        vSira.forEach(v=>{ if(sp<=tp){ sol.push(v); sp+=vg[v].length; } else { sag.push(v); tp+=vg[v].length; } });
+        govde=`<table style="width:100%;border-collapse:collapse"><tr><td style="padding:0;vertical-align:top;width:50%;border:none"><table style="width:100%;border-collapse:collapse">${sol.map(satirOf).join('')}</table></td><td style="padding:0 0 0 4px;vertical-align:top;width:50%;border:none"><table style="width:100%;border-collapse:collapse">${sag.map(satirOf).join('')}</table></td></tr></table>`;
+      } else govde=`<table style="width:100%;border-collapse:collapse">${vSira.map(satirOf).join('')}</table>`;
+      h+=`<div style="margin:0 0 1.6mm;page-break-inside:avoid;break-inside:avoid">
+        <div style="background:${RY.bg};border:1px solid #999;border-left:4px solid ${RY.bd};border-bottom:none;padding:1px 6px;font-size:9.5pt;color:${RY.tx};-webkit-print-color-adjust:exact;print-color-adjust:exact"><b>✈ ${esc(bas)}</b> — ${tekil.length} kişi · ${vSira.length} voucher${bacakH}</div>
+        ${govde}
       </div>`;
     });
   });
@@ -17693,16 +17699,21 @@ async function _tdPdfIndir(htmlListe,dosyaAd,cb,yatay){
   try{
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({unit:'mm',format:'a4',orientation:yatay?'landscape':'portrait'});
-    const M=9, W=yatay?279:192, H=yatay?192:279; // mm
+    const M=6, W=yatay?285:198, H=yatay?198:285; // mm
     let ilk=true;
     for(let bi=0;bi<htmlListe.length;bi++){
-      holder.innerHTML='<div style="padding:6px;background:#fff">'+htmlListe[bi]+'</div>';
+      holder.innerHTML='<div style="padding:2px;background:#fff">'+htmlListe[bi]+'</div>';
       await new Promise(r=>setTimeout(r,30));
       const canvas=await window.html2canvas(holder,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false});
       const pxmm=canvas.width/W;
       const sayfaPx=Math.max(200,Math.floor(H*pxmm));
-      for(let y=0;y<canvas.height;y+=sayfaPx){
-        const ph=Math.min(sayfaPx,canvas.height-y);
+      // akıllı kesim: sayfa sınırından en fazla %28 yukarıya kadar tamamen beyaz bir yatay şerit (≥3px) ara, orada kes
+      const ctx0=canvas.getContext('2d',{willReadFrequently:true});
+      const satirBeyaz=yy=>{ try{ const d=ctx0.getImageData(0,yy,canvas.width,1).data; for(let i=0;i<d.length;i+=16){ if(d[i]<245||d[i+1]<245||d[i+2]<245) return false; } return true; }catch(e){ return true; } };
+      const kesimBul=(y0,yMax)=>{ const enAz=y0+Math.floor(sayfaPx*0.72); let ardisik=0; for(let yy=yMax-1;yy>enAz;yy--){ if(satirBeyaz(yy)){ ardisik++; if(ardisik>=3) return yy+2; } else ardisik=0; } return yMax; };
+      for(let y=0;y<canvas.height;){
+        let ph=Math.min(sayfaPx,canvas.height-y);
+        if(y+ph<canvas.height){ const kes=kesimBul(y,y+ph); ph=Math.max(200,kes-y); }
         if(ph<12*pxmm&&y>0) break; // son kırpıntı boşsa atla
         const parca=document.createElement('canvas');
         parca.width=canvas.width; parca.height=ph;
@@ -17710,6 +17721,7 @@ async function _tdPdfIndir(htmlListe,dosyaAd,cb,yatay){
         if(!ilk) pdf.addPage();
         ilk=false;
         pdf.addImage(parca.toDataURL('image/jpeg',.94),'JPEG',M,M,W,ph/pxmm);
+        y+=ph;
       }
     }
     pdf.save(dosyaAd);
