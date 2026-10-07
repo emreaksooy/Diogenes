@@ -870,7 +870,7 @@ body.dark .tdm .band{background:rgba(255,255,255,.03)}
 .otl .ro.ok{background:var(--tok-s);color:var(--tok)} .otl .ro.warn{background:#fff4df;color:#b45309} .otl .ro.bad{background:var(--tbad-s);color:var(--tbad)} .otl .ro.mut{background:var(--light);color:var(--muted)} .otl .ro.pick{border:1.5px dashed var(--tbad);background:var(--tbad-s);color:var(--tbad);cursor:pointer}
 .otl .st{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
 .otl .act{display:flex;gap:4px;justify-content:flex-end;padding-right:2px}
-.otl .sr.alt{background:var(--light);font-size:.76rem;cursor:pointer} .otl .sr.alt::before{background:transparent} .otl .sr.alt .kod b{font-size:.8rem;color:#1d4ed8}
+.otl .sr.alt{background:var(--light);font-size:.76rem;cursor:pointer} .otl .sr.alt::before{width:3px;left:8px;top:6px;bottom:6px;border-radius:2px} .otl .sr.alt .kod b{font-size:.8rem;color:#1d4ed8} .otl .sr.alt .dt small{color:var(--muted);font-family:inherit}
 .otl .sr.alt .kod{padding-left:14px;position:relative} .otl .sr.alt .kod::before{content:"└";position:absolute;left:0;color:var(--muted)}
 .otl .det{border-top:1px dashed var(--border);background:var(--light);padding:10px 14px 12px 44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 18px;font-size:.78rem;cursor:default}
 .otl .det h4{margin:0 0 6px;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;gap:6px;align-items:center}
@@ -2532,7 +2532,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v726 · 08.10.2026';
+const APP_VER='v727 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16528,7 +16528,7 @@ function _otDurum(){
   // sefer bölünmüş mü? (rezervasyonlarda 01 dışı bölüm var) → o zaman her şey bölüme göre süzülür
   const bolunmusMu=t=>{ try{ return (getRezv()||[]).some(r=>r&&r.tip==='urun'&&r.durum!=='iptal'&&r.pkgId===t.pkgId&&r.kalkis===t.kalkis&&(String(r.grupBolum||'01')!=='01'||(r.musteriler||[]).some(m=>m.grupBolum&&String(m.grupBolum)!=='01'))); }catch(e){ return false; } };
   const mBol=(r,m)=>String((m&&m.grupBolum)||r.grupBolum||'01');
-  const trf=t=>{ let n=0,a=0; const bol=bolunmusMu(t)?String(t.bolum||'01'):'';
+  const trf=t=>{ let n=0,a=0; const bol=(bolunmusMu(t)&&!t._ana)?String(t.bolum||'01'):'';
     if(bol){ try{ _trGenRows().forEach(r=>{ if(r.tip==='TUR') return; if(!sefler(t).some(q=>q.pkgId===r.pkgId&&q.kalkis===r.kalkis)) return; if(_trSatirBolum(r)!==bol) return; n++; if(!r.grup) a++; }); }catch(e){} return {n,a,bol}; }
     sefler(t).forEach(sf=>{ const o=trMap[sf.pkgId+'|'+sf.kalkis]; if(o){ n+=o.n; a+=o.atasiz; } }); return {n,a}; };
   const tahsis=t=>{ let grps=[]; try{ const S=getOpsGrup().gruplar||{}; const sf=sefler(t);
@@ -16539,7 +16539,7 @@ function _otDurum(){
     const a0=th2[0]; return {tip:th2.some(a=>!(a.plaka||'').trim())?'plaka':'ok',ad:[a0.firma,a0.ad||a0.arTip].filter(Boolean).join(' · ')}; };
   const oteller=t=>{
     // 1) grubun rezervasyon kartları: otel adı + başlangıç → tarihe göre sırala, ardışık tekilleştir
-    const K=[]; try{ const sf=sefler(t); const bol=bolunmusMu(t)?String(t.bolum||'01'):''; (getRezv()||[]).forEach(r=>{ if(!r||r.tip!=='urun'||r.durum==='iptal'||r.personel) return; if(!sf.some(q=>q.pkgId===r.pkgId&&q.kalkis===r.kalkis)) return;
+    const K=[]; try{ const sf=sefler(t); const bol=(bolunmusMu(t)&&!t._ana)?String(t.bolum||'01'):''; (getRezv()||[]).forEach(r=>{ if(!r||r.tip!=='urun'||r.durum==='iptal'||r.personel) return; if(!sf.some(q=>q.pkgId===r.pkgId&&q.kalkis===r.kalkis)) return;
       const M=(r.musteriler||[]).filter(m=>m&&!m.iptal);
       (r.kartlar||[]).forEach(k=>{ if(!k||k.tip==='ulasim') return;
         // bu karttaki kişiler: uyeler → müşteri; bölünmüşse yalnız bu bölümdekiler
@@ -16559,7 +16559,7 @@ function _otDurum(){
   // mağaza programı: gerçek ziyaret planı (tarih · firma/şube · şehir), atanmamışsa firma boş
   const magaza=t=>{ try{ const bugun0='2000-01-01'; let prog=t; if(t.uyeSeferler&&t.uyeSeferler.length){ let pv=''; t.uyeSeferler.forEach(sf=>{ try{ const r=_opsGet(sf.pkgId,sf.kalkis); if(!pv&&r.magazaProgram) pv=r.magazaProgram; }catch(e){} }); if(pv){ const pp=pv.split('|'); prog=Object.assign({},t,{pkgId:pp[0],kalkis:pp[1]}); } }
       return _moZiyaretUret(prog,t.pax,t.rehberAd||'',t.kod,t.op,null,!!t.birlesikGrupId,bugun0).map(z=>{ let ad=''; try{ const cz=_moAtaCoz(z.firmaId); if(cz.f) ad=cz.f.ad+(cz.sube?' · '+(cz.sube.ad||cz.sube.sehir||''):''); }catch(e){} return {tarih:z.tarih,sehir:z.sehir,tur:z.tur,firma:ad}; }); }catch(e){ return []; } };
-  const konf=t=>{ let n=0,e=0; try{ const sf=sefler(t); const bol=bolunmusMu(t)?String(t.bolum||'01'):''; (getRezv()||[]).forEach(r=>{ if(!r||r.tip!=='urun'||r.durum==='iptal') return; if(!sf.some(q=>q.pkgId===r.pkgId&&q.kalkis===r.kalkis)) return;
+  const konf=t=>{ let n=0,e=0; try{ const sf=sefler(t); const bol=(bolunmusMu(t)&&!t._ana)?String(t.bolum||'01'):''; (getRezv()||[]).forEach(r=>{ if(!r||r.tip!=='urun'||r.durum==='iptal') return; if(!sf.some(q=>q.pkgId===r.pkgId&&q.kalkis===r.kalkis)) return;
       const M=(r.musteriler||[]).filter(m=>m&&!m.iptal);
       (r.kartlar||[]).forEach(k=>{ if(!k||k.tip==='ulasim') return; if(bol){ let kisiler=(k.uyeler||[]).map(id=>M.find(m=>m.id===id)).filter(Boolean); if(!kisiler.length&&!(k.uyeler||[]).length) kisiler=M; if(kisiler.length?!kisiler.some(m=>mBol(r,m)===bol):mBol(r,null)!==bol) return; } n++; if(k.konfirme==='Evet') e++; }); }); }catch(x){} return {n,e}; };
   return {trf,tahsis,oteller,magaza,konf};
@@ -16591,30 +16591,30 @@ function renderTurlarYeni(){
   const rehL=(getTanimlar().rehberler||[]).slice().sort((a,b)=>String(a.ad||'').localeCompare(String(b.ad||''),'tr'));
   const ro=(cls,txt,title,fn)=>`<span class="ro ${cls}" title="${esc(title||'')}" ${fn?`onclick="event.stopPropagation();${fn}" style="cursor:pointer"`:''}>${txt}</span>`;
   const satir=t=>{
-    const key=t.pkgId+'|'+t.kalkis+'|'+(t.bolum||'01'); const acik=window._otAcik&&window._otAcik.has(key);
+    const key=t.pkgId+'|'+t.kalkis+'|'+(t._ana?'ANA':(t.bolum||'01')); const acik=window._otAcik&&window._otAcik.has(key);
     const secOk=(!t.bolum||t.bolum==='01'); const secKey=t.birlesikGrupId?('G:'+t.birlesikGrupId):(t.pkgId+'|'+t.kalkis);
     const tr=D.trf(t), th=D.tahsis(t), ot=D.oteller(t), mgL=D.magaza(t), mg=mgL.length, mgA=mgL.filter(z=>!z.firma).length, kf=D.konf(t);
-    const durum=!t.rehberAd?'bad':(tr.a>0||th.tip==='yok')?'warn':'ok';
-    const altMi=t.bolum&&t.bolum!=='01';
-    const bolumSay=sira.filter(x=>x.pkgId===t.pkgId&&x.kalkis===t.kalkis&&!x.birlesikGrupId).length;
-    const dosya=t.birlesikGrupId?`otGrupAc('${t.birlesikGrupId}')`:`opsOpen('${t.pkgId}','${t.kalkis}')`;
+    const ana=!!t._ana, altMi=!!t._bol;
+    const durum=ana?((tr.a>0)?'warn':'ok'):(!t.rehberAd?'bad':(tr.a>0||th.tip==='yok')?'warn':'ok');
+    const bolumSay=t._grupSay||1;
+    const dosya=t.birlesikGrupId?`otGrupAc('${t.birlesikGrupId}')`:(altMi?`opsOpen('${t.pkgId}','${t.kalkis}','${esc(t.bolum)}')`:`opsOpen('${t.pkgId}','${t.kalkis}'${ana?",''":''})`);
     const gece=_isoDiff(t.kalkis,t.end);
     const rozet=[
       tr.n?ro(tr.a?'warn':'ok','🚌 '+(tr.a?(tr.n-tr.a)+'/'+tr.n:'✓ '+tr.n),tr.a?tr.a+' transfer atanmamış':'tüm transferler atandı',`_opsTrDate='${t.kalkis}';opsTab('transfer')`):ro('mut','🚌 —','uçuş transferi yok'),
-      th.tip==='ok'?ro('ok','🚙 '+esc(th.ad||'tahsis'),'tur aracı ayarlandı'):th.tip==='plaka'?ro('warn','🚙 plaka?','tahsis var, plaka girilmedi',dosya):th.tip==='gerekmez'?ro('mut','🚙 —','tahsis gerekmez'):ro('pick','🚙 tahsis ata','tur aracı atanmadı — dosyadan Araçlar',dosya),
-      mg?ro(mgA?'warn':'ok','🏬 '+(mgA?(mg-mgA)+'/'+mg:mg),mgA?mgA+' mağaza ziyaretinde firma atanmamış':mg+' mağaza ziyareti planlı',"showPage('magmuh');setTimeout(()=>{try{mmTab('plan')}catch(e){}},60)"):ro('mut','🏬 —','mağaza günü yok'),
+      ana?'':(th.tip==='ok'?ro('ok','🚙 '+esc(th.ad||'tahsis'),'tur aracı ayarlandı'):th.tip==='plaka'?ro('warn','🚙 plaka?','tahsis var, plaka girilmedi',dosya):th.tip==='gerekmez'?ro('mut','🚙 —','tahsis gerekmez'):ro('pick','🚙 tahsis ata','tur aracı atanmadı — dosyadan Araçlar',dosya)),
+      altMi?'':(mg?ro(mgA?'warn':'ok','🏬 '+(mgA?(mg-mgA)+'/'+mg:mg),mgA?mgA+' mağaza ziyaretinde firma atanmamış':mg+' mağaza ziyareti planlı',"showPage('magmuh');setTimeout(()=>{try{mmTab('plan')}catch(e){}},60)"):ro('mut','🏬 —','mağaza günü yok')),
       kf.n?ro(kf.e===kf.n?'ok':'mut','🏨 '+kf.e+'/'+kf.n,'otel konfirmesi'):''
     ].join('');
-    const reh=t.rehberAd?`<span class="reh">🧭 ${esc(t.rehberAd)}</span>`:`<span class="reh yok"><span class="pick" onclick="event.stopPropagation();otAcTog('${key}')">🧭 Rehber ata</span></span>`;
-    let h=`<div class="sr ${altMi?'alt':durum}" onclick="otAcTog('${key}')">
+    const reh=ana?`<span class="reh" style="color:var(--muted);font-weight:500;font-size:.72rem">rehber & araç gruplarda ↓</span>`:t.rehberAd?`<span class="reh">🧭 ${esc(t.rehberAd)}</span>`:`<span class="reh yok"><span class="pick" onclick="event.stopPropagation();otAcTog('${key}')">🧭 Rehber ata</span></span>`;
+    let h=`<div class="sr ${altMi?'alt '+durum:durum} ${ana?'ana':''}" onclick="otAcTog('${key}')">
       <input class="cb" type="checkbox" ${secOk&&!altMi?'':'style="visibility:hidden"'} ${_gbSec.has(secKey)?'checked':''} onclick="event.stopPropagation()" onchange="otSecTog('${secKey}',this.checked)" title="Birleştirmek için seç">
-      <span class="dt">${altMi?'':`${_fmtDateTR(t.kalkis).slice(0,5)} → ${_fmtDateTR(t.end).slice(0,5)} <small>${gece}g</small>`}</span>
-      <span class="kod"><b>${altMi?'G'+esc(t.bolum):esc(kodB(t))}</b>${bolumSay>1&&!altMi?`<span class="tag bol">G01 · ${bolumSay} bölüm</span>`:''}${t.uyeSeferler&&t.uyeSeferler.length?`<span class="tag birl">🔗 ${t.uyeSeferler.length} sefer</span>`:''}${!altMi&&ot.length?(()=>{ const adlar=[]; ot.forEach(o=>(o.oteller||[{ad:o.ad}]).forEach(x=>{ if(!adlar.some(a=>_norm(a)===_norm(x.ad))) adlar.push(x.ad); })); return `<span class="r" title="${esc(adlar.join(' → '))}${ot[0].plan?' (ürün planından — rezervasyon kartı yok)':''}" ${ot[0].plan?'style="font-style:italic"':''}>${esc(adlar.join(' → '))}</span>`; })():''}${altMi?`<span class="r">${esc(t.bolum)}. bölüm</span>`:''}</span>
+      <span class="dt">${altMi?`<small>${parseInt(t.bolum,10)||t.bolum}. grup</small>`:`${_fmtDateTR(t.kalkis).slice(0,5)} → ${_fmtDateTR(t.end).slice(0,5)} <small>${gece}g</small>`}</span>
+      <span class="kod"><b>${altMi?'G'+esc(t.bolum):esc(kodB(t))}</b>${ana?`<span class="tag bol">${bolumSay} grup</span>`:''}${t.uyeSeferler&&t.uyeSeferler.length?`<span class="tag birl">🔗 ${t.uyeSeferler.length} sefer</span>`:''}${ot.length?(()=>{ const adlar=[]; ot.forEach(o=>(o.oteller||[{ad:o.ad}]).forEach(x=>{ if(!adlar.some(a=>_norm(a)===_norm(x.ad))) adlar.push(x.ad); })); return `<span class="r" title="${esc(adlar.join(' → '))}${ot[0].plan?' (ürün planından — rezervasyon kartı yok)':''}" ${ot[0].plan?'style="font-style:italic"':''}>${esc(adlar.join(' → '))}</span>`; })():''}</span>
       <span class="op">${altMi?'':esc(t.op||'—')}</span>
-      <span class="pax">${t.pax}${t.acilimsiz?' <small title="açılım bekleyen rezervasyon">⏳</small>':''}</span>
+      <span class="pax">${t.pax}${ana&&t._parcalar?` <small>${esc(t._parcalar)}</small>`:''}${t.acilimsiz?' <small title="açılım bekleyen rezervasyon">⏳</small>':''}</span>
       ${reh}
       <span class="st">${rozet}</span>
-      <span class="act"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();${dosya}">📂${altMi?'':' Dosya'}</button></span>
+      <span class="act"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();${dosya}">📂${altMi?' G'+esc(t.bolum):' Dosya'}</button>${ana?`<button class="btn btn-outline btn-sm" title="Grupları düzenle (böl / değiştir)" onclick="event.stopPropagation();_gbSec.clear();_gbSec.add('${t.pkgId}|${t.kalkis}');otBolPopup()">⑃</button>`:''}</span>
     </div>`;
     if(acik){
       const rehSel=`<select onchange="otRehAta('${t.pkgId}','${t.kalkis}','${t.bolum||'01'}','${t.birlesikGrupId||''}',this.value)" onclick="event.stopPropagation()"><option value="">— atanmadı —</option>${rehL.map(r=>`<option value="${r.id}" ${(t.rehberId&&t.rehberId===r.id)||(!t.rehberId&&t.rehberAd&&_rehbNrm(t.rehberAd)===_rehbNrm(r.ad||''))?'selected':''}>${esc(r.ad||'—')}</option>`).join('')}</select>${t.rehberAd&&_rehTelBul(t.rehberAd)?` <span style="color:var(--muted);font-size:.72rem">☎ ${esc(_rehTelBul(t.rehberAd))}</span>`:''}`;
@@ -16627,19 +16627,24 @@ function renderTurlarYeni(){
       const magH=mgL.length?mgL.map(z=>`<div><span class="t">${_fmtDateTR(z.tarih).slice(0,5)}</span>${z.firma?esc(z.firma):`<span class="ro pick" onclick="event.stopPropagation();showPage('magmuh');setTimeout(()=>{try{mmTab('plan')}catch(e){}},60)">firma ata</span>`}<span class="m">${esc([z.sehir,z.tur].filter(Boolean).join(' · '))}</span></div>`).join(''):'<div class="m">ürün planında mağaza günü yok</div>';
       const birlesikH=(t.uyeSeferler&&t.uyeSeferler.length)?`<div><h4>Birleşik grup</h4><div class="l">${t.uyeSeferler.map(sf=>{const pk=getPackages().find(p=>p.id===sf.pkgId)||{};return `<div>${esc(pk.paketKodu||'?')} ${_fmtDateTR(sf.kalkis)} <span class="m">${_opsPax(sf.pkgId,sf.kalkis)} pax</span></div>`;}).join('')}<div style="margin-top:4px"><button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="event.stopPropagation();gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button></div></div></div>`:'';
       h+=`<div class="det" onclick="event.stopPropagation()">
-        <div><h4>Rehber</h4>${rehSel}</div>
+        ${ana?'':`<div><h4>Rehber</h4>${rehSel}</div>`}
         <div><h4>Transferler ${tr.n?`<span class="ro ${tr.a?'warn':'ok'}">${tr.n-tr.a}/${tr.n}</span>`:''}</h4><div class="l">${trfH}</div></div>
-        <div><h4>Tahsis</h4><div class="l"><div>${th.tip==='ok'?'🚙 '+esc(th.ad||'tur aracı'):th.tip==='plaka'?'🚙 '+esc(th.ad||'')+' <span class="m">· plaka girilmedi</span>':th.tip==='gerekmez'?'<span class="m">tahsis gerekmez</span>':'<span class="m">tur aracı atanmadı</span>'} <button class="btn btn-outline btn-sm" onclick="${dosya}">${th.tip==='yok'?'🚙 Tahsis ata':'📂 Araçlar'}</button></div></div></div>
+        ${ana?'':`<div><h4>Tahsis</h4><div class="l"><div>${th.tip==='ok'?'🚙 '+esc(th.ad||'tur aracı'):th.tip==='plaka'?'🚙 '+esc(th.ad||'')+' <span class="m">· plaka girilmedi</span>':th.tip==='gerekmez'?'<span class="m">tahsis gerekmez</span>':'<span class="m">tur aracı atanmadı</span>'} <button class="btn btn-outline btn-sm" onclick="${dosya}">${th.tip==='yok'?'🚙 Tahsis ata':'📂 Araçlar'}</button></div></div></div>`}
         <div><h4>Oteller (rezervasyondan, sırayla)</h4><div class="l">${otelH}</div></div>
-        <div><h4>Mağaza programı ${mg?`<span class="ro ${mgA?'warn':'ok'}">${mg-mgA}/${mg}</span>`:''}</h4><div class="l">${magH}</div></div>
+        ${altMi?'':`<div><h4>Mağaza programı ${mg?`<span class="ro ${mgA?'warn':'ok'}">${mg-mgA}/${mg}</span>`:''}</h4><div class="l">${magH}</div></div>`}
         ${birlesikH}
       </div>`;
     }
     return h;
   };
   // günlere göre grupla (bölümler kendi ana satırının altında)
+  // bölünmüş seferler: aynı pkgId|kalkis'te birden çok bölüm satırı → sentetik ANA satır + her bölüm alt satır
+  const cizim=[]; const seen=new Set();
+  sira.forEach(t=>{ if(t.birlesikGrupId){ cizim.push(t); return; } const sk=t.pkgId+'|'+t.kalkis; if(seen.has(sk)) return; const grp=sira.filter(x=>!x.birlesikGrupId&&x.pkgId===t.pkgId&&x.kalkis===t.kalkis).sort((a,b)=>String(a.bolum||'01').localeCompare(String(b.bolum||'01'))); seen.add(sk);
+    if(grp.length>1){ const ana=Object.assign({},grp[0],{bolum:'',_ana:true,_grupSay:grp.length,pax:grp.reduce((a,x)=>a+(+x.pax||0),0),_parcalar:grp.map(x=>x.pax).join('+'),rehberAd:'',rehberId:'',kod:kodB(grp[0])}); cizim.push(ana); grp.forEach(x=>cizim.push(Object.assign({},x,{_bol:true}))); }
+    else cizim.push(t); });
   let listH='', son=null;
-  sira.forEach(t=>{ const key=_otF.mod==='cikis'?t.end:t.kalkis; const altMi=t.bolum&&t.bolum!=='01'; if(!altMi&&key!==son){ const R=sira.filter(x=>(_otF.mod==='cikis'?x.end:x.kalkis)===key&&!(x.bolum&&x.bolum!=='01')); listH+=`<div class="gun">${esc(_trGunAd(key))} <b>${R.length} ${_otF.mod==='cikis'?'çıkış':'giriş'} · ${R.reduce((a,x)=>a+(+x.pax||0),0)} pax</b></div>`; son=key; } listH+=satir(t); });
+  cizim.forEach(t=>{ const key=_otF.mod==='cikis'?t.end:t.kalkis; if(!t._bol&&key!==son){ const R=cizim.filter(x=>(_otF.mod==='cikis'?x.end:x.kalkis)===key&&!x._bol); listH+=`<div class="gun">${esc(_trGunAd(key))} <b>${R.length} ${_otF.mod==='cikis'?'çıkış':'giriş'} · ${R.reduce((a,x)=>a+(+x.pax||0),0)} pax</b></div>`; son=key; } listH+=satir(t); });
   if(!sira.length) listH=`<div class="bos" style="padding:14px">${ham.length?'Filtreye uyan tur yok.':'Bu aralıkta tur yok.'}</div>`;
   const aktif=['op','urun','reh','rehbersiz','trf','ths'].filter(k=>_otF[k]).length;
   box.innerHTML=`<div class="card tdm otl">
