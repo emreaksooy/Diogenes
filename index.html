@@ -2390,7 +2390,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v713 · 07.10.2026';
+const APP_VER='v714 · 07.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9641,6 +9641,8 @@ function _mutIssues(){
   grids.forEach(g=>{
     if(!g||!g.pkgId||!g.kalkis) return;
     if(!(g.rows||[]).some(_isim)) return; // boş liste uyarı üretmez
+    if(g.iptal) return; // v714: iptal (CXX) liste uyarı üretmez
+    if(!(g.rows||[]).some(r=>_isim(r)&&_durumEff(r)!=='iptal')) return; // tüm yolcular iptal → uyarı yok
     const pk=pkgs.find(p=>p.id===g.pkgId); if(!pk||pk.ozelGrup) return;
     if(pkgDurum(pk)==='arsiv') return;
     // tarih karşılaştırması FORMAT-BAĞIMSIZ (ürüne 10.09.2026 yazılmış olsa da eşleşir)
