@@ -812,7 +812,9 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
 @media(max-width:980px){#sbKenarBtn{display:none!important}}
 @media(max-width:980px){
   /* v711: ana menü ÜSTTE (navbar'ın hemen altında, sabit) */
-  #mTabbar{position:fixed;left:0;right:0;top:var(--nav-h);bottom:auto;z-index:190;display:flex;background:var(--card,#fff);border-bottom:1px solid var(--border);padding:4px 4px 5px;box-shadow:0 6px 18px rgba(16,24,40,.06)}
+  #mTabbar{position:fixed;left:0;right:0;top:var(--nav-h);bottom:auto;z-index:190;display:flex;background:var(--card,#fff);border-bottom:1px solid var(--border);padding:4px 4px 5px;box-shadow:0 6px 18px rgba(16,24,40,.06);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #mTabbar::-webkit-scrollbar{display:none}
+  #mTabbar button{flex:1 0 auto;min-width:64px;white-space:nowrap}
   .app-body{padding-top:54px}
   /* bölüm alt menüsü (Operasyon/Mağaza/Rezervasyon/Uçak) ALTTA sabit çubuk — yalnız yatay panel görünürken */
   body.m-ctx .sidebar-ctx{position:fixed;left:0;right:0;bottom:0;z-index:1600;background:var(--card,#fff);border-top:1px solid var(--border);box-shadow:0 -6px 18px rgba(16,24,40,.06);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -2388,7 +2390,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v711 · 07.10.2026';
+const APP_VER='v712 · 07.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2777,6 +2779,19 @@ function navGeri(){
   }catch(e){}
   _navGeriModu=false;
 }
+// v712: üst mobil çubuk = soldaki ana menünün tamamı (role göre görünenler)
+const _M_TAB_KISA={paketlerim:['🏠','Ana Sayfa'],urun:['📦','Ürün'],rezervasyon:['🛎','Rezervasyon'],ucak:['✈️','Uçak'],operasyon:['📅','Operasyon'],rapor:['📊','Rapor'],yonetim:['⚙️','Yön. Paneli'],magmuh:['🏬','Mağazalar'],ekip:['👥','Ekip'],rehberim:['🎤','Rehber']};
+function _mTabbarKur(){
+  try{
+    const bar=document.getElementById('mTabbar'); if(!bar) return;
+    const tabs=[...document.querySelectorAll('.side-nav .nav-tab[data-page]')].filter(t=>t.style.display!=='none');
+    if(!tabs.length) return;
+    const aktif=(document.querySelector('.side-nav .nav-tab.active')||{}).getAttribute?(document.querySelector('.side-nav .nav-tab.active')||{}).getAttribute('data-page'):'';
+    bar.innerHTML=tabs.map(t=>{ const pg=t.getAttribute('data-page'); const k=_M_TAB_KISA[pg]||['•',t.textContent.trim().split(/\s{2,}/)[0]];
+      return `<button data-page="${pg}" class="${pg===aktif?'on':''}" onclick="showPage('${pg}')"><i>${k[0]}</i><span>${k[1]}</span></button>`; }).join('');
+  }catch(e){}
+}
+try{ document.addEventListener('DOMContentLoaded',_mTabbarKur); }catch(e){}
 function _mCtxGuncelle(){
   try{
     if(!window.matchMedia||!window.matchMedia('(max-width:980px)').matches){ document.body.classList.remove('m-ctx'); return; }
@@ -2790,7 +2805,7 @@ function _mTabAktif(id){
   try{
     _mCtxGuncelle();
     const menuAcik=document.body.classList.contains('mnavAcik');
-    document.querySelectorAll('#mTabbar button[data-page]').forEach(b=>b.classList.toggle('on',!menuAcik&&b.getAttribute('data-page')===id));
+    document.querySelectorAll('#mTabbar button[data-page]').forEach(b=>{ const on=!menuAcik&&b.getAttribute('data-page')===id; b.classList.toggle('on',on); if(on&&b.scrollIntoView){ try{ b.scrollIntoView({inline:'nearest',block:'nearest'}); }catch(e){} } });
     const m=document.getElementById('mTabMenu'); if(m) m.classList.toggle('on',menuAcik);
   }catch(e){}
 }
@@ -9185,6 +9200,7 @@ const _ACL={
 function _acl(pageId){ if(!sbRol) return 'e'; const grp=_PAGEGRP[pageId]||'home'; const m=_ACL[sbRol]||_ACL.beklemede; return m[grp]||'-'; }
 function _applyRoleNav(){
   document.querySelectorAll('.nav-tab[data-page]').forEach(function(t){ const pg=t.getAttribute('data-page'); if(pg==='paketlerim'){ t.style.display=(sbRol==='rehber')?'none':''; return; } t.style.display=(_acl(pg)==='-')?'none':''; });
+  try{ _mTabbarKur(); }catch(e){}
   // Şirket rolü: Mağazalar bölümünde yalnız Muhasebe + Operasyon
   document.querySelectorAll('.mm-navitem').forEach(function(t){ const mt=t.getAttribute('data-mt');
     t.style.display=(sbRol==='sirket'&&['firmalar','tahsilat'].includes(mt))?'none':''; });
