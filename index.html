@@ -794,6 +794,78 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 }
 .mm-tabbar{display:none !important}
 #mTabbar{display:none}
+/* ═══ Transfer Demo (v715) ═══ */
+.tdm{--tg:#f26522;--td:#2563eb;--ta:#0f9d6e;--tt:var(--navy);--tu:#d9a400;--tok:#157f4a;--tok-s:#e3f6ea;--tbad:#c0392b;--tbad-s:#fdeceb;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;display:flex;flex-direction:column;gap:12px}
+.tdm .days{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tdm .days::-webkit-scrollbar{display:none}
+.tdm .day{flex:0 0 auto;min-width:92px;background:var(--card,#fff);border:1px solid var(--border);border-radius:12px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font-family:inherit;text-align:left;color:inherit}
+.tdm .day .d{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+.tdm .day .n{font-size:1.05rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.tdm .day .s{font-size:.66rem;color:var(--muted);display:flex;gap:6px;align-items:center;white-space:nowrap}
+.tdm .day .s i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--tbad)}
+.tdm .day .s i.ok{background:var(--tok)} .tdm .day .s i.bos{background:var(--border)}
+.tdm .day.on{border-color:var(--primary);background:var(--primary-soft);box-shadow:inset 0 0 0 1px var(--primary)}
+.tdm .day.on .n{color:var(--primary)}
+.tdm .head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tdm .head .title{font-size:1.2rem;font-weight:800;letter-spacing:-.01em}
+.tdm .head .sum{color:var(--muted);font-size:.82rem} .tdm .head .sum b{color:var(--text)}
+.tdm .chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tdm .chip{font:inherit;font-size:.74rem;font-weight:700;border:1px solid var(--border);background:var(--card,#fff);color:var(--muted);border-radius:999px;padding:5px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tdm .chip i{width:8px;height:8px;border-radius:2px;display:inline-block;background:var(--border)}
+.tdm .chip.on{color:var(--text);border-color:currentColor}
+.tdm .chip.on.g{color:var(--tg)} .tdm .chip.on.d{color:var(--td)} .tdm .chip.on.a{color:var(--ta)} .tdm .chip.on.t{color:var(--tt)} .tdm .chip.on.u{color:var(--tu)}
+.tdm .chip.on.g i{background:var(--tg)} .tdm .chip.on.d i{background:var(--td)} .tdm .chip.on.a i{background:var(--ta)} .tdm .chip.on.t i{background:var(--tt)} .tdm .chip.on.u i{background:var(--tu)}
+.tdm .chip.sel{border-style:dashed} .tdm .sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.tdm .chip select{font:inherit;border:none;background:transparent;color:inherit;font-weight:700;max-width:150px}
+.tdm .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tdm .kpi{background:var(--card,#fff);border:1px solid var(--border);border-radius:12px;padding:9px 14px;display:flex;align-items:baseline;gap:10px}
+.tdm .kpi .n{font-size:1.45rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.tdm .kpi .l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.tdm .kpi.bad .n{color:var(--tbad)}
+.tdm .kpi .bar{margin-left:auto;height:6px;width:70px;border-radius:4px;background:var(--light);overflow:hidden} .tdm .kpi .bar b{display:block;height:100%;background:var(--tok)}
+.tdm .list{display:flex;flex-direction:column;gap:6px}
+.tdm .grp{font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:10px 4px 2px;display:flex;align-items:center;gap:8px}
+.tdm .grp::after{content:"";flex:1;height:1px;background:var(--border)}
+.tdm .row{background:var(--card,#fff);border:1px solid var(--border);border-radius:12px;display:grid;grid-template-columns:26px 86px minmax(0,1.4fr) minmax(0,1fr) 110px minmax(200px,.9fr);gap:0 12px;align-items:center;padding:9px 12px 9px 0;position:relative;overflow:hidden}
+.tdm .row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--border)}
+.tdm .row.G::before{background:var(--tg)} .tdm .row.D::before{background:var(--td)} .tdm .row.ARAD::before,.tdm .row.ARAG::before{background:var(--ta)} .tdm .row.TUR::before{background:var(--tt)} .tdm .row.UZT::before{background:var(--tu)}
+.tdm .row.sel{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.tdm .row .cb{margin-left:12px;width:16px;height:16px;accent-color:var(--primary)}
+.tdm .time{display:flex;flex-direction:column;gap:2px}
+.tdm .time .t{font-family:var(--mono);font-weight:700;font-size:1.05rem;letter-spacing:-.02em;line-height:1}
+.tdm .time .k{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.tdm .row.G .time .k{color:var(--tg)} .tdm .row.D .time .k{color:var(--td)} .tdm .row.ARAD .time .k,.tdm .row.ARAG .time .k{color:var(--ta)} .tdm .row.TUR .time .k{color:var(--tt)} .tdm .row.UZT .time .k{color:var(--tu)}
+.tdm .time .dep{font-size:.66rem;color:var(--muted)} .tdm .time .dep b{font-family:var(--mono);color:var(--text)}
+.tdm .route{min-width:0;display:flex;flex-direction:column;gap:3px}
+.tdm .route .l{display:flex;align-items:center;gap:8px;min-width:0}
+.tdm .route .pt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:.82rem} .tdm .route .pt small{font-weight:500;color:var(--muted)}
+.tdm .route .arr{color:var(--muted);flex:none}
+.tdm .route .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.7rem;color:var(--muted)}
+.tdm .tag{font-size:.64rem;font-weight:800;border-radius:6px;padding:2px 7px;background:var(--light);color:var(--text);white-space:nowrap}
+.tdm .tag.fl{font-family:var(--mono);font-weight:700} .tdm .tag.dis{background:#e6f0ff;color:#1d4ed8} .tdm .tag.ic{background:#e6f7ef;color:#157f4a} .tdm .tag.urun{background:var(--navy);color:#fff}
+.tdm .who{min-width:0;display:flex;flex-direction:column;gap:3px;font-size:.78rem}
+.tdm .who .op{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .tdm .who .reh{color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .tdm .who .reh em{font-style:normal;color:#b45309;font-weight:700}
+.tdm .pax{display:flex;align-items:baseline;gap:6px} .tdm .pax .n{font-size:1.2rem;font-weight:800;font-variant-numeric:tabular-nums} .tdm .pax .l{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.tdm .state{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tdm .okl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.76rem}
+.tdm .okl .kod{font-family:var(--mono);font-weight:700;background:var(--tok-s);color:var(--tok);border-radius:6px;padding:2px 7px}
+.tdm .okl .kod.onay{background:#dcfce7} .tdm .okl .plk{font-family:var(--mono);font-weight:700;border:1px solid var(--border);border-radius:6px;padding:1px 6px} .tdm .okl .f{font-weight:700}
+.tdm .oks{font-size:.68rem;color:var(--muted)}
+.tdm .ata{font:inherit;font-weight:700;font-size:.76rem;border:1.5px dashed var(--tbad);color:var(--tbad);background:var(--tbad-s);border-radius:9px;padding:7px 10px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px}
+.tdm .ata span{font-weight:500;font-size:.68rem;opacity:.85}
+.tdm .ths{font-size:.76rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap} .tdm .ths .kod{font-family:var(--mono);font-weight:700;background:#e6f0ff;color:#1d4ed8;border-radius:6px;padding:2px 7px}
+.tdm .act{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:5}
+.tdm .act .in{background:var(--navy);color:#fff;border-radius:14px;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.tdm .act .n{font-weight:800} .tdm .act .go{background:var(--primary);color:#fff;border:none;border-radius:9px;padding:8px 16px;font:inherit;font-weight:800;cursor:pointer;margin-left:auto}
+.tdm .act .cl{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:9px;padding:7px 12px;font:inherit;font-weight:700;cursor:pointer}
+.tdm .bos{color:var(--muted);font-size:.84rem;padding:14px 4px}
+body.dark .tdm .tag.urun{background:#dfe6f0;color:#1e2a3a}
+@media(max-width:900px){
+  .tdm .row{grid-template-columns:26px 74px minmax(0,1fr);grid-template-rows:auto auto auto;gap:6px 10px;padding-right:10px}
+  .tdm .row .who,.tdm .row .pax,.tdm .row .state{grid-column:3} .tdm .row .time,.tdm .row .cb{grid-row:1/span 4}
+  .tdm .kpis{grid-template-columns:1fr 1fr}
+}
+@media(max-width:980px){ .tdm .act{bottom:calc(66px + env(safe-area-inset-bottom,0px))} }
 #mSheet{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1700;display:flex;align-items:flex-end}
 .msh-panel{background:var(--card,#fff);border-radius:20px 20px 0 0;width:100%;max-height:78vh;overflow-y:auto;padding:10px 14px calc(18px + env(safe-area-inset-bottom,0px))}
 .msh-tutac{width:38px;height:4px;border-radius:4px;background:#d7dce4;margin:2px auto 10px}
@@ -1314,6 +1386,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
         <div class="pkg-section-item ops-navitem active-ops" data-ot="anasayfa" onclick="opsTab('anasayfa')"><svg class="ic"><use href="#i-home"/></svg> <span class="nlbl" data-k="Ana Sayfa">Ana Sayfa</span></div>
         <div class="pkg-section-item ops-navitem" data-ot="turlar" onclick="opsTab('turlar')"><svg class="ic"><use href="#i-map"/></svg> <span class="nlbl" data-k="Turlar">Turlar</span></div>
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> <span class="nlbl" data-k="Transfer">Transfer</span></div>
+        <div class="pkg-section-item ops-navitem" data-ot="trdemo" onclick="opsTab('trdemo')" title="Transfer monitörü — yeni tasarım (demo, canlı veri)"><span class="eic">🧪</span> <span class="nlbl" data-k="Trf. Demo">Transfer Demo</span></div>
         <div class="pkg-section-item ops-navitem" data-ot="tahsis" onclick="opsTab('tahsis')"><span class="eic">🚙</span> <span class="nlbl" data-k="Tahsisler">Tahsisler</span></div>
         <div class="pkg-section-item ops-navitem" data-ot="mutabakat" onclick="opsTab('mutabakat')"><svg class="ic"><use href="#i-coins"/></svg> <span class="nlbl" data-k="Mutabakat">Araç Mutabakatı</span></div>
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> <span class="nlbl" data-k="Tanımlar">Tanımlamalar</span></div>
@@ -2100,6 +2173,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
         <div id="opsPane_turlar" style="display:none"></div>
         <div id="opsPane_birlestir" style="display:none"></div>
         <div id="opsPane_transfer" style="display:none"></div>
+        <div id="opsPane_trdemo" style="display:none"></div>
         <div id="opsPane_tahsis" style="display:none"></div>
         <div id="opsPane_mutabakat" style="display:none"></div>
         <div id="opsPane_tanim" style="display:none"></div>
@@ -2390,7 +2464,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v714 · 07.10.2026';
+const APP_VER='v715 · 07.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15267,18 +15341,99 @@ function sbToggle(){
   try{ localStorage.setItem('dmc_sbKapali',kapali?'1':'0'); }catch(e){}
 }
 try{ if(localStorage.getItem('dmc_sbKapali')==='1') document.body.classList.add('sb-kapali'); }catch(e){}
+// ═══ Transfer Demo — yeni tasarım, canlı veri (v715). Klasik Transfer ekranına dokunmaz; atama klasik ekranda yapılır.
+let _tdmDate='', _tdmSel=new Set();
+let _tdmF=(function(){ try{ return Object.assign({G:1,D:1,A:1,T:1,U:0,sadece:0,op:'',urun:'',bolge:''},JSON.parse(localStorage.getItem('dmc_tdmF')||'{}')); }catch(e){ return {G:1,D:1,A:1,T:1,U:0,sadece:0,op:'',urun:'',bolge:''}; } })();
+function _tdmFSave(){ try{ localStorage.setItem('dmc_tdmF',JSON.stringify(_tdmF)); }catch(e){} }
+function tdmF(k,v){ _tdmF[k]=(v===undefined)?(_tdmF[k]?0:1):v; _tdmFSave(); renderTrDemo(); }
+function tdmGun(d){ _tdmDate=d; _tdmSel.clear(); renderTrDemo(); }
+function tdmNav(n){ _tdmDate=_isoAdd(_tdmDate||_opsToday(),n); _tdmSel.clear(); renderTrDemo(); }
+function tdmSec(id,on){ on?_tdmSel.add(id):_tdmSel.delete(id); renderTrDemo(); }
+function tdmTemizle(){ _tdmSel.clear(); renderTrDemo(); }
+function tdmKlasikAta(id){
+  // seçili (ya da tıklanan) satırları klasik Transfer ekranında seçili getir — atama çubuğu orada açılır
+  if(id) _tdmSel.add(id);
+  if(!_tdmSel.size){ showToast('Önce satır seç','error'); return; }
+  _opsTrDate=_tdmDate||_opsToday(); _trSel=new Set(_tdmSel);
+  try{ _trTipF.atanmamis=false; }catch(e){}
+  opsTab('transfer');
+  setTimeout(()=>{ try{ _trRenderAtabar(); const ab=document.getElementById('trAtabar'); ab&&ab.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} },80);
+  showToast('Seçim klasik ekrana taşındı — alttaki çubuktan firma/araç ata','success',5000);
+}
+function _tdmTipOk(r){ const t=r.tip; if(t==='G') return !!_tdmF.G; if(t==='D') return !!_tdmF.D; if(t==='ARAD'||t==='ARAG') return !!_tdmF.A; if(t==='TUR') return !!_tdmF.T; if(t==='UZT') return !!_tdmF.U; return true; }
+function _tdmRows(gun,filtre){
+  let L=_trGenRows().filter(r=>r.tarih===gun);
+  if(filtre){ L=L.filter(r=>_tdmTipOk(r)&&(!_tdmF.op||r.op===_tdmF.op)&&(!_tdmF.urun||r.urun===_tdmF.urun)&&(!_tdmF.bolge||(r.bolge||'')===_tdmF.bolge)&&(!_tdmF.sadece||!(r.grup||r.tahsis))); }
+  return L;
+}
+function renderTrDemo(){
+  const box=document.getElementById('opsPane_trdemo'); if(!box) return;
+  if(!_tdmDate) _tdmDate=_opsToday();
+  const gun=_tdmDate, bugun=_opsToday();
+  const tum=_tdmRows(gun,false), L=_tdmRows(gun,true);
+  const atanmamis=r=>!(r.grup||r.tahsis);
+  // gün şeridi: seçili günün 2 öncesinden 5 sonrasına
+  const gunler=[]; for(let i=-2;i<=5;i++){ const d=_isoAdd(gun,i); const R=_trGenRows().filter(r=>r.tarih===d&&_tdmTipOk(r)); const ac=R.filter(atanmamis).length; gunler.push({d,n:R.length,ac}); }
+  const GUNAD=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
+  const dayH=gunler.map(g=>{ const dt=new Date(g.d+'T12:00:00'); return `<button class="day ${g.d===gun?'on':''}" onclick="tdmGun('${g.d}')"><span class="d">${GUNAD[dt.getDay()]}${g.d===bugun?' · bugün':''}</span><span class="n">${g.d.slice(8,10)}.${g.d.slice(5,7)}</span><span class="s"><i class="${!g.n?'bos':g.ac?'':'ok'}"></i>${g.n?g.n+' iş · '+(g.ac?g.ac+' açık':'tamam'):'iş yok'}</span></button>`; }).join('');
+  // seçenek listeleri (o günün tüm satırlarından)
+  const uniq=f=>[...new Set(tum.map(f).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'tr'));
+  const selChip=(k,lbl,opts)=>`<label class="chip ${_tdmF[k]?'on':''}" style="${_tdmF[k]?'color:var(--text)':''}">${lbl}: <select onchange="tdmF('${k}',this.value)"><option value="">Hepsi</option>${opts.map(o=>`<option ${_tdmF[k]===o?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
+  const chip=(k,cls,lbl)=>`<button class="chip ${_tdmF[k]?'on':''} ${cls}" onclick="tdmF('${k}')"><i></i>${lbl}</button>`;
+  const pax=L.reduce((t,r)=>t+(+r.pax||0),0), acik=L.filter(atanmamis).length, ths=L.filter(r=>!r.grup&&r.tahsis).length;
+  const dt=new Date(gun+'T12:00:00'); const baslik=dt.toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',weekday:'long'});
+  // satırlar
+  const dilim=r=>{ const m=_dk(_trDeparHesap(r).saat||r.saat); if(m===null) return 3; return m<12*60?0:m<18*60?1:2; };
+  const DAD=['Sabah','Öğle / Öğleden sonra','Akşam / Gece','Saati belirsiz'];
+  const TAD={G:'Geliş',D:'Dönüş',ARAD:'Ara depar',ARAG:'Ara varış',TUR:'Tur',UZT:'Uzatma'};
+  const sirali=L.slice().sort((a,b)=>{ const x=_dk(_trDeparHesap(a).saat||a.saat), y=_dk(_trDeparHesap(b).saat||b.saat); return (x===null?9999:x)-(y===null?9999:y); });
+  const satir=r=>{
+    const dep=_trDeparHesap(r); const gr=_trGrupOf(r); const sel=_tdmSel.has(r.id);
+    let reh=null; try{ reh=_trRehInfo(r); }catch(e){}
+    const hat=_trHatTipi(r.rota||'');
+    const pt=(txt)=>{ const p=String(txt||'—').split(' · '); return `<span class="pt" title="${esc(txt||'')}">${esc(p[0])}${p[1]?` <small>· ${esc(p.slice(1).join(' · '))}</small>`:''}</span>`; };
+    let durum;
+    if(r.grup){ durum=`<div class="okl"><span class="kod ${r.onay?'onay':''}" title="${r.onay?'onaylı':'atandı'}">${esc(_trKodOf(r.grup))}</span>${gr.firma?`<span class="f">${esc(gr.firma)}</span>`:''}${gr.arac||gr.arac2?`<span>${esc([gr.arac,gr.arac2].filter(Boolean).join(' + '))}</span>`:''}${gr.plaka?`<span class="plk">${esc(gr.plaka)}</span>`:''}</div><div class="oks">${[gr.soforAd?'Şoför '+gr.soforAd:'',gr.soforTel||'',dep.saat?'depar '+dep.saat:'',r.onay?'onaylı':'onay bekliyor',!gr.plaka?'plaka girilmedi':''].filter(Boolean).map(esc).join(' · ')}</div>`; }
+    else if(r.tahsis){ durum=`<div class="ths"><span class="kod">TAHSİS</span>${esc([r.tahsis.firma,r.tahsis.arac].filter(Boolean).join(' · ')||'tur aracı')}</div><div class="oks">${r.tahsis.plaka?esc(r.tahsis.plaka):'plaka girilmedi — Tahsisler\'den ekle'}</div>`; }
+    else { durum=`<button class="ata" onclick="event.stopPropagation();tdmKlasikAta('${esc(r.id)}')">🚌 Taşımacı ata ${!dep.saat?'<span>depar saati yok</span>':''}</button>`; }
+    return `<div class="row ${esc(r.tip)} ${sel?'sel':''}">
+      <input class="cb" type="checkbox" ${sel?'checked':''} onchange="tdmSec('${esc(r.id)}',this.checked)" aria-label="seç">
+      <div class="time"><span class="k">${TAD[r.tip]||esc(r.tip)}</span><span class="t">${esc(r.saat||'—')}</span><span class="dep">Depar <b>${esc(dep.saat||'—')}</b>${dep.onceki?' <span title="önceki gün">⤴</span>':''}</span></div>
+      <div class="route"><div class="l">${pt(r.nereden)}<span class="arr">→</span>${pt(r.nereye)}</div>
+        <div class="meta">${r.ucus?`<span class="tag fl">${esc(r.ucus)}</span>`:''}${hat==='IC'?'<span class="tag ic">İÇ HAT</span>':hat==='DIS'?'<span class="tag dis">DIŞ HAT</span>':''}${r.rota&&r.rota.includes('→')?`<span>${esc(r.rota)}</span>`:''}${r.bolge?`<span>· ${esc(r.bolge)}</span>`:''}${r.grupKod?`<span>· PNR ${esc(r.grupKod)}</span>`:''}</div></div>
+      <div class="who"><span class="op">${esc(r.op||'—')} · <span class="tag urun">${esc(r.urun||'')}</span></span><span class="reh">${reh&&reh.ad?('Rehber: '+esc(reh.ad)+(reh.kaynak==='görev'?'':' <small>(grup)</small>')+(reh.bolumFark?' <em>⚠ bölüm: '+esc(reh.bolumFark)+'</em>':'')):'<em>Rehber yok</em>'}</span></div>
+      <div class="pax"><span class="n">${r.pax||0}</span><span class="l">pax</span></div>
+      <div class="state">${durum}</div>
+    </div>`;
+  };
+  let listH=''; let son=-1;
+  sirali.forEach(r=>{ const d=dilim(r); if(d!==son){ listH+=`<div class="grp">${DAD[d]}</div>`; son=d; } listH+=satir(r); });
+  if(!sirali.length) listH=`<div class="bos">${tum.length?'Filtreye uyan transfer yok.':'Bu günde transfer yok.'}</div>`;
+  const selPax=[..._tdmSel].reduce((t,id)=>{ const r=tum.find(x=>x.id===id); return t+(r?(+r.pax||0):0); },0);
+  box.innerHTML=`<div class="card tdm">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧪 Transfer Demo</b><span style="font-size:.72rem;color:var(--muted)">yeni tasarım · canlı veri · atama klasik ekranda yapılır</span><span style="margin-left:auto;display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="tdmNav(-1)">◀</button><button class="btn btn-outline btn-sm" onclick="tdmGun('${bugun}')">Bugün</button><button class="btn btn-outline btn-sm" onclick="tdmNav(1)">▶</button></span></div>
+    <div class="days">${dayH}</div>
+    <div class="head"><div><div class="title">${esc(baslik)}</div><div class="sum"><b>${L.length} transfer</b> · ${pax} yolcu${acik?` · <b style="color:var(--tbad)">${acik} atanmamış</b>`:' · <b style="color:var(--tok)">hepsi atanmış</b>'}</div></div>
+      <div style="flex:1"></div><button class="btn btn-outline btn-sm" onclick="_opsTrDate='${gun}';opsTab('transfer')">Klasik ekranda aç →</button></div>
+    <div class="chips">${chip('G','g','Geliş')}${chip('D','d','Dönüş')}${chip('A','a','Ara depar / varış')}${chip('T','t','Tur yürüyüşü')}${chip('U','u','Uzatma')}<span class="sep"></span><button class="chip sel ${_tdmF.sadece?'on':''}" onclick="tdmF('sadece')">Sadece atanmamış</button><span class="sep"></span>${selChip('op','Operatör',uniq(r=>r.op))}${selChip('urun','Ürün',uniq(r=>r.urun))}${selChip('bolge','Bölge',uniq(r=>r.bolge))}</div>
+    <div class="kpis"><div class="kpi"><span class="n">${L.length}</span><span class="l">Transfer</span></div><div class="kpi ${acik?'bad':''}"><span class="n">${acik}</span><span class="l">Atanmamış</span><span class="bar" title="${L.length-acik}/${L.length} atandı"><b style="width:${L.length?Math.round((L.length-acik)/L.length*100):0}%"></b></span></div><div class="kpi"><span class="n">${ths}</span><span class="l">Tahsis aracı</span></div><div class="kpi"><span class="n">${pax}</span><span class="l">Yolcu</span></div></div>
+    <div class="list">${listH}</div>
+    ${_tdmSel.size?`<div class="act"><div class="in"><span class="n">${_tdmSel.size} transfer seçili · ${selPax} pax</span><span style="font-size:.74rem;opacity:.85">Firma / araç / depar klasik ekrandaki atama çubuğundan</span><button class="cl" onclick="tdmTemizle()">Temizle</button><button class="go" onclick="tdmKlasikAta()">Klasik ekranda ata →</button></div></div>`:''}
+  </div>`;
+}
 function opsTab(t,noPush){
   if(t==='birlestir') t='turlar';
   if(!noPush&&typeof _opsTab!=='undefined'&&t!==_opsTab) _navPush();
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){}
   try{ if(t!=='transfer'){ const ab=document.querySelector('body>#trAtabar'); ab&&ab.remove(); } }catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
-  ['anasayfa','gunluk','rehtak','grup','transfer','tahsis','tanim','mutabakat','birlestir','turlar'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
+  ['anasayfa','gunluk','rehtak','grup','transfer','trdemo','tahsis','tanim','mutabakat','birlestir','turlar'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
   if(t==='anasayfa') renderOpsAnasayfa();
   else if(t==='rehtak') renderRehberTakvim();
   else if(t==='gunluk') renderOperasyonPage();
   else if(t==='grup') renderOpsGrup();
   else if(t==='transfer') renderOpsTransfer();
+  else if(t==='trdemo') renderTrDemo();
   else if(t==='tahsis') renderOpsTahsis();
   else if(t==='birlestir') renderGrupBirlestir();
   else if(t==='turlar') renderOpsTurlar();
