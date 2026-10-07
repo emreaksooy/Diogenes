@@ -854,7 +854,8 @@ body.dark .tdm .band{background:rgba(255,255,255,.03)}
 .otl .otl-list{display:block;background:var(--card,#fff);border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .otl .hd,.otl .sr{display:grid;grid-template-columns:30px 118px minmax(150px,1.1fr) minmax(100px,.8fr) 64px minmax(130px,.9fr) minmax(220px,1.3fr) 92px;gap:0 10px;align-items:center}
 .otl .hd{background:var(--navy);color:#fff;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:7px 10px 7px 0} .otl .hd span:first-child{padding-left:10px}
-.otl .gun{background:var(--light);font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center} .otl .gun b{color:var(--text);text-transform:none;letter-spacing:0;font-size:.78rem}
+.otl .gun{background:var(--navy);color:rgba(255,255,255,.75);font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:6px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center} .otl .gun b{color:#fff;text-transform:none;letter-spacing:0;font-size:.78rem}
+.otl .hd+.gun{border-top:none}
 .otl .sr{position:relative;padding:7px 10px 7px 0;border-top:1px solid var(--border);font-size:.8rem;cursor:pointer} .otl .sr:hover{background:var(--light)}
 .otl .sr::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--border)}
 .otl .sr.ok::before{background:var(--tok)} .otl .sr.warn::before{background:#b45309} .otl .sr.bad::before{background:var(--tbad)}
@@ -870,7 +871,7 @@ body.dark .tdm .band{background:rgba(255,255,255,.03)}
 .otl .ro.ok{background:var(--tok-s);color:var(--tok)} .otl .ro.warn{background:#fff4df;color:#b45309} .otl .ro.bad{background:var(--tbad-s);color:var(--tbad)} .otl .ro.mut{background:var(--light);color:var(--muted)} .otl .ro.pick{border:1.5px dashed var(--tbad);background:var(--tbad-s);color:var(--tbad);cursor:pointer}
 .otl .st{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
 .otl .act{display:flex;gap:4px;justify-content:flex-end;padding-right:2px}
-.otl .sr.alt{background:var(--light);font-size:.76rem;cursor:pointer} .otl .sr.alt::before{width:3px;left:8px;top:6px;bottom:6px;border-radius:2px} .otl .sr.alt .kod b{font-size:.8rem;color:#1d4ed8} .otl .sr.alt .dt small{color:var(--muted);font-family:inherit}
+.otl .sr.alt{background:#f5f8ff;font-size:.76rem;cursor:pointer;border-top:1px dashed #d6e0f5} body.dark .otl .sr.alt{background:rgba(96,140,255,.08);border-top-color:rgba(96,140,255,.25)} .otl .sr.alt::before{width:3px;left:8px;top:6px;bottom:6px;border-radius:2px} .otl .sr.alt .kod b{font-size:.8rem;color:#1d4ed8} .otl .sr.alt .dt small{color:var(--muted);font-family:inherit}
 .otl .sr.alt .kod{padding-left:14px;position:relative} .otl .sr.alt .kod::before{content:"└";position:absolute;left:0;color:var(--muted)}
 .otl .det{border-top:1px dashed var(--border);background:var(--light);padding:10px 14px 12px 44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 18px;font-size:.78rem;cursor:default}
 .otl .det h4{margin:0 0 6px;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;gap:6px;align-items:center}
@@ -2532,7 +2533,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v727 · 08.10.2026';
+const APP_VER='v728 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
