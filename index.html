@@ -2390,7 +2390,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v712 · 07.10.2026';
+const APP_VER='v713 · 07.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9841,7 +9841,20 @@ const rzSave=()=>setRezv(getRezv());
 const rzDurum=r=>r.tip!=='urun'?'—':((r.kartlar||[]).length?'acildi':'bekliyor');
 const _rzOpAdlar=()=>getOperators().map(o=>o.ad).filter(Boolean);
 
+// v713: eski içe aktarmalardan kalan sayısal olmayan bölüm değerlerini ("GM.G","A.K") temizle — bunlar grubu yanlış bölüyordu
+function _rzBolumOnar(){
+  try{
+    if(window._rzBolumOnarildi) return; window._rzBolumOnarildi=true;
+    if(_cloudOn&&sbRol&&_acl('rezervasyon')!=='e') return;
+    const norm=v=>{ if(v==null||v==='') return ''; const t=String(v).trim().toUpperCase().replace(/^G/,''); return /^\d{1,2}$/.test(t)?t.padStart(2,'0'):null; };
+    const rez=getRezv()||[]; let n=0;
+    rez.forEach(r=>{ if(!r) return; const b=norm(r.grupBolum); if(b===null){ delete r.grupBolum; n++; } else if(b&&b!==r.grupBolum){ r.grupBolum=b; n++; }
+      (r.musteriler||[]).forEach(m=>{ const mb=norm(m.grupBolum); if(mb===null){ delete m.grupBolum; n++; } else if(mb&&mb!==m.grupBolum){ m.grupBolum=mb; n++; } }); });
+    if(n){ setRezv(rez); console.warn('Bölüm onarımı:',n,'alan düzeltildi'); showToast('⚠ '+n+' kayıtta geçersiz grup bölümü ("GM.G" gibi) temizlendi — gruplar yeniden birleşti','success',7000); }
+  }catch(e){ console.warn('_rzBolumOnar',e); }
+}
 function renderRezvPage(){
+  try{ _rzBolumOnar(); }catch(e){}
   if(_rzCur&&rzR()){ _rzViewShow('rzVListe'); try{ renderRezvListe(); }catch(e){} _rzPanelAc(); rzDetay(); }
   else rzListeGoster();
 }
@@ -11350,6 +11363,8 @@ function _rzSejourOku(f){
           iDonUcNo=H('Dönüş Uçuş No'), iDonFrom=H('Dönüş From'), iDonTo=H('Dönüş To'),
           iTrfNot=hdr.findIndex(h=>/transfer/i.test(String(h||''))&&/not/i.test(String(h||'')));
     const _sjTemiz=v=>{ v=String(v==null?'':v).trim(); return (v==='?'||v==='??')?'':v; };
+    // Sejour Grup5 yalnız SAYISAL bölüm (01/02/G02) ise bölüm sayılır — "GM.G", "A.K" gibi rehber kısaltmaları bölüm değildir
+    const _sjBolum=v=>{ const t=_sjTemiz(v).toUpperCase().replace(/^G/,''); return /^\d{1,2}$/.test(t)?t.padStart(2,'0'):''; };
     const _sjRotaFT=(rFrom,rTo,rEski,gw)=>{ const f=_sjTemiz(rFrom).toUpperCase(), t=_sjTemiz(rTo).toUpperCase();
       if(f&&t) return f+'-'+t; if(rEski) return _sjRota(rEski); return gw||''; };
     if(iV<0||iAd<0){ showToast('Bu dosya Sejour "Rezervasyon Detay" formatında değil (Voucher/Misafir Adı kolonu yok)','error'); return; }
@@ -11447,7 +11462,7 @@ function _rzSejourOku(f){
           mevcut.durum=aktifVar?'':'iptal';
           { let kal=''; tumu.forEach(x=>{ const t=_sjTarih(x.r[iGir]); if(t&&(!kal||t<kal)) kal=t; }); if(kal) mevcut.kalkis=kal; }
           if(iKayit>=0){ let sat=''; tumu.forEach(x=>{ const k2=_sjTarih(x.r[iKayit]); if(k2&&(!sat||k2<sat)) sat=k2; }); if(sat) mevcut.satisTarihi=sat; }
-          if(iG5>=0&&!mevcut.grupBolumM){ const gb=_sjTemiz(tumu[0]&&tumu[0].r[iG5]); if(gb) mevcut.grupBolum=gb; }
+          if(iG5>=0&&!mevcut.grupBolumM){ const gb=_sjBolum(tumu[0]&&tumu[0].r[iG5]); if(gb) mevcut.grupBolum=gb; }
           if(iStat>=0) mevcut.sorSat=tumu.some(x=>String(x.r[iStat]||'').trim()==='Sor-Sat')||false;
           if(iAsil>=0&&!mevcut.asilVoucher){ const av=tumu.map(x=>_sjTemiz(x.r[iAsil])).find(Boolean); if(av) mevcut.asilVoucher=av; }
           if(!mevcut.pkgId){ const kod2=((tumu[0]?String(tumu[0].r[iG1]||''):'').trim()||(iKod2>=0&&tumu[0]?String(tumu[0].r[iKod2]||'').trim():'')).toUpperCase();
@@ -11568,7 +11583,7 @@ function _rzSejourOku(f){
         pkgId:pkg?pkg.id:'',urunKod:kod,kalkis:kalkis,satisTarihi:satis||new Date().toISOString().slice(0,10),
         not:(pkg?'':(String(ilk[iOtel]||'').trim()+' '+_sjTarih(ilk[iGir])+'–'+_sjTarih(ilk[iCik])).trim())+((ilk[iOda]||ilk[iOdaT])?(' · '+String(ilk[iOda]||'').trim()+'/'+String(ilk[iOdaT]||'').trim()):''),
         odaKomp:'',ukartlar:(iOda>=0?_sjUkartlar(kaynak,iOda,iAd,iGir,iCik,musteriler,iSira,iDogum,iKartNo):[]),opUcusNot:'Sejour aktarımı',musteriler:musteriler,kartlar:[],transferler:[]};
-      if(iG5>=0){ const gb=_sjTemiz(ilk[iG5]); if(gb) rec.grupBolum=gb; }
+      if(iG5>=0){ const gb=_sjBolum(ilk[iG5]); if(gb) rec.grupBolum=gb; }
       if(iAsil>=0){ const av=kaynak.map(r=>_sjTemiz(r[iAsil])).find(Boolean); if(av) rec.asilVoucher=av; }
       if(iStat>=0&&kaynak.some(r=>String(r[iStat]||'').trim()==='Sor-Sat')) rec.sorSat=true;
       { const tOteller2=(getTanimlar()||{}).oteller||[];
@@ -16247,6 +16262,7 @@ function otMagProg(gid,val){
 }
 function otAcTog(key){ window._otAcik=window._otAcik||new Set(); window._otAcik.has(key)?window._otAcik.delete(key):window._otAcik.add(key); renderOpsTurlar(); }
 function renderOpsTurlar(){
+  try{ _rzBolumOnar(); }catch(e){}
   const box=document.getElementById('opsPane_turlar'); if(!box) return;
   if(!_otBas){ _otBas=_opsToday(); _otSon=_isoAdd(_otBas,60); }
   let L=_rtTurlar(_otBas,_otSon);
