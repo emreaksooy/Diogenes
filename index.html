@@ -811,7 +811,18 @@ body.sb-kapali #sbKenarBtn{left:10px}
 body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
 @media(max-width:980px){#sbKenarBtn{display:none!important}}
 @media(max-width:980px){
-  #mTabbar{position:fixed;left:0;right:0;bottom:0;z-index:1600;display:flex;background:var(--card,#fff);border-top:1px solid var(--border);padding:6px 4px calc(7px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 18px rgba(16,24,40,.06)}
+  /* v711: ana menü ÜSTTE (navbar'ın hemen altında, sabit) */
+  #mTabbar{position:fixed;left:0;right:0;top:var(--nav-h);bottom:auto;z-index:190;display:flex;background:var(--card,#fff);border-bottom:1px solid var(--border);padding:4px 4px 5px;box-shadow:0 6px 18px rgba(16,24,40,.06)}
+  .app-body{padding-top:54px}
+  /* bölüm alt menüsü (Operasyon/Mağaza/Rezervasyon/Uçak) ALTTA sabit çubuk — yalnız yatay panel görünürken */
+  body.m-ctx .sidebar-ctx{position:fixed;left:0;right:0;bottom:0;z-index:1600;background:var(--card,#fff);border-top:1px solid var(--border);box-shadow:0 -6px 18px rgba(16,24,40,.06);padding-bottom:env(safe-area-inset-bottom,0px)}
+  body.m-ctx .sidebar-ctx .sidebar-list{gap:0;padding:5px 4px 6px;justify-content:space-around}
+  body.m-ctx .sidebar-ctx .sidebar-list .pkg-section-item{flex:1 1 0;min-width:0;padding:3px 2px;gap:3px}
+  body.m-ctx .sidebar-ctx .sidebar-list .pkg-section-item .ic{width:22px;height:22px}
+  body.m-ctx .sidebar-ctx .sidebar-list .pkg-section-item .eic{font-size:20px}
+  body.m-ctx .sidebar-ctx .sidebar-list .pkg-section-item .nlbl::after{font-size:.56rem}
+  body.m-ctx .sidebar{border-bottom:none}
+  body:not(.m-ctx){padding-bottom:12px}
   #mTabbar button{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:inherit;font-size:.58rem;font-weight:700;color:var(--muted);padding:4px 0;cursor:pointer}
   #mTabbar button i{font-style:normal;font-size:1.3rem;line-height:1}
   #mTabbar button.on{color:var(--primary)}
@@ -885,9 +896,9 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   .ucak-metric .um-num{font-size:1.05rem}
   .ucak-metric .um-lbl{font-size:.54rem}
   #opsPane_transfer>div:first-child .btn:first-child{display:none} /* ← Ana Sayfa: alt çubuk varken gereksiz */
-  body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+  body.m-ctx{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
   #sbToggleBtn{display:none !important}
-  body.mnavAcik .side-nav{bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+  body.mnavAcik .side-nav{bottom:0;padding-top:calc(var(--nav-h) + 54px + env(safe-area-inset-top,0px) + 8px)}
   #trAtabar.show{position:fixed;left:0;right:0;top:auto;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:1500;box-shadow:0 -6px 24px rgba(16,24,40,.25);padding:9px 12px;border-radius:0;margin:0}
   #trAtaForm:not(.msh-tasindi){display:none!important}
   #trAtabar .m-sadece-mobil{margin-left:auto;flex:0 0 auto!important;padding:9px 26px;border-radius:10px;font-size:.78rem}
@@ -2377,7 +2388,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v710 · 07.10.2026';
+const APP_VER='v711 · 07.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2766,8 +2777,18 @@ function navGeri(){
   }catch(e){}
   _navGeriModu=false;
 }
+function _mCtxGuncelle(){
+  try{
+    if(!window.matchMedia||!window.matchMedia('(max-width:980px)').matches){ document.body.classList.remove('m-ctx'); return; }
+    const ctx=document.querySelector('.sidebar-ctx'); if(!ctx) return;
+    const gor=[...ctx.children].some(d=>d.id&&d.id!=='sidebarPkg'&&d.id!=='sidebarOps'&&getComputedStyle(d).display!=='none'&&d.querySelector('.pkg-section-item'));
+    document.body.classList.toggle('m-ctx',gor);
+  }catch(e){}
+}
+try{ document.addEventListener('DOMContentLoaded',()=>{ const ctx=document.querySelector('.sidebar-ctx'); if(ctx&&window.MutationObserver){ new MutationObserver(()=>_mCtxGuncelle()).observe(ctx,{attributes:true,attributeFilter:['style','class'],subtree:true,childList:true}); } _mCtxGuncelle(); window.addEventListener('resize',_mCtxGuncelle); }); }catch(e){}
 function _mTabAktif(id){
   try{
+    _mCtxGuncelle();
     const menuAcik=document.body.classList.contains('mnavAcik');
     document.querySelectorAll('#mTabbar button[data-page]').forEach(b=>b.classList.toggle('on',!menuAcik&&b.getAttribute('data-page')===id));
     const m=document.getElementById('mTabMenu'); if(m) m.classList.toggle('on',menuAcik);
