@@ -2532,7 +2532,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v724 · 08.10.2026';
+const APP_VER='v725 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16535,8 +16535,14 @@ function _otDurum(){
   const oteller=t=>{
     // 1) grubun rezervasyon kartları: otel adı + başlangıç → tarihe göre sırala, ardışık tekilleştir
     const K=[]; try{ const sf=sefler(t); (getRezv()||[]).forEach(r=>{ if(!r||r.tip!=='urun'||r.durum==='iptal'||r.personel) return; if(!sf.some(q=>q.pkgId===r.pkgId&&q.kalkis===r.kalkis)) return; if(t.bolum&&t.bolum!=='01'&&String(r.grupBolum||'01')!==String(t.bolum)) return;
-      (r.kartlar||[]).forEach(k=>{ if(!k||k.tip==='ulasim') return; const ad=String(k.otel||'').trim(); if(!ad) return; K.push({ad,bas:String(k.baslangic||''),sehir:String(k.sehir||'').trim()}); }); }); }catch(e){}
-    if(K.length){ K.sort((a,b)=>a.bas.localeCompare(b.bas)); const out=[]; K.forEach(k=>{ const son=out[out.length-1]; if(!son||_norm(son.ad)!==_norm(k.ad)) out.push({ad:k.ad,bas:k.bas,sehir:k.sehir}); }); return out; }
+      (r.kartlar||[]).forEach(k=>{ if(!k||k.tip==='ulasim') return; const ad=String(k.otel||'').trim()||('('+(String(k.sehir||'').trim()||'otel')+' seçilmedi)'); const pax=(k.uyeler||[]).length||(r.musteriler||[]).length||0; K.push({ad,bas:String(k.baslangic||''),sehir:String(k.sehir||'').trim(),pax,gece:+k.gece||0,bos:!String(k.otel||'').trim()}); }); }); }catch(e){}
+    if(K.length){
+      // aynı tarihte birden çok otel olabilir (grup iki otele bölünmüş): tarih → oteller {ad, pax toplamı}
+      const byDate={}; K.forEach(k=>{ const d=byDate[k.bas]=byDate[k.bas]||{bas:k.bas,oteller:[]}; let o=d.oteller.find(x=>_norm(x.ad)===_norm(k.ad)); if(!o){ o={ad:k.ad,sehir:k.sehir,pax:0,gece:k.gece,bos:k.bos}; d.oteller.push(o); } o.pax+=k.pax; });
+      const gunler=Object.values(byDate).sort((a,b)=>a.bas.localeCompare(b.bas));
+      // ardışık günlerde aynı otel seti → tek satır (04.10–06.10)
+      const out=[]; gunler.forEach(g=>{ const imza=g.oteller.map(o=>_norm(o.ad)).sort().join('|'); const son=out[out.length-1]; if(son&&son.imza===imza){ son.bit=g.bas; return; } out.push({bas:g.bas,bit:g.bas,oteller:g.oteller,imza,ad:g.oteller.map(o=>o.ad).join(' + '),sehir:g.oteller[0].sehir}); });
+      return out; }
     // 2) yedek: ürün gün planı (henüz rezervasyon açılmamışsa)
     const pk=getPackages().find(p=>p.id===t.pkgId)||{}; const out=[]; (pk.gunler||[]).forEach((g,gi)=>{ const ad=String(g.konaklamaAd||'').trim()||String(g.konaklamaBolge||'').trim(); if(ad&&(!out.length||_norm(out[out.length-1].ad)!==_norm(ad))) out.push({ad,bas:_isoAdd(t.kalkis,gi),sehir:String(g.konaklamaBolge||'').trim(),plan:true}); }); return out; };
   // mağaza programı: gerçek ziyaret planı (tarih · firma/şube · şehir), atanmamışsa firma boş
@@ -16590,7 +16596,7 @@ function renderTurlarYeni(){
     let h=`<div class="sr ${altMi?'alt':durum}" onclick="otAcTog('${key}')">
       <input class="cb" type="checkbox" ${secOk&&!altMi?'':'style="visibility:hidden"'} ${_gbSec.has(secKey)?'checked':''} onclick="event.stopPropagation()" onchange="otSecTog('${secKey}',this.checked)" title="Birleştirmek için seç">
       <span class="dt">${altMi?'':`${_fmtDateTR(t.kalkis).slice(0,5)} → ${_fmtDateTR(t.end).slice(0,5)} <small>${gece}g</small>`}</span>
-      <span class="kod"><b>${altMi?'G'+esc(t.bolum):esc(kodB(t))}</b>${bolumSay>1&&!altMi?`<span class="tag bol">G01 · ${bolumSay} bölüm</span>`:''}${t.uyeSeferler&&t.uyeSeferler.length?`<span class="tag birl">🔗 ${t.uyeSeferler.length} sefer</span>`:''}${!altMi&&ot.length?`<span class="r" title="${esc(ot.map(o=>o.ad).join(' → '))}${ot[0].plan?' (ürün planından — rezervasyon kartı yok)':''}" ${ot[0].plan?'style="font-style:italic"':''}>${esc(ot.map(o=>o.ad).join(' → '))}</span>`:''}${altMi?`<span class="r">${esc(t.bolum)}. bölüm</span>`:''}</span>
+      <span class="kod"><b>${altMi?'G'+esc(t.bolum):esc(kodB(t))}</b>${bolumSay>1&&!altMi?`<span class="tag bol">G01 · ${bolumSay} bölüm</span>`:''}${t.uyeSeferler&&t.uyeSeferler.length?`<span class="tag birl">🔗 ${t.uyeSeferler.length} sefer</span>`:''}${!altMi&&ot.length?(()=>{ const adlar=[]; ot.forEach(o=>(o.oteller||[{ad:o.ad}]).forEach(x=>{ if(!adlar.some(a=>_norm(a)===_norm(x.ad))) adlar.push(x.ad); })); return `<span class="r" title="${esc(adlar.join(' → '))}${ot[0].plan?' (ürün planından — rezervasyon kartı yok)':''}" ${ot[0].plan?'style="font-style:italic"':''}>${esc(adlar.join(' → '))}</span>`; })():''}${altMi?`<span class="r">${esc(t.bolum)}. bölüm</span>`:''}</span>
       <span class="op">${altMi?'':esc(t.op||'—')}</span>
       <span class="pax">${t.pax}${t.acilimsiz?' <small title="açılım bekleyen rezervasyon">⏳</small>':''}</span>
       ${reh}
@@ -16602,7 +16608,9 @@ function renderTurlarYeni(){
       let trfL=[]; try{ const sf=(t.uyeSeferler&&t.uyeSeferler.length)?t.uyeSeferler:[{pkgId:t.pkgId,kalkis:t.kalkis}]; trfL=_trGenRows().filter(r=>r.tip!=='TUR'&&sf.some(q=>q.pkgId===r.pkgId&&q.kalkis===r.kalkis)).sort((a,b)=>String(a.tarih+a.saat).localeCompare(String(b.tarih+b.saat))); }catch(e){}
       const TAD={G:'Geliş',D:'Dönüş',ARAD:'Ara depar',ARAG:'Ara varış',UZT:'Uzatma'};
       const trfH=trfL.length?trfL.slice(0,8).map(r=>`<div><span class="t">${_fmtDateTR(r.tarih).slice(0,5)} ${esc(r.saat||'')}</span>${TAD[r.tip]||r.tip} · ${esc((r.tip==='D'||r.tip==='ARAD'?r.nereye:r.nereden).split(' · ')[0])}${r.ucus?' · '+esc(r.ucus):''} ${r.grup?`<span class="ro ok">${esc(_trKodOf(r.grup))}</span>`:`<span class="ro pick" onclick="event.stopPropagation();_opsTrDate='${r.tarih}';_trSel=new Set(['${esc(r.id)}']);opsTab('transfer')">ata</span>`}</div>`).join('')+(trfL.length>8?`<div class="m">+${trfL.length-8} transfer daha</div>`:''):'<div class="m">uçuş transferi yok</div>';
-      const otelH=ot.length?ot.map((o,i)=>`<div><span class="t">${o.bas?_fmtDateTR(o.bas).slice(0,5):(i+1)+'.'}</span>${esc(o.ad)}${o.sehir?` <span class="m">· ${esc(o.sehir)}</span>`:''}${o.plan?' <span class="m">(plan)</span>':''}</div>`).join('')+(ot[0].plan?'<div class="m">Rezervasyon kartı yok — ürün gün planından</div>':''):'<div class="m">otel bilgisi yok</div>';
+      const otelH=ot.length?ot.map((o,i)=>{ const tar=o.bas?(_fmtDateTR(o.bas).slice(0,5)+(o.bit&&o.bit!==o.bas?'–'+_fmtDateTR(o.bit).slice(0,5):'')):(i+1)+'.';
+          const icerik=(o.oteller||[{ad:o.ad,pax:0,sehir:o.sehir}]).map(x=>`<span ${x.bos?'style="color:#b45309"':''}>${esc(x.ad)}${x.pax?` <span class="m">${x.pax} pax</span>`:''}</span>`).join('<span class="m"> + </span>');
+          return `<div><span class="t">${tar}</span>${icerik}${o.sehir&&!(o.oteller&&o.oteller.length>1)?` <span class="m">· ${esc(o.sehir)}</span>`:''}${o.plan?' <span class="m">(plan)</span>':''}</div>`; }).join('')+(ot[0].plan?'<div class="m">Rezervasyon kartı yok — ürün gün planından</div>':''):'<div class="m">otel bilgisi yok</div>';
       const magH=mgL.length?mgL.map(z=>`<div><span class="t">${_fmtDateTR(z.tarih).slice(0,5)}</span>${z.firma?esc(z.firma):`<span class="ro pick" onclick="event.stopPropagation();showPage('magmuh');setTimeout(()=>{try{mmTab('plan')}catch(e){}},60)">firma ata</span>`}<span class="m">${esc([z.sehir,z.tur].filter(Boolean).join(' · '))}</span></div>`).join(''):'<div class="m">ürün planında mağaza günü yok</div>';
       const birlesikH=(t.uyeSeferler&&t.uyeSeferler.length)?`<div><h4>Birleşik grup</h4><div class="l">${t.uyeSeferler.map(sf=>{const pk=getPackages().find(p=>p.id===sf.pkgId)||{};return `<div>${esc(pk.paketKodu||'?')} ${_fmtDateTR(sf.kalkis)} <span class="m">${_opsPax(sf.pkgId,sf.kalkis)} pax</span></div>`;}).join('')}<div style="margin-top:4px"><button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="event.stopPropagation();gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button></div></div></div>`:'';
       h+=`<div class="det" onclick="event.stopPropagation()">
