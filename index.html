@@ -843,7 +843,24 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .tdm .route .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.7rem;color:var(--muted)} .tdm .route .meta>*{flex:none}
 .tdm .route{cursor:pointer} .tdm .route:hover .pt{text-decoration:underline}
 .tdm .exp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.tdm .atabar{margin-bottom:0}
+.tdm .atabar{margin-bottom:0;border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.tdm-ab{display:flex;flex-direction:column;gap:8px;width:100%}
+.tdm-ab-ust{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem}
+.tdm-roz{font-weight:800;background:rgba(255,255,255,.12);border-radius:8px;padding:3px 10px} .tdm-roz .cap{background:transparent;padding:0;font-weight:700}
+.tdm-ab-diger{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;width:100%;padding-top:8px;border-top:1px dashed rgba(255,255,255,.25)}
+.tdm-alt.on{background:rgba(255,255,255,.18)}
+.tdm-ab-diger[hidden],.tdm-f[hidden]{display:none}
+.tdm-vaz{background:transparent;border:none;color:rgba(255,255,255,.75);font:inherit;font-weight:700;cursor:pointer;font-size:.74rem;padding:7px 8px} .tdm-vaz:hover{color:#fff;text-decoration:underline}
+.tdm-sec{background:rgba(255,255,255,.12);border-radius:7px;padding:2px 8px;font-size:.7rem;white-space:nowrap}
+.tdm-one{font-size:.72rem;padding:2px 9px;border-radius:7px} .tdm-one.ok{background:rgba(21,127,74,.35);color:#c9f3dc} .tdm-one.warn{background:rgba(217,164,0,.3);color:#ffe8a3}
+.tdm-ab-form{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
+.tdm-f{display:flex;flex-direction:column;gap:3px;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.95}
+.tdm-f select,.tdm-f input{min-height:32px;font-size:.78rem!important;font-weight:600}
+.tdm-ab-btn{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto}
+.tdm-go{background:var(--primary);color:#fff;border:none;border-radius:9px;padding:8px 16px;font:inherit;font-weight:800;cursor:pointer;font-size:.8rem}
+.tdm-alt{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:9px;padding:7px 11px;font:inherit;font-weight:700;cursor:pointer;font-size:.74rem}
+.tdm-alt:hover{background:rgba(255,255,255,.12)}
+body>#trAtabar .tdm-ab-form{display:none}
 .tdm .gece{opacity:.75} .tdm .gece .time .k::after{content:" · ertesi gece";text-transform:none;letter-spacing:0;color:var(--muted)}
 .tdm .row.onay .okl .kod{background:#dcfce7}
 .tdm .tag{font-size:.64rem;font-weight:800;border-radius:6px;padding:2px 7px;background:var(--light);color:var(--text);white-space:nowrap}
@@ -2469,7 +2486,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v717 · 07.10.2026';
+const APP_VER='v718 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20256,7 +20273,80 @@ function _trAracDoldur(){
   });
   _trKapKontrol();
 }
+// v718: yeni görünümde atama çubuğu — onaylı taslak
+// ÜST: Rehber | Firma | Araç | Depar | Not (küçük etiketli) · solda rozet · butonlar seçime göre · sağda Diğer ▾ + Vazgeç
+// DİĞER: 2. araç | Tarife | Güzergâh notu · Excel | Info PDF | Sadece notu kaydet
+window._trAbDiger=window._trAbDiger||false;
+function _trAbDigerTog(){ window._trAbDiger=!window._trAbDiger; _trRenderAtabar(); }
+function _trAbForm(){ const g=id=>(document.getElementById(id)||{}).value||''; return {firma:g('trFirma'),arac:g('trArac'),arac2:g('trArac2'),reh:g('trRehber'),dep:_saatNorm(g('trDepar').trim()),tarife:g('trTarife'),guz:g('trGuzergah'),not:g('trSecNot')}; }
+function _trAbBagla(Tr,r,kod,dep){ const patch={grup:kod,onay:false}; if(dep){ patch.depar=dep; patch.deparMan=true; }
+  if((r.vlist||[]).length){ const uk='|u:'+String(r.ucus||''); r.vlist.forEach(v=>{ const b=r.pkgId+'|'+r.kalkis+'|'+r.vseg+'|'+v; Tr.vsat[b+uk]=Object.assign({},Tr.vsat[b]||{},Tr.vsat[b+uk]||{},patch); delete Tr.vsat[b]; }); delete Tr.sat[r.id]; }
+  else Tr.sat[r.id]=Object.assign({},Tr.sat[r.id]||{},patch); }
+// Birleşik + normal seçili → normalleri mevcut göreve ekler (yeni görev açmaz)
+function _trAtamaBirlesigeEkle(kod){
+  const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const yeni=rows.filter(r=>r.grup!==kod); if(!yeni.length) return;
+  const F=_trAbForm(); if(F.dep&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(F.dep)){ showToast('Depar SS:DD olmalı (ör. 06:30)','error'); return; }
+  const Tr=getTransfer(); Tr.sat=Tr.sat||{}; Tr.vsat=Tr.vsat||{};
+  yeni.forEach(r=>_trAbBagla(Tr,r,kod,F.dep));
+  const g=Tr.gruplar[kod]; if(g){ if(F.reh) g.rehber=F.reh; if(F.guz) g.guzergah=F.guz; }
+  setTransfer(Tr); if(F.not) yeni.forEach(r=>_trSatKaydet(r.id,{not:F.not}));
+  _trSel.clear(); window._trKod=null; renderOpsTransfer();
+  showToast(yeni.length+' transfer '+_trKodOf(kod)+' görevine eklendi','success',5000);
+}
+// Birleşik görev seçili → formdaki değişiklikleri AYNI göreve yazar (görev kodu korunur)
+function _trAtamaGuncelle(kod){
+  const F=_trAbForm(); if(F.dep&&!/^([01]?\d|2[0-3]):[0-5]\d$/.test(F.dep)){ showToast('Depar SS:DD olmalı (ör. 06:30)','error'); return; }
+  const Tr=getTransfer(); const g=Tr.gruplar[kod]; if(!g) return;
+  const L=_trFiloList(F.firma); const a=L.find(x=>x.id===F.arac), a2=L.find(x=>x.id===F.arac2);
+  if(a){ g.arac=a.ad+(a.kap?' ('+a.kap+')':''); g.arac2=a2?(a2.ad+(a2.kap?' ('+a2.kap+')':'')):''; g.firma=F.firma||a.firma||g.firma||''; g.sofor=[a.sofor,a2&&a2.sofor].filter(Boolean).join(' / ')||g.sofor||''; g.stel=[a.stel,a2&&a2.stel].filter(Boolean).join(' / ')||g.stel||''; g.tahsis=!!a.tahsis; }
+  else if(F.firma&&!a){ g.firma=F.firma; }
+  if(F.reh) g.rehber=F.reh; if(F.guz) g.guzergah=F.guz; if(F.tarife){ g.tarifeSec=F.tarife; const el=document.getElementById('trTarife'); g.hizmetAd=(el&&el.selectedIndex>0)?el.options[el.selectedIndex].text:''; }
+  g.ts=Date.now();
+  const ids=[..._trSel]; setTransfer(Tr);
+  ids.forEach(id=>{ const p={onay:false}; if(F.dep){ p.depar=F.dep; p.deparMan=true; } if(F.not) p.not=F.not; _trSatKaydet(id,p); });
+  _trSel.clear(); window._trKod=null; renderOpsTransfer();
+  showToast(_trKodOf(kod)+' güncellendi','success');
+}
+function _trRenderAtabarYeni(bar,rows,pax,T){
+  const grp=[...new Set(rows.map(r=>r.grup).filter(Boolean))];
+  const hepsiBos=!grp.length, birlesikTek=grp.length===1&&rows.every(r=>r.grup===grp[0])&&rows.length>1, karma=grp.length===1&&rows.some(r=>!r.grup)&&rows.some(r=>r.grup);
+  const tekAtanmis=grp.length===1&&rows.length===1&&!!rows[0].grup;
+  const rozet=birlesikTek?`Birleşik · ${rows.length} transfer · ${pax} pax`:(tekAtanmis?`${_trKodOf(grp[0])} · ${pax} pax`:`${rows.length} seçili · <span id="trSecPax" class="cap">${pax} pax</span>`);
+  const L=(lbl,inner,hid)=>`<label class="tdm-f"${hid?' hidden':''}><span>${lbl}</span>${inner}</label>`;
+  const go=(txt,fn,title)=>`<button class="tdm-go" onclick="${fn}" title="${title||''}">${txt}</button>`;
+  const alt=(txt,fn,title)=>`<button class="tdm-alt" onclick="${fn}" title="${title||''}">${txt}</button>`;
+  let btn='';
+  if(hepsiBos&&rows.length===1) btn=go('Ata','_trAtama(true)','Seçili transfere görev oluştur ve ata');
+  else if(hepsiBos) btn=go('🔗 Birleştir ve ata','_trAtama(true)','Seçilenler TEK görev olur — tek araç')+alt('Ayrı ayrı ata','_trAtama(false)','Her transfer ayrı görev — aynı araç bilgisi kopyalanır');
+  else if(birlesikTek||tekAtanmis) btn=go('Ata',`_trAtamaGuncelle('${esc(grp[0])}')`,'Formdaki değişiklikleri bu göreve yaz (görev kodu korunur)')+(birlesikTek?alt('✂ Ayır',`_trAtamaKaldirCoklu('${rows.map(r=>encodeURIComponent(r.id)).join('~')}')`,'Atamaları kaldır — transferler yeniden ayrı görünür'):alt('Atamayı kaldır',`_trAtamaKaldir('${esc(rows[0].id)}')`));
+  else if(karma) btn=go('🔗 Birleştir ve ata',`_trAtamaBirlesigeEkle('${esc(grp[0])}')`,'Normal transferleri mevcut birleşik göreve ekler')+alt('Ayrı ayrı ata','_trAtama(false)');
+  else btn=go('🔗 Birleştir ve ata','_trAtama(true)','Seçilenler yeni TEK görev olur')+alt('Ayrı ayrı ata','_trAtama(false)');
+  const D=!!window._trAbDiger;
+  bar.innerHTML=`<div class="tdm-ab">
+    <div class="tdm-ab-ust"><span class="tdm-roz">${rozet}</span>
+      <button class="btn btn-s m-sadece-mobil" style="background:var(--primary);font-weight:800;margin-left:auto" onclick="_trAtaSheetAc()">🚌 Ata</button>
+      <button class="btn btn-s m-sadece-mobil" style="background:rgba(255,255,255,.18)" onclick="_trSecTemizle()">✕</button></div>
+    <span id="trAtaForm" class="tdm-ab-form">
+      ${L('Rehber',`<select id="trRehber"><option value="">—</option>${(T.rehberler||[]).map(x=>`<option>${esc(x.ad)}</option>`).join('')}</select>`)}
+      ${L('Firma',`<select id="trFirma" onchange="_trAracDoldur()"><option value="">Seç…</option>${(T.aracFirmalari||[]).map(x=>`<option>${esc(x.ad)}</option>`).join('')}</select>`)}
+      ${L('Araç',`<select id="trArac" onchange="_trKapKontrol()"><option value="">Araç…</option></select>`)}
+      ${L('Depar saati',`<input id="trDepar" placeholder="boş = otomatik" style="width:110px">`)}
+      ${L('Not',`<input id="trSecNot" placeholder="iç hat, T1…" style="width:140px">`)}
+      <span class="tdm-ab-btn">${btn}<button class="tdm-alt ${D?'on':''}" onclick="_trAbDigerTog()">Diğer ${D?'▴':'▾'}</button><button class="tdm-vaz" onclick="_trSecTemizle()">Vazgeç</button></span>
+      <div class="tdm-ab-diger"${D?'':' hidden'}>
+        ${L('2. araç',`<select id="trArac2" onchange="_trKapKontrol()"><option value="">yok</option></select>`)}
+        ${L('Tarife',`<select id="trTarife" title="Fiyat kaynağı — Otomatik: güzergâh tarifesinden"><option value="">Otomatik</option></select>`)}
+        ${L('Güzergâh notu',`<input id="trGuzergah" placeholder="…" style="width:160px">`)}
+        <span class="tdm-ab-btn">${alt('📥 Excel','_trExcelSecili()','Yalnız seçili transferleri Excel indir')}${alt('🏨 Info PDF',"_trInfoDilSor('')",'Seçili uçuş transferleri için Abreise/Anreise Information PDF')}${alt('📝 Sadece notu kaydet','_trNotToplu()','Araç atamadan yalnız not yazar')}</span>
+      </div>
+    </span></div>`;
+}
 function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!bar) return; if(!_trSel.size){ bar.classList.remove('show'); bar.innerHTML=''; return; } bar.classList.add('show');
+  if(_trGorunum==='yeni'&&bar.closest('.tdm')){ const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0);
+    _trRenderAtabarYeni(bar,rows,pax,getTanimlar()); _trAracDoldur();
+    try{ const ilk=rows[0]; if(ilk){ const bl=_trSatirBolum(ilk); const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,bl); const el=document.getElementById('trRehber'); if(el&&!el.value&&(sr.rehberAd||'').trim()){ const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(sr.rehberAd)); if(o) el.value=o.value||o.text; } } }catch(e){}
+    try{ if(window.matchMedia&&matchMedia('(max-width:980px)').matches&&bar.parentElement!==document.body) document.body.appendChild(bar); }catch(e){}
+    return; }
   const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const T=getTanimlar();
   bar.innerHTML=`<b>${rows.length} seçili</b><span class="cap" id="trSecPax">${pax} pax</span>
     <button class="btn btn-s m-sadece-mobil" style="background:var(--primary);font-weight:800" onclick="_trAtaSheetAc()">🚌 Ata</button>
