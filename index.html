@@ -845,7 +845,7 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .tdm .exp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tdm .band{background:var(--light);border:1px solid var(--border);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .tdm .band .day,.tdm .band .kpi,.tdm .band .chip{background:var(--card,#fff)}
-.tdm .exp-band{flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px}
+.tdm .exp-band{display:flex;flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px;padding-top:8px;border-top:1px dashed var(--border)}
 .tdm .band-l{font-size:.66rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
 body.dark .tdm .band{background:rgba(255,255,255,.03)}
 .tdm .atabar{margin-bottom:0;border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.22)}
@@ -2491,7 +2491,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v719 · 08.10.2026';
+const APP_VER='v720 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15468,10 +15468,10 @@ function renderTrYeni(){
     <div class="band">
       <div class="chips">${chip(_trTipF.G,'g','Geliş',"_trChk('G')")}${chip(_trTipF.D,'d','Dönüş',"_trChk('D')")}${chip(_trTipF.ARAD&&_trTipF.ARAG,'a','Ara depar / varış',"_trYeniChkAra()")}${chip(_trTipF.TUR,'t','Tur yürüyüşü',"_trChk('TUR')")}${chip(_trTipF.UZT,'u','Uzatma',"_trChk('UZT')")}<span class="sep"></span><button class="chip sel ${_trTipF.atanmamis?'on':''}" onclick="_trChk('atanmamis')">Sadece atanmamış</button><button class="chip sel ${_trTipF.gece?'on':''}" onclick="_trChk('gece')" title="Ertesi gece 06:00 öncesi dönüş/ara deparlar bugünün listesinde">Ertesi gece alışları</button></div>
       <div class="chips">${selChip('op','Operatör',uniq(r=>r.op))}${selChip('urun','Ürün',uniq(r=>r.urun))}${selChip('bolge','Bölge',uniq(r=>r.bolge))}${selChip('firma','Firma',firmalar)}${selChip('reh','Rehber',rehberler)}<label class="chip ${_trUst.durum?'on':''}" style="${_trUst.durum?'color:var(--text)':''}">Durum: <select onchange="_trUstSet('durum',this.value)"><option value="">Hepsi</option><option value="atanmamis" ${_trUst.durum==='atanmamis'?'selected':''}>Atanmamış</option><option value="atandi" ${_trUst.durum==='atandi'?'selected':''}>Atandı (onaysız)</option><option value="onayli" ${_trUst.durum==='onayli'?'selected':''}>Onaylı</option></select></label>${ustAktif?`<button class="chip" onclick="_trUstTemizle()" title="Üst filtreleri temizle">✕ temizle</button>`:''}</div>
+      <div class="exp-band"><span class="band-l">Dışa aktar</span>${expH}</div>
     </div>
     <div class="atabar${_trSel.size?' show':''}" id="trAtabar"></div>
     <div class="list">${listH}</div>
-    <div class="band exp-band"><span class="band-l">Dışa aktar</span>${expH}</div>
   </div>`;
   try{ _trRenderAtabar(); }catch(e){}
 }
