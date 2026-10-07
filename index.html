@@ -878,11 +878,24 @@ body.dark .tdm .band{background:rgba(255,255,255,.03)}
 .otl .det select,.otl .det input{font:inherit;border:1px solid var(--border);border-radius:8px;padding:5px 8px;background:var(--card,#fff);color:var(--text);max-width:100%}
 .otl .det .l{display:flex;flex-direction:column;gap:4px} .otl .det .l div{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .otl .det .l .t{font-family:var(--mono);font-weight:700} .otl .det .l .m{color:var(--muted)}
 body.dark .otl .tag.bol{background:#1a2b4d;color:#9db7ff} body.dark .otl .tag.birl{background:#2d2550;color:#c4b5fd}
-@media(max-width:900px){
+/* tablet: sıkışık tek satır */
+@media(max-width:1100px){
+  .otl .hd,.otl .sr{grid-template-columns:28px 96px minmax(120px,1.2fr) minmax(70px,.6fr) 46px minmax(96px,.8fr) minmax(150px,1.1fr) 70px;gap:0 8px}
+  .otl .dt{font-size:.74rem} .otl .kod b{font-size:.84rem} .otl .kod .r{display:none} .otl .pax{font-size:.92rem}
+  .otl .act .btn{padding:5px 8px;font-size:.7rem}
+  .tdm .row{grid-template-columns:26px 78px minmax(0,1.3fr) minmax(0,.9fr) 64px minmax(170px,.9fr);gap:0 8px}
+  .tdm .route .pt{font-size:.78rem} .tdm .who{font-size:.74rem}
+}
+/* telefon: yığın */
+@media(max-width:760px){
   .otl .hd{display:none}
-  .otl .sr{grid-template-columns:30px minmax(0,1fr) 56px;grid-template-rows:auto auto auto;gap:4px 8px}
-  .otl .sr .cb{grid-row:1/span 3} .otl .sr .op,.otl .sr .reh,.otl .sr .st,.otl .sr .act{grid-column:2/span 2} .otl .act{justify-content:flex-start}
-  .otl .det{padding-left:14px}
+  .otl .sr{grid-template-columns:28px minmax(0,1fr) 46px;grid-template-rows:auto auto auto;gap:3px 8px;padding:8px 10px 8px 0}
+  .otl .sr .cb{grid-row:1/span 3} .otl .sr .dt{grid-column:2} .otl .sr .pax{grid-column:3;grid-row:1;text-align:right}
+  .otl .sr .kod{grid-column:2/span 2} .otl .kod .r{display:block;white-space:normal} .otl .sr .op{display:none}
+  .otl .sr .reh{grid-column:2/span 2} .otl .sr .st{grid-column:2/span 2} .otl .sr .act{grid-column:2/span 2;justify-content:flex-start}
+  .otl .sr.alt .dt{display:block}
+  .otl .det{padding-left:12px;grid-template-columns:1fr}
+  .otl .kpis{grid-template-columns:1fr 1fr !important} .otl .kpis .kpi:last-child{grid-column:1/span 2}
 }
 .tdm .atabar{margin-bottom:0;border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.22)}
 .tdm-ab{display:flex;flex-direction:column;gap:8px;width:100%}
@@ -925,11 +938,18 @@ body>#trAtabar .tdm-ab-form{display:none}
 .tdm .act .cl{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:9px;padding:7px 12px;font:inherit;font-weight:700;cursor:pointer}
 .tdm .bos{color:var(--muted);font-size:.84rem;padding:14px 4px}
 body.dark .tdm .tag.urun{background:#dfe6f0;color:#1e2a3a}
-@media(max-width:900px){
-  .tdm .row{grid-template-columns:26px 74px minmax(0,1fr);grid-template-rows:auto auto auto;gap:6px 10px;padding-right:10px}
+@media(max-width:760px){
+  .tdm .row{grid-template-columns:26px 70px minmax(0,1fr);grid-template-rows:auto auto auto;gap:5px 10px;padding-right:10px}
   .tdm .row .who,.tdm .row .pax,.tdm .row .state{grid-column:3} .tdm .row .time,.tdm .row .cb{grid-row:1/span 4}
   .tdm .kpis{grid-template-columns:1fr 1fr}
+  .tdm .head .title{font-size:1.02rem}
+  .tdm .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px} .tdm .chips::-webkit-scrollbar{display:none} .tdm .chip{flex:0 0 auto}
+  .tdm .chips .sep{flex:0 0 1px}
+  .tdm .band{padding:8px 10px;gap:8px}
+  .tdm .exp-band .btn{font-size:.7rem;padding:5px 8px}
+  .tdm .atabar{position:static}
 }
+@media(max-width:900px){ .tdm .kpis{grid-template-columns:1fr 1fr} }
 @media(max-width:980px){ .tdm .act{bottom:calc(66px + env(safe-area-inset-bottom,0px))} }
 #mSheet{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1700;display:flex;align-items:flex-end}
 .msh-panel{background:var(--card,#fff);border-radius:20px 20px 0 0;width:100%;max-height:78vh;overflow-y:auto;padding:10px 14px calc(18px + env(safe-area-inset-bottom,0px))}
@@ -2533,7 +2553,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v728 · 08.10.2026';
+const APP_VER='v729 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
