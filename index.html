@@ -1369,6 +1369,10 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
       <div id="ynOzet" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px"></div>
       <div style="margin:4px 0 10px"><button class="btn btn-outline btn-sm" onclick="ynBosUrunTemizle()">🧹 Boş ürün kayıtlarını temizle</button></div>
     </div>
+    <div class="card" id="ynSeferKart">
+      <div class="card-title">🔁 Yanlış ürün sürümüne bağlı seferler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:10px">Kalkış yılı ürünün sefer tarihlerine uymuyor ama aynı kodlu/operatörlü başka sürüm o yılı kapsıyor (ör. 2026 seferi 2027 ürününde)</span></div>
+      <div id="ynSeferTasi" style="font-size:.78rem"></div>
+    </div>
     <div class="card">
       <div class="card-title"><svg class="ic"><use href="#i-file"/></svg> Yedekleme</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -2373,7 +2377,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v709 · 07.10.2026';
+const APP_VER='v710 · 07.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9229,6 +9233,95 @@ function renderYonetim(){
   const hb=document.getElementById('ynHata');
   const L=window._hataLog||[];
   if(hb) hb.innerHTML=L.length?('<table class="rzmg"><tr><th style="width:70px">Saat</th><th style="width:150px">Kaynak</th><th>Mesaj</th></tr>'+L.map(x=>`<tr><td>${esc(x.t)}</td><td>${esc(x.kaynak)}</td><td>${esc(x.msg)}</td></tr>`).join('')+'</table>'):'<p style="color:var(--muted)">Bu oturumda hata yok.</p>';
+  try{ renderYnSefer(); }catch(e){}
+}
+// ═══ v710: Sefer ↔ ürün sürümü düzeltme ═══
+// Aynı kod + aynı operatörün sezon sürümleri (2025/26, 2027…) arasında yanlış ürüne bağlanmış seferleri bulur.
+function _ynSeferKardes(pk,kalkis){
+  const yil=String(kalkis||'').slice(0,4); if(!pk||!yil) return null;
+  const kendi=_resDepartureDates(pk)||[];
+  if(!kendi.length) return null; // tarihsiz ürün — yargı yok
+  if(kendi.some(t=>String(_pdate(t)||t).slice(0,4)===yil)) return null; // yıl uyuyor
+  const kod=_norm(pk.paketKodu||''); if(!kod) return null;
+  const aday=getPackages().filter(p=>p.id!==pk.id&&_norm(p.paketKodu||'')===kod&&(p.operatorId||'')===(pk.operatorId||''));
+  const tam=aday.filter(p=>(_resDepartureDates(p)||[]).some(t=>_pdate(t)===kalkis));
+  if(tam.length===1) return tam[0];
+  const yilli=aday.filter(p=>(_resDepartureDates(p)||[]).some(t=>String(_pdate(t)||t).slice(0,4)===yil));
+  return yilli.length===1?yilli[0]:null;
+}
+function _ynSeferListe(){
+  const pkgs=getPackages(); const M=new Map();
+  const ekle=(pkgId,kalkis,alan)=>{ if(!pkgId||!/^\d{4}-\d{2}-\d{2}$/.test(String(kalkis||''))) return; const k=pkgId+'|'+kalkis; let e=M.get(k); if(!e){ e={pkgId,kalkis,ucak:0,rezv:0,ops:0,grup:0,trf:0}; M.set(k,e); } e[alan]++; };
+  (getReservations()||[]).forEach(g=>{ if(g&&g.pkgId) { ekle(g.pkgId,g.kalkis,'ucak'); const e=M.get(g.pkgId+'|'+g.kalkis); if(e) e.ucak=(g.rows||[]).filter(r=>_isim(r)).length||e.ucak; } });
+  (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&r.pkgId) ekle(r.pkgId,r.kalkis,'rezv'); });
+  (getOperasyon()||[]).forEach(o=>{ if(o&&o.pkgId) ekle(o.pkgId,o.kalkis,'ops'); });
+  Object.values(getOpsGrup().gruplar||{}).forEach(g=>{ (g.uyeler||[]).forEach(u=>ekle(u.pkgId,u.kalkis,'grup')); });
+  const Tr=getTransfer(); [Tr.sat||{},Tr.vsat||{}].forEach(S=>Object.keys(S).forEach(k=>{ const p=k.split('|'); ekle(p[0],p[1],'trf'); }));
+  const out=[];
+  M.forEach(e=>{ const pk=pkgs.find(p=>p.id===e.pkgId); if(!pk) return; const hedef=_ynSeferKardes(pk,e.kalkis); if(!hedef) return;
+    out.push(Object.assign(e,{pk,hedef})); });
+  out.sort((a,b)=>String(a.pk.paketKodu).localeCompare(String(b.pk.paketKodu))||a.kalkis.localeCompare(b.kalkis));
+  return out;
+}
+function renderYnSefer(){
+  const el=document.getElementById('ynSeferTasi'); if(!el) return;
+  let L=[]; try{ L=_ynSeferListe(); }catch(e){ el.innerHTML='<p style="color:#b91c1c">Liste oluşturulamadı: '+esc(e.message||e)+'</p>'; return; }
+  window._ynSeferL=L;
+  if(!L.length){ el.innerHTML='<p style="color:#166534;font-weight:700">✓ Tüm seferler ürün sürümüyle uyumlu.</p>'; return; }
+  const ad=p=>esc(p.paketKodu||'')+' <span style="color:var(--muted)">'+esc(p.paketAdi||'')+'</span>';
+  el.innerHTML=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap"><b style="color:#b45309">${L.length} sefer yanlış sürümde</b><button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="ynSeferTasiHepsi()">🔁 Tümünü doğru ürüne taşı</button></div>
+  <table class="rzmg"><tr><th>Kalkış</th><th>Şu an bağlı</th><th>→ Doğru ürün</th><th>Uçak</th><th>Rezv</th><th>Ops</th><th>Grup üye</th><th>Transfer</th><th></th></tr>
+  ${L.map((e,i)=>`<tr><td><b>${_fmtDateTR(e.kalkis)}</b></td><td>${ad(e.pk)}</td><td>${ad(e.hedef)}</td><td>${e.ucak||'—'}</td><td>${e.rezv||'—'}</td><td>${e.ops||'—'}</td><td>${e.grup||'—'}</td><td>${e.trf||'—'}</td><td><button class="btn btn-outline btn-sm" onclick="ynSeferTasiTek(${i})">Taşı</button></td></tr>`).join('')}</table>
+  <div style="font-size:.68rem;color:var(--muted);margin-top:6px">Taşıma: uçak listesi (hedefte varsa yolcular birleştirilir, çift yazılmaz), PNR, rezervasyonlar, operasyon/rehber kaydı, grup üyelikleri, transfer atamaları (hedefte aynı satırın ataması varsa o korunur, yetim görevler silinir).</div>`;
+}
+function ynSeferTasi(kaynakId,kalkis,hedefId){
+  const rapor=[]; const kayKey=kaynakId+'|'+kalkis+'|', hedKey=hedefId+'|'+kalkis+'|';
+  const kisiKey=r=>[String(r.resno||'').trim(),_norm(r.soyad||''),_norm(r.ad||''),String(r.dogum||'').trim()].join('|');
+  // 1) uçak listesi
+  { const R=getReservations(); const src=R.find(g=>g.pkgId===kaynakId&&g.kalkis===kalkis); if(src){ const dst=R.find(g=>g.pkgId===hedefId&&g.kalkis===kalkis);
+    if(dst){ const var_=new Set((dst.rows||[]).filter(_isim).map(kisiKey)); let ek=0; (src.rows||[]).forEach(r=>{ if(_isim(r)&&!var_.has(kisiKey(r))){ (dst.rows=dst.rows||[]).push(r); ek++; } }); if(src.iptal===false||!src.iptal) dst.iptal=dst.iptal&&!(src.rows||[]).some(_isim)?dst.iptal:false; R.splice(R.indexOf(src),1); rapor.push('uçak: birleştirildi (+'+ek+' yolcu)'); }
+    else { src.pkgId=hedefId; rapor.push('uçak: taşındı'); }
+    setReservations(R); } }
+  // 2) PNR defteri
+  try{ const Pn=getPnrLedger()||[]; const src=Pn.find(g=>g.pkgId===kaynakId&&g.kalkis===kalkis); if(src){ const dst=Pn.find(g=>g.pkgId===hedefId&&g.kalkis===kalkis);
+    if(dst){ const var_=new Set((dst.rows||[]).map(x=>JSON.stringify(x))); (src.rows||[]).forEach(x=>{ if(!var_.has(JSON.stringify(x))) (dst.rows=dst.rows||[]).push(x); }); Pn.splice(Pn.indexOf(src),1); } else src.pkgId=hedefId;
+    setPnrLedger(Pn); rapor.push('pnr'); } }catch(e){}
+  // 3) rezervasyonlar
+  { const rez=getRezv()||[]; let n=0; rez.forEach(r=>{ if(!r) return; if(r.pkgId===kaynakId&&r.kalkis===kalkis){ r.pkgId=hedefId; n++; } if(r.opsPkgId===kaynakId&&r.opsKalkis===kalkis) r.opsPkgId=hedefId; (r.kartlar||[]).forEach(k=>{ if(k&&k.turPkgId===kaynakId&&k.turKalkis===kalkis) k.turPkgId=hedefId; }); });
+    if(n){ setRezv(rez); rapor.push('rezv: '+n); } }
+  // 4) operasyon kaydı (rehber, oteller, mağaza programı)
+  { const ops=getOperasyon()||[]; const src=ops.find(x=>x.pkgId===kaynakId&&x.kalkis===kalkis); if(src){ const dst=ops.find(x=>x.pkgId===hedefId&&x.kalkis===kalkis);
+    if(dst){ Object.keys(src).forEach(k=>{ if(k==='pkgId'||k==='kalkis') return; const v=dst[k]; const bos=v==null||v===''||(Array.isArray(v)&&!v.length)||(v&&typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length); if(bos) dst[k]=src[k]; }); ops.splice(ops.indexOf(src),1); rapor.push('ops: birleştirildi'); }
+    else { src.pkgId=hedefId; rapor.push('ops: taşındı'); }
+    setOperasyon(ops); } }
+  // 5) operasyon grupları
+  { const OG=getOpsGrup(); let n=0; Object.values(OG.gruplar||{}).forEach(g=>{ (g.uyeler||[]).forEach(u=>{ if(u.pkgId===kaynakId&&u.kalkis===kalkis){ u.pkgId=hedefId; n++; } }); if(g.sefer&&g.sefer.pkgId===kaynakId&&g.sefer.kalkis===kalkis) g.sefer.pkgId=hedefId; });
+    if(n){ setOpsGrup(OG); rapor.push('grup üye: '+n); } }
+  // 6) transfer atamaları
+  { const Tr=getTransfer(); let tasi=0, dus=0; const dusenGrup=new Set();
+    [Tr.sat=Tr.sat||{},Tr.vsat=Tr.vsat||{}].forEach(S=>{ Object.keys(S).forEach(k=>{ if(!k.startsWith(kayKey)) return; const nk=hedKey+k.slice(kayKey.length);
+      if(S[nk]){ if(S[k]&&S[k].grup) dusenGrup.add(S[k].grup); delete S[k]; dus++; } else { S[nk]=S[k]; delete S[k]; tasi++; } }); });
+    // yetim görevler: artık hiçbir satır bağlı değilse sil
+    let yetim=0; dusenGrup.forEach(gid=>{ const var_=Object.values(Tr.sat).some(e=>e&&e.grup===gid)||Object.values(Tr.vsat).some(e=>e&&e.grup===gid); if(!var_&&Tr.gruplar&&Tr.gruplar[gid]){ delete Tr.gruplar[gid]; yetim++; } });
+    if(tasi||dus){ setTransfer(Tr); window._trKod=null; window._trVBolM=null; rapor.push('transfer: '+tasi+' taşındı'+(dus?', '+dus+' çift düşürüldü':'')+(yetim?', '+yetim+' yetim görev silindi':'')); } }
+  _paxMemoSifirla();
+  return rapor;
+}
+function ynSeferTasiTek(i){
+  const e=(window._ynSeferL||[])[i]; if(!e) return;
+  showConfirm('🔁','Seferi Doğru Ürüne Taşı',_fmtDateTR(e.kalkis)+' · '+(e.pk.paketKodu||'')+' seferi "'+(e.pk.paketAdi||'')+'" sürümünden "'+(e.hedef.paketAdi||'')+'" sürümüne taşınacak. Uçak listesi, rezervasyonlar, operasyon/rehber, grup ve transfer atamaları birlikte gider.','Taşı',()=>{
+    const r=ynSeferTasi(e.pkgId,e.kalkis,e.hedef.id);
+    showToast('Taşındı — '+(r.join(' · ')||'değişiklik yok'),'success',8000);
+    renderYnSefer(); try{renderYonetim();}catch(x){}
+  });
+}
+function ynSeferTasiHepsi(){
+  const L=window._ynSeferL||[]; if(!L.length) return;
+  showConfirm('🔁','Tümünü Taşı',L.length+' sefer doğru ürün sürümüne taşınacak. Önce yedek almanız önerilir (aşağıdaki Yedek İndir).','Hepsini Taşı',()=>{
+    let n=0; L.forEach(e=>{ try{ ynSeferTasi(e.pkgId,e.kalkis,e.hedef.id); n++; }catch(x){ console.warn('sefer taşı',e,x); } });
+    showToast(n+' sefer taşındı','success',6000);
+    renderYnSefer(); try{renderYonetim();}catch(x){}
+  });
 }
 async function ynAuditYukle(){
   const el=document.getElementById('ynAudit'); if(!el) return;
