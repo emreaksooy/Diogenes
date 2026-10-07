@@ -880,14 +880,20 @@ body.dark .tdm .band{background:rgba(255,255,255,.03)}
 body.dark .otl .tag.bol{background:#1a2b4d;color:#9db7ff} body.dark .otl .tag.birl{background:#2d2550;color:#c4b5fd}
 /* tablet: sıkışık tek satır */
 @media(max-width:1100px){
-  .otl .hd,.otl .sr{grid-template-columns:28px 96px minmax(120px,1.2fr) minmax(70px,.6fr) 46px minmax(96px,.8fr) minmax(150px,1.1fr) 70px;gap:0 8px}
-  .otl .dt{font-size:.74rem} .otl .kod b{font-size:.84rem} .otl .kod .r{display:none} .otl .pax{font-size:.92rem}
+  .otl .hd,.otl .sr{grid-template-columns:28px 112px minmax(100px,1.1fr) minmax(60px,.5fr) 40px minmax(96px,.8fr) minmax(150px,1.1fr) 70px;gap:0 8px}
+  .otl .dt{font-size:.74rem} .otl .dt small{display:none} .otl .kod b{font-size:.84rem} .otl .kod .r{display:none} .otl .pax{font-size:.92rem;white-space:nowrap} .otl .pax small{display:none}
+  .otl .reh{font-size:.74rem} .otl .sr.ana .reh{font-size:.66rem!important}
   .otl .act .btn{padding:5px 8px;font-size:.7rem}
   .tdm .row{grid-template-columns:26px 78px minmax(0,1.3fr) minmax(0,.9fr) 64px minmax(170px,.9fr);gap:0 8px}
   .tdm .route .pt{font-size:.78rem} .tdm .who{font-size:.74rem}
 }
 /* telefon: yığın */
 @media(max-width:760px){
+  .tdm-tb{gap:6px!important} .tdm-tb .btn,.tdm-tb input{height:36px;padding:0 10px!important;font-size:.76rem!important;border-radius:9px!important}
+  .tdm-tb input[type=date]{width:112px;flex:0 0 auto;-webkit-appearance:none;appearance:none;background:var(--card,#fff)}
+  .tdm-tb .tb-ara{flex:1 1 100%!important;order:8;min-width:0!important}
+  .tdm-tb .tb-son{order:9;flex:1 1 auto}
+  .tdm-tb>span[style*="flex:1"]{display:none}
   .otl .hd{display:none}
   .otl .sr{grid-template-columns:28px minmax(0,1fr) 46px;grid-template-rows:auto auto auto;gap:3px 8px;padding:8px 10px 8px 0}
   .otl .sr .cb{grid-row:1/span 3} .otl .sr .dt{grid-column:2} .otl .sr .pax{grid-column:3;grid-row:1;text-align:right}
@@ -2553,7 +2559,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v729 · 08.10.2026';
+const APP_VER='v730 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15513,14 +15519,14 @@ function renderTrYeni(){
       </span>`;
   box.innerHTML=`<div class="card tdm">
     <div class="band">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="tdm-tb" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" onclick="opsTrNav(-1)">◀</button><input type="date" class="ops-date" value="${gun}" onchange="opsTrSet(this.value)" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit"><button class="btn btn-outline btn-sm" onclick="opsTrNav(1)">▶</button>
         <button class="btn btn-outline btn-sm" onclick="opsTrSet('')">Bugün</button>
         <button class="btn btn-outline btn-sm ${aralik&&_isoDiff(gun,_opsTrDate2)===6?'active-ops':''}" onclick="opsTrAralik(7)">7g</button>
         <button class="btn btn-outline btn-sm ${aralik&&_isoDiff(gun,_opsTrDate2)===13?'active-ops':''}" onclick="opsTrAralik(14)">14g</button>
         ${aralik?'<button class="btn btn-outline btn-sm" onclick="opsTrAralik(0)">Tek gün</button>':''}
         <span style="flex:1"></span>
-        <button class="btn btn-outline btn-sm" onclick="_trGorunumSet('klasik')" title="Eski tablo görünümü">Klasik görünüm</button>
+        <button class="btn btn-outline btn-sm tb-son" onclick="_trGorunumSet('klasik')" title="Eski tablo görünümü">Klasik görünüm</button>
       </div>
       ${aralik?'':`<div class="days">${dayH}</div>`}
     </div>
@@ -16670,12 +16676,12 @@ function renderTurlarYeni(){
   const aktif=['op','urun','reh','rehbersiz','trf','ths'].filter(k=>_otF[k]).length;
   box.innerHTML=`<div class="card tdm otl">
     <div class="band">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="tdm-tb" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" onclick="otNav(-1)">◀</button><input type="date" value="${_otBas}" onchange="otGun(this.value,${_isoDiff(_otBas,_otSon)+1})" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit"> ~ <input type="date" value="${_otSon}" onchange="_otSon=this.value;renderOpsTurlar()" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit"><button class="btn btn-outline btn-sm" onclick="otNav(1)">▶</button>
         <button class="btn btn-outline btn-sm" onclick="otGun('${bugun}',14)">Bugün</button><button class="btn btn-outline btn-sm ${_isoDiff(_otBas,_otSon)===6?'active-ops':''}" onclick="otGun(_otBas,7)">7g</button><button class="btn btn-outline btn-sm ${_isoDiff(_otBas,_otSon)===13?'active-ops':''}" onclick="otGun(_otBas,14)">14g</button><button class="btn btn-outline btn-sm ${_isoDiff(_otBas,_otSon)===29?'active-ops':''}" onclick="otGun(_otBas,30)">30g</button>
-        <input id="otAraInp" placeholder="Ara: kod, operatör, rehber…" value="${esc(_otAra)}" oninput="_otAra=this.value;clearTimeout(window._otAraT);window._otAraT=setTimeout(()=>{renderOpsTurlar();const e=document.getElementById('otAraInp');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},250)" style="flex:1;min-width:170px;padding:6px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit">
-        <button class="btn btn-outline btn-sm" onclick="opsTab('rehtak')">📅 Rehber Takvimi</button>
-        <button class="btn btn-outline btn-sm" onclick="_otGorunumSet('klasik')" title="Eski tablo görünümü">Klasik görünüm</button>
+        <input id="otAraInp" class="tb-ara" placeholder="Ara: kod, operatör, rehber…" value="${esc(_otAra)}" oninput="_otAra=this.value;clearTimeout(window._otAraT);window._otAraT=setTimeout(()=>{renderOpsTurlar();const e=document.getElementById('otAraInp');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},250)" style="flex:1;min-width:170px;padding:6px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit">
+        <button class="btn btn-outline btn-sm tb-son" onclick="opsTab('rehtak')">📅 Rehber Takvimi</button>
+        <button class="btn btn-outline btn-sm tb-son" onclick="_otGorunumSet('klasik')" title="Eski tablo görünümü">Klasik görünüm</button>
       </div>
       <div class="days">${dayH}</div>
     </div>
