@@ -843,6 +843,11 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .tdm .route .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.7rem;color:var(--muted)} .tdm .route .meta>*{flex:none}
 .tdm .route{cursor:pointer} .tdm .route:hover .pt{text-decoration:underline}
 .tdm .exp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tdm .band{background:var(--light);border:1px solid var(--border);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.tdm .band .day,.tdm .band .kpi,.tdm .band .chip{background:var(--card,#fff)}
+.tdm .exp-band{flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px}
+.tdm .band-l{font-size:.66rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
+body.dark .tdm .band{background:rgba(255,255,255,.03)}
 .tdm .atabar{margin-bottom:0;border-radius:14px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.22)}
 .tdm-ab{display:flex;flex-direction:column;gap:8px;width:100%}
 .tdm-ab-ust{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem}
@@ -2486,7 +2491,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v718 · 08.10.2026';
+const APP_VER='v719 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15433,20 +15438,7 @@ function renderTrYeni(){
   cizim.forEach(U=>{ const x=U[0]; const key=aralik?x.r.tarih:dilim(x); if(key!==son){ listH+=`<div class="grp">${aralik?esc(_trGunAd(x.r.tarih)):DAD[key]}</div>`; son=key; } listH+=U.length>1?birlesik(U):satir(x); });
   if(!L.length) listH=`<div class="bos">${ham.length?'Filtreye uyan transfer yok.':'Bu günde transfer yok.'}</div>`;
   const ustAktif=Object.values(_trUst).filter(Boolean).length+(_trSaatB||_trSaatS?1:0);
-  box.innerHTML=`<div class="card tdm">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <button class="btn btn-outline btn-sm" onclick="opsTrNav(-1)">◀</button><input type="date" class="ops-date" value="${gun}" onchange="opsTrSet(this.value)" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit"><button class="btn btn-outline btn-sm" onclick="opsTrNav(1)">▶</button>
-      <button class="btn btn-outline btn-sm" onclick="opsTrSet('')">Bugün</button>
-      <button class="btn btn-outline btn-sm ${aralik&&_isoDiff(gun,_opsTrDate2)===6?'active-ops':''}" onclick="opsTrAralik(7)">7g</button>
-      <button class="btn btn-outline btn-sm ${aralik&&_isoDiff(gun,_opsTrDate2)===13?'active-ops':''}" onclick="opsTrAralik(14)">14g</button>
-      ${aralik?'<button class="btn btn-outline btn-sm" onclick="opsTrAralik(0)">Tek gün</button>':''}
-      <span style="flex:1"></span>
-      <button class="btn btn-outline btn-sm" onclick="_trGorunumSet('klasik')" title="Eski tablo görünümü">Klasik görünüm</button>
-    </div>
-    ${aralik?'':`<div class="days">${dayH}</div>`}
-    <div class="head"><div><div class="title">${esc(baslik)}</div><div class="sum"><b>${L.length} transfer</b> · ${pax} yolcu${acik?` · <b style="color:var(--tbad)">${acik} atanmamış</b>`:(L.length?' · <b style="color:var(--tok)">hepsi atanmış</b>':'')}${ham.length!==L.length?` · filtre: ${L.length}/${ham.length}`:''}</div></div>
-      <div style="flex:1"></div>
-      <span id="trAksiyonBar" class="exp">
+  const expH=`<span id="trAksiyonBar" class="exp">
         <button class="btn btn-primary btn-sm" onclick="trGonderimAc()" title="Firmaya toplu iş paketi: aralıktaki transferler + tahsisler">📤 Firmaya İş Gönder</button>
         <button class="btn btn-outline btn-sm m-sadece-mobil tr-ik" title="Dışa Aktar" onclick="mSheetKaynak('trAksiyonBar','Dışa Aktar — '+${JSON.stringify(baslik)})">⤓</button>
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trKlasikExcel()" title="Turkuaz satırlı klasik günlük iş listesi">📗 Klasik İş Listesi</button>
@@ -15455,11 +15447,31 @@ function renderTrYeni(){
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trWhatsapp()" title="Taşımacı Excel'ini indirir + firmanın WhatsApp sohbetini açar">📲 WhatsApp</button>
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trRehberIsPdfWa()" title="Rehber çipinden rehber seç — işlerini PDF + WhatsApp">📱 Rehbere İş Listesi</button>
-      </span></div>
-    <div class="chips">${chip(_trTipF.G,'g','Geliş',"_trChk('G')")}${chip(_trTipF.D,'d','Dönüş',"_trChk('D')")}${chip(_trTipF.ARAD&&_trTipF.ARAG,'a','Ara depar / varış',"_trYeniChkAra()")}${chip(_trTipF.TUR,'t','Tur yürüyüşü',"_trChk('TUR')")}${chip(_trTipF.UZT,'u','Uzatma',"_trChk('UZT')")}<span class="sep"></span><button class="chip sel ${_trTipF.atanmamis?'on':''}" onclick="_trChk('atanmamis')">Sadece atanmamış</button><button class="chip sel ${_trTipF.gece?'on':''}" onclick="_trChk('gece')" title="Ertesi gece 06:00 öncesi dönüş/ara deparlar bugünün listesinde">Ertesi gece alışları</button><span class="sep"></span>${selChip('op','Operatör',uniq(r=>r.op))}${selChip('urun','Ürün',uniq(r=>r.urun))}${selChip('bolge','Bölge',uniq(r=>r.bolge))}${selChip('firma','Firma',firmalar)}${selChip('reh','Rehber',rehberler)}<label class="chip ${_trUst.durum?'on':''}" style="${_trUst.durum?'color:var(--text)':''}">Durum: <select onchange="_trUstSet('durum',this.value)"><option value="">Hepsi</option><option value="atanmamis" ${_trUst.durum==='atanmamis'?'selected':''}>Atanmamış</option><option value="atandi" ${_trUst.durum==='atandi'?'selected':''}>Atandı (onaysız)</option><option value="onayli" ${_trUst.durum==='onayli'?'selected':''}>Onaylı</option></select></label>${ustAktif?`<button class="chip" onclick="_trUstTemizle()" title="Üst filtreleri temizle">✕ temizle</button>`:''}</div>
-    <div class="kpis"><div class="kpi"><span class="n">${L.length}</span><span class="l">Transfer</span></div><div class="kpi ${acik?'bad':''}"><span class="n">${acik}</span><span class="l">Atanmamış</span><span class="bar" title="${L.length-acik}/${L.length} atandı"><b style="width:${L.length?Math.round((L.length-acik)/L.length*100):0}%"></b></span></div><div class="kpi"><span class="n">${ths}</span><span class="l">Tahsis aracı</span></div><div class="kpi"><span class="n">${pax}</span><span class="l">Yolcu</span></div></div>
+      </span>`;
+  box.innerHTML=`<div class="card tdm">
+    <div class="band">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="opsTrNav(-1)">◀</button><input type="date" class="ops-date" value="${gun}" onchange="opsTrSet(this.value)" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit"><button class="btn btn-outline btn-sm" onclick="opsTrNav(1)">▶</button>
+        <button class="btn btn-outline btn-sm" onclick="opsTrSet('')">Bugün</button>
+        <button class="btn btn-outline btn-sm ${aralik&&_isoDiff(gun,_opsTrDate2)===6?'active-ops':''}" onclick="opsTrAralik(7)">7g</button>
+        <button class="btn btn-outline btn-sm ${aralik&&_isoDiff(gun,_opsTrDate2)===13?'active-ops':''}" onclick="opsTrAralik(14)">14g</button>
+        ${aralik?'<button class="btn btn-outline btn-sm" onclick="opsTrAralik(0)">Tek gün</button>':''}
+        <span style="flex:1"></span>
+        <button class="btn btn-outline btn-sm" onclick="_trGorunumSet('klasik')" title="Eski tablo görünümü">Klasik görünüm</button>
+      </div>
+      ${aralik?'':`<div class="days">${dayH}</div>`}
+    </div>
+    <div class="band">
+      <div class="head"><div><div class="title">${esc(baslik)}</div><div class="sum"><b>${L.length} transfer</b> · ${pax} yolcu${acik?` · <b style="color:var(--tbad)">${acik} atanmamış</b>`:(L.length?' · <b style="color:var(--tok)">hepsi atanmış</b>':'')}${ham.length!==L.length?` · filtre: ${L.length}/${ham.length}`:''}</div></div></div>
+      <div class="kpis"><div class="kpi"><span class="n">${L.length}</span><span class="l">Transfer</span></div><div class="kpi ${acik?'bad':''}"><span class="n">${acik}</span><span class="l">Atanmamış</span><span class="bar" title="${L.length-acik}/${L.length} atandı"><b style="width:${L.length?Math.round((L.length-acik)/L.length*100):0}%"></b></span></div><div class="kpi"><span class="n">${ths}</span><span class="l">Tahsis aracı</span></div><div class="kpi"><span class="n">${pax}</span><span class="l">Yolcu</span></div></div>
+    </div>
+    <div class="band">
+      <div class="chips">${chip(_trTipF.G,'g','Geliş',"_trChk('G')")}${chip(_trTipF.D,'d','Dönüş',"_trChk('D')")}${chip(_trTipF.ARAD&&_trTipF.ARAG,'a','Ara depar / varış',"_trYeniChkAra()")}${chip(_trTipF.TUR,'t','Tur yürüyüşü',"_trChk('TUR')")}${chip(_trTipF.UZT,'u','Uzatma',"_trChk('UZT')")}<span class="sep"></span><button class="chip sel ${_trTipF.atanmamis?'on':''}" onclick="_trChk('atanmamis')">Sadece atanmamış</button><button class="chip sel ${_trTipF.gece?'on':''}" onclick="_trChk('gece')" title="Ertesi gece 06:00 öncesi dönüş/ara deparlar bugünün listesinde">Ertesi gece alışları</button></div>
+      <div class="chips">${selChip('op','Operatör',uniq(r=>r.op))}${selChip('urun','Ürün',uniq(r=>r.urun))}${selChip('bolge','Bölge',uniq(r=>r.bolge))}${selChip('firma','Firma',firmalar)}${selChip('reh','Rehber',rehberler)}<label class="chip ${_trUst.durum?'on':''}" style="${_trUst.durum?'color:var(--text)':''}">Durum: <select onchange="_trUstSet('durum',this.value)"><option value="">Hepsi</option><option value="atanmamis" ${_trUst.durum==='atanmamis'?'selected':''}>Atanmamış</option><option value="atandi" ${_trUst.durum==='atandi'?'selected':''}>Atandı (onaysız)</option><option value="onayli" ${_trUst.durum==='onayli'?'selected':''}>Onaylı</option></select></label>${ustAktif?`<button class="chip" onclick="_trUstTemizle()" title="Üst filtreleri temizle">✕ temizle</button>`:''}</div>
+    </div>
     <div class="atabar${_trSel.size?' show':''}" id="trAtabar"></div>
     <div class="list">${listH}</div>
+    <div class="band exp-band"><span class="band-l">Dışa aktar</span>${expH}</div>
   </div>`;
   try{ _trRenderAtabar(); }catch(e){}
 }
