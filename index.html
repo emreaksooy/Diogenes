@@ -2373,7 +2373,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v708 · 07.10.2026';
+const APP_VER='v709 · 07.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -12083,7 +12083,9 @@ function _rzDeadlineler(gun){
   out.sort((a,b)=>a.onem-b.onem||a.tarih.localeCompare(b.tarih));
   return out;
 }
+const RZ_KONF_ALARM=false; // v709: rezervasyon ekibi sisteme geçene kadar kırmızı konfirme alarmı kapalı (true yapınca geri gelir)
 function _rzRezvAlarm(r){ // listede kırmızı zemin: otel konfirmesiz & giriş ≤7 gün
+  if(!RZ_KONF_ALARM) return false;
   const bugun=_opsToday(), son=_isoAdd(bugun,7);
   return r.durum!=='iptal'&&(r.kartlar||[]).some(k=>k&&k.tip!=='ulasim'&&k.baslangic&&k.konfirme!=='Evet'&&k.baslangic>=_isoAdd(bugun,-1)&&k.baslangic<=son);
 }
@@ -13842,7 +13844,7 @@ function _opsUyarilar(gun){
     const d=_opsPaxDetay(t.pkgId,t.kalkis);
     out.push({tarih:t.kalkis,ikon:'🧭',onem:1,pkgId:t.pkgId,kalkis:t.kalkis,mesaj:'Rehber atanmamış — '+t.kod+(t.op?' · '+t.op:'')+' · '+t.pax+' pax (uçak listesi: '+d.ucak+' · rezervasyon: '+d.rezvP+' yolcu / '+d.rezvSay+' kayıt)',git:"opsTab('rehtak')"}); }); }catch(e){}
   // otel konfirmesiz yaklaşanlar + rezervasyon deadline'ları (opsiyon / max iptal / ödeme)
-  try{ _rzDeadlineler(gun||7).filter(x=>x.tarih>=bugun&&x.tarih<=son).slice(0,40).forEach(x=>{
+  try{ _rzDeadlineler(gun||7).filter(x=>x.tarih>=bugun&&x.tarih<=son).filter(x=>RZ_KONF_ALARM||x.tip!=='konf').slice(0,40).forEach(x=>{
     out.push({tarih:x.tarih,ikon:x.tip==='konf'?'🏨':'⏳',onem:x.tip==='konf'?1:2,mesaj:(x.tip==='konf'?('Otel konfirmesi yok — '):(x.ne+' — '))+x.otel+' · '+x.kim+(x.ek?' · '+x.ek:'')+(x.tip!=='konf'?' · giriş '+_rzTrT(x.giris):''),git:"showPage('rezervasyon');rzDeadlineAc('"+x.rid+"',"+x.ki+")"}); }); }catch(e){}
   // uçak listesi ↔ rezervasyon ÇARPIŞMALARI (Rezervasyon Monitörü)
   try{ _mutIssues().filter(x=>x.kalkis>=bugun&&x.kalkis<=son).forEach(x=>{
