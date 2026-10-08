@@ -2564,7 +2564,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v734 · 08.10.2026';
+const APP_VER='v735 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18981,7 +18981,7 @@ function _mmGirildiMi(k){
   return (k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!=='');
 }
 function _mmKayitDurum(k){
-  const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekliyor',bekleme:'bekliyor'})[v]||'onay';
+  const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekliyor',bekleme:'bekleme'})[v]||'onay'; // v735: 'bekleme' (Beklemede satış) ≠ bildirim bekliyor
   const ks=(k.magKalemler||[]).filter(x=>(x.ad||'').trim());
   if(!_mmGirildiMi(k)) return 'bekliyor';
   if(!ks.length) return String(k.rehCiro||'').trim()!==''?'onay':'bekliyor'; // kalemsiz Kaydet = satış yok
@@ -18989,7 +18989,9 @@ function _mmKayitDurum(k){
   if(dl.every(d=>d==='iptal')) return 'iptal';
   if(dl.some(d=>d==='bekliyor')) return 'bekliyor';
   // ONAY şartı: mağaza bildirimi + REHBER bildirimi ikisi de girilmiş olmalı
-  return String(k.rehCiro||'').trim()!==''?'onay':'bekliyor';
+  if(String(k.rehCiro||'').trim()==='') return 'bekliyor';
+  if(dl.some(d=>d==='bekleme')) return 'bekleme'; // bilgiler girildi, satış beklemede (ödeme/teslim)
+  return 'onay';
 }
 function _mmPaylar(k){
   // kalem pay'ları varsa paydaş bazlı; yoksa oran=acente
@@ -19323,13 +19325,13 @@ function renderMagMuh(){
   const opBul=kod=>{ try{ for(const parca of String(kod||'').split('+')){ const pk=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(parca.replace(/×\d+$/,''))); if(pk){ const ad=_resOpAd(pk); if(ad) return ad; } } }catch(e){} return ''; };
   const GL=Object.entries(gruplar).map(([key,ks])=>{ ks.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
     const kod=key.split('|')[0], kalkis=key.split('|')[1]||'', reh=key.split('|').slice(2).join('|');
-    let mag=0,kom=0,bek=0,plan=0; const tsat={hali:0,kuyum:0,deri:0,diger:0}; const tsatG={hali:false,kuyum:false,deri:false,diger:false};
+    let mag=0,kom=0,bek=0,bks=0,plan=0; const tsat={hali:0,kuyum:0,deri:0,diger:0}; const tsatG={hali:false,kuyum:false,deri:false,diger:false};
     ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag;
       try{ kom+=_mmPaylar(k).acente; }catch(e){ kom+=c.kom; } // turuncu pill: yalnız ACENTE komisyonu
       const fmK=firmalar.find(x=>x.id===k.firmaId)||{}; const ftur=[fmK.tur,k.magaza,fmK.ad].map(turSinif).find(t=>t!=='diger')||'diger'; // v732: kalem adı tür vermiyorsa mağaza türü / şube adı
       (k.magKalemler||[]).forEach(x=>{ if(x.durum==='iptal') return; let ts=turSinif(x.ad); if(ts==='diger') ts=ftur; tsat[ts]+=_tdN(x.ciro); if(String(x.ciro||'').trim()!==''&&_mmGirildiMi(k)) tsatG[ts]=true; });
-      if(_mmKayitDurum(k)==='bekliyor') bek++; });
-    return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),mag,kom,bek,plan,tsat,tsatG,op:opBul(kod)};
+      const _d=_mmKayitDurum(k); if(_d==='bekliyor') bek++; else if(_d==='bekleme') bks++; });
+    return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),mag,kom,bek,bks,plan,tsat,tsatG,op:opBul(kod)};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
   window._mmTurAcik=window._mmTurAcik||new Set();
   const F=n=>Math.round(n).toLocaleString('tr-TR');
@@ -19358,7 +19360,7 @@ function renderMagMuh(){
         ${pill('P.Pax',ppax,'#dcfce7','#166534')}
         ${pill('A.Kom P.Pax',g.pax>0?F(g.kom/g.pax):'—','#ffedd5','#c2410c')}
         <span style="display:flex;gap:6px;align-items:center;white-space:nowrap;justify-self:end">
-          ${g.bek?`<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.58rem;padding:2px 7px;border-radius:8px">${g.bek} bekl.</span>`:''}
+          ${g.bek?`<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:.58rem;padding:2px 7px;border-radius:8px">${g.bek} bekl.</span>`:''}${g.bks?`<span title="Beklemede satış — bildirim girildi, ödeme/teslim bekleniyor" style="background:#ede9fe;color:#6d28d9;font-weight:800;font-size:.58rem;padding:2px 7px;border-radius:8px">${g.bks} bekleme</span>`:''}
           ${g.plan?`<span style="background:#e0f2fe;color:#0369a1;font-weight:800;font-size:.58rem;padding:2px 7px;border-radius:8px">📅 ${g.plan}</span>`:''}
           ${(!g.bek&&!g.plan)?'<span style="color:#166534;font-weight:800">✓</span>':''}
           <span style="color:var(--muted)">${acik?'▲':'▼'}</span>
@@ -19379,7 +19381,7 @@ function renderMagMuh(){
         const c=_mmHesap(k);
         const fm=firmalar.find(x=>x.id===k.firmaId);
         const _kdur=_mmKayitDurum(k);
-        const dd={onay:['Onaylandı','#dcfce7','#166534'],bekliyor:['Bekliyor','#fef3c7','#92400e'],iptal:['İptal','#fee2e2','#b91c1c']}[_kdur];
+        const dd={onay:['Onaylandı','#dcfce7','#166534'],bekliyor:['Bekliyor','#fef3c7','#92400e'],bekleme:['Beklemede satış','#ede9fe','#6d28d9'],iptal:['İptal','#fee2e2','#b91c1c']}[_kdur];
         const farkHtml=(c.reh>0&&c.mag>0)?(Math.abs(c.fark)<0.01?'<span style="color:#166534;font-weight:800">✓</span>':`<span style="color:${c.farkY>5?'#b91c1c':'#b45309'};font-weight:800">${c.fark>0?'+':''}${(Math.round(c.fark*100)/100).toLocaleString('tr-TR')}</span>`):'—';
         g2h+=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed #e2e8f0;font-size:.76rem">
           <b style="min-width:78px">${_fmtDateTR(_pdate(k.tarih)||'')}</b>
