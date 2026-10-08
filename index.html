@@ -2564,7 +2564,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v733 · 08.10.2026';
+const APP_VER='v734 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19335,26 +19335,11 @@ function renderMagMuh(){
   const F=n=>Math.round(n).toLocaleString('tr-TR');
   const pill=(l,v,bg,fg)=>`<span style="display:flex;flex-direction:column;align-items:center;gap:1px;background:${bg};color:${fg};border-radius:10px;padding:3px 6px;white-space:nowrap;overflow:hidden"><span style="font-size:.52rem;font-weight:700;letter-spacing:.3px;opacity:.75;text-transform:uppercase">${l}</span><b style="font-size:.74rem;line-height:1">${v}</b></span>`;
   let g2h='';
-  { // v733: dönem özeti — tüm tur kartlarının toplamı (planlı/boş kartlar hariç)
-    const T={tur:0,pax:0,hali:0,kuyum:0,deri:0,diger:0,mag:0,kom:0,bek:0};
-    GL.forEach(g=>{ if(!g.mag&&!g.ks.some(k=>!k.plan)) return; T.tur++; T.pax+=g.pax||0; T.hali+=g.tsat.hali; T.kuyum+=g.tsat.kuyum; T.deri+=g.tsat.deri; T.diger+=g.tsat.diger; T.mag+=g.mag; T.kom+=g.kom; T.bek+=g.bek; });
-    const donem=_mmAralik?((window._mmBasF?_fmtDateTR(window._mmBasF):'…')+' – '+(window._mmBitF?_fmtDateTR(window._mmBitF):'…')):(()=>{ try{ const [y,m]=_mmAy.split('-'); return new Date(+y,+m-1,1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'}); }catch(e){ return _mmAy; } })();
-    const pp=(l,v,bg,fg)=>pill(l,v,bg,fg).replace('font-size:.74rem;line-height:1','font-size:.84rem;line-height:1');
-    g2h+=`<div style="border:2px solid var(--navy);border-radius:16px;margin-bottom:12px;overflow:hidden;background:#f8fafc">
-      <div class="mmkart" style="cursor:default;background:#f8fafc">
-        <span style="background:var(--primary);color:#fff;font-weight:800;font-size:.7rem;padding:4px 9px;border-radius:10px;white-space:nowrap;text-align:center">Σ ÖZET</span>
-        <span style="display:flex;flex-direction:column;overflow:hidden"><b style="font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(donem)}</b><span style="font-size:.66rem;color:var(--muted);white-space:nowrap">${T.tur} tur · ${GL.length-T.tur>0?(GL.length-T.tur)+' planlı · ':''}${T.bek?`<b style="color:#92400e">${T.bek} bildirim bekliyor</b>`:'bildirimler tam'}</span></span>
-        <span style="display:flex;flex-direction:column;overflow:hidden"><span style="font-size:.56rem;font-weight:700;color:var(--muted);text-transform:uppercase">Diğer satış</span><b style="font-size:.74rem;white-space:nowrap">${T.diger?F(T.diger):'—'}</b></span>
-        ${pp('Pax',T.pax||'—','#eef2f7','var(--navy)')}
-        ${pp('Halı',T.hali?F(T.hali):'—','#fef3c7','#92400e')}
-        ${pp('Kuyum',T.kuyum?F(T.kuyum):'—','#fef9c3','#a16207')}
-        ${pp('Deri',T.deri?F(T.deri):'—','#ede9e3','#57534e')}
-        ${pp('Ciro',F(T.mag),'var(--navy)','#fff')}
-        ${pp('Komisyon',F(T.kom),'var(--primary)','#fff')}
-        ${pp('P.Pax',T.pax>0?F(T.mag/T.pax):'—','#dcfce7','#166534')}
-        ${pp('A.Kom P.Pax',T.pax>0?F(T.kom/T.pax):'—','#ffedd5','#c2410c')}
-        <span></span>
-      </div></div>`;
+  { // v734: dönem özeti verisi — en altta ayrı panel olarak çizilir
+    const T={tur:0,plan:0,pax:0,hali:0,kuyum:0,deri:0,diger:0,mag:0,kom:0,bek:0};
+    GL.forEach(g=>{ if(!g.mag&&!g.ks.some(k=>!k.plan)){ T.plan++; return; } T.tur++; T.pax+=g.pax||0; T.hali+=g.tsat.hali; T.kuyum+=g.tsat.kuyum; T.deri+=g.tsat.deri; T.diger+=g.tsat.diger; T.mag+=g.mag; T.kom+=g.kom; T.bek+=g.bek; });
+    T.donem=_mmAralik?((window._mmBasF?_fmtDateTR(window._mmBasF):'…')+' – '+(window._mmBitF?_fmtDateTR(window._mmBitF):'…')):(()=>{ try{ const [y,m]=_mmAy.split('-'); return new Date(+y,+m-1,1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'}); }catch(e){ return _mmAy; } })();
+    window._mmOzetT=T;
   }
   GL.forEach(g=>{
     const acik=window._mmTurAcik.has(g.key);
@@ -19430,6 +19415,31 @@ function renderMagMuh(){
     <div style="font-size:.72rem;margin-top:4px">Ciro: <b>${(Math.round(o.ciro*100)/100).toLocaleString('tr-TR')}</b> · Komisyon: <b style="color:var(--primary)">${(Math.round(o.kom*100)/100).toLocaleString('tr-TR')}</b> ${esc(o.para)}</div>
     <div style="font-size:.7rem;color:${o.tahsil>=o.kom-0.01?'#166534':'#b45309'}">Tahsil: ${(Math.round(o.tahsil*100)/100).toLocaleString('tr-TR')} / kalan ${(Math.round((o.kom-o.tahsil)*100)/100).toLocaleString('tr-TR')}</div>
   </div>`).join('')}</div>`;
+  { // v734: DÖNEM ÖZETİ paneli (koyu, KPI kutuları + tür dağılım çubuğu)
+    const T=window._mmOzetT||{tur:0,plan:0,pax:0,hali:0,kuyum:0,deri:0,diger:0,mag:0,kom:0,bek:0,donem:''};
+    const F=n=>Math.round(n).toLocaleString('tr-TR');
+    const tur=[['Halı',T.hali,'#f59e0b'],['Kuyum',T.kuyum,'#facc15'],['Deri',T.deri,'#a8a29e'],['Diğer',T.diger,'#60a5fa']].filter(x=>x[1]>0);
+    const top=tur.reduce((a,x)=>a+x[1],0)||1;
+    const kpi=(l,v,alt,renk)=>`<div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;min-width:0"><div style="font-size:.58rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.65">${l}</div><div style="font-size:1.25rem;font-weight:800;line-height:1.15;color:${renk||'#fff'};white-space:nowrap">${v}</div>${alt?`<div style="font-size:.62rem;opacity:.6;margin-top:2px;white-space:nowrap">${alt}</div>`:''}</div>`;
+    h+=`<div style="margin-top:14px;background:linear-gradient(135deg,#0f2a4a,#1a3f6e);color:#fff;border-radius:16px;padding:14px 16px">
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <b style="font-size:.9rem">Σ Dönem Özeti</b><span style="font-size:.78rem;opacity:.75">${esc(T.donem)}</span>
+        <span style="margin-left:auto;font-size:.68rem;opacity:.75">${T.tur} tur${T.plan?` · ${T.plan} planlı`:''}${_mmFirmaF||_mmDurumF?' · filtreli':''}</span>
+        ${T.bek?`<span style="font-size:.66rem;background:#fde68a;color:#78350f;font-weight:700;border-radius:8px;padding:2px 8px">${T.bek} bildirim bekliyor</span>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px">
+        ${kpi('Ciro',F(T.mag),T.pax?`P.Pax ${F(T.mag/T.pax)}`:'' )}
+        ${kpi('Acente komisyonu',F(T.kom),T.pax?`P.Pax ${F(T.kom/T.pax)}`:'','#fdba74')}
+        ${kpi('Pax',T.pax||'—',T.tur?`${T.tur} tur`:'')}
+        ${kpi('Halı',T.hali?F(T.hali):'—',T.hali?'%'+Math.round(T.hali/top*100):'','#fcd34d')}
+        ${kpi('Kuyum',T.kuyum?F(T.kuyum):'—',T.kuyum?'%'+Math.round(T.kuyum/top*100):'','#fef08a')}
+        ${kpi('Deri',T.deri?F(T.deri):'—',T.deri?'%'+Math.round(T.deri/top*100):'','#d6d3d1')}
+        ${T.diger?kpi('Diğer',F(T.diger),'%'+Math.round(T.diger/top*100),'#93c5fd'):''}
+      </div>
+      ${tur.length?`<div style="display:flex;height:8px;border-radius:6px;overflow:hidden;margin-top:10px;background:rgba(255,255,255,.1)">${tur.map(x=>`<span title="${x[0]} %${Math.round(x[1]/top*100)}" style="width:${x[1]/top*100}%;background:${x[2]}"></span>`).join('')}</div>
+      <div style="display:flex;gap:12px;margin-top:5px;font-size:.62rem;opacity:.75;flex-wrap:wrap">${tur.map(x=>`<span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${x[2]};margin-right:4px;vertical-align:middle"></i>${x[0]} ${F(x[1])}</span>`).join('')}</div>`:''}
+    </div>`;
+  }
   h+=`<datalist id="mmRehL">${(getTanimlar().rehberler||[]).map(r=>`<option value="${esc(r.ad)}">`).join('')}</datalist></div>`;
   box.innerHTML=h;
   try{ if(window._mmBildId&&document.getElementById('mmBildModal')) mmBildDoldur(window._mmBildId); }catch(e){}
