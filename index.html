@@ -2564,7 +2564,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v731 · 08.10.2026';
+const APP_VER='v732 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19326,7 +19326,8 @@ function renderMagMuh(){
     let mag=0,kom=0,bek=0,plan=0; const tsat={hali:0,kuyum:0,deri:0,diger:0}; const tsatG={hali:false,kuyum:false,deri:false,diger:false};
     ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag;
       try{ kom+=_mmPaylar(k).acente; }catch(e){ kom+=c.kom; } // turuncu pill: yalnız ACENTE komisyonu
-      (k.magKalemler||[]).forEach(x=>{ if(x.durum==='iptal') return; const ts=turSinif(x.ad); tsat[ts]+=_tdN(x.ciro); if(String(x.ciro||'').trim()!==''&&_mmGirildiMi(k)) tsatG[ts]=true; });
+      const fmK=firmalar.find(x=>x.id===k.firmaId)||{}; const ftur=[fmK.tur,k.magaza,fmK.ad].map(turSinif).find(t=>t!=='diger')||'diger'; // v732: kalem adı tür vermiyorsa mağaza türü / şube adı
+      (k.magKalemler||[]).forEach(x=>{ if(x.durum==='iptal') return; let ts=turSinif(x.ad); if(ts==='diger') ts=ftur; tsat[ts]+=_tdN(x.ciro); if(String(x.ciro||'').trim()!==''&&_mmGirildiMi(k)) tsatG[ts]=true; });
       if(_mmKayitDurum(k)==='bekliyor') bek++; });
     return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),mag,kom,bek,plan,tsat,tsatG,op:opBul(kod)};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
