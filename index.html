@@ -2564,7 +2564,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v736 · 08.10.2026';
+const APP_VER='v737 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19160,6 +19160,7 @@ function _mmZiyaretSenk(){
       getRehBildirim().filter(b=>String(b.tarih||'')>=_isoAdd(bugun,-21)).forEach(b=>{
         const k2=L.find(k=>!k.silindi&&_rehbBildEsle(b,k));
         if(k2&&!String(k2.rehCiro||'').trim()){ k2.rehCiro=String(_tdN(b.tutar)); oto++; }
+        if(k2&&!String(k2.rehPax||'').trim()&&_tdN(b.pax)){ k2.rehPax=String(_tdN(b.pax)); oto++; } // v737: mağazaya giren pax
       });
     }catch(e){}
     if(n||temiz||oto){ setMagMuh(L);
@@ -19324,21 +19325,22 @@ function renderMagMuh(){
   const opBul=kod=>{ try{ for(const parca of String(kod||'').split('+')){ const pk=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(parca.replace(/×\d+$/,''))); if(pk){ const ad=_resOpAd(pk); if(ad) return ad; } } }catch(e){} return ''; };
   const GL=Object.entries(gruplar).map(([key,ks])=>{ ks.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
     const kod=key.split('|')[0], kalkis=key.split('|')[1]||'', reh=key.split('|').slice(2).join('|');
-    let mag=0,kom=0,bek=0,bks=0,plan=0; const tsat={hali:0,kuyum:0,deri:0,diger:0}; const tsatG={hali:false,kuyum:false,deri:false,diger:false};
+    let mag=0,kom=0,bek=0,bks=0,plan=0,girPax=0; const tsat={hali:0,kuyum:0,deri:0,diger:0}; const tsatG={hali:false,kuyum:false,deri:false,diger:false};
     ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag;
       try{ kom+=_mmPaylar(k).acente; }catch(e){ kom+=c.kom; } // turuncu pill: yalnız ACENTE komisyonu
       const fmK=firmalar.find(x=>x.id===k.firmaId)||{}; const ftur=[fmK.tur,k.magaza,fmK.ad].map(turSinif).find(t=>t!=='diger')||'diger'; // v732: kalem adı tür vermiyorsa mağaza türü / şube adı
       (k.magKalemler||[]).forEach(x=>{ if(x.durum==='iptal') return; let ts=turSinif(x.ad); if(ts==='diger') ts=ftur; tsat[ts]+=_tdN(x.ciro); if(String(x.ciro||'').trim()!==''&&_mmGirildiMi(k)) tsatG[ts]=true; });
-      const _d=_mmKayitDurum(k); if(_d==='bekliyor') bek++; else if(_d==='bekleme') bks++; });
-    return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),mag,kom,bek,bks,plan,tsat,tsatG,op:opBul(kod)};
+      const _d=_mmKayitDurum(k); if(_d==='bekliyor') bek++; else if(_d==='bekleme') bks++;
+      let gp=_tdN(k.rehPax); if(!gp){ try{ const b=getRehBildirim().find(b=>_rehbBildEsle(b,k)); if(b) gp=_tdN(b.pax); }catch(e){} } if(gp>girPax) girPax=gp; });
+    return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),girPax,mag,kom,bek,bks,plan,tsat,tsatG,op:opBul(kod)};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
   window._mmTurAcik=window._mmTurAcik||new Set();
   const F=n=>Math.round(n).toLocaleString('tr-TR');
   const pill=(l,v,bg,fg)=>`<span style="display:flex;flex-direction:column;align-items:center;gap:1px;background:${bg};color:${fg};border-radius:10px;padding:3px 6px;white-space:nowrap;overflow:hidden"><span style="font-size:.52rem;font-weight:700;letter-spacing:.3px;opacity:.75;text-transform:uppercase">${l}</span><b style="font-size:.74rem;line-height:1">${v}</b></span>`;
   let g2h='';
   { // v734: dönem özeti verisi — en altta ayrı panel olarak çizilir
-    const T={tur:0,plan:0,pax:0,hali:0,kuyum:0,deri:0,diger:0,mag:0,kom:0,bek:0};
-    GL.forEach(g=>{ if(!g.mag&&!g.ks.some(k=>!k.plan)){ T.plan++; return; } T.tur++; T.pax+=g.pax||0; T.hali+=g.tsat.hali; T.kuyum+=g.tsat.kuyum; T.deri+=g.tsat.deri; T.diger+=g.tsat.diger; T.mag+=g.mag; T.kom+=g.kom; T.bek+=g.bek; });
+    const T={tur:0,plan:0,pax:0,gir:0,hali:0,kuyum:0,deri:0,diger:0,mag:0,kom:0,bek:0};
+    GL.forEach(g=>{ if(!g.mag&&!g.ks.some(k=>!k.plan)){ T.plan++; return; } T.tur++; T.pax+=g.pax||0; T.gir+=g.girPax||g.pax||0; T.hali+=g.tsat.hali; T.kuyum+=g.tsat.kuyum; T.deri+=g.tsat.deri; T.diger+=g.tsat.diger; T.mag+=g.mag; T.kom+=g.kom; T.bek+=g.bek; });
     T.donem=_mmAralik?((window._mmBasF?_fmtDateTR(window._mmBasF):'…')+' – '+(window._mmBitF?_fmtDateTR(window._mmBitF):'…')):(()=>{ try{ const [y,m]=_mmAy.split('-'); return new Date(+y,+m-1,1).toLocaleDateString('tr-TR',{month:'long',year:'numeric'}); }catch(e){ return _mmAy; } })();
     window._mmOzetT=T;
   }
@@ -19429,9 +19431,9 @@ function renderMagMuh(){
         ${T.bek?`<span style="font-size:.66rem;background:#fde68a;color:#78350f;font-weight:700;border-radius:8px;padding:2px 8px">${T.bek} bildirim bekliyor</span>`:''}
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px">
-        ${kpi('Ciro',F(T.mag),T.pax?`P.Pax ${F(T.mag/T.pax)}`:'' )}
-        ${kpi('Acente komisyonu',F(T.kom),T.pax?`P.Pax ${F(T.kom/T.pax)}`:'','#fdba74')}
-        ${kpi('Pax',T.pax||'—',T.tur?`${T.tur} tur`:'')}
+        ${kpi('Pax',T.pax||'—',`mağazaya giren <b>${T.gir||'—'}</b>`)}
+        ${kpi('Toplam ciro',F(T.mag),T.gir?`P.Pax ${F(T.mag/T.gir)} <span style="opacity:.7">(girene göre)</span>`:'')}
+        ${kpi('Acente komisyonu',F(T.kom),T.gir?`P.Pax ${F(T.kom/T.gir)} <span style="opacity:.7">(girene göre)</span>`:'','#fdba74')}
         ${kpi('Halı',T.hali?F(T.hali):'—',T.hali?'%'+Math.round(T.hali/top*100):'','#fcd34d')}
         ${kpi('Kuyum',T.kuyum?F(T.kuyum):'—',T.kuyum?'%'+Math.round(T.kuyum/top*100):'','#fef08a')}
         ${kpi('Deri',T.deri?F(T.deri):'—',T.deri?'%'+Math.round(T.deri/top*100):'','#d6d3d1')}
