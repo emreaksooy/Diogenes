@@ -2564,7 +2564,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v735 · 08.10.2026';
+const APP_VER='v736 · 08.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18981,13 +18981,12 @@ function _mmGirildiMi(k){
   return (k.magKalemler||[]).some(x=>String(x.ciro||'').trim()!=='');
 }
 function _mmKayitDurum(k){
-  const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekliyor',bekleme:'bekleme'})[v]||'onay'; // v735: 'bekleme' (Beklemede satış) ≠ bildirim bekliyor
+  const kd=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekleme',bekleme:'bekleme'})[v]||'onay'; // v736: kalemdeki 'Beklemede' = satış beklemede; 'bildirim bekliyor' yalnız veri eksikse
   const ks=(k.magKalemler||[]).filter(x=>(x.ad||'').trim());
   if(!_mmGirildiMi(k)) return 'bekliyor';
   if(!ks.length) return String(k.rehCiro||'').trim()!==''?'onay':'bekliyor'; // kalemsiz Kaydet = satış yok
   const dl=ks.map(x=>kd(x.durum));
   if(dl.every(d=>d==='iptal')) return 'iptal';
-  if(dl.some(d=>d==='bekliyor')) return 'bekliyor';
   // ONAY şartı: mağaza bildirimi + REHBER bildirimi ikisi de girilmiş olmalı
   if(String(k.rehCiro||'').trim()==='') return 'bekliyor';
   if(dl.some(d=>d==='bekleme')) return 'bekleme'; // bilgiler girildi, satış beklemede (ödeme/teslim)
@@ -19549,7 +19548,7 @@ function mmBildDoldur(id){
   const firmalar=_moFirmalar(); const fm=firmalar.find(x=>x.id===k.firmaId);
   const c=_mmHesap(k);
   const inp='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.78rem';
-  const KDAD={onay:['Onaylandı','#dcfce7','#166534'],bekliyor:['Beklemede','#fef3c7','#92400e'],iptal:['İptal','#fee2e2','#b91c1c']};
+  const KDAD={onay:['Onaylandı','#dcfce7','#166534'],bekliyor:['Beklemede','#ede9fe','#6d28d9'],iptal:['İptal','#fee2e2','#b91c1c']};
   const kdN=v=>({mutabik:'onay',tahsil:'onay',onay:'onay',iptal:'iptal',bekliyor:'bekliyor',bekleme:'bekliyor'})[v]||'onay';
   // mağazanın şablon kalemleri (şube öncelikli) — kalem adı buradan SEÇİLİR
   let sablonK=[];
