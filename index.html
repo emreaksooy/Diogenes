@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v738 · 08.10.2026';
+const APP_VER='v739 · 09.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16631,10 +16631,7 @@ function renderTurlarYeni(){
   if(_otF.trf) L=L.filter(t=>D.trf(t).a>0);
   if(_otF.ths) L=L.filter(t=>D.tahsis(t).tip==='yok');
   const eksikMi=t=>!t.rehberAd||D.trf(t).a>0||D.tahsis(t).tip==='yok';
-  // gün şeridi (giriş günleri)
-  const gunler=[]; for(let i=-2;i<=5;i++){ const d=_isoAdd(_otBas,i); const R=_rtTurlar(d,d).filter(t=>t.kalkis===d); gunler.push({d,n:R.length,pax:R.reduce((a,t)=>a+(+t.pax||0),0),ek:R.filter(eksikMi).length}); }
-  const GUNAD=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
-  const dayH=gunler.map(g=>{ const dt=new Date(g.d+'T12:00:00'); return `<button class="day ${g.d===_otBas?'on':''}" onclick="otGun('${g.d}',${_isoDiff(_otBas,_otSon)+1})"><span class="d">${GUNAD[dt.getDay()]}${g.d===bugun?' · bugün':''}</span><span class="n">${g.d.slice(8,10)}.${g.d.slice(5,7)}</span><span class="s"><i class="${!g.n?'bos':g.ek?'':'ok'}"></i>${g.n?g.n+' giriş · '+(g.ek?g.ek+' eksik':'hazır'):'giriş yok'}</span></button>`; }).join('');
+  // v739: gün şeridi kaldırıldı (Transfer ekranıyla karışıyordu) — tarih aralığı + 7g/14g/30g yeterli
   const uniq=f=>[...new Set(ham.map(f).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'tr'));
   const selChip=(k,lbl,opts)=>`<label class="chip ${_otF[k]?'on':''}" style="${_otF[k]?'color:var(--text)':''}">${lbl}: <select onchange="otF('${k}',this.value)"><option value="">Hepsi</option>${opts.map(o=>`<option ${_otF[k]===o?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
   const pax=L.reduce((a,t)=>a+(+t.pax||0),0), rehsiz=L.filter(t=>!t.rehberAd).length, trfE=L.filter(t=>D.trf(t).a>0).length, thsY=L.filter(t=>D.tahsis(t).tip==='yok').length;
@@ -16707,7 +16704,6 @@ function renderTurlarYeni(){
         <button class="btn btn-outline btn-sm tb-son" onclick="opsTab('rehtak')">📅 Rehber Takvimi</button>
         <button class="btn btn-outline btn-sm tb-son" onclick="_otGorunumSet('klasik')" title="Eski tablo görünümü">Klasik görünüm</button>
       </div>
-      <div class="days">${dayH}</div>
     </div>
     <div class="band">
       <div class="head"><div><div class="title">${esc(_fmtDateTR(_otBas))} – ${esc(_fmtDateTR(_otSon))}</div><div class="sum"><b>${L.length} grup</b> · ${pax} pax${rehsiz?` · <b style="color:var(--tbad)">${rehsiz} rehbersiz</b>`:''}${trfE?` · ${trfE} transfer eksik`:''}${ham.length!==L.length?` · filtre: ${L.length}/${ham.length}`:''}</div></div></div>
