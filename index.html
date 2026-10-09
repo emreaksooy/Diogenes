@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v739 · 09.10.2026';
+const APP_VER='v740 · 09.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18401,7 +18401,13 @@ function _trBolge(pkg){ return (pkg.bolge||(pkg.destinasyonSehir||'').split(/[·
 function _trBolgeOnce(ad){ const b=(getTanimlar().bolgeler||[]).find(x=>(x.ad||'').toUpperCase()===(ad||'').toUpperCase().trim()); return b?_dk(b.once):null; }
 function _trDeparHesap(r){ if(r.deparMan&&r.depar) return {saat:r.depar,onceki:false}; if(r.tip==='D'||r.tip==='ARAD'){ const u=_dk(r.saat),o=_trBolgeOnce(r.bolge); if(u===null||o===null) return {saat:r.depar||'',onceki:false}; const d=u-o; return {saat:_mmss(d),onceki:d<0}; } return {saat:r.saat||'',onceki:false}; }
 function _trGrupKey(y,p){ return p+':'+String(y[p+'_u1']||'').trim().toUpperCase()+'_'+String(y[p+'_k1']||'').trim().toUpperCase()+'_'+String(y[p+'_ks1']||'').trim(); }
-function _trGroup(rows,p){ const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={}; rows.forEach(y=>{ if(!has(y))return; const key=_trGrupKey(y,p); if(!map[key]) map[key]={key,pnrs:new Set(),vset:new Set(),y,n:0}; const pn=(y[p+'_pnr']||'').trim(); if(pn) map[key].pnrs.add(pn); const vc=String(y.resno||'').trim(); if(vc) map[key].vset.add(vc); map[key].n++; }); return Object.values(map).map(g=>{ const L=[...g.pnrs]; g.pnr=L.length===0?'—':(L.length===1?L[0]:L.length+' PNR'); g.vlist=[...g.vset]; return g; }); }
+function _trGroup(rows,p,ekKey){ // v740: ekKey(y)→otel; aynı uçuşta farklı otelden alınanlar ayrı satır (en kalabalık otel eski anahtarı korur → mevcut atamalar bozulmaz)
+  const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={};
+  rows.forEach(y=>{ if(!has(y))return; const base=_trGrupKey(y,p); const ek=ekKey?_norm(ekKey(y)||''):''; const key=base+(ek?'\u0001'+ek:'');
+    if(!map[key]) map[key]={key,base,ek,pnrs:new Set(),vset:new Set(),y,n:0}; const pn=(y[p+'_pnr']||'').trim(); if(pn) map[key].pnrs.add(pn); const vc=String(y.resno||'').trim(); if(vc) map[key].vset.add(vc); map[key].n++; });
+  const G=Object.values(map);
+  if(ekKey){ const byBase={}; G.forEach(g=>(byBase[g.base]=byBase[g.base]||[]).push(g)); Object.values(byBase).forEach(L=>{ L.sort((a,b)=>b.n-a.n); L.forEach((g,i)=>{ g.key=i===0?g.base:g.base+'|'+g.ek.replace(/[^a-z0-9]+/g,'_').slice(0,24); }); }); }
+  return G.map(g=>{ const L=[...g.pnrs]; g.pnr=L.length===0?'—':(L.length===1?L[0]:L.length+' PNR'); g.vlist=[...g.vset]; return g; }); }
 const _TR_APS=new Set(['IST','SAW','AYT','ESB','ADB','ADA','ASR','NAV','KYA','DLM','BJV','GZT','TZX','VAN','ERZ','GNY','HTY','SZF','DNZ','EDO','CKZ','USQ','YEI','MZH','MSR','IGD','KSY','AJI','ERC','EZS','MLX','DIY','BAL','BTZ','SXZ','NOP','VAS','TJK','OGU','KFS','MQM','AOE','ISE','KCM','GZP','EYP','YKO','RZV','BGG','ONQ','TEQ','KZR','NKT','SIC']);
 function _trHatTipi(rota){
   const p=String(rota||'').split('→').map(x=>x.trim().toUpperCase()).filter(Boolean);
@@ -18449,7 +18455,7 @@ function _trGenRowsHesap(){
       &&_durumEff(x)!=='iptal'
       &&!_iptalV.has(g.pkgId+'|'+g.kalkis+'|'+String(x.resno||'').trim()));
     if(!real.length) return;
-    _trGroup(real,'g').forEach(grp=>{ const y=grp.y;
+    _trGroup(real,'g',y=>_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'ilk')||hotel).forEach(grp=>{ const y=grp.y;
       // GELİŞ uçuş kanıtı yoksa (uçuş no/rota/saat/tarih/PNR/havayolu hiçbiri girilmemiş) transfer üretme — hayalet geliş engeli
       if(!((y.g_u1||'').trim()||(y.g_v1||'').trim()||(y.g_vs1||'').trim()||(y.g_vs2||'').trim()||(y.g_tarih||'').toString().trim()||(y.g_pnr||'').trim()||(y.g_hy||'').trim())) return;
       const landAp=(y.g_v2||y.g_v1||'').toUpperCase(); const landTime=y.g_vs2||y.g_vs1||''; const cross=_dk(y.g_vs2||y.g_vs1)!==null&&_dk(y.g_ks1)!==null&&_dk(y.g_vs2||y.g_vs1)<_dk(y.g_ks1); const tarihIso=_pdate(y.g_tarih)||g.kalkis; const tarih=cross?_trGunEkle(tarihIso,1):tarihIso;
@@ -18467,7 +18473,7 @@ function _trGenRowsHesap(){
       const rotaA=[(y.a_k1||'').toUpperCase(),(y.a_v1||'').toUpperCase()].filter(Boolean).join('→');
       out.push(merge({id:g.pkgId+'|'+g.kalkis+'|ARAD|'+grp.key,tip:'ARAD',tarih:aT,op,urun,grupKod:grp.pnr,nereden:otelOnce,nereye:(y.a_k1||'')+(y.a_u1?' · '+y.a_u1+' '+(y.a_ks1||''):''),bolge,ucus:y.a_u1||'',rota:rotaA,saat:y.a_ks1||'',pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist));
       out.push(merge({id:g.pkgId+'|'+g.kalkis+'|ARAG|'+grp.key,tip:'ARAG',tarih:aT,op,urun,grupKod:grp.pnr,nereden:(y.a_v1||'')+(y.a_u1?' · '+y.a_u1+' iniş '+(y.a_vs1||''):''),nereye:otelSonra,bolge,ucus:y.a_u1||'',rota:rotaA,saat:y.a_vs1||'',pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist)); });
-    _trGroup(real,'d').forEach(grp=>{ const y=grp.y;
+    _trGroup(real,'d',y=>_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'son')||hotel).forEach(grp=>{ const y=grp.y;
       if(!((y.d_u1||'').trim()||(y.d_k1||'').trim()||(y.d_ks1||'').trim()||(y.d_tarih||'').toString().trim()||(y.d_pnr||'').trim()||(y.d_hy||'').trim())) return;
       const depAp=(y.d_k1||'').toUpperCase();
       const otelD=_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'son')||hotel;
@@ -18656,7 +18662,7 @@ function _trListRows(){
     if(_trTipF.atanmamis&&r.grup) return;
     out.push({r,dh:_trDeparHesap(r),gece:false});
   });
-  out.sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+  out.sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??_dk(a.r.saat)??9999)-(_dk(b.dh.saat)??_dk(b.r.saat)??9999)));
   return out;
 }
 const _trGrupOf=r=>r.grup?((getTransfer().gruplar||{})[r.grup]||{}):{};
@@ -18728,7 +18734,7 @@ function _trDayRows(){
     else return;
     if(_trTipF.atanmamis&&r.grup) return;
     out.push({r,dh,gece}); });
-  out.sort((a,b)=>(_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999));
+  out.sort((a,b)=>(_dk(a.dh.saat)??_dk(a.r.saat)??9999)-(_dk(b.dh.saat)??_dk(b.r.saat)??9999));
   return out;
 }
 function _trSortBy(col){ if(_trSort.col===col)_trSort.dir=-_trSort.dir; else {_trSort.col=col;_trSort.dir=1;} renderOpsTransfer(); }
@@ -20935,7 +20941,7 @@ function _trRehberIsPdfWa(){
   if(!list.length){ showToast('Bu aralıkta '+rehAd+' rehberine atanmış iş yok','error'); return; }
   const donem=_opsTrDate2?(_fmtDateTR(_opsTrDate)+' – '+_fmtDateTR(_opsTrDate2)):_trGunAd(_opsTrDate);
   const bolum=x=>x.r.tip==='G'?'GELİŞ':((x.r.tip==='D'||x.r.tip==='UZT')?'DÖNÜŞ':(x.r.tip==='TUR'?'TUR':'ARA UÇUŞ'));
-  const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+  const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??_dk(a.r.saat)??9999)-(_dk(b.dh.saat)??_dk(b.r.saat)??9999)));
   const bolumler={'GELİŞ':[],'ARA UÇUŞ':[],'TUR':[],'DÖNÜŞ':[]};
   sirali.forEach(x=>{ (bolumler[bolum(x)]=bolumler[bolum(x)]||[]).push(x); });
   let h='';
@@ -21024,7 +21030,7 @@ function _trExcelAoa(list){
   const T=getTransfer();
   const tipAd={G:'GELİŞ',D:'DÖNÜŞ',ARAD:'ARA DEPAR',ARAG:'ARA VARIŞ',TUR:'TUR',UZT:'UZATMA'};
   const aoa=[['Tarih','Görev','Depar','Tip','Nereden','Nereye','Uçuş','Uçuş Saati','Operatör','Ürün','PNR/Grup','Pax','Rehber','Firma','Araç','Şoför','Not','Durum']];
-  const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||String(a.r.grup||'ZZ').localeCompare(String(b.r.grup||'ZZ'))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+  const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||String(a.r.grup||'ZZ').localeCompare(String(b.r.grup||'ZZ'))||((_dk(a.dh.saat)??_dk(a.r.saat)??9999)-(_dk(b.dh.saat)??_dk(b.r.saat)??9999)));
   sirali.forEach(({r,dh})=>{
     const gr=r.grup?(T.gruplar||{})[r.grup]||{}:{};
     aoa.push([_fmtDateTR(r.tarih),r.grup?_trKodOf(r.grup):'—',dh.saat||'',tipAd[r.tip]||r.tip,r.nereden||'',r.nereye||'',r.ucus||'',r.saat||'',r.op||'',r.urun||'',r.grupKod||'',+r.pax||0,
@@ -21055,8 +21061,9 @@ function _trYolcular(r){
   }
   else{
     const p=r.tip==='G'?'g':((r.tip==='D'||r.tip==='UZT')?'d':'a');
-    const hedefKey=String(r.id||'').split('|')[3]||'';
-    secilen=rows.filter(y=>_trGrupKey(y,p)===hedefKey);
+    const hedefKey=String(r.id||'').split('|').slice(3).join('|')||'';
+    const anaKey=hedefKey.split('|')[0];
+    secilen=rows.filter(y=>_trGrupKey(y,p)===anaKey&&(!r.vlist||!r.vlist.length||r.vlist.some(v=>_vEsit(String(y.resno||'').trim(),v))));
   }
   // uyruk: rezervasyon müşterisinden (voucher + isim token eşleşmesi)
   const rezvler=(getRezv()||[]).filter(x=>x.tip==='urun'&&x.pkgId===r.pkgId&&x.kalkis===r.kalkis);
@@ -21121,7 +21128,7 @@ function _trTasimaciBloklar(sessiz,secIds){
   if(!list.length&&!tahsisler.length){ if(!sessiz) showToast('Bu firmaya atanmış transfer/tahsis yok','error'); return null; }
   window._trKod=_trKodMap();
   const bolum=x=>x.r.tip==='G'?'GELİŞ':(x.r.tip==='D'?'DÖNÜŞ':((x.r.tip==='TUR'||x.r.tip==='UZT')?'ARA TRANSFER':'ARA UÇUŞ'));
-  const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+  const sirali=[...list].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??_dk(a.r.saat)??9999)-(_dk(b.dh.saat)??_dk(b.r.saat)??9999)));
   const bolumler={'GELİŞ':[],'DÖNÜŞ':[],'ARA TRANSFER':[],'ARA UÇUŞ':[]};
   const gorevMap={};
   sirali.forEach(x=>{
@@ -21357,7 +21364,7 @@ function _trUetdsExcel(){
   let toplamYolcu=0, isimsizGorev=[];
   Object.keys(gorevler).sort().forEach(kod=>{
     const gr=G[kod]||{};
-    const L=gorevler[kod].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??9999)-(_dk(b.dh.saat)??9999)));
+    const L=gorevler[kod].sort((a,b)=>String(a.r.tarih).localeCompare(String(b.r.tarih))||((_dk(a.dh.saat)??_dk(a.r.saat)??9999)-(_dk(b.dh.saat)??_dk(b.r.saat)??9999)));
     const ilk=L[0];
     const aoa=[
       ['UETDS SEFER / YOLCU BİLDİRİMİ'],
