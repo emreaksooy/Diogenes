@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v740 · 09.10.2026';
+const APP_VER='v741 · 12.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11657,7 +11657,7 @@ function _rzSejourOku(f){
           if(!mevcut.pkgId){ const kod2=((tumu[0]?String(tumu[0].r[iG1]||''):'').trim()||(iKod2>=0&&tumu[0]?String(tumu[0].r[iKod2]||'').trim():'')).toUpperCase();
             if(kod2){ const opM=getOperators().find(o=>_norm(o.ad||'')===_norm(mevcut.operator||''));
               const adaylar2=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod2));
-              let pkg2=(opM&&adaylar2.find(p=>p.operatorId===opM.id))||adaylar2[0]||null; let uz2=null;
+              let pkg2=_pkgSecKodTarih(adaylar2,opM,mevcut.kalkis)||null; let uz2=null;
               if(!pkg2){ uz2=_uzKodBul(kod2); if(uz2) pkg2=uz2.pkg; }
               if(pkg2){ mevcut.pkgId=pkg2.id; mevcut.urunKod=kod2; mevcut.tip='urun'; if(uz2) mevcut.uzatmaHafta=uz2.hafta; } } }
           if(iOda>=0){ const yeniUk=_sjUkartlar(g.satirlar.length?g.satirlar:g.iptaller,iOda,iAd,iGir,iCik,mevcut.musteriler,iSira,iDogum,iKartNo); if(yeniUk.length) mevcut.ukartlar=yeniUk; }
@@ -11723,6 +11723,7 @@ function _rzSejourOku(f){
       let kalkis='', satis='';
       kaynak.forEach(r=>{ const t=_sjTarih(r[iGir]); if(t&&(!kalkis||t<kalkis)) kalkis=t;
         if(iKayit>=0){ const k2=_sjTarih(r[iKayit]); if(k2&&(!satis||k2<satis)) satis=k2; } });
+      if(kod&&pkg&&!uzHafta){ const ad3=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod)); if(ad3.length>1) pkg=_pkgSecKodTarih(ad3,op,kalkis)||pkg; } // v741: tarihe uygun sürüm
       const gw=String(ilk[iG3]||'').trim().toUpperCase();
       // müşteriler (aynı isim mükerrer olmasın)
       const gorulen=new Set(); const musteriler=[];
@@ -14003,6 +14004,17 @@ function tdMagTarihSet(zKey,val){
 }
 function _opsSet(f,v){ const r=_opsRec(true); r[f]=v; setOperasyon(getOperasyon()); }
 // Operasyon tarihleri: ürünün kalkış takvimi + REZERVASYONLARDAN gelen kalkışlar (takvimde olmayan tarihli rezervasyonlar da tur oluşturur)
+// v741: aynı kod birden çok ürün sürümünde (2026/2027) → kalkış tarihini kapsayan sürüm seçilir
+function _pkgSecKodTarih(adaylar,op,kalkis){
+  if(!adaylar||!adaylar.length) return null;
+  let L=adaylar; if(op){ const o=adaylar.filter(p=>p.operatorId===op.id); if(o.length) L=o; }
+  if(kalkis&&L.length>1){
+    const tam=L.filter(p=>{ try{ return (_opsTarihler(p)||[]).includes(kalkis); }catch(e){ return false; } }); if(tam.length) return tam[0];
+    const yil=String(kalkis).slice(0,4);
+    const ayniYil=L.filter(p=>(p.fiyatlandirma||[]).some(f=>String(f.tarih||'').slice(0,4)===yil)||(p.sezonlar||[]).some(z=>String(z.bas||z.baslangic||'').slice(0,4)===yil)); if(ayniYil.length) return ayniYil[0];
+  }
+  return L[0];
+}
 function _opsTarihler(pkg){
   const set=new Set(_resDepartureDates(pkg)||[]);
   try{ (getRezv()||[]).forEach(r=>{ if(r&&r.tip==='urun'&&r.durum!=='iptal'&&r.pkgId===pkg.id&&r.kalkis&&/^\d{4}-\d{2}-\d{2}$/.test(r.kalkis)) set.add(r.kalkis); }); }catch(e){}
