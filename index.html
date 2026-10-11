@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v741 · 12.10.2026';
+const APP_VER='v742 · 12.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18475,8 +18475,9 @@ function _trGenRowsHesap(){
       const _gAkt=!!((y.g_v2||'').trim()||(y.g_k2||'').trim());
       const _gSonK=((y.g_k2||(_gAkt?y.g_v1:'')||y.g_k1)||'').toUpperCase();
       const rotaG=[_gSonK,landAp].filter(Boolean).join('→');
-      const aktG=_gAkt?('ilk bacak '+String(y.g_k1||'?').toUpperCase()+'→'+String(y.g_v1||'?').toUpperCase()):'';
-      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|G|'+grp.key,tip:'G',tarih,op,urun,grupKod:grp.pnr,nereden:landAp+(y.g_u1?' · '+y.g_u1:''),nereye:otelG,bolge,ucus:y.g_u1||'',rota:rotaG,akt:aktG,saat:landTime,pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist)); });
+      const aktG=_gAkt?('ilk bacak '+String(y.g_k1||'?').toUpperCase()+'→'+String(y.g_v1||'?').toUpperCase()+(y.g_u1?' · '+y.g_u1:'')):'';
+      const ucusG=(_gAkt&&(y.g_u2||'').trim())||y.g_u1||''; // v742: aktarmalıda Antalya'ya inen bacağın uçuş no'su
+      out.push(merge({id:g.pkgId+'|'+g.kalkis+'|G|'+grp.key,tip:'G',tarih,op,urun,grupKod:grp.pnr,nereden:landAp+(ucusG?' · '+ucusG:''),nereye:otelG,bolge,ucus:ucusG,rota:rotaG,akt:aktG,saat:landTime,pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist)); });
     _trGroup(real.filter(_araVar),'a').forEach(grp=>{ const y=grp.y;
       const aT=_pdate(y.a_tarih)||g.kalkis;
       const ksA=_trRezvKartlar(g.pkgId,g.kalkis,y.resno);
@@ -18742,7 +18743,7 @@ function _trDayRows(){
   const all=_trGenRows(); const out=[];
   all.forEach(r=>{ if(!_trTipGoster(r)) return; const dh=_trDeparHesap(r); const efTarih=dh.onceki?_trGunEkle(r.tarih,-1):r.tarih; let gece=false;
     if(efTarih===_opsTrDate){ gece=dh.onceki; }
-    else if(_trTipF.gece&&r.tarih===_trGunEkle(_opsTrDate,1)&&!dh.onceki&&_dk(dh.saat)!==null&&_dk(dh.saat)<360&&(r.tip==='D'||r.tip==='ARAD')){ gece=true; }
+    else if(_trTipF.gece&&r.tarih===_trGunEkle(_opsTrDate,1)&&!dh.onceki&&_dk(dh.saat)!==null&&_dk(dh.saat)<360&&(r.tip==='D'||r.tip==='ARAD'||r.tip==='G')){ gece=true; } // v742: gece yarısından sonra inen gelişler de uçuş gününün listesinde
     else return;
     if(_trTipF.atanmamis&&r.grup) return;
     out.push({r,dh,gece}); });
