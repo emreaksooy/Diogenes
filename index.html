@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v742 · 12.10.2026';
+const APP_VER='v743 · 12.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15501,7 +15501,7 @@ function renderTrYeni(){
   const pax=L.reduce((t,x)=>t+(+x.r.pax||0),0), acik=L.filter(x=>acikMi(x.r)).length, ths=L.filter(x=>!x.r.grup&&x.r.tahsis).length;
   const baslik=aralik?(_fmtDateTR(gun)+' – '+_fmtDateTR(_opsTrDate2)):new Date(gun+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',weekday:'long'});
   const TAD={G:'Geliş',D:'Dönüş',ARAD:'Ara depar',ARAG:'Ara varış',TUR:'Tur',UZT:'Uzatma'};
-  const dilim=x=>{ const m=_dk(x.dh.saat||x.r.saat); if(m===null) return 3; return m<12*60?0:m<18*60?1:2; };
+  const dilim=x=>{ if(x.gece) return 2; const m=_dk(x.dh.saat||x.r.saat); if(m===null) return 3; return m<12*60?0:m<18*60?1:2; };
   const DAD=['Sabah','Öğle / Öğleden sonra','Akşam / Gece','Saati belirsiz'];
   const satir=x=>{ const r=x.r, dep=x.dh, gr=_trGrupOf(r), sel=_trSel.has(r.id);
     let reh=null; try{ reh=_trRehInfo(r); }catch(e){}
@@ -18747,7 +18747,7 @@ function _trDayRows(){
     else return;
     if(_trTipF.atanmamis&&r.grup) return;
     out.push({r,dh,gece}); });
-  out.sort((a,b)=>(_dk(a.dh.saat)??_dk(a.r.saat)??9999)-(_dk(b.dh.saat)??_dk(b.r.saat)??9999));
+  out.sort((a,b)=>((a.gece?1440:0)+(_dk(a.dh.saat)??_dk(a.r.saat)??9999))-((b.gece?1440:0)+(_dk(b.dh.saat)??_dk(b.r.saat)??9999))); // v743: ertesi gece satırları en altta
   return out;
 }
 function _trSortBy(col){ if(_trSort.col===col)_trSort.dir=-_trSort.dir; else {_trSort.col=col;_trSort.dir=1;} renderOpsTransfer(); }
