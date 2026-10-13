@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v744 · 12.10.2026';
+const APP_VER='v745 · 13.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11290,7 +11290,8 @@ function _rzYanlisUrunBant(){
   const L=_rzYanlisUrunList(); if(!L.length) return '';
   return `<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:12px;padding:10px 16px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
     <b style="font-size:.8rem">⚠ ${L.length} rezervasyon yanlış ürüne bağlı</b>
-    <span style="font-size:.74rem">${L.map(x=>esc(String(x.r.voucher||'?'))+' → '+esc(_resOpAd(x.dogru)||'')+' '+esc(x.dogru.paketKodu||'')).join(' · ')}</span>
+    <span style="font-size:.74rem;display:flex;gap:6px;flex-wrap:wrap">${L.map(x=>{ const r=x.r; const mevcut=getPackages().find(p=>p.id===r.pkgId); const n=(r.musteriler||[]).filter(m=>!m.iptal).length;
+      return `<a href="javascript:void 0" onclick="rzAc('${r.id}')" title="Kaydı aç" style="background:#fff;border:1px solid #f59e0b;border-radius:8px;padding:2px 8px;color:#92400e;text-decoration:none;white-space:nowrap"><b>${esc(String(r.voucher||'?'))}</b> · ${esc(_fmtDateTR(r.kalkis)||'—')} · ${n} pax · <span style="opacity:.7">${esc(r.operator||'')} ${esc(mevcut?(mevcut.paketKodu||''):(r.urunKod||''))}</span> → <b>${esc(_resOpAd(x.dogru)||'')} ${esc(x.dogru.paketKodu||'')}</b></a>`; }).join('')}</span>
     <button class="btn btn-outline btn-sm" style="margin-left:auto;color:#b45309;border-color:#f59e0b" onclick="rzYanlisUrunDuzelt()">🔁 Doğru ürüne taşı</button>
   </div>`;
 }
