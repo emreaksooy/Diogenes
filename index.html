@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v754 · 13.10.2026';
+const APP_VER='v755 · 13.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15505,7 +15505,7 @@ function renderTrYeni(){
   const uniq=f=>[...new Set(ham.map(x=>f(x.r)).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'tr'));
   const firmalar=[...new Set([...(getTanimlar().aracFirmalari||[]).map(f=>f.ad),...ham.map(x=>(_trGrupOf(x.r).firma||''))].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   const rehberler=uniq(r=>_trGrupOf(r).rehber||'');
-  const selChip=(k,lbl,opts)=>{ const L=_trUstList(k); const acik=window._trUstPanel===k; // v754: çoklu seçim paneli
+  const selChip=(k,lbl,opts)=>{ const L=_trUstList(k); const acik=window._trUstAcik===k; // v754: çoklu seçim paneli
     const etiket=!L.length?'Hepsi':(L.length===1?L[0]:L[0]+' +'+(L.length-1));
     return `<span class="tdm-msel" style="position:relative;display:inline-block"><button class="chip ${L.length?'on':''}" style="${L.length?'color:var(--text)':''}" onclick="_trUstPanel('${k}')">${lbl}: <b>${esc(etiket)}</b> ▾</button>
       ${acik?`<div class="tdm-msel-p"><label class="hepsi"><input type="checkbox" ${!L.length?'checked':''} onchange="_trUstSet('${k}','')"> Hepsi</label>${opts.map(o=>`<label><input type="checkbox" ${L.includes(o)?'checked':''} onchange="_trUstTog('${k}',${JSON.stringify(o).replace(/"/g,'&quot;')},this.checked)"> ${esc(o)}</label>`).join('')}${!opts.length?'<div style="color:var(--muted);font-size:.72rem;padding:4px 8px">seçenek yok</div>':''}</div>`:''}</span>`; };
@@ -18677,8 +18677,8 @@ function _trUstSet(k,v){ _trUst[k]=v; renderOpsTransfer(); }
 function _trUstList(k){ return String(_trUst[k]||'').split('|').map(x=>x.trim()).filter(Boolean); }
 function _trUstHas(k,v){ const L=_trUstList(k); return !L.length||L.includes(String(v||'')); }
 function _trUstTog(k,v,on){ const L=_trUstList(k).filter(x=>x!==v); if(on) L.push(v); _trUst[k]=L.join('|'); renderOpsTransfer(); }
-function _trUstPanel(k){ window._trUstPanel=(window._trUstPanel===k)?'':k; renderOpsTransfer(); }
-document.addEventListener('click',e=>{ if(window._trUstPanel&&!e.target.closest('.tdm-msel')){ window._trUstPanel=''; try{ renderOpsTransfer(); }catch(x){} } },true);
+function _trUstPanel(k){ window._trUstAcik=(window._trUstAcik===k)?'':k; renderOpsTransfer(); } // v755: durum değişkeni fonksiyonla aynı addaydı → ilk tıktan sonra fonksiyon eziliyordu
+document.addEventListener('click',e=>{ if(window._trUstAcik&&!e.target.closest('.tdm-msel')){ window._trUstAcik=''; try{ renderOpsTransfer(); }catch(x){} } },true);
 function _trUstTemizle(){ _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:''}; _trSaatB=''; _trSaatS=''; _trFilt={}; renderOpsTransfer(); }
 function _trGorunur(){
   let tam=_opsTrDate2?_trListRows():_trDayRows();
