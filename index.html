@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v751 · 13.10.2026';
+const APP_VER='v752 · 13.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11657,6 +11657,7 @@ function _rzSejourOku(f){
           if(iG5>=0&&!mevcut.grupBolumM){ const gb=_sjBolum(tumu[0]&&tumu[0].r[iG5]); if(gb) mevcut.grupBolum=gb; }
           if(iStat>=0) mevcut.sorSat=tumu.some(x=>String(x.r[iStat]||'').trim()==='Sor-Sat')||false;
           if(iAsil>=0&&!mevcut.asilVoucher){ const av=tumu.map(x=>_sjTemiz(x.r[iAsil])).find(Boolean); if(av) mevcut.asilVoucher=av; }
+          if(mevcut.pkgId){ try{ const pkM=getPackages().find(p=>p.id===mevcut.pkgId); const hedef=pkM&&_ynSeferKardes(pkM,mevcut.kalkis); if(hedef){ mevcut.pkgId=hedef.id; window._sjSurumDuz=(window._sjSurumDuz||0)+1; } }catch(e){} } // v752: mevcut kayıt yanlış yıl sürümündeyse doğru sürüme geçir
           if(!mevcut.pkgId){ const kod2=((tumu[0]?String(tumu[0].r[iG1]||''):'').trim()||(iKod2>=0&&tumu[0]?String(tumu[0].r[iKod2]||'').trim():'')).toUpperCase();
             if(kod2){ const opM=getOperators().find(o=>_norm(o.ad||'')===_norm(mevcut.operator||''));
               const adaylar2=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod2));
@@ -11808,6 +11809,7 @@ function _rzSejourOku(f){
     if(uyeYok) msg+=' · '+uyeYok+' isim rezervasyonda bulunamadı (kart tüm üyelere açıldı)';
     if(atla) msg+=' · '+atla+' zaten vardı/boş (atlandı)';
     if(onarim) msg+=' · '+onarim+' açılım artığı kayıt temizlendi';
+    if(window._sjSurumDuz){ msg+=' · '+window._sjSurumDuz+' kayıt doğru ürün sürümüne taşındı'; window._sjSurumDuz=0; }
     if(window._sjSenkron){ msg+=' · '+window._sjSenkron+' voucher dosyayla eşitlendi'; if(window._sjIsimlendi) msg+=' ('+window._sjIsimlendi+' NO NAME koltuğa isim geldi)'; window._sjSenkron=0; window._sjIsimlendi=0; }
     if(window._sjKartSil){ msg+=' · 🗑 '+window._sjKartSil+' eski otel kartı kaldırıldı (dosyada yok)'; window._sjKartSil=0; }
     if(iptalRez) msg+=' · '+iptalRez+' İPTAL rezervasyon (fatura/iptal şartı için) işaretlendi';
@@ -14011,10 +14013,12 @@ function _opsSet(f,v){ const r=_opsRec(true); r[f]=v; setOperasyon(getOperasyon(
 function _pkgSecKodTarih(adaylar,op,kalkis){
   if(!adaylar||!adaylar.length) return null;
   let L=adaylar; if(op){ const o=adaylar.filter(p=>p.operatorId===op.id); if(o.length) L=o; }
-  if(kalkis&&L.length>1){
-    const tam=L.filter(p=>{ try{ return (_opsTarihler(p)||[]).includes(kalkis); }catch(e){ return false; } }); if(tam.length) return tam[0];
+  if(kalkis&&L.length>1){ // v752: ürünün KENDİ kalkış tarihleri (_resDepartureDates) esas — _opsTarihler iki sürümde de aynı tarihi döndürebiliyor
+    const D=p=>{ try{ return (_resDepartureDates(p)||[]).map(t=>_pdate(t)||t); }catch(e){ return []; } };
+    const tam=L.filter(p=>D(p).includes(kalkis)); if(tam.length===1) return tam[0];
     const yil=String(kalkis).slice(0,4);
-    const ayniYil=L.filter(p=>(p.fiyatlandirma||[]).some(f=>String(f.tarih||'').slice(0,4)===yil)||(p.sezonlar||[]).some(z=>String(z.bas||z.baslangic||'').slice(0,4)===yil)); if(ayniYil.length) return ayniYil[0];
+    const ayniYil=(tam.length?tam:L).filter(p=>D(p).some(t=>String(t).slice(0,4)===yil)); if(ayniYil.length) return ayniYil[0];
+    if(tam.length) return tam[0];
   }
   return L[0];
 }
