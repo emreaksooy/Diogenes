@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v745 · 13.10.2026';
+const APP_VER='v746 · 13.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20305,8 +20305,9 @@ function renderOpsTahsis(){
       ${(_thsFirmaF||_thsBasF||_thsBitF)?`<button class="btn btn-outline btn-sm" onclick="_thsFirmaF='';_thsBasF='';_thsBitF='';renderOpsTahsis()">✕ Filtreyi temizle</button>`:''}
     </div>`;
   h+=L.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
-    <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Tur / Görev</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Gönderim</th><th style="${th2}"></th></tr>
+    <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Gün</th><th style="${th2}">Tur / Görev</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Gönderim</th><th style="${th2}"></th></tr>
     ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b><div style="font-size:.6rem;color:var(--muted)">${t.bas?new Date(t.bas+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div>${t.basYer?`<div style="font-size:.62rem;color:#0369a1;font-weight:700">📍 ${esc(t.basYer)}</div>`:''}</td><td style="${td2}">${_fmtDateTR(t.bit)}<div style="font-size:.6rem;color:var(--muted)">${t.bit?new Date(t.bit+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div></td>
+      <td style="${td2};text-align:center">${(t.bas&&t.bit)?`<b style="font-size:.95rem">${_isoDiff(t.bas,t.bit)+1}</b><div style="font-size:.58rem;color:var(--muted)">gün</div>`:'—'}</td>
       <td style="${td2}"><b>${esc(t.tur)}</b>${t.gorev?`<div style="font-size:.66rem;color:#0369a1;font-weight:700">${esc(t.gorev)}</div>`:''}${t.prog?`<div style="font-size:.62rem;color:var(--muted)">${esc(t.prog)}</div>`:''}</td>
       <td style="${td2}">${esc(t.firma)||'<span style="color:#b45309;font-weight:700">firma yok</span>'}</td><td style="${td2}">${esc(t.arac)}</td>
       <td style="${td2}">${t.plaka?`<b>${esc(t.plaka)}</b>`:'<span style="color:#b45309;font-size:.68rem">plaka bekliyor</span>'}${t.sofor?` · ${esc(t.sofor)}`:''}${t.stel?` <span style="color:var(--muted);font-size:.68rem">${esc(t.stel)}</span>`:''}</td>
@@ -20315,7 +20316,7 @@ function renderOpsTahsis(){
       <td style="${td2};white-space:nowrap"><button class="btn ${window._thsEdit===(t.gid+'|'+t.aid)?'btn-primary':'btn-outline'} btn-sm" onclick="thsEditAc('${t.gid}','${t.aid}')" title="Araç bilgilerini burada düzenle — rehberin ekranına düşer">✏️</button> <button class="btn btn-outline btn-sm" onclick="thsPrint('${t.gid}','${t.aid}')" title="Görev emri: isim listesi + yapılacak iş (yazdır/PDF)">🖨</button> <button class="btn btn-outline btn-sm" onclick="thsTekExcel('${t.gid}','${t.aid}')" title="Görev emri Excel">📥</button> <button class="btn btn-outline btn-sm" onclick="trTahsisDosya('${t.gid}')" title="Tur dosyasının Araçlar sekmesi">🔧</button> <button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="thsSil('${t.gid}','${t.aid}')">🗑</button></td></tr>${window._thsEdit===(t.gid+'|'+t.aid)?(function(){
         const a=((getOpsGrup().gruplar||{})[t.gid]||{araclar:[]}).araclar.find(x=>x.id===t.aid)||{};
         const li=(lbl,id2,val,w2,ph)=>`<label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">${lbl}<input id="the_${id2}" value="${esc(val||'')}" ${ph?`placeholder="${ph}"`:''} style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:${w2}px"></label>`;
-        return `<tr><td colspan="10" style="background:#fffbeb;border-bottom:2px solid #fde68a;padding:10px 12px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        return `<tr><td colspan="11" style="background:#fffbeb;border-bottom:2px solid #fde68a;padding:10px 12px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">FİRMA<input id="the_firma" value="${esc(a.firma||'')}" list="thsFirmaL2" onchange="thsFirmaDoldur()" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:130px"><datalist id="thsFirmaL2">${[...new Set((getTanimlar().aracFirmalari||[]).map(f2=>f2.ad||'').filter(Boolean))].map(f2=>`<option value="${esc(f2)}">`).join('')}</datalist></label>
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">ARAÇ<input id="the_arac" value="${esc(a.ad||'')}" list="thsAracL" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:110px"><datalist id="thsAracL"></datalist></label>
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">TİP<input id="the_tip" value="${esc(a.arTip||'')}" list="thsTipL" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:70px;text-transform:uppercase"><datalist id="thsTipL"></datalist></label>
