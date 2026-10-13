@@ -20296,7 +20296,7 @@ function renderOpsTahsis(){
   const th2='background:#0369a1;color:#fff;padding:5px 9px;font-size:.62rem;text-align:left;white-space:nowrap';
   const td2='padding:5px 9px;font-size:.76rem;border-bottom:1px solid var(--border)';
   const tumFirmalar=[...new Set(firmalar.concat(L.map(x=>x.firma).filter(Boolean)))].sort((a,b)=>a.localeCompare(b,'tr'));
-  h+=`<div class="card"><div class="card-title">Atanan Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} araç</span> <button class="btn btn-outline btn-sm" onclick="thsExcel()" title="Filtreye göre Excel indirir">📥 Excel</button></div>
+  h+=`<div class="card"><div class="card-title">Atanan Tahsisler <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">${L.length} araç · ${L.reduce((a,t)=>a+((t.bas&&t.bit)?(_isoDiff(t.bas,t.bit)+1):0),0)} gün</span> <button class="btn btn-outline btn-sm" onclick="thsExcel()" title="Filtreye göre Excel indirir">📥 Excel</button></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
       <select onchange="thsFiltre('firma',this.value)" style="${inp}"><option value="">— Tüm firmalar —</option>${tumFirmalar.map(f=>`<option ${_thsFirmaF===f?'selected':''}>${esc(f)}</option>`).join('')}</select>
       <input type="date" value="${esc(_thsBasF)}" onchange="thsFiltre('bas',this.value)" style="${inp}" title="Aralık başı">
