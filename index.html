@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v752 · 13.10.2026';
+const APP_VER='v753 · 13.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18425,8 +18425,13 @@ function _trOtelSec(ks,mod,t){
   return k?k.otel:'';
 }
 function _trHotel(pkgId,kalkis,pkg){ const o=getOperasyon().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); const ot=o&&o.oteller&&o.oteller.find(h=>(h.ad||'').trim()); if(ot) return ot.ad; return pkg.destinasyonSehir||pkg.paketAdi||'Otel'; }
-function _trBolge(pkg){ return (pkg.bolge||(pkg.destinasyonSehir||'').split(/[·,\/]/)[0]||'').trim().toUpperCase(); }
-function _trBolgeOnce(ad){ const b=(getTanimlar().bolgeler||[]).find(x=>(x.ad||'').toUpperCase()===(ad||'').toUpperCase().trim()); return b?_dk(b.once):null; }
+function _trBolgeKanon(s){ // v753: ISTANBUL / İSTANBUL / istanbul → tek yazım (tanımlı bölge adı varsa o, yoksa Türkçe büyük harf)
+  const t=String(s||'').trim(); if(!t) return '';
+  try{ const n=_norm(t); const b=(getTanimlar().bolgeler||[]).find(x=>_norm(x.ad||'')===n); if(b) return String(b.ad).trim().toLocaleUpperCase('tr'); }catch(e){}
+  return t.toLocaleUpperCase('tr');
+}
+function _trBolge(pkg){ return _trBolgeKanon(pkg.bolge||(pkg.destinasyonSehir||'').split(/[·,\/]/)[0]||''); }
+function _trBolgeOnce(ad){ const n=_norm(ad||''); const b=(getTanimlar().bolgeler||[]).find(x=>_norm(x.ad||'')===n); return b?_dk(b.once):null; }
 function _trDeparHesap(r){ if(r.deparMan&&r.depar) return {saat:r.depar,onceki:false}; if(r.tip==='D'||r.tip==='ARAD'){ const u=_dk(r.saat),o=_trBolgeOnce(r.bolge); if(u===null||o===null) return {saat:r.depar||'',onceki:false}; const d=u-o; return {saat:_mmss(d),onceki:d<0}; } return {saat:r.saat||'',onceki:false}; }
 function _trGrupKey(y,p){ return p+':'+String(y[p+'_u1']||'').trim().toUpperCase()+'_'+String(y[p+'_k1']||'').trim().toUpperCase()+'_'+String(y[p+'_ks1']||'').trim(); }
 function _trGroup(rows,p,ekKey){ // v740: ekKey(y)→otel; aynı uçuşta farklı otelden alınanlar ayrı satır (en kalabalık otel eski anahtarı korur → mevcut atamalar bozulmaz)
