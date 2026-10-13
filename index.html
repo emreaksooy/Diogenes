@@ -888,6 +888,8 @@ body.dark .otl .tag.bol{background:#1a2b4d;color:#9db7ff} body.dark .otl .tag.bi
   .tdm .route .pt{font-size:.78rem} .tdm .who{font-size:.74rem}
 }
 @media(min-width:761px){.tdm-tb .tb-g{display:contents}}
+.tdm-msel-p{position:absolute;z-index:60;top:calc(100% + 4px);left:0;min-width:200px;max-height:300px;overflow:auto;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;display:flex;flex-direction:column;gap:2px}
+.tdm-msel-p label{display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:7px;font-size:.78rem;cursor:pointer;white-space:nowrap}.tdm-msel-p label:hover{background:#f1f5f9}.tdm-msel-p label.hepsi{border-bottom:1px solid var(--border);margin-bottom:3px;font-weight:700}
 .rzsth{cursor:pointer;user-select:none;white-space:nowrap} .rzsth:hover{text-decoration:underline} .rzsth.on{color:#fdba74}
 /* telefon: yığın */
 @media(max-width:760px){
@@ -2565,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v753 · 13.10.2026';
+const APP_VER='v754 · 13.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15503,7 +15505,10 @@ function renderTrYeni(){
   const uniq=f=>[...new Set(ham.map(x=>f(x.r)).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'tr'));
   const firmalar=[...new Set([...(getTanimlar().aracFirmalari||[]).map(f=>f.ad),...ham.map(x=>(_trGrupOf(x.r).firma||''))].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
   const rehberler=uniq(r=>_trGrupOf(r).rehber||'');
-  const selChip=(k,lbl,opts)=>`<label class="chip ${_trUst[k]?'on':''}" style="${_trUst[k]?'color:var(--text)':''}">${lbl}: <select onchange="_trUstSet('${k}',this.value)"><option value="">Hepsi</option>${opts.map(o=>`<option ${_trUst[k]===o?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
+  const selChip=(k,lbl,opts)=>{ const L=_trUstList(k); const acik=window._trUstPanel===k; // v754: çoklu seçim paneli
+    const etiket=!L.length?'Hepsi':(L.length===1?L[0]:L[0]+' +'+(L.length-1));
+    return `<span class="tdm-msel" style="position:relative;display:inline-block"><button class="chip ${L.length?'on':''}" style="${L.length?'color:var(--text)':''}" onclick="_trUstPanel('${k}')">${lbl}: <b>${esc(etiket)}</b> ▾</button>
+      ${acik?`<div class="tdm-msel-p"><label class="hepsi"><input type="checkbox" ${!L.length?'checked':''} onchange="_trUstSet('${k}','')"> Hepsi</label>${opts.map(o=>`<label><input type="checkbox" ${L.includes(o)?'checked':''} onchange="_trUstTog('${k}',${JSON.stringify(o).replace(/"/g,'&quot;')},this.checked)"> ${esc(o)}</label>`).join('')}${!opts.length?'<div style="color:var(--muted);font-size:.72rem;padding:4px 8px">seçenek yok</div>':''}</div>`:''}</span>`; };
   const chip=(on,cls,lbl,fn)=>`<button class="chip ${on?'on':''} ${cls}" onclick="${fn}"><i></i>${lbl}</button>`;
   const pax=L.reduce((t,x)=>t+(+x.r.pax||0),0), acik=L.filter(x=>acikMi(x.r)).length, ths=L.filter(x=>!x.r.grup&&x.r.tahsis).length;
   const baslik=aralik?(_fmtDateTR(gun)+' – '+_fmtDateTR(_opsTrDate2)):new Date(gun+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',weekday:'long'});
@@ -18668,6 +18673,12 @@ function _trSheetYenile(){
       b.textContent='✓ Uygula'; b.onclick=mSheetKapat; p.appendChild(b); } }catch(e){}
 }
 function _trUstSet(k,v){ _trUst[k]=v; renderOpsTransfer(); }
+// v754: çoklu seçim — değer '|' ile birleşik string (eski tek değerli kullanımlarla uyumlu)
+function _trUstList(k){ return String(_trUst[k]||'').split('|').map(x=>x.trim()).filter(Boolean); }
+function _trUstHas(k,v){ const L=_trUstList(k); return !L.length||L.includes(String(v||'')); }
+function _trUstTog(k,v,on){ const L=_trUstList(k).filter(x=>x!==v); if(on) L.push(v); _trUst[k]=L.join('|'); renderOpsTransfer(); }
+function _trUstPanel(k){ window._trUstPanel=(window._trUstPanel===k)?'':k; renderOpsTransfer(); }
+document.addEventListener('click',e=>{ if(window._trUstPanel&&!e.target.closest('.tdm-msel')){ window._trUstPanel=''; try{ renderOpsTransfer(); }catch(x){} } },true);
 function _trUstTemizle(){ _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:''}; _trSaatB=''; _trSaatS=''; _trFilt={}; renderOpsTransfer(); }
 function _trGorunur(){
   let tam=_opsTrDate2?_trListRows():_trDayRows();
@@ -18675,11 +18686,11 @@ function _trGorunur(){
     tam=tam.filter(x=>{ const u=_dk(x.r.saat); if(u===null) return false; if(b!==null&&u<b) return false; if(sn!==null&&u>sn) return false; return true; }); }
   const G=getTransfer().gruplar||{};
   const grOf=r=>r.grup?(G[r.grup]||{}):null;
-  if(_trUst.op) tam=tam.filter(x=>x.r.op===_trUst.op);
-  if(_trUst.urun) tam=tam.filter(x=>x.r.urun===_trUst.urun);
-  if(_trUst.bolge) tam=tam.filter(x=>(x.r.bolge||'')===_trUst.bolge);
-  if(_trUst.firma) tam=tam.filter(x=>{ const g=grOf(x.r); return g&&(g.firma||'')===_trUst.firma; });
-  if(_trUst.reh) tam=tam.filter(x=>{ const g=grOf(x.r); return g&&(g.rehber||'')===_trUst.reh; });
+  if(_trUst.op) tam=tam.filter(x=>_trUstHas('op',x.r.op));
+  if(_trUst.urun) tam=tam.filter(x=>_trUstHas('urun',x.r.urun));
+  if(_trUst.bolge) tam=tam.filter(x=>_trUstHas('bolge',x.r.bolge||''));
+  if(_trUst.firma) tam=tam.filter(x=>{ const g=grOf(x.r); return g&&_trUstHas('firma',g.firma||''); });
+  if(_trUst.reh) tam=tam.filter(x=>{ const g=grOf(x.r); return g&&_trUstHas('reh',g.rehber||''); });
   if(_trUst.durum==='atanmamis') tam=tam.filter(x=>!x.r.grup);
   else if(_trUst.durum==='atandi') tam=tam.filter(x=>x.r.grup&&!x.r.onay);
   else if(_trUst.durum==='onayli') tam=tam.filter(x=>x.r.grup&&x.r.onay);
@@ -20402,7 +20413,7 @@ function _trTahsisBolumHTML(){
         (g2.araclar||[]).filter(a=>a.tip==='tahsis').forEach(a=>{
           const ab=_pdate(a.bas)||'', abit=_pdate(a.bit)||ab;
           if(abit&&abit<bugun) return; // bitmiş tahsisler listelenmez
-          if(_trUst.firma&&String(a.firma||'').trim()!==_trUst.firma) return;
+          if(_trUst.firma&&!_trUstHas('firma',String(a.firma||'').trim())) return;
           let rehAd=''; try{ const rh=(getTanimlar().rehberler||[]).find(r=>r.id===g2.rehberId); rehAd=rh?(rh.ad||''):''; }catch(e){}
           let gonDurum='';
           if((a.firma||'').trim()){
