@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v747 · 13.10.2026';
+const APP_VER='v748 · 13.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18396,7 +18396,10 @@ const _trLow=t=>String(t).toLocaleLowerCase('tr-TR').replace(/ı/g,'i');
 function _trRezvKartlar(pkgId,kalkis,resno,y){
   try{
     const v=String(resno||'').trim(); if(!v&&!y) return [];
-    const L=(getRezv()||[]).filter(x=>x.tip==='urun'&&x.pkgId===pkgId&&x.kalkis===kalkis&&x.durum!=='iptal');
+    let L=(getRezv()||[]).filter(x=>x.tip==='urun'&&x.pkgId===pkgId&&x.kalkis===kalkis&&x.durum!=='iptal');
+    if(!L.length){ // v748: aynı tarihte rezv yoksa ±1 gün (uçak listesi ile rezervasyon seferi bir gün kaymış olabilir)
+      const k1=_isoAdd(kalkis,-1), k2=_isoAdd(kalkis,1);
+      L=(getRezv()||[]).filter(x=>x.tip==='urun'&&x.pkgId===pkgId&&(x.kalkis===k1||x.kalkis===k2)&&x.durum!=='iptal'); }
     let r=v?L.find(x=>_vEsit(v,String(x.voucher||'').trim())||(x.asilVoucher&&_vEsit(v,String(x.asilVoucher).trim()))):null;
     if(!r&&y&&((y.soyad||'').trim()||(y.ad||'').trim())){ // v747: voucher uyuşmazsa (uçak listesi farklı numara) isimle eşle — ad/soyad sırası fark etmez
       const tok=t=>_norm(String(t||'')).split(/\s+/).filter(Boolean).sort().join('|');
