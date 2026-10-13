@@ -2565,7 +2565,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v746 · 13.10.2026';
+const APP_VER='v747 · 13.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18393,10 +18393,16 @@ const _trGunEkle=(t,n)=>{ const d=new Date(t+'T12:00:00'); if(isNaN(d))return t;
 const _trGunAd=t=>{ const d=new Date(t+'T12:00:00'); return isNaN(d)?t:d.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric',weekday:'long'}); };
 const _trLow=t=>String(t).toLocaleLowerCase('tr-TR').replace(/ı/g,'i');
 // REZERVASYONDAN OTEL: transferin gerçek varış/kalkış noktası açılım (konaklama kartları)
-function _trRezvKartlar(pkgId,kalkis,resno){
+function _trRezvKartlar(pkgId,kalkis,resno,y){
   try{
-    const v=String(resno||'').trim(); if(!v) return [];
-    const r=(getRezv()||[]).find(x=>x.tip==='urun'&&x.pkgId===pkgId&&x.kalkis===kalkis&&x.durum!=='iptal'&&(_vEsit(v,String(x.voucher||'').trim())||(x.asilVoucher&&_vEsit(v,String(x.asilVoucher).trim()))));
+    const v=String(resno||'').trim(); if(!v&&!y) return [];
+    const L=(getRezv()||[]).filter(x=>x.tip==='urun'&&x.pkgId===pkgId&&x.kalkis===kalkis&&x.durum!=='iptal');
+    let r=v?L.find(x=>_vEsit(v,String(x.voucher||'').trim())||(x.asilVoucher&&_vEsit(v,String(x.asilVoucher).trim()))):null;
+    if(!r&&y&&((y.soyad||'').trim()||(y.ad||'').trim())){ // v747: voucher uyuşmazsa (uçak listesi farklı numara) isimle eşle — ad/soyad sırası fark etmez
+      const tok=t=>_norm(String(t||'')).split(/\s+/).filter(Boolean).sort().join('|');
+      const hedef=tok((y.soyad||'')+' '+(y.ad||''));
+      r=L.find(x=>(x.musteriler||[]).some(m=>!m.iptal&&tok((m.soyad||'')+' '+(m.ad||''))===hedef))||null;
+    }
     if(!r) return [];
     return (r.kartlar||[]).filter(k=>k.tip!=='ulasim'&&(k.otel||'').trim()&&k.baslangic)
       .sort((a,b)=>String(_pdate(a.baslangic)).localeCompare(String(_pdate(b.baslangic))));
@@ -18470,11 +18476,11 @@ function _trGenRowsHesap(){
       &&_durumEff(x)!=='iptal'
       &&!_iptalV.has(g.pkgId+'|'+g.kalkis+'|'+String(x.resno||'').trim()));
     if(!real.length) return;
-    _trGroup(real,'g',y=>_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'ilk')||hotel).forEach(grp=>{ const y=grp.y;
+    _trGroup(real,'g',y=>_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno,y),'ilk')||hotel).forEach(grp=>{ const y=grp.y;
       // GELİŞ uçuş kanıtı yoksa (uçuş no/rota/saat/tarih/PNR/havayolu hiçbiri girilmemiş) transfer üretme — hayalet geliş engeli
       if(!((y.g_u1||'').trim()||(y.g_v1||'').trim()||(y.g_vs1||'').trim()||(y.g_vs2||'').trim()||(y.g_tarih||'').toString().trim()||(y.g_pnr||'').trim()||(y.g_hy||'').trim())) return;
       const landAp=(y.g_v2||y.g_v1||'').toUpperCase(); const landTime=y.g_vs2||y.g_vs1||''; const cross=_dk(y.g_vs2||y.g_vs1)!==null&&_dk(y.g_ks1)!==null&&_dk(y.g_vs2||y.g_vs1)<_dk(y.g_ks1); const tarihIso=_pdate(y.g_tarih)||g.kalkis; const tarih=cross?_trGunEkle(tarihIso,1):tarihIso;
-      const otelG=_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'ilk')||hotel;
+      const otelG=_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno,y),'ilk')||hotel;
       const _gAkt=!!((y.g_v2||'').trim()||(y.g_k2||'').trim());
       const _gSonK=((y.g_k2||(_gAkt?y.g_v1:'')||y.g_k1)||'').toUpperCase();
       const rotaG=[_gSonK,landAp].filter(Boolean).join('→');
@@ -18483,16 +18489,16 @@ function _trGenRowsHesap(){
       out.push(merge({id:g.pkgId+'|'+g.kalkis+'|G|'+grp.key,tip:'G',tarih,op,urun,grupKod:grp.pnr,nereden:landAp+(ucusG?' · '+ucusG:''),nereye:otelG,bolge,ucus:ucusG,rota:rotaG,akt:aktG,saat:landTime,pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist)); });
     _trGroup(real.filter(_araVar),'a').forEach(grp=>{ const y=grp.y;
       const aT=_pdate(y.a_tarih)||g.kalkis;
-      const ksA=_trRezvKartlar(g.pkgId,g.kalkis,y.resno);
+      const ksA=_trRezvKartlar(g.pkgId,g.kalkis,y.resno,y);
       const otelOnce=_trOtelSec(ksA,'tarih',_isoAdd(aT,-1))||_trOtelSec(ksA,'ilk')||hotel;
       const otelSonra=_trOtelSec(ksA,'baslayan',aT)||_trOtelSec(ksA,'tarih',aT)||hotel;
       const rotaA=[(y.a_k1||'').toUpperCase(),(y.a_v1||'').toUpperCase()].filter(Boolean).join('→');
       out.push(merge({id:g.pkgId+'|'+g.kalkis+'|ARAD|'+grp.key,tip:'ARAD',tarih:aT,op,urun,grupKod:grp.pnr,nereden:otelOnce,nereye:(y.a_k1||'')+(y.a_u1?' · '+y.a_u1+' '+(y.a_ks1||''):''),bolge,ucus:y.a_u1||'',rota:rotaA,saat:y.a_ks1||'',pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist));
       out.push(merge({id:g.pkgId+'|'+g.kalkis+'|ARAG|'+grp.key,tip:'ARAG',tarih:aT,op,urun,grupKod:grp.pnr,nereden:(y.a_v1||'')+(y.a_u1?' · '+y.a_u1+' iniş '+(y.a_vs1||''):''),nereye:otelSonra,bolge,ucus:y.a_u1||'',rota:rotaA,saat:y.a_vs1||'',pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist)); });
-    _trGroup(real,'d',y=>_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'son')||hotel).forEach(grp=>{ const y=grp.y;
+    _trGroup(real,'d',y=>_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno,y),'son')||hotel).forEach(grp=>{ const y=grp.y;
       if(!((y.d_u1||'').trim()||(y.d_k1||'').trim()||(y.d_ks1||'').trim()||(y.d_tarih||'').toString().trim()||(y.d_pnr||'').trim()||(y.d_hy||'').trim())) return;
       const depAp=(y.d_k1||'').toUpperCase();
-      const otelD=_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno),'son')||hotel;
+      const otelD=_trOtelSec(_trRezvKartlar(g.pkgId,g.kalkis,y.resno,y),'son')||hotel;
       const _dAkt=!!((y.d_v2||'').trim()||(y.d_k2||'').trim());
       const _dIlkV=((y.d_v1||y.d_k2||y.d_v2)||'').toUpperCase();
       const rotaD=[depAp,_dIlkV].filter(Boolean).join('→');
@@ -18503,7 +18509,7 @@ function _trGenRowsHesap(){
       try{
         const anaD=_donusTarihi(g.kalkis,pkg);
         if(anaD&&dTarih&&dTarih>anaD){
-          const ksU=_trRezvKartlar(g.pkgId,g.kalkis,y.resno);
+          const ksU=_trRezvKartlar(g.pkgId,g.kalkis,y.resno,y);
           const otelSon=_trOtelSec(ksU,'tarih',_isoAdd(anaD,-1))||_trOtelSec(ksU,'son')||hotel;
           const otelUz=_trOtelSec(ksU,'baslayan',anaD)||_trOtelSec(ksU,'tarih',anaD)||'Uzatma oteli ?';
           out.push(merge({id:g.pkgId+'|'+g.kalkis+'|UZT|'+grp.key,tip:'UZT',tarih:anaD,op,urun,grupKod:grp.pnr,nereden:otelSon,nereye:otelUz,bolge,ucus:'',rota:'',akt:'dönüş '+_fmtDateTR(dTarih)+(y.d_u1?' · '+y.d_u1:''),saat:'',pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist));
