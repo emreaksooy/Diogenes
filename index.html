@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v755 · 13.10.2026';
+const APP_VER='v756 · 14.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -3285,7 +3285,7 @@ function _ynVeri(){
   const sehir={}; let tahsisN=0;
   aktif.forEach(t=>{ try{
     const pk=pkgs.find(x=>x.id===t.pkgId); const gN=(_isoDiff(t.kalkis,bugun)||0)+1;
-    const c=pk?(_opsCity(pk,gN)||''):''; if(c) sehir[c]=(sehir[c]||0)+(+t.pax||0);
+    const c=pk?(_opsCity(pk,gN,t.kalkis)||''):''; if(c) sehir[c]=(sehir[c]||0)+(+t.pax||0);
   }catch(e){} });
   try{ _ogResolve().forEach(g2=>{ ((getOpsGrup().gruplar||{})[g2.id]||{}).id;
     const gg=(getOpsGrup().gruplar||{})[g2.id];
@@ -13582,7 +13582,7 @@ function _rehbMagazalar(){
       sefler.forEach(sf=>{
         const pkg=getPackages().find(p=>p.id===sf.pkgId); if(!pkg) return;
         let rec={}; try{ rec=_opsGet(sf.pkgId,sf.kalkis)||{}; }catch(e){}
-        (pkg.gunler||[]).forEach((gn,gi)=>{
+        _opsGunler(pkg,sf.kalkis).forEach((gn,gi)=>{
           if(!gn.magazaVar||!(gn.magazalar||[]).length) return;
           (gn.magazalar||[]).forEach((m,mi)=>{
             const tarih=_magTarihGet(sf.pkgId,sf.kalkis,gi,mi);
@@ -14074,7 +14074,18 @@ function _opsPaxHesap(pkgId,kalkis){
   // REZERVASYON esas kaynak — rezv kaydı varsa onun aktif yolcu sayısı; yoksa uçak listesi
   return rezvP>0?rezvP:ucak;
 }
-function _opsCity(pkg,dayNo){ const g=(pkg.gunler||[])[dayNo-1]; if(!g)return ''; const n=(g.noktalar||[]).filter(x=>x&&x.trim()); return (n.length?n[n.length-1]:'')||g.konaklamaSehir||''; }
+// v756: TERS YÜRÜYÜŞ — sefer kaydında ters:true ise ürün günleri aynadan okunur (1. gün = ürünün son günü). Oteller rezervasyondan geldiği için etkilenmez.
+function _opsTers(pkgId,kalkis){ try{ return !!(_opsGet(pkgId,kalkis)||{}).ters; }catch(e){ return false; } }
+function _opsGunler(pkg,kalkis){ const G=(pkg&&pkg.gunler)||[]; return (kalkis&&_opsTers(pkg.id,kalkis))?G.slice().reverse():G; }
+function opsTersTog(pkgId,kalkis){
+  const all=getOperasyon(); let r=all.find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!r){ r={pkgId,kalkis,magazalar:[],oteller:[]}; all.push(r); }
+  r.ters=!r.ters; setOperasyon(all);
+  try{ window._trRowsMemo=null; window._ogResolveMemo=null; _paxMemoSifirla&&_paxMemoSifirla(); }catch(e){}
+  showToast(r.ters?'Sefer TERS yürüyüş olarak işaretlendi — program ve mağaza günleri aynadan okunur':'Ters yürüyüş kaldırıldı','success');
+  try{ if(typeof renderOpsTurlar==='function') renderOpsTurlar(); }catch(e){}
+  try{ if(window._tdGid&&document.getElementById('opsPane_grup')) renderOpsGrup(); }catch(e){}
+}
+function _opsCity(pkg,dayNo,kalkis){ const g=_opsGunler(pkg,kalkis)[dayNo-1]; if(!g)return ''; const n=(g.noktalar||[]).filter(x=>x&&x.trim()); return (n.length?n[n.length-1]:'')||g.konaklamaSehir||''; }
 const _OPS_ALIAS={'aga limanı':'Göcek','ağa limanı':'Göcek','manastır koyu':'Göcek, Fethiye','tersane koyu':'Göcek','batık hamam koyu':'Göcek','bedri rahmi koyu':'Göcek','gemiler adası':'Fethiye','koca kalamaki':'Göcek','sarsala koyu':'Göcek'};
 function _opsGeoName(name){ const k=(name||'').toLowerCase().trim(); const usr=(getTanimlar().yerDuzeltme||[]).find(x=>((x.yer||'').toLowerCase().trim())===k); if(usr&&(usr.sehir||'').trim()) return usr.sehir; return _OPS_ALIAS[k]||name; }
 function _opsGorunur(pkgId,kalkis){
@@ -14113,7 +14124,7 @@ function renderOperasyonPage(){
   if(!list.length){ html+='<p style="color:var(--muted);font-size:.86rem;margin-top:10px">Bu gün yürüyen tur yok. Tarihi değiştir ya da "Sefere git" ile bir sefer aç.</p>'; }
   else html+=list.map(it=>{
     const rec=_opsGet(it.pkg.id,it.kalkis); const p=_opsPax(it.pkg.id,it.kalkis);
-    const sehir=_opsCity(it.pkg,it.dayNo); const okReh=(_opsGrupReh(it.pkg.id,it.kalkis)||rec.rehberAd||'').trim();
+    const sehir=_opsCity(it.pkg,it.dayNo,it.kalkis); const okReh=(_opsGrupReh(it.pkg.id,it.kalkis)||rec.rehberAd||'').trim();
     return `<div class="ops-row" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')">
       <div class="ops-day">Gün ${it.dayNo}/${it.toplam}${sehir?'<div style="font-weight:600;color:var(--muted);font-size:.7rem;margin-top:2px">'+esc(sehir)+'</div>':''}</div>
       <div class="ops-main"><div class="ops-nm">${esc((it.pkg.paketKodu?it.pkg.paketKodu+' · ':'')+(it.pkg.paketAdi||'Adsız'))}</div>
@@ -14309,7 +14320,7 @@ function renderOpsAnasayfa(){
       </div>
     </div>
     <div class="card"><div class="ops-ct"><svg class="ic"><use href="#i-list"/></svg> Bugün Aktif Turlar <span style="color:var(--muted);font-weight:600;font-size:.8rem">(${aktif.length})</span></div>
-      ${aktif.length?aktif.map(it=>{const rec=_opsGet(it.pkg.id,it.kalkis);const sehir=_opsCity(it.pkg,it.dayNo);const rh=(_opsGrupReh(it.pkg.id,it.kalkis)||rec.rehberAd||'').trim();const p=_opsPax(it.pkg.id,it.kalkis);return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">Gün ${it.dayNo}/${it.toplam}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' ':'')+(it.pkg.paketAdi||''))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}${sehir?' · '+esc(sehir):''}</div></span><span style="background:var(--primary-soft,#fff3ec);color:var(--primary);border-radius:14px;padding:1px 9px;font-size:.74rem;font-weight:800;white-space:nowrap">${p} kişi</span><span class="ops-badge ${rh?'ok':''}">${rh?esc(rh):'rehber yok'}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Bugün yürüyen tur yok.</p>'}
+      ${aktif.length?aktif.map(it=>{const rec=_opsGet(it.pkg.id,it.kalkis);const sehir=_opsCity(it.pkg,it.dayNo,it.kalkis);const rh=(_opsGrupReh(it.pkg.id,it.kalkis)||rec.rehberAd||'').trim();const p=_opsPax(it.pkg.id,it.kalkis);return `<div class="opsa-item" onclick="opsOpen('${it.pkg.id}','${it.kalkis}')"><span class="opsa-d">Gün ${it.dayNo}/${it.toplam}</span><span style="flex:1;min-width:0"><b>${esc((it.pkg.paketKodu?it.pkg.paketKodu+' ':'')+(it.pkg.paketAdi||''))}</b><div style="font-size:.74rem;color:var(--muted)">${esc(_resOpAd(it.pkg)||'')}${sehir?' · '+esc(sehir):''}</div></span><span style="background:var(--primary-soft,#fff3ec);color:var(--primary);border-radius:14px;padding:1px 9px;font-size:.74rem;font-weight:800;white-space:nowrap">${p} kişi</span><span class="ops-badge ${rh?'ok':''}">${rh?esc(rh):'rehber yok'}</span></div>`;}).join(''):'<p style="color:var(--muted);font-size:.85rem">Bugün yürüyen tur yok.</p>'}
     </div>`;
   _opsRenderMap();
 }
@@ -14334,7 +14345,7 @@ async function _opsRenderMap(_cid){
   const need={}, groups={}; const bgSeen=new Set();
   aktif.forEach(it=>{ const sk=it.pkg.id+'|'+it.kalkis; const bg=bgOf[sk];
     if(bg){ if(bgSeen.has(bg.id)) return; bgSeen.add(bg.id); }
-    const c=_opsCity(it.pkg,it.dayNo); if(!c)return; const co=_opsMapCountry(it.pkg); const k=(c+'|'+co).toLowerCase().trim(); need[k]={city:c,country:co}; const rec=_opsGet(it.pkg.id,it.kalkis);
+    const c=_opsCity(it.pkg,it.dayNo,it.kalkis); if(!c)return; const co=_opsMapCountry(it.pkg); const k=(c+'|'+co).toLowerCase().trim(); need[k]={city:c,country:co}; const rec=_opsGet(it.pkg.id,it.kalkis);
     (groups[k]=groups[k]||[]).push({kod:bg?(bg.etiket+' 🔗'):(it.pkg.paketKodu||it.pkg.paketAdi||''),opAd:_resOpAd(it.pkg)||'',reh:((_opsGrupReh&&_opsGrupReh(it.pkg.id,it.kalkis))||rec.rehberAd||'').trim(),dayNo:it.dayNo,toplam:it.toplam,city:c}); });
   const coords={};
   for(const k in need){ const gn=_opsGeoName(need[k].city); const cache=getGeoCache(); const ck=(gn+'|'+(need[k].country||'')).toLowerCase().trim(); const was=!!cache[ck]; const r=await geocodePlace(gn,need[k].country); coords[k]=r; if(!was) await _sleep(1000); }
@@ -14999,7 +15010,7 @@ function moProgramSec(ki,val){
 function _moZiyaretUret(programTur,pax,rehber,kodEtiket,opEtiket,parts,birlesik,basT){
   const out=[]; const bugun=basT||new Date().toISOString().slice(0,10);
   const pkg=getPackages().find(p=>p.id===programTur.pkgId); if(!pkg) return out;
-  (pkg.gunler||[]).forEach((g,gi)=>{
+  _opsGunler(pkg,programTur.kalkis).forEach((g,gi)=>{
     if(!g.magazaVar||!(g.magazalar||[]).length) return;
     (g.magazalar||[]).forEach((m,mi)=>{
       const tarih=_magTarihGet(programTur.pkgId,programTur.kalkis,gi,mi);
@@ -16630,7 +16641,7 @@ function _otDurum(){
       const out=[]; gunler.forEach(g=>{ const imza=g.oteller.map(o=>_norm(o.ad)).sort().join('|'); const son=out[out.length-1]; if(son&&son.imza===imza){ son.bit=g.bas; return; } out.push({bas:g.bas,bit:g.bas,oteller:g.oteller,imza,ad:g.oteller.map(o=>o.ad).join(' + '),sehir:g.oteller[0].sehir}); });
       return out; }
     // 2) yedek: ürün gün planı (henüz rezervasyon açılmamışsa)
-    const pk=getPackages().find(p=>p.id===t.pkgId)||{}; const out=[]; (pk.gunler||[]).forEach((g,gi)=>{ const ad=String(g.konaklamaAd||'').trim()||String(g.konaklamaBolge||'').trim(); if(ad&&(!out.length||_norm(out[out.length-1].ad)!==_norm(ad))) out.push({ad,bas:_isoAdd(t.kalkis,gi),sehir:String(g.konaklamaBolge||'').trim(),plan:true}); }); return out; };
+    const pk=getPackages().find(p=>p.id===t.pkgId)||{}; const out=[]; _opsGunler(pk,t.kalkis).forEach((g,gi)=>{ const ad=String(g.konaklamaAd||'').trim()||String(g.konaklamaBolge||'').trim(); if(ad&&(!out.length||_norm(out[out.length-1].ad)!==_norm(ad))) out.push({ad,bas:_isoAdd(t.kalkis,gi),sehir:String(g.konaklamaBolge||'').trim(),plan:true}); }); return out; };
   // mağaza programı: gerçek ziyaret planı (tarih · firma/şube · şehir), atanmamışsa firma boş
   const magaza=t=>{ try{ const bugun0='2000-01-01'; let prog=t; if(t.uyeSeferler&&t.uyeSeferler.length){ let pv=''; t.uyeSeferler.forEach(sf=>{ try{ const r=_opsGet(sf.pkgId,sf.kalkis); if(!pv&&r.magazaProgram) pv=r.magazaProgram; }catch(e){} }); if(pv){ const pp=pv.split('|'); prog=Object.assign({},t,{pkgId:pp[0],kalkis:pp[1]}); } }
       return _moZiyaretUret(prog,t.pax,t.rehberAd||'',t.kod,t.op,null,!!t.birlesikGrupId,bugun0).map(z=>{ let ad=''; try{ const cz=_moAtaCoz(z.firmaId); if(cz.f) ad=cz.f.ad+(cz.sube?' · '+(cz.sube.ad||cz.sube.sehir||''):''); }catch(e){} return {tarih:z.tarih,sehir:z.sehir,tur:z.tur,firma:ad}; }); }catch(e){ return []; } };
@@ -16704,6 +16715,7 @@ function renderTurlarYeni(){
         ${ana?'':`<div><h4>Tahsis</h4><div class="l"><div>${th.tip==='ok'?'🚙 '+esc(th.ad||'tur aracı'):th.tip==='plaka'?'🚙 '+esc(th.ad||'')+' <span class="m">· plaka girilmedi</span>':th.tip==='gerekmez'?'<span class="m">tahsis gerekmez</span>':'<span class="m">tur aracı atanmadı</span>'} <button class="btn btn-outline btn-sm" onclick="${dosya}">${th.tip==='yok'?'🚙 Tahsis ata':'📂 Araçlar'}</button></div></div></div>`}
         <div><h4>Oteller (rezervasyondan, sırayla)</h4><div class="l">${otelH}</div></div>
         ${altMi?'':`<div><h4>Mağaza programı ${mg?`<span class="ro ${mgA?'warn':'ok'}">${mg-mgA}/${mg}</span>`:''}</h4><div class="l">${magH}</div></div>`}
+        ${altMi?'':`<div><h4>Yürüyüş yönü</h4><div class="l">${_opsTers(t.pkgId,t.kalkis)?'<b style="color:#6d28d9">↔ TERS</b> — program ve mağaza günleri aynadan':'Normal (ürün programı sırasıyla)'} <button class="btn btn-outline btn-sm" style="margin-left:6px" onclick="event.stopPropagation();opsTersTog('${t.pkgId}','${t.kalkis}')">${_opsTers(t.pkgId,t.kalkis)?'Normale çevir':'↔ Ters yap'}</button></div></div>`}
         ${birlesikH}
       </div>`;
     }
@@ -17318,7 +17330,8 @@ function _tdTurRota(g){
   if((g.uyeler||[]).length) pkgId=g.uyeler[0].pkgId; else if(g.sefer&&g.sefer.pkgId) pkgId=g.sefer.pkgId;
   const pkg=getPackages().find(p=>p.id===pkgId); if(!pkg) return '';
   const sehirler=[]; let prev='';
-  (pkg.gunler||[]).forEach(gd=>{
+  const _kk=((g.uyeler||[])[0]||{}).kalkis||(g.sefer&&g.sefer.kalkis)||'';
+  _opsGunler(pkg,_kk).forEach(gd=>{
     const nk=(gd.noktalar||[]).filter(x=>x&&x.trim());
     const c=(gd.konaklamaSehir||gd.konaklamaAd||gd.konaklamaBolge||(nk.length?nk[nk.length-1]:'')||'').trim();
     if(c&&c!==prev){ sehirler.push(c); prev=c; }
@@ -17453,6 +17466,7 @@ function renderTurDosyasi(box){
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       ${reh?'<span class="rzchip rzc-ok">Rehber atandı</span>':'<span class="rzchip rzc-bek">Rehber yok</span>'}
       ${g.araclar.some(a=>a.tip==='tahsis')?'<span class="rzchip" style="background:#e0f2fe;color:#0369a1">Tahsis var</span>':''}
+      ${(E.uyeler[0]&&_opsTers(E.uyeler[0].pkgId,E.uyeler[0].kalkis))?'<span class="rzchip" style="background:#ede9fe;color:#6d28d9" title="Program ve mağaza günleri aynadan okunur">↔ TERS YÜRÜYÜŞ</span>':''}
       <span class="rzchip ${g.hesapKapali?'rzc-ok':'rzc-bek'}">${g.hesapKapali?'Hesap kapandı':'Hesap açık'}</span>
     </div>
   </div>
@@ -17607,7 +17621,7 @@ function renderTurDosyasi(box){
     if(!P.length) h+='<p style="color:var(--muted);font-size:.85rem">Ürünlerde tur programı (günler) tanımlı değil.</p>';
     P.forEach(blok=>{
       h+=`<div style="margin-bottom:14px">
-        <div style="font-weight:800;font-size:.86rem;margin-bottom:8px">${esc(blok.kod)} · ${_fmtDateTR(blok.kalkis)} girişi</div>
+        <div style="font-weight:800;font-size:.86rem;margin-bottom:8px">${esc(blok.kod)} · ${_fmtDateTR(blok.kalkis)} girişi${blok.ters?' <span style="background:#ede9fe;color:#6d28d9;font-size:.62rem;font-weight:800;padding:1px 7px;border-radius:7px">↔ TERS YÜRÜYÜŞ</span>':''}</div>
         ${blok.gunler.map(gd=>`<div style="border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:8px">
           <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
             <b style="color:var(--primary);font-size:.8rem;white-space:nowrap">${_fmtDateTR(gd.tarih)} · Gün ${gd.no}</b>
@@ -17780,7 +17794,7 @@ function renderTurDosyasi(box){
     sefler.forEach(sf=>{
       const pkg=getPackages().find(p=>p.id===sf.pkgId); if(!pkg) return;
       let rec={}; try{ rec=_opsGet(sf.pkgId,sf.kalkis)||{}; }catch(e){}
-      (pkg.gunler||[]).forEach((gn,gi)=>{
+      _opsGunler(pkg,sf.kalkis).forEach((gn,gi)=>{
         if(!gn.magazaVar||!(gn.magazalar||[]).length) return;
         (gn.magazalar||[]).forEach((m,mi)=>{
           const tarih=_magTarihGet(sf.pkgId,sf.kalkis,gi,mi);
@@ -17961,7 +17975,7 @@ function _tdProgramData(E){
   const out=[];
   sefler.sort((a,b)=>String(a.kalkis).localeCompare(String(b.kalkis))).forEach(sf=>{
     const pk=getPackages().find(p=>p.id===sf.pkgId); if(!pk||!(pk.gunler||[]).length) return;
-    out.push({kod:pk.paketKodu||pk.paketAdi||'',kalkis:sf.kalkis,gunler:(pk.gunler||[]).map((gd,gi)=>({
+    out.push({kod:pk.paketKodu||pk.paketAdi||'',kalkis:sf.kalkis,ters:_opsTers(sf.pkgId,sf.kalkis),gunler:_opsGunler(pk,sf.kalkis).map((gd,gi)=>({
       no:gd.no||gi+1,
       tarih:_isoAdd(sf.kalkis,gi),
       baslik:gd.baslik||'',
@@ -17979,7 +17993,7 @@ function _tdDocProgram(g,E){
   let h=_tdDocBas('Tur Programı',E);
   if(!P.length) return h+'<p style="font-size:10pt">Tur programı tanımlı değil.</p></div>';
   P.forEach(blok=>{
-    if(P.length>1) h+=`<h2 style="font-size:11.5pt;margin:4mm 0 2mm">${esc(blok.kod)} — ${_fmtDateTR(blok.kalkis)} girişi</h2>`;
+    if(P.length>1||blok.ters) h+=`<h2 style="font-size:11.5pt;margin:4mm 0 2mm">${esc(blok.kod)} — ${_fmtDateTR(blok.kalkis)} girişi${blok.ters?' (TERS YÜRÜYÜŞ)':''}</h2>`;
     blok.gunler.forEach(gd=>{
       h+=`<div style="margin-bottom:3mm;page-break-inside:avoid">
         <div style="background:#eee;border:1px solid #999;padding:2px 7px;font-size:10pt"><b>${_fmtDateTR(gd.tarih)} · Gün ${gd.no}</b>${gd.baslik?' — <b>'+esc(gd.baslik)+'</b>':''}${gd.rota?' <span style="color:#555">('+esc(gd.rota)+')</span>':''}</div>
@@ -18576,7 +18590,7 @@ function _trGenRowsHesap(){
         }
       }
     }catch(e){}
-    const gunler=(pkg.turTransferYok||kartTur)?[]:(pkg.gunler||[]); let prevCity='';
+    const gunler=(pkg.turTransferYok||kartTur)?[]:_opsGunler(pkg,g.kalkis); let prevCity='';
     gunler.forEach((gd,i)=>{ const nk=(gd.noktalar||[]).filter(x=>x&&x.trim()); const city=(gd.konaklamaSehir||(nk.length?nk[nk.length-1]:'')||'').trim();
       if(i>0&&city&&prevCity&&city!==prevCity){ out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+i,tip:'TUR',tarih:_trGunEkle(g.kalkis,i),op,urun,grupKod:'',nereden:prevCity,nereye:city,bolge:'',ucus:'',saat:'08:00',pax:real.length,yet:real.length,coc:0,beb:0},_turVlist)); }
       if(city)prevCity=city; });
@@ -20037,9 +20051,9 @@ function _thsGidBul(t){
   }catch(e){}
   return '';
 }
-function _thsRota(pkgId){
+function _thsRota(pkgId,kalkis){
   const pkg=getPackages().find(p=>p.id===pkgId)||{}; const out=[];
-  (pkg.gunler||[]).forEach(g=>{ const nk=(g.noktalar||[]).filter(x=>x&&x.trim());
+  _opsGunler(pkg,kalkis).forEach(g=>{ const nk=(g.noktalar||[]).filter(x=>x&&x.trim());
     const c=(g.konaklamaSehir||(nk.length?nk[nk.length-1]:'')||'').trim();
     if(c&&out[out.length-1]!==c) out.push(c); });
   return out.join(' → ');
@@ -20390,7 +20404,7 @@ function renderOpsTahsis(){
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BİTİŞ<input id="ths_bit" type="date" value="${esc(t.end)}" style="${inp}"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ YERİ<input id="ths_basyer" placeholder="AYT / otel adı" style="${inp};min-width:120px"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">TUR / GÖREV<input id="ths_gorev" list="thsGorevL" placeholder="Kapadokya turu" style="${inp};min-width:140px"><datalist id="thsGorevL"><option value="Tam gün tur"><option value="Yarım gün tur"><option value="Kapadokya turu"><option value="Şehir turu"><option value="Karşılama + tur"><option value="Tur boyunca tahsis"></datalist></label>
-            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted);flex:1;min-width:180px">YAPILACAK İŞ / PROGRAM<input id="ths_program" value="${esc(_thsRota(t.pkgId))}" style="${inp}"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted);flex:1;min-width:180px">YAPILACAK İŞ / PROGRAM<input id="ths_program" value="${esc(_thsRota(t.pkgId,t.kalkis))}" style="${inp}"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">FİYAT<input id="ths_fiyat" placeholder="€" style="${inp};width:80px"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">NOT<input id="ths_not" style="${inp};min-width:120px"></label>
             <button class="btn btn-primary" onclick="thsKaydet('${enc}')">💾 Tahsisi Kaydet</button>
@@ -21487,8 +21501,9 @@ function _trPrintDay(){ const kodlar=[...new Set(_trDayRows().filter(x=>x.r.grup
 function renderOperasyonDetay(){
   const box=document.getElementById('opsDetay'); if(!box) return;
   const pkg=getPackages().find(p=>p.id===_opsPkgId)||{}; const r=_opsRec(true);
+  const _tersMi=!!r.ters;
   const F=(label,field,ph,type)=>`<label class="ops-f"><span>${label}</span><input type="${type||'text'}" value="${esc(r[field]||'')}" placeholder="${ph||''}" onchange="_opsSet('${field}',this.value)"></label>`;
-  const gunler=(pkg.gunler||[]);
+  const gunler=_opsGunler(pkg,_opsKalkis);
   const prog=gunler.map((g,i)=>`${i+1}. ${esc(g.konaklamaSehir||g.baslik||'')}`).filter(Boolean).join(' → ');
   // Otel satırları
   const oteller=r.oteller||[];
