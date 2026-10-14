@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v756 · 14.10.2026';
+const APP_VER='v757 · 14.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13996,8 +13996,10 @@ function _magTarihGet(pkgId,kalkis,gi,mi){
   try{ const r=_opsGet(pkgId,kalkis); const v=(r.magazaTarih||{})['g'+gi+'_'+mi]; if(v) return v; }catch(e){}
   return _isoAdd(kalkis,gi);
 }
-function tdMagTarihSet(zKey,val){
-  const p=String(zKey||'').split('|'); if(p.length<3) return;
+function otMagTarihSet(zKey,val){ _magTarihYaz(zKey,val); try{ renderOpsTurlar(); }catch(e){} } // v757: Turlar detayından
+function tdMagTarihSet(zKey,val){ if(_magTarihYaz(zKey,val)) renderOpsGrup(); }
+function _magTarihYaz(zKey,val){
+  const p=String(zKey||'').split('|'); if(p.length<3) return false;
   const m=/^g(\d+)_(\d+)$/.exec(p[2]); if(!m) return;
   const all=getOperasyon();
   let rec=all.find(x=>x.pkgId===p[0]&&x.kalkis===p[1]);
@@ -14006,8 +14008,9 @@ function tdMagTarihSet(zKey,val){
   const k='g'+m[1]+'_'+m[2];
   const oto=_isoAdd(p[1],+m[1]);
   if(!val||val===oto) delete rec.magazaTarih[k]; else rec.magazaTarih[k]=val;
-  setOperasyon(all); renderOpsGrup();
+  setOperasyon(all);
   showToast(val&&val!==oto?'Mağaza tarihi elle düzeltildi — plan ve rehber ekranı da bu tarihi kullanır':'Mağaza tarihi tur programına döndü','success');
+  return true;
 }
 function _opsSet(f,v){ const r=_opsRec(true); r[f]=v; setOperasyon(getOperasyon()); }
 // Operasyon tarihleri: ürünün kalkış takvimi + REZERVASYONLARDAN gelen kalkışlar (takvimde olmayan tarihli rezervasyonlar da tur oluşturur)
@@ -16644,7 +16647,7 @@ function _otDurum(){
     const pk=getPackages().find(p=>p.id===t.pkgId)||{}; const out=[]; _opsGunler(pk,t.kalkis).forEach((g,gi)=>{ const ad=String(g.konaklamaAd||'').trim()||String(g.konaklamaBolge||'').trim(); if(ad&&(!out.length||_norm(out[out.length-1].ad)!==_norm(ad))) out.push({ad,bas:_isoAdd(t.kalkis,gi),sehir:String(g.konaklamaBolge||'').trim(),plan:true}); }); return out; };
   // mağaza programı: gerçek ziyaret planı (tarih · firma/şube · şehir), atanmamışsa firma boş
   const magaza=t=>{ try{ const bugun0='2000-01-01'; let prog=t; if(t.uyeSeferler&&t.uyeSeferler.length){ let pv=''; t.uyeSeferler.forEach(sf=>{ try{ const r=_opsGet(sf.pkgId,sf.kalkis); if(!pv&&r.magazaProgram) pv=r.magazaProgram; }catch(e){} }); if(pv){ const pp=pv.split('|'); prog=Object.assign({},t,{pkgId:pp[0],kalkis:pp[1]}); } }
-      return _moZiyaretUret(prog,t.pax,t.rehberAd||'',t.kod,t.op,null,!!t.birlesikGrupId,bugun0).map(z=>{ let ad=''; try{ const cz=_moAtaCoz(z.firmaId); if(cz.f) ad=cz.f.ad+(cz.sube?' · '+(cz.sube.ad||cz.sube.sehir||''):''); }catch(e){} return {tarih:z.tarih,sehir:z.sehir,tur:z.tur,firma:ad}; }); }catch(e){ return []; } };
+      return _moZiyaretUret(prog,t.pax,t.rehberAd||'',t.kod,t.op,null,!!t.birlesikGrupId,bugun0).map(z=>{ let ad=''; try{ const cz=_moAtaCoz(z.firmaId); if(cz.f) ad=cz.f.ad+(cz.sube?' · '+(cz.sube.ad||cz.sube.sehir||''):''); }catch(e){} const pt=(z.parts||[])[0]||{}; return {tarih:z.tarih,sehir:z.sehir,tur:z.tur,firma:ad,zKey:pt.pkgId?(pt.pkgId+'|'+pt.kalkis+'|'+String(pt.key||'').replace(/^b\d+_/,'')):''}; }); }catch(e){ return []; } };
   const konf=t=>{ let n=0,e=0; try{ const sf=sefler(t); const bol=(bolunmusMu(t)&&!t._ana)?String(t.bolum||'01'):''; (getRezv()||[]).forEach(r=>{ if(!r||r.tip!=='urun'||r.durum==='iptal') return; if(!sf.some(q=>q.pkgId===r.pkgId&&q.kalkis===r.kalkis)) return;
       const M=(r.musteriler||[]).filter(m=>m&&!m.iptal);
       (r.kartlar||[]).forEach(k=>{ if(!k||k.tip==='ulasim') return; if(bol){ let kisiler=(k.uyeler||[]).map(id=>M.find(m=>m.id===id)).filter(Boolean); if(!kisiler.length&&!(k.uyeler||[]).length) kisiler=M; if(kisiler.length?!kisiler.some(m=>mBol(r,m)===bol):mBol(r,null)!==bol) return; } n++; if(k.konfirme==='Evet') e++; }); }); }catch(x){} return {n,e}; };
@@ -16707,7 +16710,7 @@ function renderTurlarYeni(){
       const otelH=ot.length?ot.map((o,i)=>{ const tar=o.bas?(_fmtDateTR(o.bas).slice(0,5)+(o.bit&&o.bit!==o.bas?'–'+_fmtDateTR(o.bit).slice(0,5):'')):(i+1)+'.';
           const icerik=(o.oteller||[{ad:o.ad,pax:0,sehir:o.sehir}]).map(x=>`<span ${x.bos?'style="color:#b45309"':''}>${esc(x.ad)}${x.pax?` <span class="m">${x.pax} pax</span>`:''}</span>`).join('<span class="m"> + </span>');
           return `<div><span class="t">${tar}</span>${icerik}${o.sehir&&!(o.oteller&&o.oteller.length>1)?` <span class="m">· ${esc(o.sehir)}</span>`:''}${o.plan?' <span class="m">(plan)</span>':''}</div>`; }).join('')+(ot[0].plan?'<div class="m">Rezervasyon kartı yok — ürün gün planından</div>':''):'<div class="m">otel bilgisi yok</div>';
-      const magH=mgL.length?mgL.map(z=>`<div><span class="t">${_fmtDateTR(z.tarih).slice(0,5)}</span>${z.firma?esc(z.firma):`<span class="ro pick" onclick="event.stopPropagation();showPage('magmuh');setTimeout(()=>{try{mmTab('plan')}catch(e){}},60)">firma ata</span>`}<span class="m">${esc([z.sehir,z.tur].filter(Boolean).join(' · '))}</span></div>`).join(''):'<div class="m">ürün planında mağaza günü yok</div>';
+      const magH=mgL.length?mgL.map(z=>`<div>${z.zKey?`<input type="date" value="${esc(z.tarih)}" title="Mağaza tarihini elle değiştir (boş = tur programına dön)" onclick="event.stopPropagation()" onchange="event.stopPropagation();otMagTarihSet('${z.zKey}',this.value)" style="font:inherit;font-size:.7rem;font-weight:700;border:1px solid var(--border);border-radius:6px;padding:1px 4px;width:118px;margin-right:6px;background:var(--card,#fff);color:inherit">`:`<span class="t">${_fmtDateTR(z.tarih).slice(0,5)}</span>`}${z.firma?esc(z.firma):`<span class="ro pick" onclick="event.stopPropagation();showPage('magmuh');setTimeout(()=>{try{mmTab('plan')}catch(e){}},60)">firma ata</span>`}<span class="m">${esc([z.sehir,z.tur].filter(Boolean).join(' · '))}</span></div>`).join(''):'<div class="m">ürün planında mağaza günü yok</div>';
       const birlesikH=(t.uyeSeferler&&t.uyeSeferler.length)?`<div><h4>Birleşik grup</h4><div class="l">${t.uyeSeferler.map(sf=>{const pk=getPackages().find(p=>p.id===sf.pkgId)||{};return `<div>${esc(pk.paketKodu||'?')} ${_fmtDateTR(sf.kalkis)} <span class="m">${_opsPax(sf.pkgId,sf.kalkis)} pax</span></div>`;}).join('')}<div style="margin-top:4px"><button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="event.stopPropagation();gbDagit('${t.birlesikGrupId}')">✂ Dağıt</button></div></div></div>`:'';
       h+=`<div class="det" onclick="event.stopPropagation()">
         ${ana?'':`<div><h4>Rehber</h4>${rehSel}</div>`}
