@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v763 · 14.10.2026';
+const APP_VER='v764 · 14.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9643,6 +9643,9 @@ async function _cloudStart(session){
   sbUser=session.user;
   try{
     window._bootT&&(window._bootT.oturum=performance.now());
+    // v764: bulut çekimi profil/rol sorgusunu BEKLEMEDEN başlar (RLS zaten kullanıcı token'ıyla sınırlar); rol sonra uygulanır
+    const _pullP=(async()=>{ try{ await _cloudPull(); return true; }catch(e){ return e||new Error('bulut çekimi'); } })();
+    window._bootT&&(window._bootT.pullBas=performance.now());
     const _ekrP=(async()=>{ try{ return await sb.from('kv_store').select('data').eq('key','ekipek').maybeSingle(); }catch(e){ return null; } })(); // v762/v763: profil ile paralel (PostgrestBuilder'da .catch yok)
     let {data:prof}=await sb.from('profiles').select('*').eq('id',sbUser.id).maybeSingle();
     if(!prof){
@@ -9681,8 +9684,7 @@ async function _cloudStart(session){
     }catch(e){}
     _showLogin(false); // rol uygulandı, doğru sayfa açık — login şimdi kapanır (flash yok)
     _setCloud('ok','Bulut: bağlanıyor…');
-    window._bootT&&(window._bootT.pullBas=performance.now());
-    await Promise.race([_cloudPull(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Bulut çekimi 60 sn içinde tamamlanamadı — bağlantıyı kontrol edip sayfayı yenileyin')),60000))]);
+    { const _pr=await Promise.race([_pullP,new Promise((_,rej)=>setTimeout(()=>rej(new Error('Bulut çekimi 60 sn içinde tamamlanamadı — bağlantıyı kontrol edip sayfayı yenileyin')),60000))]); if(_pr!==true) throw _pr; }
     window._bootT&&(window._bootT.pullBit=performance.now());
     _cloudSubscribe();
     renderPano&&renderPano();
