@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v761 · 14.10.2026';
+const APP_VER='v762 · 14.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9642,6 +9642,8 @@ async function doLogout(){
 async function _cloudStart(session){
   sbUser=session.user;
   try{
+    window._bootT&&(window._bootT.oturum=performance.now());
+    const _ekrP=sb.from('kv_store').select('data').eq('key','ekipek').maybeSingle().catch(()=>null); // v762: profil ile paralel
     let {data:prof}=await sb.from('profiles').select('*').eq('id',sbUser.id).maybeSingle();
     if(!prof){
       await sb.from('profiles').insert({id:sbUser.id,email:sbUser.email,ad:(sbUser.email||'').split('@')[0],rol:'beklemede'});
@@ -9650,7 +9652,7 @@ async function _cloudStart(session){
     sbRol=prof?.rol||'beklemede';
     try{ localStorage.setItem('dmc_rolCache',sbRol); }catch(e){}
     try{
-      const ekr=await sb.from('kv_store').select('data').eq('key','ekipek').maybeSingle();
+      const ekr=await _ekrP;
       if(ekr&&ekr.data&&ekr.data.data&&((ekr.data.data[sbUser.email]||{}).durum==='pasif')){
         await sb.auth.signOut(); sbUser=null; sbRol=null; _showLogin(true); _setCloud('login','Hesap pasif');
         showToast('Hesabınız pasif durumda — yöneticinizle görüşün','error',7000); return;
@@ -9679,7 +9681,9 @@ async function _cloudStart(session){
     }catch(e){}
     _showLogin(false); // rol uygulandı, doğru sayfa açık — login şimdi kapanır (flash yok)
     _setCloud('ok','Bulut: bağlanıyor…');
+    window._bootT&&(window._bootT.pullBas=performance.now());
     await Promise.race([_cloudPull(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Bulut çekimi 60 sn içinde tamamlanamadı — bağlantıyı kontrol edip sayfayı yenileyin')),60000))]);
+    window._bootT&&(window._bootT.pullBit=performance.now());
     _cloudSubscribe();
     renderPano&&renderPano();
     _setCloud('ok','Bulut: eşitlendi');
@@ -13097,14 +13101,16 @@ function _rezvDedupe(){
 }
 // Supabase tek sorguda en fazla 1000 satır döndürür — TÜM satırları sayfa sayfa çek.
 // Bu eksikti: doc_rows 1000'i aşınca fazlası "silinmiş" sanılıp yerelden de siliniyordu (rezervasyon kayıplarının kök nedeni).
-async function _sbAll(mk){
-  let out=[], from=0; const step=1000;
-  for(let guard=0; guard<50; guard++){
-    const r=await mk(from,from+step-1);
-    if(r.error) return r;
-    out=out.concat(r.data||[]);
-    if(!r.data||r.data.length<step) return {data:out,error:null};
-    from+=step;
+async function _sbAll(mk){ // v762: ilk sayfa doluysa sonraki sayfalar 6'lı paralel (doc_rows id listesi 7 sayfa × 150ms sıralıydı)
+  const step=1000; let out=[];
+  const r0=await mk(0,step-1); if(r0.error) return r0; out=r0.data||[];
+  if(out.length<step) return {data:out,error:null};
+  let from=step;
+  for(let guard=0; guard<9; guard++){
+    const ps=[]; for(let i=0;i<6;i++){ const a=from+i*step; ps.push(mk(a,a+step-1)); }
+    const rs=await Promise.all(ps);
+    for(const r of rs){ if(r.error) return r; out=out.concat(r.data||[]); if(!r.data||r.data.length<step) return {data:out,error:null}; }
+    from+=6*step;
   }
   return {data:out,error:null};
 }
@@ -13915,7 +13921,7 @@ async function _boot(){
   _bootRender();
   window._bootT.render=performance.now();
   _bootSplashKapat();
-  try{ const T=window._bootT; console.log('AÇILIŞ: idb '+Math.round(T.idb-T.bas)+'ms · bulut '+Math.round(T.bulut-T.idb)+'ms · render '+Math.round(T.render-T.bulut)+'ms · toplam '+Math.round(T.render-T.bas)+'ms'); }catch(e){}
+  try{ const T=window._bootT; console.log('AÇILIŞ: idb '+Math.round(T.idb-T.bas)+'ms · oturum→pull '+(T.pullBas?Math.round(T.pullBas-T.oturum):'?')+'ms · pull '+(T.pullBit?Math.round(T.pullBit-T.pullBas):'?')+'ms · bulut toplam '+Math.round(T.bulut-T.idb)+'ms · render '+Math.round(T.render-T.bulut)+'ms · toplam '+Math.round(T.render-T.bas)+'ms'); }catch(e){}
 }
 function _bootSplashGoster(){
   try{
