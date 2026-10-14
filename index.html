@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v762 · 14.10.2026';
+const APP_VER='v763 · 14.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9643,7 +9643,7 @@ async function _cloudStart(session){
   sbUser=session.user;
   try{
     window._bootT&&(window._bootT.oturum=performance.now());
-    const _ekrP=sb.from('kv_store').select('data').eq('key','ekipek').maybeSingle().catch(()=>null); // v762: profil ile paralel
+    const _ekrP=(async()=>{ try{ return await sb.from('kv_store').select('data').eq('key','ekipek').maybeSingle(); }catch(e){ return null; } })(); // v762/v763: profil ile paralel (PostgrestBuilder'da .catch yok)
     let {data:prof}=await sb.from('profiles').select('*').eq('id',sbUser.id).maybeSingle();
     if(!prof){
       await sb.from('profiles').insert({id:sbUser.id,email:sbUser.email,ad:(sbUser.email||'').split('@')[0],rol:'beklemede'});
