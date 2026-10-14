@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v759 · 14.10.2026';
+const APP_VER='v760 · 14.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11817,6 +11817,25 @@ function _rzSejourOku(f){
     if(iptalRez) msg+=' · '+iptalRez+' İPTAL rezervasyon (fatura/iptal şartı için) işaretlendi';
     else if(iptal) msg+=' · '+iptal+' iptal satırı not edildi';
     showToast(msg,'success');
+    // v760: DOSYADA OLMAYAN rezervasyonlar — Sejour'da ürün kartı iptal edilip kartlar silinince voucher listeden tamamen düşer;
+    // dosyanın kapsadığı operatör + tarih aralığındaki Sejour kökenli aktif kayıtlar dosyada yoksa iptal adayı olarak sorulur.
+    try{
+      if(!dosyaAcilim){
+        const kapsam={}; const vFile=new Set();
+        Object.values(grup).forEach(g=>{ const ks=[_norm(g.opKod||''),_norm(g.opAd||'')].filter(Boolean); ks.forEach(k=>{ const c=kapsam[k]=kapsam[k]||{min:'',max:''}; if(g.giris){ if(!c.min||g.giris<c.min) c.min=g.giris; if(!c.max||g.giris>c.max) c.max=g.giris; } }); vFile.add(_norm(g.voucher||'')); });
+        const opUyum=r=>{ const a=_norm(r.operator||''); return Object.keys(kapsam).find(k=>k&&(k===a||a.includes(k)||k.includes(a))); };
+        const eksik=rezv.filter(r=>{ if(!r||r.tip!=='urun'||r.durum==='iptal'||r.personel) return false; if(String(r.opUcusNot||'')!=='Sejour aktarımı') return false;
+          const k=opUyum(r); if(!k) return false; const c=kapsam[k]; if(!c.min||!r.kalkis||r.kalkis<c.min||r.kalkis>c.max) return false;
+          const v=_norm(r.voucher||''), av=_norm(r.asilVoucher||''); return !(vFile.has(v)||(av&&vFile.has(av))); });
+        if(eksik.length){
+          window._sjEksikIds=eksik.map(r=>r.id);
+          const liste=eksik.slice(0,25).map(r=>'• '+(r.voucher||'?')+' · '+(r.urunKod||'')+' · '+_fmtDateTR(r.kalkis)+' · '+(r.musteriler||[]).filter(m=>!m.iptal).length+' pax').join('\n')+(eksik.length>25?'\n… +'+(eksik.length-25):'');
+          setTimeout(()=>showConfirm('⚠️','Dosyada olmayan rezervasyonlar',eksik.length+' aktif rezervasyon bu dosyanın kapsadığı operatör/tarih aralığında ama dosyada YOK (Sejour\'da ürün kartı iptal edilip kartlar silinmiş olabilir):\n\n'+liste+'\n\nHepsini İPTAL olarak işaretleyeyim mi? (Yolcular iptal, not: "Sejour dosyasında yok")','İptal işaretle',()=>{
+            const L=getRezv(); let n=0; L.forEach(r=>{ if(window._sjEksikIds.includes(r.id)){ r.durum='iptal'; r.not=('İPTAL — Sejour dosyasında yok ('+new Date().toLocaleDateString('tr-TR')+')'+(r.not?' · '+r.not:'')); n++; } });
+            setRezv(L); rzSave&&rzSave(); try{ renderRezvListe(); }catch(e){} showToast(n+' rezervasyon iptal işaretlendi','success'); }),400);
+        }
+      }
+    }catch(e){ console.warn('eksik voucher kontrolü',e); }
     if(kodYok.size||opYok.size){
       const parca=[];
       if(kodYok.size) parca.push('Üründe eşleşmeyen kodlar (rezervasyon OTEL tipiyle alındı): '+[...kodYok].join(', '));
