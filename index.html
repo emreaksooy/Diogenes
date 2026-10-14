@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v757 · 14.10.2026';
+const APP_VER='v758 · 14.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13997,6 +13997,7 @@ function _magTarihGet(pkgId,kalkis,gi,mi){
   return _isoAdd(kalkis,gi);
 }
 function otMagTarihSet(zKey,val){ _magTarihYaz(zKey,val); try{ renderOpsTurlar(); }catch(e){} } // v757: Turlar detayından
+function moMagTarihSet(zKey,val){ _magTarihYaz(zKey,val); try{ renderMagazaOps(); }catch(e){} } // v758: Mağazalar › Plan
 function tdMagTarihSet(zKey,val){ if(_magTarihYaz(zKey,val)) renderOpsGrup(); }
 function _magTarihYaz(zKey,val){
   const p=String(zKey||'').split('|'); if(p.length<3) return false;
@@ -15422,7 +15423,7 @@ function renderMagazaOps(){
       const pb=((b.sehir&&r.sehir&&_norm(b.sehir)===_norm(r.sehir))?2:0)+((b.tur&&r.tur&&_norm(b.tur)===_norm(r.tur))?1:0);
       return pb-pa||a.etiket.localeCompare(b.etiket,'tr'); });
     h+='<tr'+(r.firmaId?'':' style="background:#fffbeb"')+'>'
-     +'<td style="'+tdS+';font-weight:700">'+_fmtDateTR(r.tarih)+'</td>'
+     +'<td style="'+tdS+';font-weight:700;white-space:nowrap">'+(function(){ const p0=(r.parts||[])[0]; const zk=p0&&p0.pkgId?(p0.pkgId+'|'+p0.kalkis+'|'+String(p0.key||'').replace(/^b\d+_/,'')):''; return zk?'<input type="date" value="'+esc(r.tarih)+'" title="Mağaza tarihini elle değiştir (programdaki güne çekersen otomatiğe döner)" onchange="moMagTarihSet(\''+zk+'\',this.value)" style="font:inherit;font-size:.74rem;font-weight:700;border:1px solid var(--border);border-radius:6px;padding:2px 5px;width:124px;background:var(--card,#fff);color:inherit">':_fmtDateTR(r.tarih); })()+'</td>'
      +'<td style="'+tdS+'"><b>'+esc(r.kod)+'</b>'+(r.birlesik?' <span style="background:#ede9fe;color:#6d28d9;border-radius:5px;font-size:.62rem;font-weight:800;padding:1px 6px">BİRLEŞİK</span>':'')+'</td>'
      +'<td style="'+tdS+'">'+esc(r.op||'—')+'</td>'
      +'<td style="'+tdS+'">'+esc(r.sehir||'—')+'</td>'
