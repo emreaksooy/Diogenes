@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v760 · 14.10.2026';
+const APP_VER='v761 · 14.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13874,6 +13874,7 @@ function restoreLastState(){
 
 // ── Açılış: önbelleği IndexedDB'den yükle (yoksa localStorage'dan taşı), sonra her şeyi başlat ──
 async function _boot(){
+  window._bootT={bas:performance.now()}; // v761: açılış süre ölçümü (console: _bootT)
   window._bootAni=true; // açılış boyunca dmc_lastPage yazılmaz (restore ezilmesin)
   setTimeout(()=>{ window._bootAni=false; },25000); // emniyet: açılış takılırsa bayrak kalkar
   let pkgs = await idbGet('packages');
@@ -13901,6 +13902,7 @@ async function _boot(){
   let trf = await idbGet('transfer');      _trCache = (trf&&typeof trf==='object')?trf:null;
   let ogr = await idbGet('opsgrup');       _ogCache = (ogr&&typeof ogr==='object')?ogr:null;
   await _docSigLoad();
+  window._bootT.idb=performance.now();
   // ── BULUT ÖNCELİKLİ AÇILIŞ ──
   // Ekran çizilmeden ÖNCE bulut çekilir: her cihaz açılışta bulutla eşitlenir.
   // Çevrimdışı / oturum yok / 20 sn'de yanıt yoksa yerel veriyle devam edilir
@@ -13909,8 +13911,11 @@ async function _boot(){
   try{
     await Promise.race([_cloudBoot(), new Promise(r=>setTimeout(r,20000))]);
   }catch(e){ console.warn('bulut açılış',e); }
+  window._bootT.bulut=performance.now();
   _bootRender();
+  window._bootT.render=performance.now();
   _bootSplashKapat();
+  try{ const T=window._bootT; console.log('AÇILIŞ: idb '+Math.round(T.idb-T.bas)+'ms · bulut '+Math.round(T.bulut-T.idb)+'ms · render '+Math.round(T.render-T.bulut)+'ms · toplam '+Math.round(T.render-T.bas)+'ms'); }catch(e){}
 }
 function _bootSplashGoster(){
   try{
