@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v764 · 14.10.2026';
+const APP_VER='v765 · 15.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19528,11 +19528,13 @@ function renderMagMuh(){
 })();
   // ay özeti (firma bazlı)
   const oz={};
-  L.forEach(k=>{ const c=_mmHesap(k); const ad=(firmalar.find(x=>x.id===k.firmaId)||{}).ad||'—'; const o=oz[ad]=oz[ad]||{ciro:0,kom:0,tahsil:0,n:0,para:k.para||'EUR'}; o.ciro+=c.mag; o.kom+=c.kom; o.n++; if(k.durum==='tahsil') o.tahsil+=c.kom; });
+  L.forEach(k=>{ const c=_mmHesap(k); const ad=(firmalar.find(x=>x.id===k.firmaId)||{}).ad||'—'; const o=oz[ad]=oz[ad]||{ciro:0,kom:0,tahsil:0,n:0,pax:0,para:k.para||'EUR'}; o.ciro+=c.mag; o.kom+=c.kom; o.n++; if(k.durum==='tahsil') o.tahsil+=c.kom;
+    let gp=_tdN(k.rehPax); if(!gp){ try{ const b=getRehBildirim().find(b=>_rehbBildEsle(b,k)); if(b) gp=_tdN(b.pax); }catch(e){} } o.pax+=gp||_tdN(k.pax)||0; }); // v765: mağazaya giren pax (yoksa tur paxı)
   h+=`<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${Object.entries(oz).map(([ad,o])=>`<div style="border:1.5px solid var(--border);border-radius:11px;padding:9px 12px">
     <b style="font-size:.78rem">${esc(ad)}</b> <span style="font-size:.64rem;color:var(--muted)">· ${o.n} ziyaret</span>
     <div style="font-size:.72rem;margin-top:4px">Ciro: <b>${(Math.round(o.ciro*100)/100).toLocaleString('tr-TR')}</b> · Komisyon: <b style="color:var(--primary)">${(Math.round(o.kom*100)/100).toLocaleString('tr-TR')}</b> ${esc(o.para)}</div>
     <div style="font-size:.7rem;color:${o.tahsil>=o.kom-0.01?'#166534':'#b45309'}">Tahsil: ${(Math.round(o.tahsil*100)/100).toLocaleString('tr-TR')} / kalan ${(Math.round((o.kom-o.tahsil)*100)/100).toLocaleString('tr-TR')}</div>
+    <div style="font-size:.7rem;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap"><span style="background:#eef2f7;color:var(--navy);border-radius:6px;padding:1px 7px;font-weight:700">${o.pax} pax</span><span style="background:#dcfce7;color:#166534;border-radius:6px;padding:1px 7px;font-weight:700" title="Ciro / mağazaya giren pax">P.Pax ${o.pax?Math.round(o.ciro/o.pax).toLocaleString('tr-TR'):'—'}</span><span style="background:#ffedd5;color:#c2410c;border-radius:6px;padding:1px 7px;font-weight:700" title="Komisyon / pax">A.Kom P.Pax ${o.pax?Math.round(o.kom/o.pax).toLocaleString('tr-TR'):'—'}</span></div>
   </div>`).join('')}</div>`;
   { // v734: DÖNEM ÖZETİ paneli (koyu, KPI kutuları + tür dağılım çubuğu)
     const T=window._mmOzetT||{tur:0,plan:0,pax:0,hali:0,kuyum:0,deri:0,diger:0,mag:0,kom:0,bek:0,donem:''};
