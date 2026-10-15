@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v765 · 15.10.2026';
+const APP_VER='v766 · 15.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19123,7 +19123,8 @@ function renderMagEkstre(){
   const _meAralik=!!(window._meBas||window._meBit);
   const yilF=k=>{ const t=String(_pdate(k.tarih)||'');
     if(_meAralik) return (!window._meBas||t>=window._meBas)&&(!window._meBit||t<=window._meBit);
-    return !_meYil||t.slice(0,4)===_meYil; };
+    const ay=window._meAy||''; // v766: ay filtresi (yılla birlikte ya da tek başına)
+    return (!_meYil||t.slice(0,4)===_meYil)&&(!ay||t.slice(5,7)===ay); };
   const gizliKisi=(typeof sbRol!=='undefined'&&sbRol==='sirket');
   const firmalarOn=_moFirmalar();
   const grupF=window._meGrupF||'', subeF=window._meSubeF||'', turF=window._meTurF||'';
@@ -19153,6 +19154,7 @@ function renderMagEkstre(){
   let h=`<div class="card"><div class="card-title">🧾 Mağaza Ekstresi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">onaylı satış → hakediş → tahsilat → kalan</span></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
       <select onchange="_meYil=this.value;renderMagEkstre()" ${_meAralik?'disabled title="Tarih aralığı aktif"':''} style="padding:4px 7px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.76rem;${_meAralik?'opacity:.45':''}"><option value="">Tüm yıllar</option>${yillar.map(y=>`<option ${_meYil===y?'selected':''}>${y}</option>`).join('')}</select>
+      <select onchange="window._meAy=this.value;renderMagEkstre()" ${_meAralik?'disabled title="Tarih aralığı aktif"':''} style="padding:4px 7px;border:1.5px solid ${window._meAy?'#2563eb':'var(--border)'};border-radius:7px;font-family:inherit;font-size:.76rem;${_meAralik?'opacity:.45':''}"><option value="">Tüm aylar</option>${['01','02','03','04','05','06','07','08','09','10','11','12'].map(a=>`<option value="${a}" ${(window._meAy||'')===a?'selected':''}>${new Date(2000,+a-1,1).toLocaleDateString('tr-TR',{month:'long'})}</option>`).join('')}</select>
       <input type="date" value="${window._meBas||''}" onchange="window._meBas=this.value;renderMagEkstre()" title="Aralık başı" style="padding:4px 7px;border:1.5px solid ${window._meBas?'#2563eb':'var(--border)'};border-radius:7px;font-family:inherit;font-size:.76rem">
       <span style="color:var(--muted)">~</span>
       <input type="date" value="${window._meBit||''}" onchange="window._meBit=this.value;renderMagEkstre()" title="Aralık sonu" style="padding:4px 7px;border:1.5px solid ${window._meBit?'#2563eb':'var(--border)'};border-radius:7px;font-family:inherit;font-size:.76rem">
