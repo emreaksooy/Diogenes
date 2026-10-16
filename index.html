@@ -2568,7 +2568,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v774 · 16.10.2026';
+const APP_VER='v775 · 16.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18230,8 +18230,34 @@ function _tdDocCizelge(g,E){
     ${P.map(()=>`<td style="${TD2}"></td>`).join('')}</tr></tbody>
   </table></div>`;
 }
-function _tdDocMasraf(g,E){
-  return _tdDocBas('Masraf Formu',E)+`<table style="width:100%;border-collapse:collapse"><tr><th style="${_tdTh}">Tarih</th><th style="${_tdTh}">Açıklama</th><th style="${_tdTh};width:60px">$</th><th style="${_tdTh};width:60px">€</th><th style="${_tdTh};width:60px">₺</th></tr>${Array.from({length:16}).map(()=>`<tr>${Array.from({length:5}).map(()=>`<td style="${_tdTd};height:18px"></td>`).join('')}</tr>`).join('')}</table><p style="font-size:9pt;margin-top:5mm">İmza (Rehber): ______________________</p></div>`;
+function _tdDocMasraf(g,E){ // v775: Emre'nin Masraf_Formu.pdf düzeni — üstte tur + rehber bilgisi, tam sayfa boş satırlar
+  const t=getTanimlar();
+  let reh={}; try{ reh=_tdBolumReh(g,E)||(t.rehberler||[]).find(r=>r.id===g.rehberId)||{}; }catch(e){}
+  let pk=null; try{ pk=(E.uyeler[0]||g.sefer)?getPackages().find(p=>p.id===(E.uyeler[0]?E.uyeler[0].pkgId:g.sefer.pkgId)):null; }catch(e){}
+  const gun=+g.gunSay||((pk&&+pk.gece)?(+pk.gece+1):0);
+  const bit=(E.tarih&&gun)?_rzGun(E.tarih,Math.max(0,gun-1)):'';
+  const op=(()=>{ try{ return [...new Set((E.uyeler||[]).map(u=>{ const r=_tdRezv(u.resno); return r&&(r.operator||'').trim(); }).filter(Boolean))].join(', ')||(pk?(_resOpAd(pk)||''):''); }catch(e){ return ''; } })();
+  const rehTel=(reh.tel||reh.telefon||'').trim()||(reh.ad?_rehTelBul(reh.ad):'');
+  const L=(k,v)=>`<div style="display:flex;gap:6px;font-size:9.5pt;line-height:1.5"><span style="color:#555;min-width:26mm">${k}</span><b>${esc(v||'—')}</b></div>`;
+  const TH='border:1px solid #000;padding:4px 7px;text-align:left;font-size:9.5pt;background:#eee;-webkit-print-color-adjust:exact;print-color-adjust:exact';
+  const TD='border:1px solid #000;padding:0 7px;height:21px;font-size:9.5pt';
+  return `<div style="font-family:Arial,sans-serif;padding:3mm 3mm 2mm">
+    <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 3mm"><h1 style="font-size:15pt;margin:0">Masraf Formu</h1><span style="margin-left:auto;font-size:9pt;color:#555">Diogenes Travel${g.no?' · '+esc(g.no):''}</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 14mm;border:1px solid #000;padding:2mm 3mm;margin-bottom:3mm">
+      ${L('Tur',(E.urunler||[]).join(' + ')+(pk&&pk.paketAdi?' · '+pk.paketAdi:''))}
+      ${L('Rehber',(reh.ad||'')+(rehTel?' · '+rehTel:''))}
+      ${L('Tarih',_fmtDateTR(E.tarih)+(bit&&bit!==E.tarih?' – '+_fmtDateTR(bit):'')+(gun?' ('+gun+' gün)':''))}
+      ${L('Operatör',op)}
+      ${L('Grup',(E.ad||''))}
+      ${L('Pax',String(E.pax||''))}
+    </div>
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed"><colgroup><col style="width:18%"><col><col style="width:12%"><col style="width:12%"><col style="width:12%"></colgroup>
+      <tr><th style="${TH}">Tarih</th><th style="${TH}">Açıklama</th><th style="${TH}">$</th><th style="${TH}">€</th><th style="${TH}">₺</th></tr>
+      ${Array.from({length:30}).map(()=>`<tr>${Array.from({length:5}).map(()=>`<td style="${TD}"></td>`).join('')}</tr>`).join('')}
+      <tr><td style="${TD};background:#eee;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact" colspan="2">TOPLAM</td><td style="${TD}"></td><td style="${TD}"></td><td style="${TD}"></td></tr>
+    </table>
+    <div style="display:flex;justify-content:space-between;font-size:9pt;margin-top:7mm"><span>İmza (Rehber): ______________________</span><span>Teslim Alan: ______________________</span></div>
+  </div>`;
 }
 function _tdDocSozlesme(g,E){
   const t=getTanimlar();
