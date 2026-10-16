@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v769 · 16.10.2026';
+const APP_VER='v770 · 16.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -17578,7 +17578,7 @@ function renderTurDosyasi(box){
           :`<label class="otl-f"><span>Tarih</span><input type="date" value="${esc(a.tarih)}" onchange="tdAracSet(${i},'tarih',this.value)"></label>
             <label class="otl-f" style="width:80px"><span>Saat</span><input value="${esc(a.saat)}" placeholder="06:00" onchange="tdAracSet(${i},'saat',this.value)"></label>`}
         <label class="otl-f" style="width:118px"><span>Maliyet${a.fiyatPara?' ('+esc(a.fiyatPara)+')':''}</span><input id="tdAf_${i}" inputmode="decimal" value="${esc(a.fiyat!=null?a.fiyat:'')}" placeholder="oto" title="${esc(a.fiyatNot||'Kontrattan otomatik — elle ezebilirsin; boşaltırsan otomatiğe döner')}" style="text-align:right${a.fiyatMan?';border-color:var(--primary)':''}" onchange="tdAracFiyatElle(${i},this.value)"></label>
-        ${a.tip==='tahsis'?`<label class="otl-f" style="min-width:140px"><span>Başlangıç Yeri</span><input value="${esc(a.basYer||'')}" placeholder="AYT / otel adı" onchange="tdAracSet(${i},'basYer',this.value)"></label><label class="otl-f" style="min-width:150px"><span>Tur / Görev</span><input value="${esc(a.gorev||'')}" list="tdGorevL_${i}" placeholder="Kapadokya turu" onchange="tdAracSet(${i},'gorev',this.value)"><datalist id="tdGorevL_${i}"><option value="Tam gün tur"><option value="Yarım gün tur"><option value="Kapadokya turu"><option value="Şehir turu"><option value="İstanbul çıkışlı batı turu"><option value="Karşılama + tur"><option value="Tur boyunca tahsis"></datalist></label><label class="otl-f" style="flex:1.4;min-width:170px"><span>Program / Güzergâh <a href="javascript:void(0)" onclick="tdAracRota(${i})" style="font-weight:700;color:var(--primary);text-decoration:none">⟳ turdan getir</a></span><input value="${esc(a.program||'')}" placeholder="Antalya → Kapadokya → …" onchange="tdAracSet(${i},'program',this.value)"></label>`:''}
+        ${a.tip==='tahsis'?`<label class="otl-f" style="min-width:140px"><span>Başlangıç Yeri</span><input value="${esc(a.basYer||'')}" placeholder="AYT / otel adı" onchange="tdAracSet(${i},'basYer',this.value)"></label><label class="otl-f" style="min-width:90px"><span>Baş. Saati</span><input type="time" value="${esc(a.basSaat||'')}" onchange="tdAracSet(${i},'basSaat',this.value)"></label><label class="otl-f" style="min-width:150px"><span>Tur / Görev</span><input value="${esc(a.gorev||'')}" list="tdGorevL_${i}" placeholder="Kapadokya turu" onchange="tdAracSet(${i},'gorev',this.value)"><datalist id="tdGorevL_${i}"><option value="Tam gün tur"><option value="Yarım gün tur"><option value="Kapadokya turu"><option value="Şehir turu"><option value="İstanbul çıkışlı batı turu"><option value="Karşılama + tur"><option value="Tur boyunca tahsis"></datalist></label><label class="otl-f" style="flex:1.4;min-width:170px"><span>Program / Güzergâh <a href="javascript:void(0)" onclick="tdAracRota(${i})" style="font-weight:700;color:var(--primary);text-decoration:none">⟳ turdan getir</a></span><input value="${esc(a.program||'')}" placeholder="Antalya → Kapadokya → …" onchange="tdAracSet(${i},'program',this.value)"></label>`:''}
         <label class="otl-f" style="flex:1;min-width:120px"><span>Not</span><input value="${esc(a.not)}" onchange="tdAracSet(${i},'not',this.value)"></label>
         <button style="background:none;border:none;color:var(--muted);cursor:pointer;padding-bottom:10px" onclick="tdAracDel(${i})">✕</button>
       </div>`;
@@ -17710,7 +17710,7 @@ function renderTurDosyasi(box){
         ${a.plaka?`<span style="font-weight:800">${esc(a.plaka)}</span>`:'<span style="color:#b45309;font-size:.68rem">plaka girilmedi</span>'}
         ${a.sofor?`<span>👨‍✈️ ${esc(a.sofor)}</span>`:''}
         ${a.stel?`<a href="tel:${esc(a.stel)}" style="color:inherit;font-weight:700">☎ ${esc(a.stel)}</a>`:''}
-        ${a.basYer?`<span style="font-weight:700">📍 ${esc(a.basYer)}</span>`:''}
+        ${(a.basYer||a.basSaat)?`<span style="font-weight:700">📍 ${esc([a.basYer,a.basSaat].filter(Boolean).join(' · '))}</span>`:''}
         ${a.gorev||a.program?`<span style="color:#0369a1">${esc([a.gorev,a.program].filter(Boolean).join(' · '))}</span>`:''}
         ${a.bas?`<span style="margin-left:auto;color:#0369a1;font-weight:700">${_fmtDateTR(a.bas)}${a.bit?' – '+_fmtDateTR(a.bit):''}</span>`:''}
       </div>`).join('');
@@ -20161,7 +20161,7 @@ function thsKaydet(enc){
   if(!_basBitOk(_bas,_bit)) return;
   (g.araclar=g.araclar||[]).push({id:R_GID(),tip:'tahsis',bolum:_thsBolum,firma,ad:v('arac'),arTip:v('tip').toUpperCase(),
     plaka:v('plaka').toUpperCase(),sofor:v('sofor'),stel:v('stel'),
-    bas:_bas,bit:_bit,basYer:v('basyer'),gorev:v('gorev'),program:v('program'),not:v('not'),fiyat:v('fiyat')});
+    bas:_bas,bit:_bit,basYer:v('basyer'),basSaat:v('bassaat'),gorev:v('gorev'),program:v('program'),not:v('not'),fiyat:v('fiyat')});
   setOpsGrup(S); window._thsAcik='';
   renderOpsTahsis();
   showToast('Tahsis atandı — 📤 İş Gönderimi ile firmaya iletebilirsin','success',5000);
@@ -20175,7 +20175,7 @@ function thsGuncelle(gid,aid){
   if(!_basBitOk(_yBas,_yBit)) return;
   a.firma=v('firma'); a.ad=v('arac'); a.arTip=v('tip').toUpperCase(); a.plaka=v('plaka').toUpperCase();
   a.sofor=v('sofor'); a.stel=v('stel'); a.bas=_yBas; a.bit=_yBit;
-  a.basYer=v('basyer'); a.gorev=v('gorev'); a.program=v('program'); a.not=v('not'); a.fiyat=v('fiyat');
+  a.basYer=v('basyer'); a.basSaat=v('bassaat'); a.gorev=v('gorev'); a.program=v('program'); a.not=v('not'); a.fiyat=v('fiyat');
   setOpsGrup(S); window._thsEdit='';
   renderOpsTahsis();
   showToast('Tahsis güncellendi — rehberin ekranındaki bilgiler de yenilendi','success',5000);
@@ -20230,7 +20230,7 @@ function _thsListe(bugun){
             else if(!bl&&bolumler.length>1){ bolumUyar=true; } } }catch(e){}
         L.push({gid:g2.id,aid:a.id,bas:ab,bit:abit,tur:urun+(bl?' G'+bl:''),gorev:a.gorev||'',pax:paxB,bolum:bl,bolumler,bolumUyar,
           firma:a.firma||'',arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehB,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||'',basYer:a.basYer||_thsBasOtel(g2.uyeler||[],ab),basYerOto:!a.basYer});
+          reh:rehB,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||'',basYer:a.basYer||_thsBasOtel(g2.uyeler||[],ab),basYerOto:!a.basYer,basSaat:a.basSaat||''});
       });
     });
   }catch(e){}
@@ -20244,7 +20244,7 @@ function thsExcel(){
   const filtreTxt=[_thsFirmaF||'tüm firmalar',(_thsBasF||_thsBitF)?((_thsBasF?_fmtDateTR(_thsBasF):'…')+' – '+(_thsBitF?_fmtDateTR(_thsBitF):'…')):'bugün ve sonrası'].join(' · ');
   const aoa=[['DIOGENES TRAVEL — TAHSİS LİSTESİ'],[filtreTxt],[],
     ['Başlangıç','Bitiş','Başlangıç Yeri','Tur','Görev','Program / Yapılacak İş','Firma','Araç','Plaka','Şoför','Şoför Tel','Pax','Rehber','Rehber Tel','Fiyat','Gönderim','Not']];
-  L.forEach(t=>aoa.push([_thsGun(t.bas),_thsGun(t.bit),t.basYer,t.tur,t.gorev,t.prog,t.firma,t.arac,t.plaka,t.sofor,t.stel,+t.pax||'',t.reh,t.reh?_rehTelBul(t.reh):'',t.fiyat,t.gon==='✓'?'gönderildi':(t.gon==='YENI'?'GÖNDERİLMEDİ':''),t.not]));
+  L.forEach(t=>aoa.push([_thsGun(t.bas),_thsGun(t.bit),[t.basYer,t.basSaat].filter(Boolean).join(' · '),t.tur,t.gorev,t.prog,t.firma,t.arac,t.plaka,t.sofor,t.stel,+t.pax||'',t.reh,t.reh?_rehTelBul(t.reh):'',t.fiyat,t.gon==='✓'?'gönderildi':(t.gon==='YENI'?'GÖNDERİLMEDİ':''),t.not]));
   aoa.push([]); aoa.push(['TOPLAM','','','','','','','','','',L.length+' tahsis araç']);
   const ws=XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols']=[21,21,16,14,16,30,14,16,11,14,13,6,16,13,9,13,18].map(w2=>({wch:w2}));
@@ -20276,6 +20276,10 @@ function _thsBasOtel(uyeler,bas){ // v769: başlangıç oteli — yolcuların ba
     const L=Object.values(say).sort((a,b)=>b.n-a.n);
     return L.slice(0,2).map(x=>x.ad).join(' / ');
   }catch(e){ return ''; }
+}
+function _thsBasOtelSefer(pkgId,kalkis,bas){ // v770: tahsis atama formu için — seferin rezervasyonlarından
+  try{ const U=(getRezv()||[]).filter(r=>_opsRezvSayilir(r)&&r.pkgId===pkgId&&r.kalkis===kalkis).map(r=>({pkgId,kalkis,resno:r.voucher||''}));
+    return _thsBasOtel(U,bas||kalkis); }catch(e){ return ''; }
 }
 function _thsYolcular(uyeler){
   const out=[]; const gorulen=new Set();
@@ -20314,7 +20318,7 @@ function _thsTek(gid,aid){
     for(const kk of sefler){ const p2=kk.split('|'); const rec=_opsGet(p2[0],p2[1])||{}; const ad2=(rec.rehberAd||'').trim(); if(ad2){ rehAd=ad2; break; } }
   }catch(e){} }
   return {a,tur:(E2&&(E2.urunler||[]).join('+'))||(g2.ad||''),pax:(E2&&E2.pax)||yolcular.length,
-    bas:_pdate(a.bas)||'',bit:_pdate(a.bit)||_pdate(a.bas)||'',reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',yolcular,basYer:a.basYer||_thsBasOtel(uyeler,_pdate(a.bas)||'')};
+    bas:_pdate(a.bas)||'',bit:_pdate(a.bit)||_pdate(a.bas)||'',reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',yolcular,basYer:a.basYer||_thsBasOtel(uyeler,_pdate(a.bas)||''),basSaat:a.basSaat||''};
 }
 function thsPrint(gid,aid){
   const D=_thsTek(gid,aid); if(!D){ showToast('Tahsis bulunamadı','error'); return; }
@@ -20323,7 +20327,7 @@ function thsPrint(gid,aid){
   const h=`<div class="gorev"><h1>🚙 TAHSİS GÖREV EMRİ — ${esc(a.firma||'')}</h1>
     <h2>${esc(D.tur)} · Diogenes Travel</h2>
     <div style="background:#1F4E78;color:#fff;border-radius:8px;padding:7px 12px;margin:6px 0;font-size:.86rem;font-weight:800;display:flex;gap:18px;flex-wrap:wrap">
-      <span>▶ BAŞLANGIÇ: ${esc(_thsGun(D.bas)||'—')}${D.basYer?' · 📍 '+esc(D.basYer):''}</span>
+      <span>▶ BAŞLANGIÇ: ${esc(_thsGun(D.bas)||'—')}${D.basSaat?' · '+esc(D.basSaat):''}${D.basYer?' · 📍 '+esc(D.basYer):''}</span>
       <span>■ BİTİŞ: ${esc(_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—')}</span>
       <span style="color:#fbbf24">${esc(_thsSure(D.bas,D.bit))}</span>
     </div>
@@ -20350,7 +20354,7 @@ function thsTekExcel(gid,aid){
   const a=D.a;
   const aoa=[['DIOGENES TRAVEL — TAHSİS GÖREV EMRİ · '+(a.firma||'')],
     [D.tur],[],
-    ['BAŞLANGIÇ',_thsGun(D.bas)||'—'],['BAŞLANGIÇ YERİ',D.basYer||'—'],['BİTİŞ',_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—'],['SÜRE',_thsSure(D.bas,D.bit)],
+    ['BAŞLANGIÇ',(_thsGun(D.bas)||'—')+(D.basSaat?' · '+D.basSaat:'')],['BAŞLANGIÇ YERİ',D.basYer||'—'],['BİTİŞ',_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—'],['SÜRE',_thsSure(D.bas,D.bit)],
     ['Araç',[a.ad,a.arTip].filter(Boolean).join(' · ')],['Plaka',a.plaka||''],['Şoför',[a.sofor,a.stel].filter(Boolean).join(' · ')],
     ['Rehber',D.reh?(D.reh+(D.rehTel?' · '+D.rehTel:'')):''],['Pax',D.pax||''],
     ['YAPILACAK İŞ',[a.gorev,a.program,a.not].filter(Boolean).join('  ·  ')||'—'],[],
@@ -20407,7 +20411,7 @@ function renderOpsTahsis(){
     </div>`;
   h+=L.length?`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <tr><th style="${th2}">Başlangıç</th><th style="${th2}">Bitiş</th><th style="${th2}">Gün</th><th style="${th2}">Tur / Görev</th><th style="${th2}">Firma</th><th style="${th2}">Araç</th><th style="${th2}">Plaka / Şoför</th><th style="${th2}">Pax</th><th style="${th2}">Rehber</th><th style="${th2}">Gönderim</th><th style="${th2}"></th></tr>
-    ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b><div style="font-size:.6rem;color:var(--muted)">${t.bas?new Date(t.bas+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div>${t.basYer?`<div style="font-size:.62rem;color:#0369a1;font-weight:700">📍 ${esc(t.basYer)}</div>`:''}</td><td style="${td2}">${_fmtDateTR(t.bit)}<div style="font-size:.6rem;color:var(--muted)">${t.bit?new Date(t.bit+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div></td>
+    ${L.map(t=>`<tr><td style="${td2}"><b>${_fmtDateTR(t.bas)}</b><div style="font-size:.6rem;color:var(--muted)">${t.bas?new Date(t.bas+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div>${(t.basYer||t.basSaat)?`<div style="font-size:.62rem;color:#0369a1;font-weight:700">📍 ${esc([t.basYer,t.basSaat].filter(Boolean).join(' · '))}</div>`:''}</td><td style="${td2}">${_fmtDateTR(t.bit)}<div style="font-size:.6rem;color:var(--muted)">${t.bit?new Date(t.bit+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long'}):''}</div></td>
       <td style="${td2};text-align:center">${(t.bas&&t.bit)?`<b style="font-size:.95rem">${_isoDiff(t.bas,t.bit)+1}</b><div style="font-size:.58rem;color:var(--muted)">gün</div>`:'—'}</td>
       <td style="${td2}"><b>${esc(t.tur)}</b>${t.gorev?`<div style="font-size:.66rem;color:#0369a1;font-weight:700">${esc(t.gorev)}</div>`:''}${t.prog?`<div style="font-size:.62rem;color:var(--muted)">${esc(t.prog)}</div>`:''}</td>
       <td style="${td2}">${esc(t.firma)||'<span style="color:#b45309;font-weight:700">firma yok</span>'}</td><td style="${td2}">${esc(t.arac)}</td>
@@ -20424,7 +20428,7 @@ function renderOpsTahsis(){
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">PLAKA<input id="the_plaka" value="${esc(a.plaka||'')}" list="thsPlakaL" onchange="thsPlakaSecildi()" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:100px;text-transform:uppercase"><datalist id="thsPlakaL"></datalist></label>${li('ŞOFÖR','sofor',a.sofor,110)}${li('ŞOFÖR TEL','stel',a.stel,110)}
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ<input id="the_bas" type="date" value="${esc(_pdate(a.bas)||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem"></label>
           <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BİTİŞ<input id="the_bit" type="date" value="${esc(_pdate(a.bit)||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem"></label>
-          ${li('BAŞLANGIÇ YERİ','basyer',a.basYer,120,'AYT / otel adı')}${li('TUR / GÖREV','gorev',a.gorev,130)}${li('PROGRAM','program',a.program,180)}${li('FİYAT','fiyat',a.fiyat,70)}${li('NOT','not',a.not,110)}
+          ${li('BAŞLANGIÇ YERİ','basyer',a.basYer||t.basYer,120,'AYT / otel adı')}<label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞ. SAATİ<input id="the_bassaat" type="time" value="${esc(a.basSaat||'')}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;width:96px"></label>${li('TUR / GÖREV','gorev',a.gorev,130)}${li('PROGRAM','program',a.program,180)}${li('FİYAT','fiyat',a.fiyat,70)}${li('NOT','not',a.not,110)}
           <button class="btn btn-primary" onclick="thsGuncelle('${t.gid}','${t.aid}')">💾 Kaydet</button>
         </div></td></tr>`;})():''}`).join('')}
   </table></div>`:'<p class="section-tip">Henüz tahsis atanmadı.</p>';
@@ -20460,7 +20464,8 @@ function renderOpsTahsis(){
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">ŞOFÖR TEL<input id="ths_stel" style="${inp};width:110px"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ<input id="ths_bas" type="date" value="${esc(t.kalkis)}" style="${inp}"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BİTİŞ<input id="ths_bit" type="date" value="${esc(t.end)}" style="${inp}"></label>
-            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ YERİ<input id="ths_basyer" placeholder="AYT / otel adı" style="${inp};min-width:120px"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞLANGIÇ YERİ<input id="ths_basyer" value="${esc(_thsBasOtelSefer(t.pkgId,t.kalkis,t.kalkis))}" placeholder="AYT / otel adı" style="${inp};min-width:120px"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">BAŞ. SAATİ<input id="ths_bassaat" type="time" style="${inp};width:96px"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">TUR / GÖREV<input id="ths_gorev" list="thsGorevL" placeholder="Kapadokya turu" style="${inp};min-width:140px"><datalist id="thsGorevL"><option value="Tam gün tur"><option value="Yarım gün tur"><option value="Kapadokya turu"><option value="Şehir turu"><option value="Karşılama + tur"><option value="Tur boyunca tahsis"></datalist></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted);flex:1;min-width:180px">YAPILACAK İŞ / PROGRAM<input id="ths_program" value="${esc(_thsRota(t.pkgId,t.kalkis))}" style="${inp}"></label>
             <label style="display:flex;flex-direction:column;gap:3px;font-size:.62rem;font-weight:700;color:var(--muted)">FİYAT<input id="ths_fiyat" placeholder="€" style="${inp};width:80px"></label>
@@ -21238,7 +21243,7 @@ function _trTasimaciBloklar(sessiz,secIds){
         let yolcular=[]; try{ yolcular=_thsYolcular(E2.uyeler||[]); }catch(e){}
         tahsisler.push({key:'TAH|'+E2.id+'|'+ab,bas:ab,bit:abit,tur:((E2.urunler||[]).join('+')||'')+(a.gorev?' — '+a.gorev:''),pax:E2.pax||'',
           arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:[(a.basYer||_thsBasOtel(E2.uyeler||[],ab))?'Başlangıç: '+(a.basYer||_thsBasOtel(E2.uyeler||[],ab)):'',a.program,a.not].filter(Boolean).join(' · '),yolcular});
+          reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:[(()=>{ const by=[a.basYer||_thsBasOtel(E2.uyeler||[],ab),a.basSaat||''].filter(Boolean).join(' '); return by?'Başlangıç: '+by:''; })(),a.program,a.not].filter(Boolean).join(' · '),yolcular});
       });
     });
   }catch(e){}
