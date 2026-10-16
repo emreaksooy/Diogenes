@@ -2568,7 +2568,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v773 · 16.10.2026';
+const APP_VER='v774 · 16.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18636,11 +18636,14 @@ function _trGenRowsHesap(){
         if(enIyi){
           const zincir=[...enIyi].sort((a,b)=>String(_pdate(a.baslangic)).localeCompare(String(_pdate(b.baslangic))));
           let onceki=zincir[0], gecisVar=false;
+          let anaD=''; try{ anaD=_donusTarihi(g.kalkis,pkg)||''; }catch(e){}
           for(let zi=1;zi<zincir.length;zi++){
             const k=zincir[zi];
             const a1=_kAd(onceki), a2=_kAd(k);
+            const tarihK0=_pdate(k.baslangic)||'';
+            if(anaD&&tarihK0&&tarihK0>=anaD){ onceki=k; continue; } // v774: tur bitişinden sonraki otel geçişi = UZATMA (UZT satırı zaten var), tur yürüyüşü üretme
             if(a1&&a2&&_norm(a1)!==_norm(a2)){
-              const tarihK=_pdate(k.baslangic)||'';
+              const tarihK=tarihK0;
               const gunNo=tarihK?Math.max(1,_isoDiff(g.kalkis,tarihK)||0):zi;
               const s1=_kSehir(onceki), s2=_kSehir(k);
               out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+gunNo,tip:'TUR',tarih:tarihK||_trGunEkle(g.kalkis,zi),op,urun,grupKod:'',
