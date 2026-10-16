@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v770 · 16.10.2026';
+const APP_VER='v771 · 16.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18586,6 +18586,7 @@ function _trGenRowsHesap(){
     // TUR geçişleri: önce GERÇEK açılım (rezervasyon kartlarındaki şehir zinciri) —
     // tur tersten yürüyorsa yön ve tarihler ürün programından değil kartlardan gelir
     const _turVlist=[...new Set(real.map(x=>String(x.resno||'').trim()).filter(Boolean))];
+    let _turPax=real.length; try{ const _p=_opsPaxHesap(g.pkgId,g.kalkis); if(_p>0) _turPax=_p; }catch(e){} // v771: tur yürüyüşü pax = Turlar ile aynı (rezervasyon esas; NO NAME/iptal hariç)
     let kartTur=false;
     try{
       if(!pkg.turTransferYok){
@@ -18617,7 +18618,7 @@ function _trGenRowsHesap(){
               out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+gunNo,tip:'TUR',tarih:tarihK||_trGunEkle(g.kalkis,zi),op,urun,grupKod:'',
                 nereden:a1+((s1&&_norm(s1)!==_norm(a1))?' · '+s1:''),
                 nereye:a2+((s2&&_norm(s2)!==_norm(a2))?' · '+s2:''),
-                bolge:'',ucus:'',saat:'08:00',pax:real.length,yet:real.length,coc:0,beb:0},_turVlist));
+                bolge:'',ucus:'',saat:'08:00',pax:_turPax,yet:_turPax,coc:0,beb:0},_turVlist));
               gecisVar=true;
             }
             onceki=k;
@@ -18628,7 +18629,7 @@ function _trGenRowsHesap(){
     }catch(e){}
     const gunler=(pkg.turTransferYok||kartTur)?[]:_opsGunler(pkg,g.kalkis); let prevCity='';
     gunler.forEach((gd,i)=>{ const nk=(gd.noktalar||[]).filter(x=>x&&x.trim()); const city=(gd.konaklamaSehir||(nk.length?nk[nk.length-1]:'')||'').trim();
-      if(i>0&&city&&prevCity&&city!==prevCity){ out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+i,tip:'TUR',tarih:_trGunEkle(g.kalkis,i),op,urun,grupKod:'',nereden:prevCity,nereye:city,bolge:'',ucus:'',saat:'08:00',pax:real.length,yet:real.length,coc:0,beb:0},_turVlist)); }
+      if(i>0&&city&&prevCity&&city!==prevCity){ out.push(merge({id:g.pkgId+'|'+g.kalkis+'|TUR|'+i,tip:'TUR',tarih:_trGunEkle(g.kalkis,i),op,urun,grupKod:'',nereden:prevCity,nereye:city,bolge:'',ucus:'',saat:'08:00',pax:_turPax,yet:_turPax,coc:0,beb:0},_turVlist)); }
       if(city)prevCity=city; });
   });
   // TUR görevleri: tarihi kapsayan TAHSİS aracı varsa satıra işlenir (araç/firma monitörde görünür)
