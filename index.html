@@ -2568,7 +2568,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v775 · 16.10.2026';
+const APP_VER='v776 · 16.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -14084,6 +14084,13 @@ function _opsOperatorAd(pkg,kalkis){
 // v738: operasyon pax sayımı — NO NAME (isimsiz koltuk) sayılmaz; ayrı gösterilir
 function _mNoName(m){ return !!(m&&(m.noname||/^no\s*name$/i.test(String((m.soyad||'')+' '+(m.ad||'')).trim()))); }
 function _mSayilir(m){ return !!(m&&!m.iptal&&((m.ad||'').trim()||(m.soyad||'').trim())&&!_mNoName(m)); }
+// v776: BİLET İPTAL — rezervasyon aktif kalsa da uçak listesinde o voucher'ın TÜM satırları iptalse yolcu gelmiyor sayılır (pax, isim listesi, görev emri)
+function _opsBiletIptalV(pkgId,kalkis,resno,g0){
+  try{ const g=g0||getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis); if(!g) return false;
+    const v=String(resno||'').trim(); if(!v) return false;
+    const R=(g.rows||[]).filter(r=>_isim(r)&&String((r.resno||'').trim())===v);
+    return R.length>0&&R.every(r=>_durumEff(r)==='iptal'); }catch(e){ return false; }
+}
 function _opsNoNamePax(pkgId,kalkis){
   let n=0; try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkgId&&r.kalkis===kalkis){ n+=(r.musteriler||[]).filter(m=>!m.iptal&&_mNoName(m)).length; } }); }catch(e){} return n;
 }
@@ -14092,7 +14099,7 @@ function _opsPaxDetay(pkgId,kalkis){
   if(g&&g.iptal) return {ucak:0,rezvP:0,rezvSay:0}; // CXX sefer
   const ucak=g?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())&&_durumEff(r)!=='iptal').length:0;
   let rezvP=0, rezvSay=0;
-  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkgId&&r.kalkis===kalkis){ const n=(r.musteriler||[]).filter(_mSayilir).length; if(n){rezvP+=n; rezvSay++;} } }); }catch(e){}
+  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkgId&&r.kalkis===kalkis&&!_opsBiletIptalV(pkgId,kalkis,r.voucher,g)){ const n=(r.musteriler||[]).filter(_mSayilir).length; if(n){rezvP+=n; rezvSay++;} } }); }catch(e){}
   return {ucak,rezvP,rezvSay};
 }
 function _rtPaxTip(t){ const d=_opsPaxDetay(t.pkgId,t.kalkis); return ' (uçak listesi: '+d.ucak+' · rezervasyon: '+d.rezvP+' yolcu / '+d.rezvSay+' kayıt)'; }
@@ -14107,7 +14114,7 @@ function _opsPaxHesap(pkgId,kalkis){
   // uçak sayımı: İPTAL satırlar hariç
   const ucak=(g&&!g.iptal)?(g.rows||[]).filter(r=>((r.resno||'').toString().trim()||(r.soyad||'').trim()||(r.ad||'').trim())&&_durumEff(r)!=='iptal').length:0;
   let rezvP=0;
-  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkgId&&r.kalkis===kalkis){ rezvP+=(r.musteriler||[]).filter(_mSayilir).length; } }); }catch(e){}
+  try{ (getRezv()||[]).forEach(r=>{ if(_opsRezvSayilir(r)&&r.pkgId===pkgId&&r.kalkis===kalkis&&!_opsBiletIptalV(pkgId,kalkis,r.voucher,g)){ rezvP+=(r.musteriler||[]).filter(_mSayilir).length; } }); }catch(e){}
   // REZERVASYON esas kaynak — rezv kaydı varsa onun aktif yolcu sayısı; yoksa uçak listesi
   return rezvP>0?rezvP:ucak;
 }
@@ -16406,6 +16413,7 @@ function _ogResnoPaxRezvHesap(pkgId,kalkis,resno){
     const g0=getReservations().find(x=>x.pkgId===pkgId&&x.kalkis===kalkis);
     const ucakta=g0&&(g0.rows||[]).some(r=>_isim(r)&&String((r.resno||'').trim())===String(resno).trim());
     if(!ucakta) return 0;
+    if(_opsBiletIptalV(pkgId,kalkis,resno,g0)) return 0; // v776: tüm biletler iptal
     const rz=(getRezv()||[]).find(z=>z.tip==='urun'&&z.pkgId===pkgId&&z.kalkis===kalkis
       &&(String(z.voucher||'').trim()===String(resno).trim()||String(z.asilVoucher||'').trim()===String(resno).trim()));
     if(rz&&rz.personel) return 0;
@@ -17200,6 +17208,7 @@ function _tdKisiler(E){
       if(!seferler.has((r.pkgId||'')+'|'+(r.kalkis||''))) return;
       const v=String(r.voucher||'').trim();
       if(vGorunen.has(v)) return;
+      if(_opsBiletIptalV(r.pkgId,r.kalkis,v)) return; // v776: bileti iptal — dosyada görünmez
       if(uyeResno.size&&!uyeResno.has(v)) return; // bölünmüş grupta yalnız kendi üyeleri
       (r.musteriler||[]).forEach(m=>{
         if(m.iptal||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
@@ -20348,6 +20357,7 @@ function _thsYolcular(uyeler){
     const rz=rzL.find(z=>z.tip==='urun'&&(!u.pkgId||z.pkgId===u.pkgId)&&(!u.kalkis||z.kalkis===u.kalkis)&&z.durum!=='iptal')
       ||rzL.find(z=>z.tip==='urun'&&(!u.pkgId||z.pkgId===u.pkgId)&&(!u.kalkis||z.kalkis===u.kalkis))||rzL.find(z=>z.tip==='urun')||rzL[0]||null;
     if(rz&&rz.durum==='iptal') return; // v767/v768: iptal rezervasyon (asılVoucher dahil) görev emrine girmez
+    if(u.pkgId&&u.kalkis&&_opsBiletIptalV(u.pkgId,u.kalkis,res)) return; // v776: bileti iptal
     let n=0;
     if(rz) (rz.musteriler||[]).forEach(m=>{ if(m.iptal||_mNoName(m)||!((m.ad||'').trim()||(m.soyad||'').trim())) return;
       ekle(u.resno,(m.soyad||'').trim(),(m.ad||'').trim()); n++; });
