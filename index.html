@@ -842,6 +842,7 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .tdm .route .l{display:flex;align-items:center;gap:8px;min-width:0}
 .tdm .route .pt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:.82rem} .tdm .route .pt small{font-weight:500;color:var(--muted)}
 .tdm .route .arr{color:var(--muted);flex:none}
+.tdm .route .pin{flex:none;background:none;border:none;cursor:pointer;font-size:.68rem;opacity:.3;padding:0 2px;line-height:1} .tdm .row:hover .route .pin{opacity:.75} .tdm .route .pin:hover{opacity:1} .tdm .route .pin.man{opacity:.9;color:var(--primary)}
 .tdm .route .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.7rem;color:var(--muted)} .tdm .route .meta>*{flex:none}
 .tdm .route{cursor:pointer} .tdm .route:hover .pt{text-decoration:underline}
 .tdm .exp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -2567,7 +2568,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v771 · 16.10.2026';
+const APP_VER='v772 · 16.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15573,7 +15574,7 @@ function renderTrYeni(){
     return `<div class="row ${esc(r.tip)} ${sel?'sel':''} ${x.gece?'gece':''} ${r.onay?'onay':''}">
       <input class="cb" type="checkbox" ${sel?'checked':''} onchange="_trYeniSec('${esc(r.id)}',this.checked)" aria-label="seç">
       <div class="time"><span class="k">${TAD[r.tip]||esc(r.tip)}${r.trf?' · TRF':''}</span><span class="t">${esc(r.saat||'—')}</span><span class="dep">Depar <b>${esc(dep.saat||'—')}</b>${dep.onceki?' <span title="önceki gün">⤴</span>':''}</span></div>
-      <div class="route" onclick="_trDetayAc('${esc(r.id)}')" title="Detay"><div class="l">${pt(r.nereden)}<span class="arr">→</span>${pt(r.nereye)}</div>
+      <div class="route" onclick="_trDetayAc('${esc(r.id)}')" title="Detay"><div class="l">${pt(r.nereden)}<button class="pin${r.ovrNereden?' man':''}" title="${r.ovrNereden?'Alınış yeri elle girildi — düzelt / otomatiğe dön':'Alınış yerini düzelt — yalnız bu transfer'}" onclick="event.stopPropagation();_trYerAc('${esc(r.id)}','nereden')">📍</button><span class="arr">→</span>${pt(r.nereye)}<button class="pin${r.ovrNereye?' man':''}" title="${r.ovrNereye?'Bırakış yeri elle girildi — düzelt / otomatiğe dön':'Bırakış yerini düzelt — yalnız bu transfer'}" onclick="event.stopPropagation();_trYerAc('${esc(r.id)}','nereye')">📍</button></div>
         <div class="meta">${aralik?`<span class="tag">${_fmtDateTR(r.tarih).slice(0,5)}</span>`:''}${r.ucus?`<span class="tag fl">${esc(r.ucus)}</span>`:''}${hat==='IC'?'<span class="tag hic">İÇ HAT</span>':hat==='DIS'?'<span class="tag hdis">DIŞ HAT</span>':''}${r.rota&&r.rota.includes('→')?`<span>${esc(r.rota)}</span>`:''}${r.bolge?`<span>· ${esc(r.bolge)}</span>`:''}${r.grupKod?`<span>· PNR ${esc(r.grupKod)}</span>`:''}${r.akt?`<span>· aktarmalı</span>`:''}</div></div>
       <div class="who"><span class="op">${esc(r.op||'—')} · <span class="tag urun">${esc(r.urun||'')}</span></span><span class="reh">${reh&&reh.ad?('Rehber: '+esc(reh.ad)+(reh.kaynak==='görev'?'':' <small>(grup)</small>')+(reh.bolumFark?' <em>⚠ bölüm: '+esc(reh.bolumFark)+'</em>':'')):'<em>Rehber yok</em>'}</span></div>
       <div class="pax"><span class="n">${r.pax||0}</span><span class="l">pax</span></div>
@@ -15591,7 +15592,7 @@ function renderTrYeni(){
     return `<div class="row ${esc(r0.tip)} ${hepsi?'sel':''} ${r0.onay?'onay':''}">
       <input class="cb" type="checkbox" ${hepsi?'checked':''} onchange="_trSecCoklu('${enc}',this.checked)" aria-label="seç">
       <div class="time"><span class="k">${TAD[r0.tip]||esc(r0.tip)} <span class="tag link">🔗 ${U.length}</span></span><span class="t">${esc(dh0.saat||r0.saat||'—')}</span><span class="dep">Depar <b>${esc(dh0.saat||'—')}</b></span></div>
-      <div class="route" onclick="_trDetayCoklu('${enc}')" title="Detay: tüm uçuşlar ve yolcular"><div class="l">${nereden.length===1?pt(nereden[0]):`<span class="pt">${esc(nereden.map(n=>n.split(' · ')[0]).join(' / '))}</span>`}<span class="arr">→</span>${nereye.length===1?pt(nereye[0]):`<span class="pt">${esc(nereye.map(n=>n.split(' · ')[0]).join(' / '))}</span>`}</div><div class="ucl">${ucl}</div></div>
+      <div class="route" onclick="_trDetayCoklu('${enc}')" title="Detay: tüm uçuşlar ve yolcular"><div class="l">${nereden.length===1?pt(nereden[0]):`<span class="pt">${esc(nereden.map(n=>n.split(' · ')[0]).join(' / '))}</span>`}<button class="pin${U.some(x=>x.r.ovrNereden)?' man':''}" title="Alınış yerini düzelt — bu karttaki tüm transferler" onclick="event.stopPropagation();_trYerAc('${enc}','nereden',true)">📍</button><span class="arr">→</span>${nereye.length===1?pt(nereye[0]):`<span class="pt">${esc(nereye.map(n=>n.split(' · ')[0]).join(' / '))}</span>`}<button class="pin${U.some(x=>x.r.ovrNereye)?' man':''}" title="Bırakış yerini düzelt — bu karttaki tüm transferler" onclick="event.stopPropagation();_trYerAc('${enc}','nereye',true)">📍</button></div><div class="ucl">${ucl}</div></div>
       <div class="who"><span class="op">${u1(r=>r.op).map(esc).join(' + ')||'—'} · ${u1(r=>r.urun).map(u=>`<span class="tag urun">${esc(u)}</span>`).join(' ')}</span><span class="reh">${rehler.length?'Rehber: '+rehler.map(esc).join(' + '):'<em>Rehber yok</em>'}</span></div>
       <div class="pax"><span class="n">${paxT}</span><span class="l">pax</span></div>
       <div class="state"><div class="okl"><span class="kod">${esc(_trKodOf(r0.grup))}</span>${gr.firma?`<span class="f">${esc(gr.firma)}</span>`:''}${gr.arac||gr.arac2?`<span>${esc([gr.arac,gr.arac2].filter(Boolean).join(' + '))}</span>`:''}${gr.plaka?`<span class="plk">${esc(gr.plaka)}</span>`:''}</div><div class="oks">${[gr.soforAd||gr.sofor?'Şoför '+(gr.soforAd||gr.sofor):'',gr.soforTel||gr.stel||'',U.length+' uçuş tek araç',r0.onay?'✓ onaylı':'onay bekliyor',!gr.plaka?'plaka girilmedi':''].filter(Boolean).map(esc).join(' · ')}</div></div>
@@ -20540,7 +20541,7 @@ function _trDetayAc(id){
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="document.getElementById('trDetayModal').remove()">✕ Kapat</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px">
-      ${bilgi('Nereden',r.nereden)}${bilgi('Nereye',r.nereye)}${bilgi('Uçuş',(r.ucus||'')+(r.rota&&r.rota.includes('→')?' · '+r.rota+(_trHatTipi(r.rota)==='IC'?' (İÇ HAT)':_trHatTipi(r.rota)==='DIS'?' (DIŞ HAT)':'')+(r.akt?' · aktarmalı ('+r.akt+')':''):'')+(r.saat?' · '+r.saat:''))}${bilgi('Depar',dh.saat)}${bilgi('Pax',String(r.pax))}${bilgi('Bölge',r.bolge)}${bilgi('Operatör',r.op)}
+      ${bilgi('Nereden'+(r.ovrNereden?' (elle)':''),r.nereden).replace('</b></div>',' <button class="rowbtn" title="Alınış yerini düzelt" onclick="document.getElementById(\'trDetayModal\').remove();_trYerAc(\''+r.id.replace(/'/g,'')+'\',\'nereden\')">📍</button></b></div>')}${bilgi('Nereye'+(r.ovrNereye?' (elle)':''),r.nereye).replace('</b></div>',' <button class="rowbtn" title="Bırakış yerini düzelt" onclick="document.getElementById(\'trDetayModal\').remove();_trYerAc(\''+r.id.replace(/'/g,'')+'\',\'nereye\')">📍</button></b></div>')}${bilgi('Uçuş',(r.ucus||'')+(r.rota&&r.rota.includes('→')?' · '+r.rota+(_trHatTipi(r.rota)==='IC'?' (İÇ HAT)':_trHatTipi(r.rota)==='DIS'?' (DIŞ HAT)':'')+(r.akt?' · aktarmalı ('+r.akt+')':''):'')+(r.saat?' · '+r.saat:''))}${bilgi('Depar',dh.saat)}${bilgi('Pax',String(r.pax))}${bilgi('Bölge',r.bolge)}${bilgi('Operatör',r.op)}
       ${bilgi('Araç',[gr.arac,gr.arac2].filter(Boolean).join(' + '))}${bilgi('Firma',gr.firma)}${(function(){ const ri2=_trRehInfo(r); return bilgi('Rehber'+(ri2.kaynak==='grup'?' (grup)':''),ri2.ad?(ri2.ad+(ri2.tel?' · '+ri2.tel:'')):''); })()}${bilgi('Şoför',gr.sofor?(gr.sofor+(gr.stel?' '+gr.stel:'')):'')}${bilgi('Not',r.not)}
     </div>
     <div style="font-weight:800;font-size:.8rem;margin-bottom:5px">👥 Yolcular (${yolcular.length})</div>
