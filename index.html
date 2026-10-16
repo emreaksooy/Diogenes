@@ -2567,7 +2567,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v768 · 16.10.2026';
+const APP_VER='v769 · 16.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20230,7 +20230,7 @@ function _thsListe(bugun){
             else if(!bl&&bolumler.length>1){ bolumUyar=true; } } }catch(e){}
         L.push({gid:g2.id,aid:a.id,bas:ab,bit:abit,tur:urun+(bl?' G'+bl:''),gorev:a.gorev||'',pax:paxB,bolum:bl,bolumler,bolumUyar,
           firma:a.firma||'',arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehB,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||'',basYer:a.basYer||''});
+          reh:rehB,gon,prog:a.program||'',not:a.not||'',fiyat:a.fiyat||'',basYer:a.basYer||_thsBasOtel(g2.uyeler||[],ab),basYerOto:!a.basYer});
       });
     });
   }catch(e){}
@@ -20264,6 +20264,19 @@ function thsExcel(){
 }
 const _thsGun=t=>{ if(!t) return ''; const d=new Date(t+'T12:00:00'); return isNaN(d)?_fmtDateTR(t):(_fmtDateTR(t)+' '+d.toLocaleDateString('tr-TR',{weekday:'long'})); };
 const _thsSure=(b,e)=>{ if(!b) return ''; const n=(e&&e>=b)?(_isoDiff(b,e)+1):1; return n+' gün'; };
+function _thsBasOtel(uyeler,bas){ // v769: başlangıç oteli — yolcuların başlangıç gününden önceki geceyi geçirdiği otel (yoksa o gün başlayan otel kartı); en çok görülen
+  try{
+    if(!bas||!(uyeler||[]).length) return '';
+    const once=_isoAdd(bas,-1), say={};
+    uyeler.forEach(u=>{
+      const ks=_trRezvKartlar(u.pkgId,u.kalkis,u.resno); if(!ks.length) return;
+      const o=(_trOtelSec(ks,'kapsayan',once)||_trOtelSec(ks,'baslayan',bas)||'').trim(); if(!o) return;
+      const k=_norm(o); say[k]=say[k]||{ad:o,n:0}; say[k].n++;
+    });
+    const L=Object.values(say).sort((a,b)=>b.n-a.n);
+    return L.slice(0,2).map(x=>x.ad).join(' / ');
+  }catch(e){ return ''; }
+}
 function _thsYolcular(uyeler){
   const out=[]; const gorulen=new Set();
   const ekle=(v,soyad,ad)=>{ const k=v+'|'+soyad+'|'+ad; if(gorulen.has(k)||!(soyad||ad)) return; gorulen.add(k); out.push({voucher:v,soyad,ad}); };
@@ -20301,7 +20314,7 @@ function _thsTek(gid,aid){
     for(const kk of sefler){ const p2=kk.split('|'); const rec=_opsGet(p2[0],p2[1])||{}; const ad2=(rec.rehberAd||'').trim(); if(ad2){ rehAd=ad2; break; } }
   }catch(e){} }
   return {a,tur:(E2&&(E2.urunler||[]).join('+'))||(g2.ad||''),pax:(E2&&E2.pax)||yolcular.length,
-    bas:_pdate(a.bas)||'',bit:_pdate(a.bit)||_pdate(a.bas)||'',reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',yolcular};
+    bas:_pdate(a.bas)||'',bit:_pdate(a.bit)||_pdate(a.bas)||'',reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',yolcular,basYer:a.basYer||_thsBasOtel(uyeler,_pdate(a.bas)||'')};
 }
 function thsPrint(gid,aid){
   const D=_thsTek(gid,aid); if(!D){ showToast('Tahsis bulunamadı','error'); return; }
@@ -20310,7 +20323,7 @@ function thsPrint(gid,aid){
   const h=`<div class="gorev"><h1>🚙 TAHSİS GÖREV EMRİ — ${esc(a.firma||'')}</h1>
     <h2>${esc(D.tur)} · Diogenes Travel</h2>
     <div style="background:#1F4E78;color:#fff;border-radius:8px;padding:7px 12px;margin:6px 0;font-size:.86rem;font-weight:800;display:flex;gap:18px;flex-wrap:wrap">
-      <span>▶ BAŞLANGIÇ: ${esc(_thsGun(D.bas)||'—')}${a.basYer?' · 📍 '+esc(a.basYer):''}</span>
+      <span>▶ BAŞLANGIÇ: ${esc(_thsGun(D.bas)||'—')}${D.basYer?' · 📍 '+esc(D.basYer):''}</span>
       <span>■ BİTİŞ: ${esc(_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—')}</span>
       <span style="color:#fbbf24">${esc(_thsSure(D.bas,D.bit))}</span>
     </div>
@@ -20337,7 +20350,7 @@ function thsTekExcel(gid,aid){
   const a=D.a;
   const aoa=[['DIOGENES TRAVEL — TAHSİS GÖREV EMRİ · '+(a.firma||'')],
     [D.tur],[],
-    ['BAŞLANGIÇ',_thsGun(D.bas)||'—'],['BAŞLANGIÇ YERİ',a.basYer||'—'],['BİTİŞ',_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—'],['SÜRE',_thsSure(D.bas,D.bit)],
+    ['BAŞLANGIÇ',_thsGun(D.bas)||'—'],['BAŞLANGIÇ YERİ',D.basYer||'—'],['BİTİŞ',_thsGun(D.bit&&D.bit!==D.bas?D.bit:D.bas)||'—'],['SÜRE',_thsSure(D.bas,D.bit)],
     ['Araç',[a.ad,a.arTip].filter(Boolean).join(' · ')],['Plaka',a.plaka||''],['Şoför',[a.sofor,a.stel].filter(Boolean).join(' · ')],
     ['Rehber',D.reh?(D.reh+(D.rehTel?' · '+D.rehTel:'')):''],['Pax',D.pax||''],
     ['YAPILACAK İŞ',[a.gorev,a.program,a.not].filter(Boolean).join('  ·  ')||'—'],[],
@@ -21225,7 +21238,7 @@ function _trTasimaciBloklar(sessiz,secIds){
         let yolcular=[]; try{ yolcular=_thsYolcular(E2.uyeler||[]); }catch(e){}
         tahsisler.push({key:'TAH|'+E2.id+'|'+ab,bas:ab,bit:abit,tur:((E2.urunler||[]).join('+')||'')+(a.gorev?' — '+a.gorev:''),pax:E2.pax||'',
           arac:[a.ad,a.arTip].filter(Boolean).join(' · ')||'—',plaka:a.plaka||'',sofor:a.sofor||'',stel:a.stel||'',
-          reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:[a.basYer?'Başlangıç: '+a.basYer:'',a.program,a.not].filter(Boolean).join(' · '),yolcular});
+          reh:rehAd,rehTel:rehAd?_rehTelBul(rehAd):'',not:[(a.basYer||_thsBasOtel(E2.uyeler||[],ab))?'Başlangıç: '+(a.basYer||_thsBasOtel(E2.uyeler||[],ab)):'',a.program,a.not].filter(Boolean).join(' · '),yolcular});
       });
     });
   }catch(e){}
