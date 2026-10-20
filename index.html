@@ -2569,7 +2569,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v779 · 20.10.2026';
+const APP_VER='v780 · 20.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16496,7 +16496,7 @@ function _ogCiftBirlestir(){
     for(let i=0;i<L.length;i++) for(let j=i+1;j<L.length;j++){
       const a=L[i], b=L[j]; if(!exp[a.id]||!exp[b.id]) continue;
       const ka=sefKey(a), kb=sefKey(b);
-      if(ka.length!==1||kb.length!==1||ka[0]!==kb[0]) continue; // yalnız tek-sefer gruplar, aynı sefer
+      if(!ka.length||ka.slice().sort().join('\u0001')!==kb.slice().sort().join('\u0001')) continue; // v780: aynı sefer kümesi (tek sefer ya da aynı birleşik set — BLKN7×2 çift birleşik grup)
       const va=vset(a), vb=vset(b);
       const altKume=[...va].every(x=>vb.has(x))||[...vb].every(x=>va.has(x));
       if(!altKume) continue; // bilinçli bölünmüş gruplar (G01/G02) dokunulmaz
