@@ -2569,7 +2569,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v780 · 20.10.2026';
+const APP_VER='v781 · 20.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8854,6 +8854,29 @@ function ucakKodEsleAc(){
    +'<button class="btn btn-outline btn-sm" onclick="window._ucakBekleyen=[];document.getElementById(\'ucakKodModal\').remove()">Vazgeç</button>'
    +'<button class="btn btn-primary btn-sm" onclick="ucakKodEsleKaydet()">Eşle ve Aktar</button></div></div>';
   document.body.appendChild(div);
+  // v781: ÖN-SEÇİM — öğrenilmiş eşleme (ucakKodEsleme) ya da dosya adındaki operatör ipucu varsa operatör+ürün dolu gelir; kullanıcı yalnız onaylar
+  try{
+    const duz=t=>_norm(String(t||'')).replace(/ /g,'');
+    const uyum=(op,h)=>{ const on=duz(op&&op.ad), hn=duz(h); return !!(on&&hn&&hn.length>=3&&(on===hn||on.includes(hn)||hn.includes(on))); };
+    const esl=(getTanimlar().ucakKodEsleme||{});
+    div.querySelectorAll('select[data-kod]').forEach(urunSel=>{
+      const k=urunSel.getAttribute('data-kod'); const opSel=urunSel.parentElement.querySelector('select:not([data-kod])'); if(!opSel) return;
+      let pkg=null, opId='';
+      const ogr=esl[k]?getPackages().find(p=>p.id===esl[k]):null;
+      const ipuc=[...new Set(bek.filter(b=>b.kod===k).flatMap(b=>String(b.ad||'').split(/[\/\s._-]+/)).filter(Boolean))];
+      const ipOps=ops.filter(o=>ipuc.some(h=>uyum(o,h)));
+      const kodlu=getPackages().filter(p=>pkgDurum(p)!=='arsiv'&&_norm(p.paketKodu||'')===_norm(k));
+      if(ipOps.length===1){ opId=ipOps[0].id; const ay=kodlu.filter(p=>p.operatorId===opId); if(ay.length===1) pkg=ay[0]; else if(ogr&&ogr.operatorId===opId) pkg=ogr; }
+      else if(ogr){ pkg=ogr; opId=ogr.operatorId||''; }
+      else if(kodlu.length===1){ pkg=kodlu[0]; opId=pkg.operatorId||''; }
+      if(!opId) return;
+      opSel.value=opId; _ukeUrunDoldur(opSel);
+      if(pkg) urunSel.value=pkg.id;
+      const not=document.createElement('div'); not.style.cssText='font-size:.66rem;color:#0369a1;margin-top:4px';
+      not.textContent='Öneri: '+((ops.find(o=>o.id===opId)||{}).ad||'')+(pkg?' · '+(pkg.paketKodu||'')+(pkg.paketAdi?' · '+pkg.paketAdi:''):' — bu operatörde '+k+' kodlu ürün yok, listeden seç')+(ipOps.length===1?' (dosya adından)':' (önceki eşlemeden)');
+      urunSel.parentElement.parentElement.appendChild(not);
+    });
+  }catch(e){}
 }
 function ucakKodEsleKaydet(){
   const div=document.getElementById('ucakKodModal'); if(!div) return;
