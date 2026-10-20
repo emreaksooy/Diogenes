@@ -2569,7 +2569,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v778 · 20.10.2026';
+const APP_VER='v779 · 20.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11593,8 +11593,9 @@ function _rzSejourOku(f){
       const tip=String(r[iTip]||'').trim();
       // açılım dosyasında tarih bölmesi YOK; ürün dosyasında giriş tarihine göre bölünür (bloklar)
       const giris=dosyaAcilim?'':(_sjTarih(r[iGir])||'');
-      const key=String(r[iOp]||'').trim()+'|'+v+'|'+giris;
-      const gg=(grup[key]=grup[key]||{opKod:String(r[iOp]||'').trim(),opAd:String(r[iOpAd]||'').trim(),voucher:v,giris:giris,satirlar:[],iptaller:[]});
+      const kodSat=(!dosyaAcilim&&iKod2>=0)?String(r[iKod2]||'').trim().toUpperCase():''; // v779: ürün dosyasında aynı voucher + aynı giriş + FARKLI ürün (CAP7 → MAG5+2 zinciri) ayrı kayıt
+      const key=String(r[iOp]||'').trim()+'|'+v+'|'+giris+(kodSat?'|'+kodSat:'');
+      const gg=(grup[key]=grup[key]||{opKod:String(r[iOp]||'').trim(),opAd:String(r[iOpAd]||'').trim(),voucher:v,giris:giris,kodSat,kartNo:(iKartNo>=0?+r[iKartNo]||0:0),satirlar:[],iptaller:[]});
       if(tip==='İptal'){ gg.iptaller.push(r); iptal++; } else gg.satirlar.push(r);
     });
     // aynı voucher kaç tarihte var? (blok voucher tespiti — mevcut kayıt eşleme için)
@@ -11607,6 +11608,40 @@ function _rzSejourOku(f){
       showToast(sejN+' eski Sejour kaydı temizlendi — dosyadan baştan kuruluyor','success');
       window._sjTemizle=false; // temizlik bir kez
     }
+    // v779: ÜRÜN ZİNCİRİ — aynı voucher'da aynı girişle birden çok ürün (Sejour ikinci ürüne de ilk girişi yazar):
+    // kart sırasına (#) göre dizilir, her ürünün girişi bir öncekinin bitişidir (bitiş = giriş + Gün)
+    const iGun=H('Gün');
+    try{ if(!dosyaAcilim){
+      const zin={}; Object.values(grup).forEach(g=>{ if(!g.kodSat) return; const vk=_norm(g.opKod+'|'+g.voucher+'|'+g.giris); (zin[vk]=zin[vk]||[]).push(g); });
+      Object.values(zin).filter(L=>L.length>1).forEach(L=>{
+        L.sort((a,b)=>(a.kartNo-b.kartNo)); let bas=L[0].giris;
+        L.forEach((g,i)=>{ g.zincir=true; if(i>0&&bas){ g.giris=bas; }
+          const R=g.satirlar.concat(g.iptaller); let gun=0;
+          R.forEach(r=>{ const n=iGun>=0?(+r[iGun]||0):0; if(n>gun) gun=n; if(!n){ const a=_sjTarih(r[iGir]),b=_sjTarih(r[iCik]); if(a&&b){ const d=_isoDiff(a,b); if(d>gun) gun=d; } } });
+          bas=(g.giris&&gun)?_isoAdd(g.giris,gun):''; });
+        window._sjZincir=(window._sjZincir||0)+1;
+      });
+      // anahtarları yeni girişe göre tazele
+      Object.keys(grup).forEach(k=>{ const g=grup[k]; const nk=g.opKod+'|'+g.voucher+'|'+g.giris+(g.kodSat?'|'+g.kodSat:''); if(nk!==k){ delete grup[k]; grup[nk]=g; } });
+    } }catch(e){ console.warn('zincir',e); }
+    // v779: AÇILIM dosyasında voucher'ın birden çok ürün kaydı varsa otel satırları ürün koduna (Orj.Otel) ya da tarihe göre ilgili kayda dağıtılır
+    const iOrj=H('Orj.Otel');
+    try{ if(dosyaAcilim){
+      Object.keys(grup).forEach(k=>{ const g=grup[k]; if(g.giris) return;
+        const L=rezv.filter(x=>x.tip==='urun'&&x.voucher&&_norm(x.voucher||'')===_norm(g.voucher)&&x.kalkis).sort((a,b)=>String(a.kalkis).localeCompare(String(b.kalkis)));
+        if(L.length<2) return;
+        const kodOf=x=>_norm(x.urunKod||((getPackages().find(p=>p.id===x.pkgId)||{}).paketKodu)||'');
+        const hedef=r=>{ const kr=iOrj>=0?_norm(String(r[iOrj]||'')):''; let c=kr?L.find(x=>kodOf(x)===kr):null;
+          if(!c){ const t=_sjTarih(r[iGir]); c=L.filter(x=>x.kalkis<=t).slice(-1)[0]||L[0]; } return c; };
+        const parca={};
+        g.satirlar.forEach(r=>{ const c=hedef(r); (parca[c.kalkis]=parca[c.kalkis]||{satirlar:[],iptaller:[]}).satirlar.push(r); });
+        g.iptaller.forEach(r=>{ const c=hedef(r); (parca[c.kalkis]=parca[c.kalkis]||{satirlar:[],iptaller:[]}).iptaller.push(r); });
+        if(Object.keys(parca).length<2) return;
+        delete grup[k];
+        Object.keys(parca).forEach(kal=>{ grup[k+'|'+kal]=Object.assign({},g,{giris:kal,satirlar:parca[kal].satirlar,iptaller:parca[kal].iptaller}); });
+        window._sjAcilimBol=(window._sjAcilimBol||0)+1;
+      });
+    } }catch(e){ console.warn('açılım böl',e); }
     let yeni=0, atla=0, kartN=0, kartVoucher=0, uyeYok=0, iptalRez=0; const kodYok=new Set(), opYok=new Set();
     const otelAdCoz=ad=>{ const t=getTanimlar()||{}; const o=(t.oteller||[]).find(x=>_norm(x.ad||'')===_norm(ad)); return o?o.ad:ad; };
     Object.values(grup).forEach(g=>{
@@ -11663,7 +11698,7 @@ function _rzSejourOku(f){
           }
           const aktifVar=tumu.some(x=>!x.ipt);
           mevcut.durum=aktifVar?'':'iptal';
-          { let kal=''; tumu.forEach(x=>{ const t=_sjTarih(x.r[iGir]); if(t&&(!kal||t<kal)) kal=t; }); if(kal) mevcut.kalkis=kal; }
+          { let kal=''; tumu.forEach(x=>{ const t=_sjTarih(x.r[iGir]); if(t&&(!kal||t<kal)) kal=t; }); if(g.zincir&&g.giris) kal=g.giris; if(kal) mevcut.kalkis=kal; }
           if(iKayit>=0){ let sat=''; tumu.forEach(x=>{ const k2=_sjTarih(x.r[iKayit]); if(k2&&(!sat||k2<sat)) sat=k2; }); if(sat) mevcut.satisTarihi=sat; }
           if(iG5>=0&&!mevcut.grupBolumM){ const gb=_sjBolum(tumu[0]&&tumu[0].r[iG5]); if(gb) mevcut.grupBolum=gb; }
           if(iStat>=0) mevcut.sorSat=tumu.some(x=>String(x.r[iStat]||'').trim()==='Sor-Sat')||false;
@@ -11725,7 +11760,7 @@ function _rzSejourOku(f){
       const tumIptal=!g.satirlar.length&&g.iptaller.length;
       const kaynak=g.satirlar.length?g.satirlar:g.iptaller;
       const ilk=kaynak[0];
-      const kod=(String(ilk[iG1]||'').trim()||(iKod2>=0?String(ilk[iKod2]||'').trim():'')).toUpperCase();
+      const kod=((g.zincir&&g.kodSat)?g.kodSat:(String(ilk[iG1]||'').trim()||(iKod2>=0?String(ilk[iKod2]||'').trim():''))).toUpperCase(); // v779: zincirde satırın kendi ürün kodu (Grup1 ilk ürünü taşır)
       const op=opBul(g.opKod,g.opAd); if(!op) opYok.add(g.opAd||g.opKod);
       let pkg=null, uzHafta=0;
       if(kod){
@@ -11738,6 +11773,7 @@ function _rzSejourOku(f){
       let kalkis='', satis='';
       kaynak.forEach(r=>{ const t=_sjTarih(r[iGir]); if(t&&(!kalkis||t<kalkis)) kalkis=t;
         if(iKayit>=0){ const k2=_sjTarih(r[iKayit]); if(k2&&(!satis||k2<satis)) satis=k2; } });
+      if(g.zincir&&g.giris) kalkis=g.giris; // v779: zincirde ikinci ürünün girişi = öncekinin bitişi
       if(kod&&pkg&&!uzHafta){ const ad3=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod)); if(ad3.length>1) pkg=_pkgSecKodTarih(ad3,op,kalkis)||pkg; } // v741: tarihe uygun sürüm
       const gw=String(ilk[iG3]||'').trim().toUpperCase();
       // müşteriler (aynı isim mükerrer olmasın)
