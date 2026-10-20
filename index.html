@@ -475,6 +475,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)
 /* ════════ YAZDIRMA / PDF ÇIKTISI ════════ */
 @media print{
 .toast,.res-toast,#resToast{display:none!important;visibility:hidden!important}
+#mTabbar,.mnav-btn,#mNavOverlay{display:none!important} /* v778: telefon sekme şeridi PDF'e girmesin */
 /* ── Sunum sayfalama estetiği ── */
 .pres-cover{page-break-inside:avoid!important;break-inside:avoid!important;page-break-after:avoid!important}
 .pres-intro{page-break-inside:avoid!important;break-inside:avoid!important}
@@ -2568,7 +2569,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v777 · 19.10.2026';
+const APP_VER='v778 · 20.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
