@@ -2573,7 +2573,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v783 · 23.10.2026';
+const APP_VER='v784 · 23.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9777,6 +9777,9 @@ function _vEsit(a,b){
   const kisa=da.length<db.length?da:db, uzun=da.length<db.length?db:da;
   return kisa.length>=6&&uzun.endsWith(kisa);
 }
+// v784: KARDEŞ SEFER — aynı operatörün aynı kalkışlı farklı ürünleri (Trendtours THIL7/THIL14/THIL21 tek uçak listesinde gelir;
+// yolcunun rezervasyonu THIL14'te, uçak listesi satırı THIL7 seferinde olabilir)
+function _kardesPkgIds(pkgId){ try{ const pk=getPackages().find(p=>p.id===pkgId); if(!pk||!pk.operatorId) return [pkgId]; return getPackages().filter(p=>p.operatorId===pk.operatorId).map(p=>p.id); }catch(e){ return [pkgId]; } }
 function _mutIssues(){
   const out=[]; const pkgs=getPackages(); const grids=getReservations();
   const gridMap={}; grids.forEach(g=>{ gridMap[g.pkgId+'|'+g.kalkis]=g; });
@@ -9785,8 +9788,11 @@ function _mutIssues(){
     if(r.durum==='iptal') return; // iptal rezervasyon uyarı üretmez (eşleşme setinde kalır — uçaktaki satırı 'rezvde yok' uyarısına da düşürmez)
     const v=String(r.voucher).trim();
     const g=gridMap[r.pkgId+'|'+r.kalkis];
-    const rows=g?(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,v)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher)))):[];
+    let rows=g?(g.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,v)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher)))):[];
     const pk=pkgs.find(p=>p.id===r.pkgId)||{}; const kod=pk.paketKodu||'';
+    if(!rows.length){ // v784: kardeş seferin uçak listesinde varsa (THIL14 rezv ↔ THIL7 listesi) uyarı yok
+      for(const kp of _kardesPkgIds(r.pkgId)){ if(kp===r.pkgId) continue; const g2=gridMap[kp+'|'+r.kalkis]; if(!g2) continue;
+        const r2=(g2.rows||[]).filter(x=>_isim(x)&&(_vEsit(x.resno,v)||(r.asilVoucher&&_vEsit(x.resno,r.asilVoucher)))); if(r2.length){ rows=r2; break; } } }
     if(!rows.length){
       // uzak tarihli seferler için gürültü yapma — uçak listeleri kalkışa ~2 hafta kala hazırlanır
       try{ const gf=_isoDiff(_opsToday(),r.kalkis); if(gf>14||gf<-1) return; }catch(e){}
@@ -9839,7 +9845,8 @@ function _mutIssues(){
   grids.forEach(g=>{
     if(!rezvKalkis.has(g.pkgId+'|'+g.kalkis)) return;
     const pk=pkgs.find(p=>p.id===g.pkgId)||{}; const kod=pk.paketKodu||'';
-    const seferRezv=rezvler.filter(r=>r.pkgId===g.pkgId&&r.kalkis===g.kalkis);
+    const kardes=_kardesPkgIds(g.pkgId);
+    const seferRezv=rezvler.filter(r=>kardes.includes(r.pkgId)&&r.kalkis===g.kalkis); // v784: kardeş ürünlerin aynı kalkışlı rezvleri de sayılır
     const urunRezv=rezvler.filter(r=>r.pkgId===g.pkgId); // aynı ürün, TÜM tarihler (tarih değişmiş/iptal rezv tespiti)
     [...new Set((g.rows||[]).filter(x=>_isim(x)&&_durumEff(x)!=='iptal').map(x=>String(x.resno||'').trim()).filter(Boolean))].forEach(rn=>{
       const var2=seferRezv.some(r=>_vEsit(rn,r.voucher)||(r.asilVoucher&&_vEsit(rn,r.asilVoucher)));
@@ -16480,8 +16487,9 @@ function _ogResnoPaxRezvHesap(pkgId,kalkis,resno){
     const ucakta=g0&&(g0.rows||[]).some(r=>_isim(r)&&String((r.resno||'').trim())===String(resno).trim());
     if(!ucakta) return 0;
     if(_opsBiletIptalV(pkgId,kalkis,resno,g0)) return 0; // v776: tüm biletler iptal
-    const rz=(getRezv()||[]).find(z=>z.tip==='urun'&&z.pkgId===pkgId&&z.kalkis===kalkis
-      &&(String(z.voucher||'').trim()===String(resno).trim()||String(z.asilVoucher||'').trim()===String(resno).trim()));
+    const kardes=_kardesPkgIds(pkgId);
+    const rz=(getRezv()||[]).filter(z=>z.tip==='urun'&&kardes.includes(z.pkgId)&&z.kalkis===kalkis
+      &&(String(z.voucher||'').trim()===String(resno).trim()||String(z.asilVoucher||'').trim()===String(resno).trim())).sort((a,b)=>(a.pkgId===pkgId?0:1)-(b.pkgId===pkgId?0:1))[0]; // v784: kardeş ürün rezvi
     if(rz&&rz.personel) return 0;
     if(rz&&_opsRezvSayilir(rz)){
       const n=(rz.musteriler||[]).filter(_mSayilir).length;
@@ -18584,8 +18592,9 @@ const _trLow=t=>String(t).toLocaleLowerCase('tr-TR').replace(/ı/g,'i');
 function _trRezvKartlar(pkgId,kalkis,resno,y){
   try{
     const v=String(resno||'').trim(); if(!v&&!y) return [];
-    const uygun=x=>((x.tip==='urun'&&x.pkgId===pkgId)||(x.tip==='otel'&&(x.pkgId===pkgId||!x.pkgId)))&&x.durum!=='iptal';
-    let L=(getRezv()||[]).filter(x=>uygun(x)&&x.kalkis===kalkis); // v749: OTEL KARTI tipi kayıtlar (Aspasia, pkgId boş olabilir) da sayılır
+    const kardes=_kardesPkgIds(pkgId); // v784: aynı operatörün kardeş ürünleri (THIL7 listesindeki THIL14 yolcusu)
+    const uygun=x=>((x.tip==='urun'&&(x.pkgId===pkgId||kardes.includes(x.pkgId)))||(x.tip==='otel'&&(x.pkgId===pkgId||!x.pkgId)))&&x.durum!=='iptal';
+    let L=(getRezv()||[]).filter(x=>uygun(x)&&x.kalkis===kalkis).sort((a,b)=>(a.pkgId===pkgId?0:1)-(b.pkgId===pkgId?0:1)); // v749: OTEL KARTI tipi kayıtlar (Aspasia, pkgId boş olabilir) da sayılır
     if(!L.length){ // v751: aynı ürün + voucher, kalkış farklı ama otel kartları bu tarihi kapsıyorsa (tur dosyası da voucher'la eşler) — ör. ALB1+6 rezv 12.10, uçuş 13.10
       L=(getRezv()||[]).filter(x=>uygun(x)&&(x.kartlar||[]).some(k=>k.tip!=='ulasim'&&(k.otel||'').trim()&&k.baslangic&&_pdate(k.baslangic)<=kalkis&&_isoAdd(_pdate(k.baslangic),Math.max(1,+k.gece||1))>=kalkis)); }
     let r=v?(L.find(x=>String(x.voucher||'').trim()===v)||L.find(x=>_vEsit(v,String(x.voucher||'').trim())||(x.asilVoucher&&_vEsit(v,String(x.asilVoucher).trim())))):null; // v777: önce birebir voucher
@@ -18646,9 +18655,9 @@ function _trGenRowsHesap(){
   // İPTAL rezervasyonların voucher'ları transfer ÜRETMEZ (uçak listesinde satırları dursa bile)
   const _iptalV=new Set();
   try{ (getRezv()||[]).forEach(r=>{ if(r&&r.durum==='iptal'){
-    const kk=r.pkgId+'|'+r.kalkis+'|';
+    _kardesPkgIds(r.pkgId).forEach(kp=>{ const kk=kp+'|'+r.kalkis+'|'; // v784: kardeş sefer listesindeki satırı da düşür
     if((r.voucher||'').trim()) _iptalV.add(kk+String(r.voucher).trim());
-    if((r.asilVoucher||'').trim()) _iptalV.add(kk+String(r.asilVoucher).trim());
+    if((r.asilVoucher||'').trim()) _iptalV.add(kk+String(r.asilVoucher).trim()); });
   } }); }catch(e){}
   const merge=(o,vlist)=>{ const p=(o.id||'').split('|'); o.pkgId=p[0]||''; o.kalkis=p[1]||''; o.opsGrupId=(p[0]||'')+'|'+(p[1]||'');
     o.vlist=vlist||[]; o.vseg=p[2]==='TUR'?('TUR:'+(p[3]||'')):p[2];
