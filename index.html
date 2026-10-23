@@ -2573,7 +2573,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v782 · 20.10.2026';
+const APP_VER='v783 · 23.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11870,12 +11870,13 @@ function _rzSejourOku(f){
       if(silId.size){ onarim=silId.size; for(let i=rezv.length-1;i>=0;i--) if(silId.has(rezv[i].id)) rezv.splice(i,1); } }
     setRezv(rezv); rzSave&&rzSave(); try{rzListeGoster&&rzListeGoster();}catch(_e){}
     // yerel disk doğrulaması: 2 sn sonra idb'den geri oku, tutmuyorsa BÜYÜK uyarı
-    setTimeout(async()=>{ try{
-      const disk=await idbGet('rezervasyonlar');
-      const dn=Array.isArray(disk)?disk.length:0;
-      if(dn!==rezv.length){
-        _hataKaydet('YEREL/dogrulama','Bellekte '+rezv.length+' rezervasyon var ama diske '+dn+' yazılabildi!');
-        showToast('⚠️ YEREL DİSK DOĞRULAMASI BAŞARISIZ: bellekte '+rezv.length+', diskte '+dn+' kayıt. Sayfayı YENİLEMEYİN — durumu bildirin!','error',12000);
+    setTimeout(async()=>{ try{ // v783: güncel bellekle kıyasla (bulut çekimi/dedupe araya girebilir), tutmazsa 2 sn sonra bir kez daha dene
+      const oku=async()=>{ const disk=await idbGet('rezervasyonlar'); return Array.isArray(disk)?disk.length:0; };
+      let dn=await oku(), mn=(getRezv()||[]).length;
+      if(dn!==mn){ await new Promise(x=>setTimeout(x,2000)); dn=await oku(); mn=(getRezv()||[]).length; }
+      if(dn!==mn){
+        _hataKaydet('YEREL/dogrulama','Bellekte '+mn+' rezervasyon var ama diske '+dn+' yazılabildi!');
+        showToast('⚠️ YEREL DİSK DOĞRULAMASI BAŞARISIZ: bellekte '+mn+', diskte '+dn+' kayıt. Sayfayı YENİLEMEYİN — durumu bildirin!','error',12000);
       } else console.log('Yerel disk doğrulandı:',dn,'rezervasyon');
     }catch(e){} },2000);
     let msg=yeni+' rezervasyon aktarıldı';
