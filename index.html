@@ -2573,7 +2573,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v784 · 23.10.2026';
+const APP_VER='v785 · 24.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20851,8 +20851,8 @@ function _trDetayAc(id){
       ${bilgi('Araç',[gr.arac,gr.arac2].filter(Boolean).join(' + '))}${bilgi('Firma',gr.firma)}${(function(){ const ri2=_trRehInfo(r); return bilgi('Rehber'+(ri2.kaynak==='grup'?' (grup)':''),ri2.ad?(ri2.ad+(ri2.tel?' · '+ri2.tel:'')):''); })()}${bilgi('Şoför',gr.sofor?(gr.sofor+(gr.stel?' '+gr.stel:'')):'')}${bilgi('Not',r.not)}
     </div>
     <div style="font-weight:800;font-size:.8rem;margin-bottom:5px">👥 Yolcular (${yolcular.length})</div>
-    ${yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${st}">#</th><th style="${st}">Voucher</th><th style="${st}">Soyadı, Adı</th><th style="${st}">Yaş</th><th style="${st}">Uyruk</th></tr>
-      ${yolcular.map((y,i)=>`<tr><td style="${st}">${i+1}</td><td style="${st}">${esc(y.voucher)}</td><td style="${st}"><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td><td style="${st}">${esc(String(y.yas||''))}</td><td style="${st}">${esc(y.uyruk||'')}</td></tr>`).join('')}</table>`
+    ${yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${st}">#</th><th style="${st}">Voucher</th><th style="${st}">Soyadı, Adı</th><th style="${st}">Otel</th><th style="${st}">Yaş</th><th style="${st}">Uyruk</th></tr>
+      ${yolcular.map((y,i)=>`<tr><td style="${st}">${i+1}</td><td style="${st}">${esc(y.voucher)}</td><td style="${st}"><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td>${_trOtelHucre(r,y,st)}<td style="${st}">${esc(String(y.yas||''))}</td><td style="${st}">${esc(y.uyruk||'')}</td></tr>`).join('')}</table>`
       :'<div style="font-size:.74rem;color:var(--muted)">Yolcu detayı bulunamadı (uçak listesi eşleşmedi).</div>'}
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-primary btn-sm" onclick="document.getElementById('trDetayModal').remove();opsOpen('${r.pkgId}','${r.kalkis}')">👥 Gruba git — tur dosyası (araç tahsis / düzenleme)</button>
@@ -21157,6 +21157,18 @@ function _trAtamaKaldirCoklu(enc){
     window._trKod=null; renderOpsTransfer(); showToast('Atamalar kaldırıldı — transferler ayrıldı','success');
   });
 }
+// v785: yolcunun oteli — transfer yönüne göre (geliş → ilk otel, dönüş → son otel, uzatma/ara → o tarihi kapsayan)
+function _trYolcuOtel(r,y){
+  try{
+    const ks=_trRezvKartlar(r.pkgId,r.kalkis,y.voucher||y.resno,{soyad:y.soyad,ad:y.ad});
+    if(!ks.length) return '';
+    if(r.tip==='G'||r.tip==='ARAG') return _trOtelSec(ks,'baslayan',r.tarih)||_trOtelSec(ks,'ilk')||'';
+    if(r.tip==='D'||r.tip==='ARAD') return _trOtelSec(ks,'tarih',_isoAdd(r.tarih,-1))||_trOtelSec(ks,'son')||'';
+    if(r.tip==='UZT') return _trOtelSec(ks,'baslayan',r.tarih)||'';
+    return _trOtelSec(ks,'tarih',r.tarih)||'';
+  }catch(e){ return ''; }
+}
+function _trOtelHucre(r,y,st){ const o=_trYolcuOtel(r,y); const satir=(r.tip==='D'||r.tip==='ARAD')?r.nereden:r.nereye; const farkli=o&&satir&&_norm(o)!==_norm(String(satir).split(' · ')[0]); return `<td style="${st}${farkli?';color:#b45309;font-weight:700':''}" title="${farkli?'Satırın otelinden farklı':''}">${esc(o||'—')}</td>`; }
 function _trDetayCoklu(enc){
   const ids=_trIdsCoz(enc); const all=_trGenRows();
   const U=ids.map(id=>all.find(x=>x.id===id)).filter(Boolean);
@@ -21171,9 +21183,10 @@ function _trDetayCoklu(enc){
   const bolum=U.map(r=>{
     let yolcular=[]; try{ yolcular=_trYolcularDetay(r); }catch(e){}
     let dep=''; try{ dep=_trDeparHesap(r).saat||''; }catch(e){}
-    return `<div style="background:var(--navy);color:#fff;border-radius:9px 9px 0 0;padding:5px 10px;font-size:.76rem;font-weight:700;margin-top:10px">✈ ${esc(r.ucus||'—')} ${esc(r.saat||'')} · ${esc(r.urun)} · ${r.pax} pax${dep?` · <span style="color:#fbbf24">Depar ${esc(dep)}</span>`:''}</div>
-    ${yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${st}">#</th><th style="${st}">Voucher</th><th style="${st}">Soyadı, Adı</th></tr>
-      ${yolcular.map((y,i)=>`<tr><td style="${st}">${i+1}</td><td style="${st}">${esc(y.voucher)}</td><td style="${st}"><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td></tr>`).join('')}</table>`:'<div style="font-size:.72rem;color:var(--muted);padding:4px 2px">Yolcu detayı bulunamadı.</div>'}`;
+    const otelS=(r.tip==='D'||r.tip==='ARAD')?r.nereden:r.nereye;
+    return `<div style="background:var(--navy);color:#fff;border-radius:9px 9px 0 0;padding:5px 10px;font-size:.76rem;font-weight:700;margin-top:10px">✈ ${esc(r.ucus||'—')} ${esc(r.saat||'')} · ${esc(r.urun)} · ${r.pax} pax${otelS?` · <span style="opacity:.85">🏨 ${esc(String(otelS).split(' · ')[0])}</span>`:''}${dep?` · <span style="color:#fbbf24">Depar ${esc(dep)}</span>`:''}</div>
+    ${yolcular.length?`<table style="width:100%;border-collapse:collapse"><tr><th style="${st}">#</th><th style="${st}">Voucher</th><th style="${st}">Soyadı, Adı</th><th style="${st}">Otel</th></tr>
+      ${yolcular.map((y,i)=>`<tr><td style="${st}">${i+1}</td><td style="${st}">${esc(y.voucher)}</td><td style="${st}"><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td>${_trOtelHucre(r,y,st)}</tr>`).join('')}</table>`:'<div style="font-size:.72rem;color:var(--muted);padding:4px 2px">Yolcu detayı bulunamadı.</div>'}`;
   }).join('');
   const bilgi=(l,v)=>v?`<div style="font-size:.74rem"><span style="color:var(--muted);font-weight:700;font-size:.6rem;text-transform:uppercase">${l}</span><br><b>${esc(v)}</b></div>`:'';
   box.innerHTML=`<div style="background:var(--card);border-radius:16px;max-width:640px;width:100%;max-height:84vh;overflow:auto;padding:18px" onclick="event.stopPropagation()">
