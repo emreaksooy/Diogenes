@@ -2574,7 +2574,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v786 · 25.10.2026';
+const APP_VER='v787 · 25.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18826,7 +18826,7 @@ function _trKartMenu(id,dep){
   m+=`<label class="msh-item" style="cursor:pointer">🕐&nbsp; Depar saati<input type="time" value="${esc(dep||'')}" onchange="_trDeparElle('${id}',this.value)" style="margin-left:auto;border:1.5px solid var(--border);border-radius:9px;padding:5px 8px;font-family:inherit;font-size:.85rem"></label>`;
   m+=`<button class="msh-item" onclick="mSheetKapat();_trYerAc('${id}','nereden')">📍&nbsp; Alınış yerini düzelt</button>`;
   m+=`<button class="msh-item" onclick="mSheetKapat();_trYerAc('${id}','nereye')">📍&nbsp; Bırakış yerini düzelt</button>`;
-  if((r.tip==='D'||r.tip==='G')&&r.ucus) m+=`<button class="msh-item" onclick="mSheetKapat();_trInfoDilSor('${id}')">🏨&nbsp; ${r.tip==='D'?'Abreise':'Anreise'} Information (PDF)</button>`;
+  if(((r.tip==='D'||r.tip==='G')&&r.ucus)||r.tip==='UZT') m+=`<button class="msh-item" onclick="mSheetKapat();_trInfoDilSor('${id}')">🏨&nbsp; ${r.tip==='D'?'Abreise':(r.tip==='G'?'Anreise':'Hoteltransfer')} Information (PDF)</button>`;
   if(r.tip==='TUR') m+=`<button class="msh-item" onclick="mSheetKapat();_trTipTog('${id}')">⇄&nbsp; ${r.trf?'Tur yürüyüşüne dön':'Transfer olarak işle'}</button>`;
   if(r.grup){
     if(!r.onay) m+=`<button class="msh-item" onclick="mSheetKapat();_trOnay('${id}')">✓&nbsp; Onayla</button>`;
@@ -20363,7 +20363,7 @@ function _renderOpsTransferKlasik(){
     h+=`<td>${gr&&gr.firma?esc(gr.firma):(r.tahsis&&r.tahsis.firma?`<span style="color:#0369a1;font-weight:700">${esc(r.tahsis.firma)}</span>`:'<span style="color:var(--muted)">—</span>')}</td>`;
     h+=`<td><input class="notin" value="${esc(r.not||'')}" onchange="_trNotElle('${r.id}',this.value)" placeholder="—"></td>`;
     h+=`<td>${r.grup?(r.onay?'<span class="trchip c-onay">onaylı</span>':'<span class="trchip c-ok">atandı</span>'):(r.tahsis?'<span class="trchip" style="background:#e0f2fe;color:#0369a1">tahsis aracı</span>':'<span class="trchip c-yok">atanmadı</span>')}${_yeniMi(r)?' <span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:.56rem;padding:1px 6px;border-radius:7px">YENİ</span>':''}</td>`;
-    h+=`<td>${(r.tip==='D'||r.tip==='G')&&r.ucus?`<button class="rowbtn" onclick="_trInfoDilSor('${r.id}')" title="${r.tip==='D'?'Abreise':'Anreise'} Information — DE/EN/TR (PDF)">🏨</button>`:''}${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button><button class="rowbtn" onclick="trRehberWa('${r.grup}')" title="Rehbere WhatsApp: görev listesi PDF iner + sohbet açılır">📲</button>`:''}</td></tr>`;
+    h+=`<td>${((r.tip==='D'||r.tip==='G')&&r.ucus)||r.tip==='UZT'?`<button class="rowbtn" onclick="_trInfoDilSor('${r.id}')" title="${r.tip==='D'?'Abreise':(r.tip==='G'?'Anreise':'Hoteltransfer')} Information — DE/EN/TR (PDF)">🏨</button>`:''}${r.grup?`<button class="rowbtn" onclick="_trOnay('${r.id}')" title="Onayla">✓</button><button class="rowbtn" onclick="_trAtamaKaldir('${r.id}')" title="Kaldır">✕</button><button class="rowbtn" onclick="_trPrintGrup('${r.grup}')" title="PDF">🖨</button><button class="rowbtn" onclick="trRehberWa('${r.grup}')" title="Rehbere WhatsApp: görev listesi PDF iner + sohbet açılır">📲</button>`:''}</td></tr>`;
     (function(){
       const durumTx=(gr&&(gr.firma||gr.arac))?[gr.firma,gr.arac].filter(Boolean).join(' · '):'';
       const thsTx=(!gr&&r.tahsis)?[r.tahsis.firma,r.tahsis.arac].filter(Boolean).join(' · ')||'tahsis aracı':'';
@@ -21221,13 +21221,13 @@ function _trNotSatirH(r){ const sj=_trRezvNot(r); return `<div class="notrow" on
 const _trApAd={VIE:'VIENNA',ZRH:'ZURICH',MUC:'MUNICH',FRA:'FRANKFURT',DUS:'DUESSELDORF',BER:'BERLIN',HAM:'HAMBURG',STR:'STUTTGART',SZG:'SALZBURG',GRZ:'GRAZ',LNZ:'LINZ',INN:'INNSBRUCK',KLU:'KLAGENFURT',GVA:'GENEVA',BSL:'BASEL',AYT:'ANTALYA AIRPORT',ADB:'IZMIR',IST:'ISTANBUL',SAW:'ISTANBUL SABIHA GOKCEN',ASR:'KAYSERI',NAV:'NEVSEHIR',DLM:'DALAMAN',BJV:'BODRUM'};
 function _trApAdi(kod){ kod=String(kod||'').toUpperCase().trim(); return _trApAd[kod]||kod; }
 const _trInfoL={
- de:{bas:'ABREISE INFORMATION',basG:'ANREISE INFORMATION',datum:'DATUM',otel:'HOTEL · TRANSFER VOM',otelG:'HOTEL · TRANSFER NACH',abhol:'ABHOLZEIT',anzeit:'ANKUNFT',pers:'ANGEMELDETE PERSONEN',name:'NAME',vch:'VOUCHER',flug:'FLUG',saatD:'ABFLUG',saatG:'ANKUNFT',not:'Bitte seien Sie <b>10 Minuten</b> vor der Abholzeit an der Rezeption.',rec:'RECEPTION',fAb:'Abflug ab',fZiel:'Zielflughafen',fAbz:'Abflugzeit',fAnz:'Ankunftzeit',gun:['So','Mo','Di','Mi','Do','Fr','Sa']},
- en:{bas:'DEPARTURE INFORMATION',basG:'ARRIVAL INFORMATION',datum:'DATE',otel:'HOTEL · TRANSFER FROM',otelG:'HOTEL · TRANSFER TO',abhol:'PICK-UP TIME',anzeit:'ARRIVAL',pers:'REGISTERED PASSENGERS',name:'NAME',vch:'VOUCHER',flug:'FLIGHT',saatD:'DEPARTURE',saatG:'ARRIVAL',not:'Please be at the reception <b>10 minutes</b> before the pick-up time.',rec:'RECEPTION',fAb:'Departure from',fZiel:'Destination',fAbz:'Departure time',fAnz:'Arrival time',gun:['Su','Mo','Tu','We','Th','Fr','Sa']},
- tr:{bas:'DÖNÜŞ BİLGİLENDİRME',basG:'GELİŞ BİLGİLENDİRME',datum:'TARİH',otel:'OTEL · ALINIŞ YERİ',otelG:'OTEL · BIRAKIŞ',abhol:'ALINIŞ SAATİ',anzeit:'İNİŞ',pers:'KAYITLI YOLCULAR',name:'İSİM',vch:'VOUCHER',flug:'UÇUŞ',saatD:'KALKIŞ',saatG:'İNİŞ',not:'Lütfen alınış saatinden <b>10 dakika</b> önce resepsiyonda hazır olun.',rec:'RESEPSİYON',fAb:'Kalkış Havalimanı',fZiel:'Varış Havalimanı',fAbz:'Kalkış Saati',fAnz:'Varış Saati',gun:['Paz','Pzt','Sal','Çar','Per','Cum','Cmt']}};
+ de:{basU:'HOTELTRANSFER · VERLÄNGERUNG',otelU:'TRANSFER VOM HOTEL',otelU2:'ZUM HOTEL',bas:'ABREISE INFORMATION',basG:'ANREISE INFORMATION',datum:'DATUM',otel:'HOTEL · TRANSFER VOM',otelG:'HOTEL · TRANSFER NACH',abhol:'ABHOLZEIT',anzeit:'ANKUNFT',pers:'ANGEMELDETE PERSONEN',name:'NAME',vch:'VOUCHER',flug:'FLUG',saatD:'ABFLUG',saatG:'ANKUNFT',not:'Bitte seien Sie <b>10 Minuten</b> vor der Abholzeit an der Rezeption.',rec:'RECEPTION',fAb:'Abflug ab',fZiel:'Zielflughafen',fAbz:'Abflugzeit',fAnz:'Ankunftzeit',gun:['So','Mo','Di','Mi','Do','Fr','Sa']},
+ en:{basU:'HOTEL TRANSFER · EXTENSION',otelU:'TRANSFER FROM HOTEL',otelU2:'TO HOTEL',bas:'DEPARTURE INFORMATION',basG:'ARRIVAL INFORMATION',datum:'DATE',otel:'HOTEL · TRANSFER FROM',otelG:'HOTEL · TRANSFER TO',abhol:'PICK-UP TIME',anzeit:'ARRIVAL',pers:'REGISTERED PASSENGERS',name:'NAME',vch:'VOUCHER',flug:'FLIGHT',saatD:'DEPARTURE',saatG:'ARRIVAL',not:'Please be at the reception <b>10 minutes</b> before the pick-up time.',rec:'RECEPTION',fAb:'Departure from',fZiel:'Destination',fAbz:'Departure time',fAnz:'Arrival time',gun:['Su','Mo','Tu','We','Th','Fr','Sa']},
+ tr:{basU:'OTEL TRANSFERİ · UZATMA',otelU:'ALINIŞ OTELİ',otelU2:'GİDİLECEK OTEL',bas:'DÖNÜŞ BİLGİLENDİRME',basG:'GELİŞ BİLGİLENDİRME',datum:'TARİH',otel:'OTEL · ALINIŞ YERİ',otelG:'OTEL · BIRAKIŞ',abhol:'ALINIŞ SAATİ',anzeit:'İNİŞ',pers:'KAYITLI YOLCULAR',name:'İSİM',vch:'VOUCHER',flug:'UÇUŞ',saatD:'KALKIŞ',saatG:'İNİŞ',not:'Lütfen alınış saatinden <b>10 dakika</b> önce resepsiyonda hazır olun.',rec:'RESEPSİYON',fAb:'Kalkış Havalimanı',fZiel:'Varış Havalimanı',fAbz:'Kalkış Saati',fAnz:'Varış Saati',gun:['Paz','Pzt','Sal','Çar','Per','Cum','Cmt']}};
 const _trInfoRenk=[['#1d4ed8','#eff6ff','#bfdbfe'],['#c2410c','#fff4ee','#fcd9c4'],['#15803d','#f0fdf4','#bbf7d0'],['#7c3aed','#f5f3ff','#ddd6fe'],['#0e7490','#ecfeff','#a5f3fc']];
 function _trInfoBolum(U,L){
   // U: ayni gorevin D/G satirlari (1+) — TEK sayfa
-  const r0=U[0]; const anreise=r0.tip==='G';
+  const r0=U[0]; const anreise=r0.tip==='G'; const uzt=r0.tip==='UZT'; // v787: uzatma (otel→otel) transferi de Info belgesine girer
   const dh0=_trDeparHesap(r0);
   const rz=(getRezv()||[]).filter(z=>z&&z.tip==='urun'&&U.some(r=>z.pkgId===r.pkgId&&z.kalkis===r.kalkis));
   const unv=x=>{ try{ const z=rz.find(z2=>[z2.voucher,z2.asilVoucher].some(v=>String(v||'').trim()===String(x.resno||'').trim()));
@@ -21241,6 +21241,7 @@ function _trInfoBolum(U,L){
     const rws=((g&&g.rows)||[]).filter(x=>vset.has(String(x.resno||'').trim())&&_isim(x)&&_durumEff(x)!=='iptal');
     const y0=rws[0]||{};
     const uKey=(r.ucus||'')+'|'+(r.saat||'');
+    if(uzt){ rws.forEach(x=>kisiler.push({x,ui:0,ucus:'',saat:''})); return; }
     if(ucIdx[uKey]===undefined){ ucIdx[uKey]=ucuslar.length;
       const rp=String(r.rota||'').split('→');
       ucuslar.push({no:r.ucus||'',saat:r.saat||'',rota:String(r.rota||'').trim(),
@@ -21253,6 +21254,7 @@ function _trInfoBolum(U,L){
   let gun=''; try{ gun=L.gun[new Date((r0.tarih||'')+'T12:00:00').getDay()]||''; }catch(e){}
   const tarihTx=(()=>{ const p=String(r0.tarih||'').split('-'); return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):''; })();
   const otelAd=[...new Set(U.map(r=>anreise?(r.nereye0||r.nereye||''):(r.nereden0||r.nereden||'')))].filter(Boolean).join(' / ');
+  const otelHedef=uzt?[...new Set(U.map(r=>r.nereye||''))].filter(Boolean).join(' / '):'';
   const vomTx=String(r0.ovrNereden||L.rec).toUpperCase();
   const sagSaat=anreise?(r0.saat||''):(dh0.saat||'');
   const op=[...new Set(U.map(r=>r.op))].filter(Boolean).join(' + ');
@@ -21262,7 +21264,7 @@ function _trInfoBolum(U,L){
   <div style="background:#1e2a3a;color:#fff;padding:12px 22px;display:flex;align-items:center;gap:12px;border-radius:8px 8px 0 0;${PCA}">
     ${logo?`<img src="${logo}" style="height:36px;background:#fff;border-radius:50%;padding:3px">`:''}
     <div><div style="font-weight:800;font-size:12pt">DIOGENES TRAVEL</div>
-      <div style="font-size:7.5pt;color:#9fb3c8">${anreise?L.basG:L.bas}${op?' · '+esc(op.toUpperCase()):''}</div></div>
+      <div style="font-size:7.5pt;color:#9fb3c8">${uzt?L.basU:(anreise?L.basG:L.bas)}${op?' · '+esc(op.toUpperCase()):''}</div></div>
     <div style="margin-left:auto;background:#f26522;border-radius:9px;padding:5px 16px;text-align:center;${PCA}">
       <div style="font-size:6.5pt;font-weight:700">${anreise?L.anzeit:L.abhol}</div>
       <div style="font-size:17pt;font-weight:800">${esc(sagSaat)}</div>
@@ -21271,9 +21273,13 @@ function _trInfoBolum(U,L){
   <div style="border:1.5px solid #e5e9f0;border-top:none;border-radius:0 0 8px 8px;padding:14px 20px 16px">
     <div style="display:flex;gap:10px">
       <div style="flex:1;border:1.5px solid #e5e9f0;border-radius:9px;padding:7px 12px">
-        <div style="font-size:6.5pt;color:#6b7280;font-weight:700">${anreise?L.otelG:L.otel}</div>
+        <div style="font-size:6.5pt;color:#6b7280;font-weight:700">${uzt?L.otelU:(anreise?L.otelG:L.otel)}</div>
         <div style="font-weight:800;font-size:10pt">${esc(String(otelAd).toUpperCase())}${anreise?'':' · '+esc(vomTx)}</div>
       </div>
+      ${uzt?`<div style="flex:1;border:1.5px solid #f26522;border-radius:9px;padding:7px 12px;background:#fff4ee;${PCA}">
+        <div style="font-size:6.5pt;color:#c2410c;font-weight:700">${L.otelU2}</div>
+        <div style="font-weight:800;font-size:10pt">${esc(String(otelHedef).toUpperCase())}</div>
+      </div>`:''}
       <div style="border:1.5px solid #e5e9f0;border-radius:9px;padding:8px 20px;text-align:center">
         <div style="font-size:7pt;color:#6b7280;font-weight:700">${L.datum}</div>
         <div style="font-weight:800;font-size:14.5pt;white-space:nowrap">${esc(tarihTx)}${gun?' <span style="font-size:10pt;color:#6b7280">'+gun+'</span>':''}</div>
@@ -21302,8 +21308,8 @@ function _trInfoBolum(U,L){
 function _trInfoCok(ids,dil){
   const L=_trInfoL[dil]||_trInfoL.de;
   const rows=_trGenRows();
-  const secil=[...new Set(ids)].map(i=>rows.find(x=>x.id===i)).filter(r=>r&&(r.tip==='D'||r.tip==='G')&&(r.ucus||r.saat));
-  if(!secil.length){ showToast('Uçuşlu GELİŞ/DÖNÜŞ transferi seç — Info belgesi uçuş işleri için üretilir','error',5000); return; }
+  const secil=[...new Set(ids)].map(i=>rows.find(x=>x.id===i)).filter(r=>r&&(((r.tip==='D'||r.tip==='G')&&(r.ucus||r.saat))||r.tip==='UZT')); // v787: uzatma da
+  if(!secil.length){ showToast('GELİŞ/DÖNÜŞ (uçuşlu) ya da UZATMA transferi seç — Info belgesi bunlar için üretilir','error',5000); return; }
   // AYNI GOREV (grup) = TEK SAYFA; grupsuzlar tek basina
   const grupMap={}; const sira=[];
   secil.forEach(r=>{ const gk=(r.grup?('g:'+r.grup+':'+r.tip):('_'+r.id));
@@ -21314,8 +21320,8 @@ function _trInfoCok(ids,dil){
   const w=window.open('','_blank'); if(!w){ showToast('Açılır pencere engellendi — tarayıcı izni ver','error'); return; }
   // dosya adı: Tarih-Departure List-Otel Adı
   const _r0=grupMap[sira[0]][0];
-  const _hepsiD=sira.every(k=>grupMap[k][0].tip==='D'), _hepsiG=sira.every(k=>grupMap[k][0].tip==='G');
-  const _listeAd=_hepsiD?'Departure List':(_hepsiG?'Arrival List':'Transfer List');
+  const _hepsiD=sira.every(k=>grupMap[k][0].tip==='D'), _hepsiG=sira.every(k=>grupMap[k][0].tip==='G'), _hepsiU=sira.every(k=>grupMap[k][0].tip==='UZT');
+  const _listeAd=_hepsiD?'Departure List':(_hepsiG?'Arrival List':(_hepsiU?'Hotel Transfer':'Transfer List'));
   const _oteller=[...new Set(sira.map(k=>{ const r=grupMap[k][0]; return String((r.tip==='G'?(r.nereye0||r.nereye):(r.nereden0||r.nereden))||'').trim(); }).filter(Boolean))];
   const _otelTx=(_oteller[0]||'')+(_oteller.length>1?' +'+(_oteller.length-1):'');
   const _dosyaAd=[_fmtDateTR(_r0.tarih),_listeAd,_otelTx].filter(Boolean).join('-');
