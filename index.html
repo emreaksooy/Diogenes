@@ -2574,7 +2574,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v788 · 25.10.2026';
+const APP_VER='v789 · 25.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18788,6 +18788,10 @@ function _trGenRowsHesap(){
       }
     });
   }catch(e){}
+  // v789: AYNI GÖREVDEKİ (grup) satırlar deparı paylaşır — araç atarken girilen depar grubun ilk satırına yazılmış olabilir
+  // (MAG5+2 satırı 07:00, aynı araçtaki LYK7 satırı boş → tur dosyasında "uçuşa göre" görünüyordu); boş olan en erken elle girilen deparı alır
+  try{ const gd={}; out.forEach(r=>{ if(r.grup&&r.deparMan&&r.depar){ const k=r.grup+'|'+r.tarih; const d=_dk(r.depar); if(d!==null&&(!gd[k]||d<gd[k].dk)) gd[k]={dk:d,saat:r.depar}; } });
+    out.forEach(r=>{ if(r.grup&&!(r.deparMan&&r.depar)){ const e=gd[r.grup+'|'+r.tarih]; if(e){ r.depar=e.saat; r.deparMan=true; r.deparGrup=true; } } }); }catch(e){}
   return out;
 }
 function _trTipGoster(r){
