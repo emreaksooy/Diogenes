@@ -843,6 +843,7 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .tdm .route .l{display:flex;align-items:center;gap:8px;min-width:0}
 .tdm .route .pt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:.82rem} .tdm .route .pt small{font-weight:500;color:var(--muted)}
 .tdm .route .arr{color:var(--muted);flex:none}
+.tdm .route .notrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px} .tdm .route .notin{font:inherit;font-size:.7rem;padding:2px 7px;border:1px dashed var(--border);border-radius:7px;background:transparent;color:var(--fg,#0f172a);min-width:160px;flex:1 1 160px} .tdm .route .notin:focus{border-style:solid;border-color:var(--primary);outline:none;background:var(--card,#fff)} .tdm .route .notin.dolu{border-style:solid;border-color:#f59e0b;background:#fffbeb;color:#92400e;font-weight:700} .tdm .route .sjnot{font-size:.66rem;color:#92400e;background:#fef3c7;border-radius:6px;padding:1px 6px;white-space:normal}
 .tdm .route .pin{flex:none;background:none;border:none;cursor:pointer;font-size:.68rem;opacity:.3;padding:0 2px;line-height:1} .tdm .row:hover .route .pin{opacity:.75} .tdm .route .pin:hover{opacity:1} .tdm .route .pin.man{opacity:.9;color:var(--primary)}
 .tdm .route .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.7rem;color:var(--muted)} .tdm .route .meta>*{flex:none}
 .tdm .route{cursor:pointer} .tdm .route:hover .pt{text-decoration:underline}
@@ -2573,7 +2574,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v785 · 24.10.2026';
+const APP_VER='v786 · 25.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15655,7 +15656,7 @@ function renderTrYeni(){
       <input class="cb" type="checkbox" ${sel?'checked':''} onchange="_trYeniSec('${esc(r.id)}',this.checked)" aria-label="seç">
       <div class="time"><span class="k">${TAD[r.tip]||esc(r.tip)}${r.trf?' · TRF':''}</span><span class="t">${esc(r.saat||'—')}</span><span class="dep">Depar <b>${esc(dep.saat||'—')}</b>${dep.onceki?' <span title="önceki gün">⤴</span>':''}</span></div>
       <div class="route" onclick="_trDetayAc('${esc(r.id)}')" title="Detay"><div class="l">${pt(r.nereden)}<button class="pin${r.ovrNereden?' man':''}" title="${r.ovrNereden?'Alınış yeri elle girildi — düzelt / otomatiğe dön':'Alınış yerini düzelt — yalnız bu transfer'}" onclick="event.stopPropagation();_trYerAc('${esc(r.id)}','nereden')">📍</button><span class="arr">→</span>${pt(r.nereye)}<button class="pin${r.ovrNereye?' man':''}" title="${r.ovrNereye?'Bırakış yeri elle girildi — düzelt / otomatiğe dön':'Bırakış yerini düzelt — yalnız bu transfer'}" onclick="event.stopPropagation();_trYerAc('${esc(r.id)}','nereye')">📍</button></div>
-        <div class="meta">${aralik?`<span class="tag">${_fmtDateTR(r.tarih).slice(0,5)}</span>`:''}${r.ucus?`<span class="tag fl">${esc(r.ucus)}</span>`:''}${hat==='IC'?'<span class="tag hic">İÇ HAT</span>':hat==='DIS'?'<span class="tag hdis">DIŞ HAT</span>':''}${r.rota&&r.rota.includes('→')?`<span>${esc(r.rota)}</span>`:''}${r.bolge?`<span>· ${esc(r.bolge)}</span>`:''}${r.grupKod?`<span>· PNR ${esc(r.grupKod)}</span>`:''}${r.akt?`<span>· aktarmalı</span>`:''}</div></div>
+        <div class="meta">${aralik?`<span class="tag">${_fmtDateTR(r.tarih).slice(0,5)}</span>`:''}${r.ucus?`<span class="tag fl">${esc(r.ucus)}</span>`:''}${hat==='IC'?'<span class="tag hic">İÇ HAT</span>':hat==='DIS'?'<span class="tag hdis">DIŞ HAT</span>':''}${r.rota&&r.rota.includes('→')?`<span>${esc(r.rota)}</span>`:''}${r.bolge?`<span>· ${esc(r.bolge)}</span>`:''}${r.grupKod?`<span>· PNR ${esc(r.grupKod)}</span>`:''}${r.akt?`<span>· aktarmalı</span>`:''}</div>${_trNotSatirH(r)}</div>
       <div class="who"><span class="op">${esc(r.op||'—')} · <span class="tag urun">${esc(r.urun||'')}</span></span><span class="reh">${reh&&reh.ad?('Rehber: '+esc(reh.ad)+(reh.kaynak==='görev'?'':' <small>(grup)</small>')+(reh.bolumFark?' <em>⚠ bölüm: '+esc(reh.bolumFark)+'</em>':'')):'<em>Rehber yok</em>'}</span></div>
       <div class="pax"><span class="n">${r.pax||0}</span><span class="l">pax</span></div>
       <div class="state">${durum}</div>
@@ -15665,7 +15666,7 @@ function renderTrYeni(){
     const hepsi=U.every(x=>_trSel.has(x.r.id)); const paxT=U.reduce((t,x)=>t+(+x.r.pax||0),0);
     const u1=f=>[...new Set(U.map(x=>String(f(x.r)||'').trim()).filter(Boolean))];
     const hatT=rt=>{ const h=_trHatTipi(rt||''); return h==='IC'?'<span class="tag hic">İÇ HAT</span>':h==='DIS'?'<span class="tag hdis">DIŞ HAT</span>':''; };
-    const ucl=U.map(x=>`<div><span class="tag fl">${esc(x.r.ucus||'—')}</span><b>${esc(x.r.saat||'')}</b>${x.r.rota&&x.r.rota.includes('→')?`<span>${esc(x.r.rota)}</span>${hatT(x.r.rota)}`:''}<span style="color:var(--muted)">· ${esc((x.r.nereden||'').split(' · ')[0])} · ${x.r.pax||0} pax</span></div>`).join('');
+    const ucl=U.map(x=>`<div><span class="tag fl">${esc(x.r.ucus||'—')}</span><b>${esc(x.r.saat||'')}</b>${x.r.rota&&x.r.rota.includes('→')?`<span>${esc(x.r.rota)}</span>${hatT(x.r.rota)}`:''}<span style="color:var(--muted)">· ${esc((x.r.nereden||'').split(' · ')[0])} · ${x.r.pax||0} pax</span>${(x.r.not||'').trim()?`<span class="sjnot" style="background:#fffbeb;border:1px solid #f59e0b">📝 ${esc(x.r.not)}</span>`:''}${_trRezvNot(x.r).map(t=>`<span class="sjnot">✈ ${esc(t)}</span>`).join('')}</div>`).join('')+`<div class="notrow" onclick="event.stopPropagation()"><input class="notin${(r0.not||'').trim()?' dolu':''}" value="${esc(r0.not||'')}" placeholder="📝 transfer notu (tüm uçuşlara)…" onchange="_trNotToplu2('${enc}',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></div>`;
     const rehler=[...new Set(U.map(x=>{ try{ return (_trRehInfo(x.r).ad||'').trim(); }catch(e){ return ''; } }).filter(Boolean))];
     const nereden=u1(r=>r.nereden), nereye=u1(r=>r.nereye);
     const pt=txt=>{ const p=String(txt||'—').split(' · '); return `<span class="pt" title="${esc(txt||'')}">${esc(p[0])}${p[1]?` <small>· ${esc(p.slice(1).join(' · '))}</small>`:''}</span>`; };
@@ -21138,6 +21139,7 @@ function _trAtama(birlesik){ if(birlesik===undefined) birlesik=true;
   else rows.forEach(r=>{ const kod=grupYap(); if(!ilkKod) ilkKod=kod; bagla(r,kod); });
   setTransfer(Tr); _trSel.clear(); window._trKod=null; renderOpsTransfer();
   showToast(birlesik?(_trKodOf(ilkKod)+' oluşturuldu — '+rows.length+' transfer TEK görevde, '+pax+' pax'):(rows.length+' AYRI görev oluşturuldu — satırlar birleşmedi'),'success',6000); }
+function _trNotToplu2(enc,v){ _trIdsCoz(enc).forEach(id=>_trSatKaydet(id,{not:(v||'').trim()})); window._trRowsMemo=null; try{ renderOpsTransfer(); }catch(e){} }
 function _trNotToplu(){
   if(!_trSel.size) return;
   const v=((document.getElementById('trSecNot')||{}).value||'').trim();
@@ -21205,7 +21207,17 @@ function _trOnay(id){ const r=_trGenRows().find(x=>x.id===id); _trSatKaydet(id,{
 function _trDeparElle(id,v){ v=_saatNorm((v||'').trim());
   if(!_saatGecerli(v)){ showToast('Geçersiz saat: "'+v+'" — ss:dd biçiminde gir (ör. 16, 1615, 16:15)','error',4000); renderOpsTransfer(); return; }
   _trSatKaydet(id,{depar:v,deparMan:!!v}); renderOpsTransfer(); }
-function _trNotElle(id,v){ _trSatKaydet(id,{not:(v||'').trim()}); }
+function _trNotElle(id,v){ _trSatKaydet(id,{not:(v||'').trim()}); try{ window._trRowsMemo=null; const el=document.activeElement; if(!(el&&el.classList&&el.classList.contains('notin'))) renderOpsTransfer(); }catch(e){} }
+// v786: operatörden (Sejour "Trf. Notu") gelen yolcu transfer notları — satırın voucher'ları için
+function _trRezvNot(r){
+  try{ const vl=(r.vlist||[]).map(v=>String(v||'').trim()).filter(Boolean); if(!vl.length) return [];
+    const out=new Set();
+    (getRezv()||[]).forEach(z=>{ if(z.tip!=='urun'||z.kalkis!==r.kalkis||z.durum==='iptal') return; const zv=String(z.voucher||'').trim(), av=String(z.asilVoucher||'').trim();
+      if(!vl.some(v=>_vEsit(v,zv)||(av&&_vEsit(v,av)))) return;
+      (z.musteriler||[]).forEach(m=>{ if(m.iptal) return; const t=String(m.trfNot||'').trim(); if(t) out.add(t); }); });
+    return [...out]; }catch(e){ return []; }
+}
+function _trNotSatirH(r){ const sj=_trRezvNot(r); return `<div class="notrow" onclick="event.stopPropagation()"><input class="notin${(r.not||'').trim()?' dolu':''}" value="${esc(r.not||'')}" placeholder="📝 transfer notu…" onchange="_trNotElle('${esc(r.id)}',this.value)" onkeydown="if(event.key==='Enter')this.blur()">${sj.map(t=>`<span class="sjnot" title="Operatörden (Sejour transfer notu)">✈ ${esc(t)}</span>`).join('')}</div>`; }
 const _trApAd={VIE:'VIENNA',ZRH:'ZURICH',MUC:'MUNICH',FRA:'FRANKFURT',DUS:'DUESSELDORF',BER:'BERLIN',HAM:'HAMBURG',STR:'STUTTGART',SZG:'SALZBURG',GRZ:'GRAZ',LNZ:'LINZ',INN:'INNSBRUCK',KLU:'KLAGENFURT',GVA:'GENEVA',BSL:'BASEL',AYT:'ANTALYA AIRPORT',ADB:'IZMIR',IST:'ISTANBUL',SAW:'ISTANBUL SABIHA GOKCEN',ASR:'KAYSERI',NAV:'NEVSEHIR',DLM:'DALAMAN',BJV:'BODRUM'};
 function _trApAdi(kod){ kod=String(kod||'').toUpperCase().trim(); return _trApAd[kod]||kod; }
 const _trInfoL={
