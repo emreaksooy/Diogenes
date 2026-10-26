@@ -843,7 +843,8 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .tdm .route .l{display:flex;align-items:center;gap:8px;min-width:0}
 .tdm .route .pt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:.82rem} .tdm .route .pt small{font-weight:500;color:var(--muted)}
 .tdm .route .arr{color:var(--muted);flex:none}
-.tdm .route .notrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px} .tdm .route .notin{font:inherit;font-size:.7rem;padding:2px 7px;border:1px dashed var(--border);border-radius:7px;background:transparent;color:var(--fg,#0f172a);min-width:160px;flex:1 1 160px} .tdm .route .notin:focus{border-style:solid;border-color:var(--primary);outline:none;background:var(--card,#fff)} .tdm .route .notin.dolu{border-style:solid;border-color:#f59e0b;background:#fffbeb;color:#92400e;font-weight:700} .tdm .route .sjnot{font-size:.66rem;color:#92400e;background:#fef3c7;border-radius:6px;padding:1px 6px;white-space:normal}
+.tdm .route .notrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px} .tdm .route .notin{font:inherit;font-size:.7rem;padding:2px 7px;border:1px dashed var(--border);border-radius:7px;background:transparent;color:var(--fg,#0f172a);min-width:160px;flex:1 1 160px} .tdm .route .notin:focus{border-style:solid;border-color:var(--primary);outline:none;background:var(--card,#fff)} .tdm .route .depin{font:inherit;font-size:.7rem;font-weight:700;width:64px;padding:2px 6px;border:1px dashed var(--border);border-radius:7px;background:transparent;color:var(--fg,#0f172a);text-align:center;font-variant-numeric:tabular-nums} .tdm .route .depin.man{border-style:solid;border-color:var(--primary);color:var(--primary)} .tdm .route .depin.grp{border-style:solid;border-color:#94a3b8} .tdm .route .depin:focus{outline:none;border-style:solid;border-color:var(--primary);background:var(--card,#fff)} .tdm .route .deplbl{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.tdm .route .notin.dolu{border-style:solid;border-color:#f59e0b;background:#fffbeb;color:#92400e;font-weight:700} .tdm .route .sjnot{font-size:.66rem;color:#92400e;background:#fef3c7;border-radius:6px;padding:1px 6px;white-space:normal}
 .tdm .route .pin{flex:none;background:none;border:none;cursor:pointer;font-size:.68rem;opacity:.3;padding:0 2px;line-height:1} .tdm .row:hover .route .pin{opacity:.75} .tdm .route .pin:hover{opacity:1} .tdm .route .pin.man{opacity:.9;color:var(--primary)}
 .tdm .route .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.7rem;color:var(--muted)} .tdm .route .meta>*{flex:none}
 .tdm .route{cursor:pointer} .tdm .route:hover .pt{text-decoration:underline}
@@ -2574,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v789 · 25.10.2026';
+const APP_VER='v790 · 26.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15666,7 +15667,7 @@ function renderTrYeni(){
     const hepsi=U.every(x=>_trSel.has(x.r.id)); const paxT=U.reduce((t,x)=>t+(+x.r.pax||0),0);
     const u1=f=>[...new Set(U.map(x=>String(f(x.r)||'').trim()).filter(Boolean))];
     const hatT=rt=>{ const h=_trHatTipi(rt||''); return h==='IC'?'<span class="tag hic">İÇ HAT</span>':h==='DIS'?'<span class="tag hdis">DIŞ HAT</span>':''; };
-    const ucl=U.map(x=>`<div><span class="tag fl">${esc(x.r.ucus||'—')}</span><b>${esc(x.r.saat||'')}</b>${x.r.rota&&x.r.rota.includes('→')?`<span>${esc(x.r.rota)}</span>${hatT(x.r.rota)}`:''}<span style="color:var(--muted)">· ${esc((x.r.nereden||'').split(' · ')[0])} · ${x.r.pax||0} pax</span>${(x.r.not||'').trim()?`<span class="sjnot" style="background:#fffbeb;border:1px solid #f59e0b">📝 ${esc(x.r.not)}</span>`:''}${_trRezvNot(x.r).map(t=>`<span class="sjnot">✈ ${esc(t)}</span>`).join('')}</div>`).join('')+`<div class="notrow" onclick="event.stopPropagation()"><input class="notin${(r0.not||'').trim()?' dolu':''}" value="${esc(r0.not||'')}" placeholder="📝 transfer notu (tüm uçuşlara)…" onchange="_trNotToplu2('${enc}',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></div>`;
+    const ucl=U.map(x=>`<div><span class="tag fl">${esc(x.r.ucus||'—')}</span><b>${esc(x.r.saat||'')}</b>${x.r.rota&&x.r.rota.includes('→')?`<span>${esc(x.r.rota)}</span>${hatT(x.r.rota)}`:''}<span style="color:var(--muted)">· ${esc((x.r.nereden||'').split(' · ')[0])} · ${x.r.pax||0} pax</span><span onclick="event.stopPropagation()" style="display:inline-flex;gap:4px;align-items:center;margin-left:4px">${_trDepInH(x.r,x.dh)}</span>${(x.r.not||'').trim()?`<span class="sjnot" style="background:#fffbeb;border:1px solid #f59e0b">📝 ${esc(x.r.not)}</span>`:''}${_trRezvNot(x.r).map(t=>`<span class="sjnot">✈ ${esc(t)}</span>`).join('')}</div>`).join('')+`<div class="notrow" onclick="event.stopPropagation()"><input class="notin${(r0.not||'').trim()?' dolu':''}" value="${esc(r0.not||'')}" placeholder="📝 transfer notu (tüm uçuşlara)…" onchange="_trNotToplu2('${enc}',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></div>`;
     const rehler=[...new Set(U.map(x=>{ try{ return (_trRehInfo(x.r).ad||'').trim(); }catch(e){ return ''; } }).filter(Boolean))];
     const nereden=u1(r=>r.nereden), nereye=u1(r=>r.nereye);
     const pt=txt=>{ const p=String(txt||'—').split(' · '); return `<span class="pt" title="${esc(txt||'')}">${esc(p[0])}${p[1]?` <small>· ${esc(p.slice(1).join(' · '))}</small>`:''}</span>`; };
@@ -21223,7 +21224,8 @@ function _trRezvNot(r){
       (z.musteriler||[]).forEach(m=>{ if(m.iptal) return; const t=String(m.trfNot||'').trim(); if(t) out.add(t); }); });
     return [...out]; }catch(e){ return []; }
 }
-function _trNotSatirH(r){ const sj=_trRezvNot(r); return `<div class="notrow" onclick="event.stopPropagation()"><input class="notin${(r.not||'').trim()?' dolu':''}" value="${esc(r.not||'')}" placeholder="📝 transfer notu…" onchange="_trNotElle('${esc(r.id)}',this.value)" onkeydown="if(event.key==='Enter')this.blur()">${sj.map(t=>`<span class="sjnot" title="Operatörden (Sejour transfer notu)">✈ ${esc(t)}</span>`).join('')}</div>`; }
+function _trDepInH(r,dh){ dh=dh||_trDeparHesap(r); const man=!!(r.deparMan&&r.depar&&!r.deparGrup); const grp=!!r.deparGrup; return `<span class="deplbl">Depar</span><input class="depin${man?' man':(grp?' grp':'')}" value="${esc(dh.saat||'')}" placeholder="ss:dd" title="${man?'Elle girildi — bu satır':(grp?'Gruptaki diğer satırdan alındı — değiştirmek için yaz':'Uçuşa göre otomatik — elle girmek için yaz; boş bırak = otomatik')}" onchange="_trDeparElle('${esc(r.id)}',this.value)" onkeydown="if(event.key==='Enter')this.blur()">`; }
+function _trNotSatirH(r){ const sj=_trRezvNot(r); return `<div class="notrow" onclick="event.stopPropagation()">${(r.tip==='D'||r.tip==='ARAD'||r.tip==='UZT'||r.tip==='TUR')?_trDepInH(r):''}<input class="notin${(r.not||'').trim()?' dolu':''}" value="${esc(r.not||'')}" placeholder="📝 transfer notu…" onchange="_trNotElle('${esc(r.id)}',this.value)" onkeydown="if(event.key==='Enter')this.blur()">${sj.map(t=>`<span class="sjnot" title="Operatörden (Sejour transfer notu)">✈ ${esc(t)}</span>`).join('')}</div>`; }
 const _trApAd={VIE:'VIENNA',ZRH:'ZURICH',MUC:'MUNICH',FRA:'FRANKFURT',DUS:'DUESSELDORF',BER:'BERLIN',HAM:'HAMBURG',STR:'STUTTGART',SZG:'SALZBURG',GRZ:'GRAZ',LNZ:'LINZ',INN:'INNSBRUCK',KLU:'KLAGENFURT',GVA:'GENEVA',BSL:'BASEL',AYT:'ANTALYA AIRPORT',ADB:'IZMIR',IST:'ISTANBUL',SAW:'ISTANBUL SABIHA GOKCEN',ASR:'KAYSERI',NAV:'NEVSEHIR',DLM:'DALAMAN',BJV:'BODRUM'};
 function _trApAdi(kod){ kod=String(kod||'').toUpperCase().trim(); return _trApAd[kod]||kod; }
 const _trInfoL={
@@ -21262,7 +21264,11 @@ function _trInfoBolum(U,L){
   const otelAd=[...new Set(U.map(r=>anreise?(r.nereye0||r.nereye||''):(r.nereden0||r.nereden||'')))].filter(Boolean).join(' / ');
   const otelHedef=uzt?[...new Set(U.map(r=>r.nereye||''))].filter(Boolean).join(' / '):'';
   const vomTx=String(r0.ovrNereden||L.rec).toUpperCase();
-  const sagSaat=anreise?(r0.saat||''):(dh0.saat||'');
+  // v790: otel bazlı farklı alınış saatleri (birleşik görevde her otelin kendi deparı)
+  const otelSaatL=(!anreise)?(()=>{ const m={}; U.forEach(r=>{ const o=String((r.nereden0||r.nereden||'')).split(' · ')[0].trim(); const sa=_trDeparHesap(r).saat||''; if(!o) return; if(!m[o]||(sa&&(!m[o]||_dk(sa)<_dk(m[o]||'99:99')))) m[o]=sa; }); return Object.entries(m).map(([o,sa])=>({o,sa})); })():[];
+  const farkliSaat=otelSaatL.length>1&&new Set(otelSaatL.map(x=>x.sa)).size>1;
+  const enErken=farkliSaat?otelSaatL.map(x=>x.sa).filter(Boolean).sort((a,b)=>_dk(a)-_dk(b))[0]:'';
+  const sagSaat=anreise?(r0.saat||''):((farkliSaat&&enErken)||dh0.saat||'');
   const op=[...new Set(U.map(r=>r.op))].filter(Boolean).join(' + ');
   let logo=''; try{ logo=(document.querySelector('.brand img')||{}).src||''; }catch(e){}
   const PCA='-webkit-print-color-adjust:exact;print-color-adjust:exact';
@@ -21280,7 +21286,7 @@ function _trInfoBolum(U,L){
     <div style="display:flex;gap:10px">
       <div style="flex:1;border:1.5px solid #e5e9f0;border-radius:9px;padding:7px 12px">
         <div style="font-size:6.5pt;color:#6b7280;font-weight:700">${uzt?L.otelU:(anreise?L.otelG:L.otel)}</div>
-        <div style="font-weight:800;font-size:10pt">${esc(String(otelAd).toUpperCase())}${anreise?'':' · '+esc(vomTx)}</div>
+        ${farkliSaat?otelSaatL.map(x=>`<div style="font-weight:800;font-size:10pt;display:flex;justify-content:space-between;gap:10px"><span>${esc(x.o.toUpperCase())}</span><span style="color:#f26522">${esc(x.sa||'—')}</span></div>`).join('')+`<div style="font-size:6.5pt;color:#6b7280">${esc(vomTx)}</div>`:`<div style="font-weight:800;font-size:10pt">${esc(String(otelAd).toUpperCase())}${anreise?'':' · '+esc(vomTx)}</div>`}
       </div>
       ${uzt?`<div style="flex:1;border:1.5px solid #f26522;border-radius:9px;padding:7px 12px;background:#fff4ee;${PCA}">
         <div style="font-size:6.5pt;color:#c2410c;font-weight:700">${L.otelU2}</div>
