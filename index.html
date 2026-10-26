@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v791 · 26.10.2026';
+const APP_VER='v792 · 26.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -21579,6 +21579,16 @@ function _trYolcularDetay(r){
     return Object.assign({},y,{unvan,pans,konak,oda,yas:yasHesap(y.dogum)});
   });
 }
+// v792: birleşik görevde otel bazlı alınış — "NIVASOLE HOTEL 06:50 · OPTIMUM 07:00 → AYT · PC2003"
+function _trBlokRota(b,B){
+  const cok=(b.oteller||[]).length>1;
+  const otelTx=cok?b.oteller.map(o=>o.otel+(o.depar?' ('+o.depar+')':'')).join('  ·  '):'';
+  if(B==='DÖNÜŞ') return (otelTx||b.hedef)+'  →  '+b.ucuslar.map(u=>u.yer)[0];
+  return b.ucuslar.map(u=>u.yer)[0].split(' · ')[0]+'  →  '+(otelTx||b.hedef);
+}
+const _TR_OTEL_RENK=['FFDBEAFE','FFFFEDD5','FFDCFCE7','FFEDE9FE','FFFCE7F3','FFFEF9C3'];
+const _TR_OTEL_RENK_HTML=['#dbeafe','#ffedd5','#dcfce7','#ede9fe','#fce7f3','#fef9c3'];
+function _trOtelRenkIdx(b,otel){ const i=(b.oteller||[]).findIndex(o=>o.otel===otel); return i<0?0:i%_TR_OTEL_RENK.length; }
 function _trTasimaciBloklar(sessiz,secIds){
   let firma=_trUst.firma, list;
   if(secIds){
@@ -21621,14 +21631,16 @@ function _trTasimaciBloklar(sessiz,secIds){
       blok={kod:_trKodOf(x.r.grup),tarih:x.r.tarih,gr:_trGrupOf(x.r),ilkR:x.r,ucuslar:[],pax:0,depar:null,hedef:'',yolcular:[]};
       gorevMap[key]=blok; bolumler[B].push(blok);
     }
+    const _otelS=String((x.r.tip==='D'||x.r.tip==='ARAD')?x.r.nereden:x.r.nereye).split(' · ')[0].trim(); // v792: satırın oteli + kendi deparı
     blok.ucuslar.push({ucus:x.r.ucus||'',saat:x.r.saat||'',yer:(x.r.tip==='TUR'||x.r.tip==='UZT')?((x.r.nereden||'')+' → '+(x.r.nereye||'')):(x.r.tip==='D'?x.r.nereye:x.r.nereden),
-      rt:(x.r.rota&&x.r.rota.includes('→'))?x.r.rota:'',hat:_trHatTipi(x.r.rota)==='IC'?'İÇ HAT':(_trHatTipi(x.r.rota)==='DIS'?'DIŞ HAT':''),ak:x.r.akt||''});
+      rt:(x.r.rota&&x.r.rota.includes('→'))?x.r.rota:'',hat:_trHatTipi(x.r.rota)==='IC'?'İÇ HAT':(_trHatTipi(x.r.rota)==='DIS'?'DIŞ HAT':''),ak:x.r.akt||'',otel:_otelS,depar:x.dh.saat||''});
+    (blok.oteller=blok.oteller||[]); if(_otelS&&!blok.oteller.some(o=>o.otel===_otelS)) blok.oteller.push({otel:_otelS,depar:x.dh.saat||''}); else if(_otelS){ const o=blok.oteller.find(o2=>o2.otel===_otelS); if(x.dh.saat&&(!o.depar||_dk(x.dh.saat)<_dk(o.depar))) o.depar=x.dh.saat; }
     (blok.ops=blok.ops||new Set()).add(x.r.op||'');
     if((x.r.not||'').trim()) (blok.notlar=blok.notlar||new Set()).add(x.r.not.trim());
     blok.pax+=(+x.r.pax||0);
     const dk=_dk(x.dh.saat); if(dk!==null&&(blok.depar===null||dk<blok.depar)) blok.depar=x.dh.saat;
     blok.hedef=x.r.tip==='D'?x.r.nereden:x.r.nereye; // otel tarafı
-    _trYolcularDetay(x.r).forEach(y=>blok.yolcular.push(Object.assign({},y,{ucus:x.r.ucus||'',usaat:x.r.saat||'',op:x.r.op||'',
+    _trYolcularDetay(x.r).forEach(y=>blok.yolcular.push(Object.assign({},y,{ucus:x.r.ucus||'',usaat:x.r.saat||'',op:x.r.op||'',otel:_otelS,alinis:x.dh.saat||'',
       hat:_trHatTipi(x.r.rota)==='IC'?'İÇ HAT':(_trHatTipi(x.r.rota)==='DIS'?'DIŞ HAT':''),rt:(x.r.rota&&x.r.rota.includes('→'))?x.r.rota:''})));
   });
   return {firma,bolumler,tahsisler,isIds:list.map(x=>x.r.id).concat(tahsisler.map(t=>t.key)),
@@ -21720,7 +21732,7 @@ function _trTasimaciExcel(secIds){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const V=_trTasimaciBloklar(false,secIds); if(!V) return;
   const aoa=[['DIOGENES TRAVEL — TRANSFER LİSTESİ · '+V.firma],[V.donem],[]];
-  const bantlar=[], bolumBant=[], yolcuHdr=[], detaylar=[], deparlar=[];
+  const bantlar=[], bolumBant=[], yolcuHdr=[], detaylar=[], deparlar=[], renkli=[];
   Object.keys(V.bolumler).forEach(B=>{
     const L=V.bolumler[B]; if(!L.length) return;
     bolumBant.push(aoa.length);
@@ -21731,48 +21743,48 @@ function _trTasimaciExcel(secIds){
       const reh=_rehAd+(_rehAd!=='—'&&_rehTelBul(_rehAd)?' '+_rehTelBul(_rehAd):'')+(b.gr.sofor?' · Şoför: '+b.gr.sofor:'')+(b.gr.stel?' ('+b.gr.stel+')':'');
       const ucusOzet=[...new Set(b.ucuslar.map(u=>(u.ucus+(u.saat?' '+u.saat:'')+(u.rt?'  ('+u.rt+(u.hat?' — '+u.hat:'')+(u.ak?' · aktarmalı, '+u.ak:'')+')':'')).trim()).filter(Boolean))].join('   +   ');
       const aracTxt=[b.gr.arac,b.gr.arac2].filter(Boolean).join(' + ')||'—';
-      const rota=B==='DÖNÜŞ'?(b.hedef+'  →  '+b.ucuslar.map(u=>u.yer)[0]):(b.ucuslar.map(u=>u.yer)[0].split(' · ')[0]+'  →  '+b.hedef);
+      const rota=_trBlokRota(b,B); const cokOtel=(b.oteller||[]).length>1;
       bantlar.push(aoa.length);
-      aoa.push([B.charAt(0)+B.slice(1).toLocaleLowerCase('tr')+' Transfer: '+(bi+1)+'   ·   '+b.kod+'   ·   '+_fmtDateTR(b.tarih),'','','','','','','DEPAR: '+(b.depar||'—'),'']);
+      aoa.push([B.charAt(0)+B.slice(1).toLocaleLowerCase('tr')+' Transfer: '+(bi+1)+'   ·   '+b.kod+'   ·   '+_fmtDateTR(b.tarih),'','','','','','','','','DEPAR: '+(b.depar||'—'),'']);
       deparlar.push(aoa.length); aoa.push(['Depar Saati',b.depar||'—']);
       detaylar.push(aoa.length); aoa.push(['Uçuş',ucusOzet||'—']);
       detaylar.push(aoa.length); aoa.push(['Güzergâh',rota]);
       detaylar.push(aoa.length); aoa.push(['Detay',b.pax+' pax   ·   Araç: '+aracTxt+'   ·   Rehber: '+reh]);
       if(b.notlar&&b.notlar.size){ detaylar.push(aoa.length); aoa.push(['Not',[...b.notlar].join('  ·  ')]); }
       yolcuHdr.push(aoa.length);
-      aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Uçuş','Uçuş Saati','Operatör','Hat / Terminal']);
-      b.yolcular.forEach((y,i)=>aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.ucus,y.usaat,y.op,y.hat?(y.hat+(y.rt?' ('+y.rt+')':'')):'']));
+      aoa.push(['#','Voucher','Unvan','Soyadı, Adı','Yaş','Alınış Oteli','Alınış','Uçuş','Uçuş Saati','Operatör','Hat / Terminal']);
+      b.yolcular.forEach((y,i)=>{ if(cokOtel) renkli.push({r:aoa.length,rgb:_TR_OTEL_RENK[_trOtelRenkIdx(b,y.otel)]}); aoa.push([i+1,y.voucher,y.unvan,y.soyad+', '+y.ad,y.yas,y.otel||'',y.alinis||'',y.ucus,y.usaat,y.op,y.hat?(y.hat+(y.rt?' ('+y.rt+')':'')):'']); });
       aoa.push([]);
     });
     const topP=L.reduce((t,b)=>t+b.pax,0);
-    aoa.push(['TOPLAM — '+B,'','','','','',L.length+' iş · '+topP+' pax','','']);
+    aoa.push(['TOPLAM — '+B,'','','','','','','',L.length+' iş · '+topP+' pax','','']);
     aoa.push([]);
   });
   if(window._trTahDahil&&V.tahsisler&&V.tahsisler.length){
     bolumBant.push(aoa.length); aoa.push(['TAHSİS ARAÇLAR']);
-    aoa.push(['Başlangıç','Bitiş','Tur','Araç','Plaka / Şoför','Pax','Rehber','Rehber Tel','Not']);
+    aoa.push(['Başlangıç','Bitiş','Tur','Araç','Plaka / Şoför','Pax','Rehber','Rehber Tel','Not','','']);
     V.tahsisler.forEach(t=>{
-      aoa.push([_fmtDateTR(t.bas),_fmtDateTR(t.bit),t.tur,t.arac,[t.plaka,t.sofor,t.stel].filter(Boolean).join(' · '),+t.pax||'',t.reh||'',t.rehTel||'',t.not||'']);
+      aoa.push([_fmtDateTR(t.bas),_fmtDateTR(t.bit),t.tur,t.arac,[t.plaka,t.sofor,t.stel].filter(Boolean).join(' · '),+t.pax||'',t.reh||'',t.rehTel||'',t.not||'','','']);
       if(t.yolcular&&t.yolcular.length){
-        yolcuHdr.push(aoa.length); aoa.push(['','#','Voucher','Soyadı, Adı','','','','','']);
-        t.yolcular.forEach((y,i)=>aoa.push(['',i+1,y.voucher,y.soyad+', '+y.ad,'','','','','']));
+        yolcuHdr.push(aoa.length); aoa.push(['','#','Voucher','Soyadı, Adı','','','','','','','']);
+        t.yolcular.forEach((y,i)=>aoa.push(['',i+1,y.voucher,y.soyad+', '+y.ad,'','','','','','','']));
       }
     });
-    aoa.push(['TOPLAM — TAHSİS','','','','','',V.tahsisler.length+' araç','','']);
+    aoa.push(['TOPLAM — TAHSİS','','','','','',V.tahsisler.length+' araç','','','','']);
     aoa.push([]);
   }
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[10,15,8,32,7,10,9,16,10].map(w2=>({wch:w2}));
+  ws['!cols']=[10,15,8,30,6,26,8,10,9,15,13].map(w2=>({wch:w2}));
   try{
-    const nC=9;
+    const nC=11;
     ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:nC-1}},{s:{r:1,c:0},e:{r:1,c:nC-1}}];
     ws['!rows']=[{hpt:30},{hpt:15}];
     _xsSet(ws,0,0,{font:{bold:true,sz:15,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},alignment:{horizontal:'left',vertical:'center',indent:1}});
     for(let c=1;c<nC;c++) _xsSet(ws,0,c,{fill:{fgColor:{rgb:_XSC.navy}}});
     _xsSet(ws,1,0,{font:{sz:9,italic:true,color:{rgb:_XSC.gri}},alignment:{horizontal:'left',indent:1}});
     bolumBant.forEach(r2=>{ ws['!merges'].push({s:{r:r2,c:0},e:{r:r2,c:nC-1}}); _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:12,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},alignment:{vertical:'center'}}); ws['!rows'][r2]={hpt:20}; });
-    bantlar.forEach(r2=>{ ws['!merges'].push({s:{r:r2,c:0},e:{r:r2,c:6}}); ws['!merges'].push({s:{r:r2,c:7},e:{r:r2,c:nC-1}}); ws['!rows'][r2]={hpt:20}; _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.navy}},fill:{fgColor:{rgb:'FFE8EEF7'}},border:_xsB(),alignment:{vertical:'center'}});
-      _xsSet(ws,r2,7,{font:{bold:true,sz:12,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(),alignment:{horizontal:'center',vertical:'center'}}); });
+    bantlar.forEach(r2=>{ ws['!merges'].push({s:{r:r2,c:0},e:{r:r2,c:8}}); ws['!merges'].push({s:{r:r2,c:9},e:{r:r2,c:nC-1}}); ws['!rows'][r2]={hpt:20}; _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:11,color:{rgb:_XSC.navy}},fill:{fgColor:{rgb:'FFE8EEF7'}},border:_xsB(),alignment:{vertical:'center'}});
+      _xsSet(ws,r2,9,{font:{bold:true,sz:12,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.turuncu}},border:_xsB(),alignment:{horizontal:'center',vertical:'center'}}); });
     deparlar.forEach(r2=>{ ws['!merges'].push({s:{r:r2,c:1},e:{r:r2,c:nC-1}}); ws['!rows'][r2]={hpt:22};
       _xsSet(ws,r2,0,{font:{bold:true,sz:11,color:{rgb:_XSC.turuncu}},alignment:{horizontal:'right',vertical:'center'}});
       _xsSet(ws,r2,1,{font:{bold:true,sz:14,color:{rgb:_XSC.turuncu}},alignment:{vertical:'center'}}); });
@@ -21782,6 +21794,8 @@ function _trTasimaciExcel(secIds){
     yolcuHdr.forEach(r2=>{ _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:8,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}},border:_xsB(_XSC.beyaz)});
       for(let r3=r2+1;r3<aoa.length&&aoa[r3].length&&aoa[r3][0]!=='';r3++){ if(typeof aoa[r3][0]!=='number') break; _xsSatirStil(ws,r3,nC,{font:{sz:9},border:_xsB(),fill:(r3-r2)%2===0?{fgColor:{rgb:_XSC.zebra}}:undefined}); } });
     aoa.forEach((row,r2)=>{ if(String(row[0]||'').startsWith('TOPLAM')) _xsSatirStil(ws,r2,nC,{font:{bold:true,sz:10},fill:{fgColor:{rgb:_XSC.turuncuSoft}},border:_xsB(_XSC.turuncu)}); });
+    // v792: otel bazlı renk (yalnız çok otelli görevlerde) — Otel + Alınış hücreleri koyu, satır açık ton
+    renkli.forEach(x=>{ _xsSatirStil(ws,x.r,nC,{font:{sz:9},border:_xsB(),fill:{fgColor:{rgb:x.rgb}}}); _xsSet(ws,x.r,5,{font:{sz:9,bold:true}}); _xsSet(ws,x.r,6,{font:{sz:10,bold:true,color:{rgb:_XSC.turuncu}},alignment:{horizontal:'center'}}); });
   }catch(e){}
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Transfer Listesi');
@@ -21811,7 +21825,7 @@ function _trTasimaciPdf(){
     h+=`<div class="gorev"><h1>${esc(B)} TRANSFER LİSTESİ — ${esc(V.firma)}</h1><h2>${esc(V.donem)} · Diogenes Travel</h2>`;
     L.forEach((b,bi)=>{
       const ucusOzet=[...new Set(b.ucuslar.map(u=>(u.ucus+(u.saat?' '+u.saat:'')+(u.rt?' ('+u.rt+(u.hat?' — '+u.hat:'')+(u.ak?' · aktarmalı, '+u.ak:'')+')':'')).trim()).filter(Boolean))].join(' + ');
-      const rota=B==='DÖNÜŞ'?(b.hedef+' → '+b.ucuslar.map(u=>u.yer)[0]):(b.ucuslar.map(u=>u.yer)[0].split(' · ')[0]+' → '+b.hedef);
+      const rota=_trBlokRota(b,B).replace(/  →  /g,' → ').replace(/  ·  /g,' · '); const cokOtel=(b.oteller||[]).length>1;
       const aracTxt=[b.gr.arac,b.gr.arac2].filter(Boolean).join(' + ')||'—';
       const _ri=_trRehInfo(b.ilkR||{});
       const _rehAd=(b.gr.rehber||_ri.ad||'—');
@@ -21821,8 +21835,8 @@ function _trTasimaciPdf(){
       <div style="font-size:9.5pt;padding:2px 8px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Güzergâh:</b> ${esc(rota)}</div>
       <div style="font-size:9.5pt;padding:2px 8px 4px;border-left:1px solid #99a;border-right:1px solid #99a"><b>Depar:</b> ${esc(b.depar||'—')} &nbsp;·&nbsp; <b>${b.pax} pax</b> &nbsp;·&nbsp; <b>Araç:</b> ${esc(aracTxt)} &nbsp;·&nbsp; <b>Rehber:</b> ${esc(reh)}</div>
       ${b.notlar&&b.notlar.size?`<div style="font-size:9.5pt;padding:2px 8px 4px;border-left:1px solid #99a;border-right:1px solid #99a;color:#92400e"><b>Not:</b> ${esc([...b.notlar].join('  ·  '))}</div>`:''}
-      <table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Voucher</th><th>Unvan</th><th>Soyadı, Adı</th><th>Yaş</th><th>Uçuş</th><th>Saat</th><th>Operatör</th></tr>
-      ${b.yolcular.map((y,i)=>`<tr><td>${i+1}</td><td>${esc(y.voucher)}</td><td>${esc(y.unvan)}</td><td><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td><td>${esc(String(y.yas))}</td><td>${esc(y.ucus)}</td><td>${esc(y.usaat)}</td><td>${esc(y.op)}</td></tr>`).join('')}</table>`;
+      <table style="width:100%;border-collapse:collapse"><tr><th>#</th><th>Voucher</th><th>Unvan</th><th>Soyadı, Adı</th><th>Yaş</th><th>Alınış Oteli</th><th>Alınış</th><th>Uçuş</th><th>Saat</th><th>Operatör</th></tr>
+      ${b.yolcular.map((y,i)=>{ const bg=cokOtel?'background:'+_TR_OTEL_RENK_HTML[_trOtelRenkIdx(b,y.otel)]+';-webkit-print-color-adjust:exact;print-color-adjust:exact':''; return `<tr style="${bg}"><td>${i+1}</td><td>${esc(y.voucher)}</td><td>${esc(y.unvan)}</td><td><b>${esc(y.soyad)}</b>, ${esc(y.ad)}</td><td>${esc(String(y.yas))}</td><td>${esc(y.otel||'')}</td><td><b>${esc(y.alinis||'')}</b></td><td>${esc(y.ucus)}</td><td>${esc(y.usaat)}</td><td>${esc(y.op)}</td></tr>`; }).join('')}</table>`;
     });
     const topP=L.reduce((t,b)=>t+b.pax,0);
     h+=`<div style="margin-top:5px;font-weight:700;font-size:10pt">TOPLAM: ${L.length} iş · ${topP} pax</div></div>`;
