@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v795 · 26.10.2026';
+const APP_VER='v796 · 26.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -21071,7 +21071,7 @@ function _trRenderAtabarYeni(bar,rows,pax,T){
   let btn='';
   if(hepsiBos&&rows.length===1) btn=go('Ata','_trAtama(true)','Seçili transfere görev oluştur ve ata');
   else if(hepsiBos) btn=go('🔗 Birleştir ve ata','_trAtama(true)','Seçilenler TEK görev olur — tek araç')+alt('Ayrı ayrı ata','_trAtama(false)','Her transfer ayrı görev — aynı araç bilgisi kopyalanır');
-  else if(birlesikTek||tekAtanmis) btn=go('Ata',`_trAtamaGuncelle('${esc(grp[0])}')`,'Formdaki değişiklikleri bu göreve yaz (görev kodu korunur)')+(birlesikTek?alt('✂ Ayır',`_trAtamaKaldirCoklu('${rows.map(r=>encodeURIComponent(r.id)).join('~')}')`,'Atamaları kaldır — transferler yeniden ayrı görünür'):alt('Atamayı kaldır',`_trAtamaKaldir('${esc(rows[0].id)}')`));
+  else if(birlesikTek||tekAtanmis) btn=go('💾 Kaydet',`_trAtamaGuncelle('${esc(grp[0])}')`,'Formdaki değişiklikleri bu göreve yaz (görev kodu korunur)')+(birlesikTek?alt('✂ Ayır',`_trAtamaKaldirCoklu('${rows.map(r=>encodeURIComponent(r.id)).join('~')}')`,'Atamaları kaldır — transferler yeniden ayrı görünür'):alt('Atamayı kaldır',`_trAtamaKaldir('${esc(rows[0].id)}')`));
   else if(karma) btn=go('🔗 Birleştir ve ata',`_trAtamaBirlesigeEkle('${esc(grp[0])}')`,'Normal transferleri mevcut birleşik göreve ekler')+alt('Ayrı ayrı ata','_trAtama(false)');
   else btn=go('🔗 Birleştir ve ata','_trAtama(true)','Seçilenler yeni TEK görev olur')+alt('Ayrı ayrı ata','_trAtama(false)');
   const D=!!window._trAbDiger;
@@ -21094,9 +21094,31 @@ function _trRenderAtabarYeni(bar,rows,pax,T){
       </div>
     </span></div>`;
 }
+// v796: seçili transferler mevcut bir göreve aitse form o görevin bilgileriyle dolu gelir — değiştir → Kaydet
+function _trAbOnDoldur(rows){
+  try{
+    const grp=[...new Set(rows.map(r=>r.grup).filter(Boolean))]; if(grp.length!==1||rows.some(r=>!r.grup)) return false;
+    const kod=grp[0]; const g=(getTransfer().gruplar||{})[kod]; if(!g) return false;
+    const E=id=>document.getElementById(id);
+    const setSel=(id,val)=>{ const el=E(id); if(!el||!val) return false; const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(val)); if(o){ el.value=o.value; return true; } return false; };
+    if(g.rehber) setSel('trRehber',g.rehber);
+    if(g.firma) setSel('trFirma',g.firma);
+    _trAracDoldur();
+    const L=_trFiloList(g.firma||''); const ara=ad=>{ const t=_norm(ad||''); if(!t) return null; return L.find(x=>_norm(x.ad+(x.kap?' ('+x.kap+')':''))===t)||L.find(x=>_norm(x.ad)===t.replace(/\s*\(\d+\)\s*$/,'').trim())||L.find(x=>t.startsWith(_norm(x.ad))); };
+    const a=ara(g.arac); if(a&&E('trArac')) E('trArac').value=a.id;
+    const a2=ara(g.arac2); if(a2&&E('trArac2')) E('trArac2').value=a2.id;
+    if(g.tarifeSec&&E('trTarife')) E('trTarife').value=g.tarifeSec;
+    if(E('trGuzergah')) E('trGuzergah').value=g.guzergah||'';
+    const deps=[...new Set(rows.filter(r=>r.deparMan&&r.depar&&!r.deparGrup).map(r=>r.depar))]; if(E('trDepar')) E('trDepar').value=deps.length===1?deps[0]:''; if(E('trDepar')&&deps.length>1) E('trDepar').placeholder='satır bazlı farklı';
+    const nots=[...new Set(rows.map(r=>(r.not||'').trim()).filter(Boolean))]; if(E('trSecNot')) E('trSecNot').value=nots.length===1?nots[0]:'';
+    try{ _trKapKontrol(); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
 function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!bar) return; if(!_trSel.size){ bar.classList.remove('show'); bar.innerHTML=''; return; } bar.classList.add('show');
   if(_trGorunum==='yeni'&&bar.closest('.tdm')){ const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0);
     _trRenderAtabarYeni(bar,rows,pax,getTanimlar()); _trAracDoldur();
+    _trAbOnDoldur(rows); // v796
     try{ const ilk=rows[0]; if(ilk){ const bl=_trSatirBolum(ilk); const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,bl); const el=document.getElementById('trRehber'); if(el&&!el.value&&(sr.rehberAd||'').trim()){ const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(sr.rehberAd)); if(o) el.value=o.value||o.text; } } }catch(e){}
     try{ if(window.matchMedia&&matchMedia('(max-width:980px)').matches&&bar.parentElement!==document.body) document.body.appendChild(bar); }catch(e){}
     return; }
@@ -21119,7 +21141,7 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
     ${_trSel.size>1?`<button class="btn btn-s" style="background:#0369a1" onclick="_trAtama(false)" title="Her seçili transfer AYRI görev olur — aynı araç bilgisi kopyalanır, satırlar birleşmez">⚟ Ayrı Ayrı Ata</button>`:''}
     <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trNotToplu()" title="Araç atamadan yalnız not yazar — satırın Not kolonuna işlenir">📝 Sadece Notu Kaydet</button>
     <button class="btn btn-o" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.4)" onclick="_trSecTemizle()">Vazgeç</button></span>`;
-  _trAracDoldur();
+  _trAracDoldur(); _trAbOnDoldur(rows);
   try{ const ilk=rows[0]; if(ilk){ const bl=_trSatirBolum(ilk); const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,bl); const el=document.getElementById('trRehber');
     if(el&&!el.value&&(sr.rehberAd||'').trim()){ const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(sr.rehberAd)); if(o) el.value=o.value||o.text; } } }catch(e){}
   try{ if(window.matchMedia&&matchMedia('(max-width:980px)').matches&&bar.parentElement!==document.body) document.body.appendChild(bar); }catch(e){}
