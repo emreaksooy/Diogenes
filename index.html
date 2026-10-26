@@ -838,7 +838,7 @@ body.dark .rzkart,body.dark .rzmet,body.dark .rzbox,body.dark .rzsecK,body.dark 
 .tdm .time .t{font-family:var(--mono);font-weight:700;font-size:1.05rem;letter-spacing:-.02em;line-height:1}
 .tdm .time .k{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
 .tdm .row.G .time .k{color:var(--tg)} .tdm .row.D .time .k{color:var(--td)} .tdm .row.ARAD .time .k,.tdm .row.ARAG .time .k{color:var(--ta)} .tdm .row.TUR .time .k{color:var(--tt)} .tdm .row.UZT .time .k{color:var(--tu)}
-.tdm .time .dep{font-size:.66rem;color:var(--muted)} .tdm .time .dep b{font-family:var(--mono);color:var(--text)}
+.tdm .time .dep{font-size:.66rem;color:var(--muted);line-height:1.3;white-space:nowrap} .tdm .time .dep b{font-family:var(--mono);color:var(--text)}
 .tdm .route{min-width:0;display:flex;flex-direction:column;gap:3px}
 .tdm .route .l{display:flex;align-items:center;gap:8px;min-width:0}
 .tdm .route .pt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:.82rem} .tdm .route .pt small{font-weight:500;color:var(--muted)}
@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v793 · 26.10.2026';
+const APP_VER='v794 · 26.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15664,7 +15664,7 @@ function renderTrYeni(){
     else { durum=`<button class="ata" onclick="event.stopPropagation();_trYeniAta('${esc(r.id)}')">🚌 Taşımacı ata ${!dep.saat?'<span>depar saati yok</span>':''}</button>`; }
     return `<div class="row ${esc(r.tip)} ${sel?'sel':''} ${x.gece?'gece':''} ${r.onay?'onay':''}">
       <input class="cb" type="checkbox" ${sel?'checked':''} onchange="_trYeniSec('${esc(r.id)}',this.checked)" aria-label="seç">
-      <div class="time"><span class="k">${TAD[r.tip]||esc(r.tip)}${r.trf?' · TRF':''}</span><span class="t">${esc(r.saat||'—')}</span><span class="dep">Depar <b>${esc(dep.saat||'—')}</b>${dep.onceki?' <span title="önceki gün">⤴</span>':''}</span></div>
+      <div class="time"><span class="k">${TAD[r.tip]||esc(r.tip)}${r.trf?' · TRF':''}</span><span class="t" title="Depar (alınış) saati">${esc(dep.saat||r.saat||'—')}${dep.onceki?' <span title="önceki gün" style="font-size:.7rem">⤴</span>':''}</span><span class="dep">${(r.tip==='G'||r.tip==='ARAG')?'İniş':((r.tip==='D'||r.tip==='ARAD')?'Uçuş':'Saat')} <b>${esc(r.saat||'—')}</b>${r.ucus?' · '+esc(r.ucus):''}</span></div>
       <div class="route" onclick="_trDetayAc('${esc(r.id)}')" title="Detay"><div class="l">${pt(r.nereden)}<button class="pin${r.ovrNereden?' man':''}" title="${r.ovrNereden?'Alınış yeri elle girildi — düzelt / otomatiğe dön':'Alınış yerini düzelt — yalnız bu transfer'}" onclick="event.stopPropagation();_trYerAc('${esc(r.id)}','nereden')">📍</button><span class="arr">→</span>${pt(r.nereye)}<button class="pin${r.ovrNereye?' man':''}" title="${r.ovrNereye?'Bırakış yeri elle girildi — düzelt / otomatiğe dön':'Bırakış yerini düzelt — yalnız bu transfer'}" onclick="event.stopPropagation();_trYerAc('${esc(r.id)}','nereye')">📍</button></div>
         <div class="meta">${aralik?`<span class="tag">${_fmtDateTR(r.tarih).slice(0,5)}</span>`:''}${r.ucus?`<span class="tag fl">${esc(r.ucus)}</span>`:''}${hat==='IC'?'<span class="tag hic">İÇ HAT</span>':hat==='DIS'?'<span class="tag hdis">DIŞ HAT</span>':''}${r.rota&&r.rota.includes('→')?`<span>${esc(r.rota)}</span>`:''}${r.bolge?`<span>· ${esc(r.bolge)}</span>`:''}${r.grupKod?`<span>· PNR ${esc(r.grupKod)}</span>`:''}${r.akt?`<span>· aktarmalı</span>`:''}</div>${_trNotSatirH(r)}</div>
       <div class="who"><span class="op">${esc(r.op||'—')} · <span class="tag urun">${esc(r.urun||'')}</span></span><span class="reh">${reh&&reh.ad?('Rehber: '+esc(reh.ad)+(reh.kaynak==='görev'?'':' <small>(grup)</small>')+(reh.bolumFark?' <em>⚠ bölüm: '+esc(reh.bolumFark)+'</em>':'')):'<em>Rehber yok</em>'}</span></div>
@@ -15682,7 +15682,7 @@ function renderTrYeni(){
     const pt=txt=>{ const p=String(txt||'—').split(' · '); return `<span class="pt" title="${esc(txt||'')}">${esc(p[0])}${p[1]?` <small>· ${esc(p.slice(1).join(' · '))}</small>`:''}</span>`; };
     return `<div class="row ${esc(r0.tip)} ${hepsi?'sel':''} ${r0.onay?'onay':''}">
       <input class="cb" type="checkbox" ${hepsi?'checked':''} onchange="_trSecCoklu('${enc}',this.checked)" aria-label="seç">
-      <div class="time"><span class="k">${TAD[r0.tip]||esc(r0.tip)} <span class="tag link">🔗 ${U.length}</span></span><span class="t">${esc(dh0.saat||r0.saat||'—')}</span><span class="dep">Depar <b>${esc(dh0.saat||'—')}</b></span></div>
+      <div class="time"><span class="k">${TAD[r0.tip]||esc(r0.tip)} <span class="tag link">🔗 ${U.length}</span></span><span class="t" title="Depar (en erken alınış)">${esc((()=>{ const L=U.map(x=>x.dh.saat).filter(Boolean).sort((a,b)=>_dk(a)-_dk(b)); return L[0]||r0.saat||'—'; })())}</span><span class="dep">${(r0.tip==='G'||r0.tip==='ARAG')?'İniş':'Uçuş'} ${[...new Set(U.map(x=>(x.r.ucus||'')+' '+(x.r.saat||'')).filter(x=>x.trim()))].map(esc).join('<br>')}</span></div>
       <div class="route" onclick="_trDetayCoklu('${enc}')" title="Detay: tüm uçuşlar ve yolcular"><div class="l">${nereden.length===1?pt(nereden[0]):`<span class="pt">${esc(nereden.map(n=>n.split(' · ')[0]).join(' / '))}</span>`}<button class="pin${U.some(x=>x.r.ovrNereden)?' man':''}" title="Alınış yerini düzelt — bu karttaki tüm transferler" onclick="event.stopPropagation();_trYerAc('${enc}','nereden',true)">📍</button><span class="arr">→</span>${nereye.length===1?pt(nereye[0]):`<span class="pt">${esc(nereye.map(n=>n.split(' · ')[0]).join(' / '))}</span>`}<button class="pin${U.some(x=>x.r.ovrNereye)?' man':''}" title="Bırakış yerini düzelt — bu karttaki tüm transferler" onclick="event.stopPropagation();_trYerAc('${enc}','nereye',true)">📍</button></div><div class="ucl">${ucl}</div></div>
       <div class="who"><span class="op">${u1(r=>r.op).map(esc).join(' + ')||'—'} · ${u1(r=>r.urun).map(u=>`<span class="tag urun">${esc(u)}</span>`).join(' ')}</span><span class="reh">${rehler.length?'Rehber: '+rehler.map(esc).join(' + '):'<em>Rehber yok</em>'}</span></div>
       <div class="pax"><span class="n">${paxT}</span><span class="l">pax</span></div>
