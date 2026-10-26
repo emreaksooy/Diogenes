@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v790 · 26.10.2026';
+const APP_VER='v791 · 26.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8386,6 +8386,15 @@ function _ucakSablonAktar(rows,wb,sessiz){
         const yeni=String(y[f]||'').trim(); const eski=String(mevcutY[f]||'').trim();
         if(yeni&&eski&&yeni!==eski){ degisimler.push({alan:f,eski,yeni}); mevcutY[f]=yeni; }
         else if(yeni&&!eski) mevcutY[f]=yeni;
+      });
+      // v791: BİLET DEĞİŞTİ ve yeni bilet aktarmasız → eski 2. bacak temizlenir (AYT-ESB-VIE iptal, AYT-MUC alındı → "AYT-MUC + ESB-VIE" kalmasın)
+      ['g','d'].forEach(px=>{ const u1='_u1', bacak2=[px+'_u2',px+'_k2',px+'_v2',px+'_ks2',px+'_vs2'];
+        const yeniU1=String(y[px+u1]||'').trim(), yeniPnr=String(y[px+'_pnr']||'').trim();
+        const degisti=degisimler.some(d=>d.alan===px+u1||d.alan===px+'_pnr');
+        const yeniAktarmasiz=yeniU1&&!bacak2.some(f=>String(y[f]||'').trim());
+        if(degisti&&yeniAktarmasiz&&bacak2.some(f=>String(mevcutY[f]||'').trim())){
+          degisimler.push({alan:px+'_u2',eski:String(mevcutY[px+'_u2']||mevcutY[px+'_v2']||'').trim(),yeni:'(aktarma kaldırıldı)'});
+          bacak2.forEach(f=>{ mevcutY[f]=''; }); }
       });
       if(y.dogum&&!mevcutY.dogum) mevcutY.dogum=y.dogum;
       atla++; return;
