@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v797 · 26.10.2026';
+const APP_VER='v798 · 26.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -21697,15 +21697,27 @@ function _trKlasikRows(){
         return S2; })(),
       notlar:new Set([String(r.not||'').trim()].filter(Boolean)),
       hatlar:new Set([(r.tip==='G'||r.tip==='D'||r.tip==='ARAG'||r.tip==='ARAD')?_trHatTipi(r.rota||''):''].filter(h=>h==='IC'||h==='DIS')), // v797: terminal
+      donus:(r.tip==='D'||r.tip==='ARAD'||r.tip==='UZT'), hav:kisalt((r.tip==='D'||r.tip==='ARAD')?r.nereye:r.nereden), bolgeKod:_bolgeKod,
+      alinislar:[{otel:kisalt((r.tip==='D'||r.tip==='ARAD'||r.tip==='UZT')?r.nereden:r.nereye),saat:depar}], // v798: otel bazlı alınış
       kaptan:[gr.sofor,gr.stel].filter(Boolean).join(' · '),
       rehber:ri.ad?(ri.ad+(ri.tel?' · '+ri.tel:'')):''};
     const key=(r.grup&&r.tip!=='TUR')?(r.grup+'|'+r.tarih+'|'+tip):('tek'+(seq++));
     const m=birlesim.get(key);
     if(m){ m.pax+=kayit.pax; if(kayit.depar&&(!m.depar||kayit.depar<m.depar)) m.depar=kayit.depar;
-      kayit.ops.forEach(o=>m.ops.add(o)); kayit.notlar.forEach(n=>m.notlar.add(n)); kayit.hatlar.forEach(h=>m.hatlar.add(h)); }
+      kayit.ops.forEach(o=>m.ops.add(o)); kayit.notlar.forEach(n=>m.notlar.add(n)); kayit.hatlar.forEach(h=>m.hatlar.add(h)); m.alinislar=(m.alinislar||[]).concat(kayit.alinislar||[]); }
     else birlesim.set(key,kayit);
   });
-  birlesim.forEach(v=>out.push(v));
+  birlesim.forEach(v=>{ // v798: birleşik işte TÜM oteller güzergâhta; alınış saatleri farklıysa otel yanında saat + NOTLAR'a "Alınış: …"
+    try{ const A={}; (v.alinislar||[]).forEach(a=>{ if(!a.otel) return; if(!(a.otel in A)||(a.saat&&(!A[a.otel]||a.saat<A[a.otel]))) A[a.otel]=a.saat||A[a.otel]||''; });
+      const L2=Object.entries(A);
+      if(L2.length>1&&v.tip!=='Günlük Tur'&&v.tip!=='Transfer'){
+        const farkli=new Set(L2.map(x=>x[1])).size>1;
+        const otelTx=L2.sort((a,b)=>String(a[1]).localeCompare(String(b[1]))).map(([o,sa])=>o+(farkli&&sa?' '+sa:'')).join(' / ');
+        v.yon=(v.donus?(otelTx+' - '+v.hav):(v.hav+' - '+otelTx))+(v.bolgeKod?' ('+v.bolgeKod+')':'');
+        if(farkli){ const tx='Alınış: '+L2.map(([o,sa])=>o+' '+(sa||'—')).join(' · '); if(![...v.notlar].some(n=>_norm(n).includes(_norm(tx)))) v.notlar=new Set([tx,...v.notlar]); }
+      } }catch(e){}
+    delete v.alinislar; delete v.donus; delete v.hav; delete v.bolgeKod;
+    out.push(v); });
   // tahsisler: aralıkla kesişen her gün bir satır
   try{
     const Sg=getOpsGrup().gruplar||{};
