@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v796 · 26.10.2026';
+const APP_VER='v797 · 26.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -21696,12 +21696,13 @@ function _trKlasikRows(){
           if(rz&&(rz.operator||'').trim()) S2.add(rz.operator.trim()); }); }catch(e){}
         return S2; })(),
       notlar:new Set([String(r.not||'').trim()].filter(Boolean)),
+      hatlar:new Set([(r.tip==='G'||r.tip==='D'||r.tip==='ARAG'||r.tip==='ARAD')?_trHatTipi(r.rota||''):''].filter(h=>h==='IC'||h==='DIS')), // v797: terminal
       kaptan:[gr.sofor,gr.stel].filter(Boolean).join(' · '),
       rehber:ri.ad?(ri.ad+(ri.tel?' · '+ri.tel:'')):''};
     const key=(r.grup&&r.tip!=='TUR')?(r.grup+'|'+r.tarih+'|'+tip):('tek'+(seq++));
     const m=birlesim.get(key);
     if(m){ m.pax+=kayit.pax; if(kayit.depar&&(!m.depar||kayit.depar<m.depar)) m.depar=kayit.depar;
-      kayit.ops.forEach(o=>m.ops.add(o)); kayit.notlar.forEach(n=>m.notlar.add(n)); }
+      kayit.ops.forEach(o=>m.ops.add(o)); kayit.notlar.forEach(n=>m.notlar.add(n)); kayit.hatlar.forEach(h=>m.hatlar.add(h)); }
     else birlesim.set(key,kayit);
   });
   birlesim.forEach(v=>out.push(v));
@@ -21719,7 +21720,7 @@ function _trKlasikRows(){
           tBas:_fmtDateTR(ab),tBit:_fmtDateTR(abit),tGun:_gunNo+'/'+_gunT,
           yon:([t.gorev,(d===ab?t.basYer:'' )].filter(Boolean).join(' · ')||t.prog||t.tur),
           pax:+t.pax||0,arac:t.arac.split('·')[0].trim(),tip:'Tahsis',
-          kod:grpNo||t.tur,ops:new Set(),notlar:new Set([t.not].filter(Boolean)),
+          kod:grpNo||t.tur,ops:new Set(),notlar:new Set([t.not].filter(Boolean)),hatlar:new Set(),
           kaptan:[t.sofor,t.stel].filter(Boolean).join(' · '),
           rehber:t.reh?(t.reh+(_rehTelBul(t.reh)?' · '+_rehTelBul(t.reh):'')):''});
       }
@@ -21732,18 +21733,19 @@ function _trKlasikExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const L=_trKlasikRows();
   if(!L.length){ showToast('Bu aralıkta iş yok','error'); return; }
-  const aoa=[['İŞ','TARİH','DEPARTMAN','FİRMA','DEPAR','İŞİN YÖNÜ','T.BAŞLANGIÇ','T.BİTİŞ','GÜN','KİŞİ','ARAÇ','TİP','İŞ KODU','OPERATÖRLER','NOTLAR','KAPTAN','REHBER']];
-  L.forEach((x,i)=>aoa.push([i+1,_fmtDateTR(x.tarih),'OPERASYON','DIOGENES TRAVEL',x.depar||'',x.yon||'',x.tBas||'',x.tBit||'',x.tGun||'',x.pax||'',x.arac||'',x.tip,x.kod||'',[...x.ops].join(' + '),[...x.notlar].join(' · '),x.kaptan||'',x.rehber||'']));
+  const termTx=h=>{ const H=h||new Set(); const ic=H.has('IC'), dis=H.has('DIS'); return ic&&dis?'İç + Dış Hat':(dis?'Dış Hat':(ic?'İç Hat':'')); }; // v797
+  const aoa=[['İŞ','TARİH','DEPARTMAN','FİRMA','DEPAR','İŞİN YÖNÜ','TERMİNAL','T.BAŞLANGIÇ','T.BİTİŞ','GÜN','KİŞİ','ARAÇ','TİP','İŞ KODU','OPERATÖRLER','NOTLAR','KAPTAN','REHBER']];
+  L.forEach((x,i)=>aoa.push([i+1,_fmtDateTR(x.tarih),'OPERASYON','DIOGENES TRAVEL',x.depar||'',x.yon||'',termTx(x.hatlar),x.tBas||'',x.tBit||'',x.tGun||'',x.pax||'',x.arac||'',x.tip,x.kod||'',[...x.ops].join(' + '),[...x.notlar].join(' · '),x.kaptan||'',x.rehber||'']));
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[4,11,12,16,7,26,12,12,6,5,8,10,10,18,22,24,30].map(w2=>({wch:w2}));
+  ws['!cols']=[4,11,12,16,7,26,13,12,12,6,5,8,10,10,18,22,24,30].map(w2=>({wch:w2}));
   try{
-    const nC=17;
+    const nC=18;
     _xsSatirStil(ws,0,nC,{font:{bold:true,sz:9,color:{rgb:'FFFFFFFF'}},fill:{fgColor:{rgb:'FF1E3A5F'}},border:_xsB('FFFFFFFF'),alignment:{vertical:'center',horizontal:'center'}});
     for(let r2=1;r2<aoa.length;r2++) for(let c=0;c<nC;c++) _xsSet(ws,r2,c,{
       font:{sz:9,name:'Arial'},
       fill:{fgColor:{rgb:'FFAFEEEE'}},
       border:_xsB('FF555555'),
-      alignment:{vertical:'center',horizontal:(c===0||c===4||c===6||c===7||c===8||c===9||c===11)?'center':'left'}});
+      alignment:{vertical:'center',horizontal:(c===0||c===4||c===6||c===7||c===8||c===9||c===10||c===12)?'center':'left'}});
   }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Is Listesi');
   const ad=(_opsTrDate||_opsToday())+(_opsTrDate2?('_'+_opsTrDate2):'')+'_is_listesi.xlsx';
