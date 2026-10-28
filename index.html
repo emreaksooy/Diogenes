@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v799 · 28.10.2026';
+const APP_VER='v800 · 28.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13016,6 +13016,25 @@ async function _docSigLoad(){
   }catch(e){}
 }
 const _KIND2COL={reservations:'res',pnrLedger:'pnr',operasyon:'ops',transfer:'transfer',opsgrup:'opsgrup',rezervasyonlar:'rezv'};
+// ═══ v800: ALAN BAZLI BİRLEŞTİRME — iki sekme/cihaz aynı satırı değiştirince kaydedilen KAYBOLMAZ ═══
+// _docBase[col][id] = satırın son eşitlenmiş hali (JSON). Yerel değişiklik = local≠base olan ÜST SEVİYE alanlar.
+// Push'tan önce bulut sürümü alınır; bulut değişmişse: sonuç = bulut + yerelde değişen alanlar.
+// Uzaktan satır gelince yerelde gönderilmemiş değişiklik varsa: sonuç = uzak + yerelde değişen alanlar → yeniden push.
+const _docBase={};
+function _docBaseSet(col,id,data){ (_docBase[col]=_docBase[col]||new Map()).set(id,data==null?null:JSON.stringify(data)); }
+function _docBaseGet(col,id){ const m=_docBase[col]; const j=m&&m.get(id); try{ return j?JSON.parse(j):null; }catch(e){ return null; } }
+function _docBaseDel(col,id){ const m=_docBase[col]; if(m) m.delete(id); }
+function _docBirlestir(base,local,remote){
+  if(!remote||typeof remote!=='object'||Array.isArray(remote)) return local;
+  if(!base||typeof base!=='object') return local; // temel yok → yerel kazanır (eski davranış)
+  const out=JSON.parse(JSON.stringify(remote)); const degisen=[];
+  new Set([...Object.keys(local||{}),...Object.keys(base)]).forEach(k=>{
+    const lv=JSON.stringify(local?local[k]:undefined), bv=JSON.stringify(base[k]);
+    if(lv!==bv){ degisen.push(k); if(local&&k in local) out[k]=JSON.parse(JSON.stringify(local[k])); else delete out[k]; }
+  });
+  return {out,degisen};
+}
+function _docYerineKoy(hedef,yeni){ Object.keys(hedef).forEach(k=>{ if(!(k in yeni)) delete hedef[k]; }); Object.assign(hedef,yeni); }
 function _docSplit(col){
   if(col==='res') return (_resCache||[]).filter(g=>g&&g.pkgId&&g.kalkis).map(g=>({id:g.pkgId+'|'+g.kalkis,parent:String(g.kalkis||''),data:g}));
   if(col==='rezv') return (_rezvCache||[]).filter(r=>r&&r.id).map(r=>({id:r.id,parent:String((r.urunKod||'')+'|'+(r.kalkis||'')),data:r}));
@@ -13052,6 +13071,15 @@ function _docJoin(col,rows){
   }
 }
 function _docApplyOne(col,id,data){
+  // v800: yerelde gönderilmemiş değişiklik varsa uzak satırla ALAN BAZLI birleştir, sonra yeniden gönder
+  try{ if(data&&typeof data==='object'&&!Array.isArray(data)){
+    const yerel=_docSplit(col).find(r=>r.id===id); const base=_docBaseGet(col,id);
+    if(yerel&&base&&_dsig(yerel.data)!==_dsig(base)){
+      const m=_docBirlestir(base,yerel.data,data);
+      if(m&&m.out&&m.degisen.length){ data=m.out; try{ _hataKaydet&&_hataKaydet('BULUT/birleştirme',col+':'+id+' uzak + yerel('+m.degisen.join(',')+')'); }catch(e){}
+        const K2={res:'reservations',pnr:'pnrLedger',ops:'operasyon',transfer:'transfer',opsgrup:'opsgrup',rezv:'rezervasyonlar'}; if(K2[col]) setTimeout(()=>{ try{ _cloudQueue(K2[col]); }catch(e){} },300); }
+    } } }catch(e){}
+  if(data) _docBaseSet(col,id,data); else _docBaseDel(col,id);
   const arrUp=(arr,find)=>{ const i=arr.findIndex(find); if(data){ if(i>=0)arr[i]=data; else arr.push(data); } else if(i>=0)arr.splice(i,1); };
   if(col==='res'){ arrUp(_resCache,x=>x&&(x.pkgId+'|'+x.kalkis)===id); idbSet('reservations',_resCache); }
   else if(col==='rezv'){ if(!data){ try{_hataKaydet&&_hataKaydet('REZV-SİL(remote)','id='+id);}catch(e){} } arrUp(_rezvCache,x=>x&&x.id===id); idbSet('rezervasyonlar',_rezvCache); }
@@ -13103,6 +13131,20 @@ async function _docPush(col){
     geriGelen.forEach(id=>_silTomb.delete(col+':'+id));
     try{ await sb.from('doc_rows').delete().eq('col','sil').in('id',geriGelen.map(id=>col+':'+id)); }catch(e){}
   }
+  // v800: push'tan önce bulut sürümünü al; başkası değiştirdiyse alan bazlı birleştir (yerelde değişen alanlar üstte)
+  if(ups.length){ try{
+    const idL=ups.map(u=>u.id); const srv=new Map();
+    for(let i=0;i<idL.length;i+=100){ const q=await sb.from('doc_rows').select('id,data').eq('col',col).in('id',idL.slice(i,i+100)); (q.data||[]).forEach(x=>srv.set(x.id,x.data)); }
+    const sigBase=new Map(); // bulut değişti mi? → bulut sig ≠ base sig
+    ups.forEach(u=>{ const sd=srv.get(u.id); if(!sd||typeof sd!=='object'||Array.isArray(sd)) return; const base=_docBaseGet(col,u.id); if(!base) return;
+      if(_dsig(sd)===_dsig(base)) return; // bulut bizim bildiğimiz gibi → düz yaz
+      if(_dsig(sd)===_dsig(u.data)) return; // zaten aynı
+      const m=_docBirlestir(base,u.data,sd); if(!m||!m.out) return;
+      const yerelObj=_docSplit(col).find(r=>r.id===u.id); if(yerelObj&&yerelObj.data&&typeof yerelObj.data==='object') _docYerineKoy(yerelObj.data,m.out);
+      u.data=m.out; sig.set(u.id,_dsig(m.out));
+      try{ _hataKaydet&&_hataKaydet('BULUT/birleştirme',col+':'+u.id+' push öncesi bulut değişmişti → birleştirildi ('+m.degisen.join(',')+')'); }catch(e){} });
+    try{ ['res','rezv','ops','transfer','opsgrup','pnr'].includes(col)&&_docKaydetYerel&&_docKaydetYerel(col); }catch(e){}
+  }catch(e){ console.warn('push öncesi birleştirme',e); } }
   for(let i=0;i<ups.length;i+=50){
     const dilim=ups.slice(i,i+50);
     let r; try{ r=await sb.from('doc_rows').upsert(dilim); }catch(e){ r={error:e}; }
@@ -13123,8 +13165,13 @@ async function _docPush(col){
     if(r.error) throw new Error('Silme gönderilemedi ('+col+', '+(i+parca.length)+'/'+del.length+') — '+(r.error.message||r.error));
     parca.forEach(id=>sig.delete(id));
   }
+  ups.forEach(u=>{ if(sig.get(u.id)===_dsig(u.data)) _docBaseSet(col,u.id,u.data); }); // v800: gönderilen = yeni temel
+  del.forEach(id=>_docBaseDel(col,id));
   _docSigSave();
 }
+function _docKaydetYerel(col){ try{ if(col==='ops') idbSet('operasyon',_opsCache); else if(col==='res') idbSet('reservations',_resCache); else if(col==='rezv') idbSet('rezervasyonlar',_rezvCache); else if(col==='transfer') idbSet('transfer',_trCache); else if(col==='opsgrup') idbSet('opsgrup',_ogCache); else if(col==='pnr') idbSet('pnrLedger',_pnrCache); }catch(e){} }
+// v800: açılışta/tam çekimde senkron sayılan satırlar temel olarak kaydedilir (sig eşleşenler)
+function _docBaseBaslat(){ try{ Object.keys(_docSig).forEach(col=>{ _docSplit(col).forEach(r=>{ if(_docSig[col].get(r.id)===_dsig(r.data)) _docBaseSet(col,r.id,r.data); }); }); }catch(e){} }
 function _onDocRemote(p){
   try{
     const col=(p.new&&p.new.col)||(p.old&&p.old.col); if(!col||!_docSig[col]) return;
@@ -13300,7 +13347,7 @@ async function _cloudPullFull(){
     _pkgCache.forEach(p=>_sigPkg.set(p.id,JSON.stringify(p)));
     _opCache.forEach(o=>_sigOp.set(o.id,JSON.stringify(o)));
     _rezvDedupe();
-    _docSigSave();
+    _docSigSave(); _docBaseBaslat(); // v800
     renderOpList(); renderOperatorSelect(); renderDashboard();
     if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); }
     _pullDususKontrol('tam çekim',_rezvOnce);
@@ -13410,7 +13457,7 @@ async function _cloudPullIncre(last){
   // taşlı yerel kayıtlar (eski IDB kopyalarından kalanlar) temizlenir
   try{ Object.keys(_docSig).forEach(c=>{ _docSplit(c).forEach(r=>{ if(_silTomb.has(c+':'+r.id)){ _docSig[c].delete(r.id); _docApplyOne(c,r.id,null); degisti++; } }); }); }catch(e){}
   _rezvDedupe();
-  _docSigSave();
+  _docSigSave(); _docBaseBaslat(); // v800
   if(degisti){ renderOpList(); renderOperatorSelect(); renderDashboard(); if(currentId && !_pkgCache.find(p=>p.id===currentId)){ currentId=null; clearForm(); updateCurrentLabel('',''); } }
   _pullDususKontrol('artımlı çekim',_rezvOnce);
 }
@@ -14026,7 +14073,7 @@ async function _boot(){
   let rb  = await idbGet('rehbildirim');   _rbCache     = Array.isArray(rb)?rb:[];
   let trf = await idbGet('transfer');      _trCache = (trf&&typeof trf==='object')?trf:null;
   let ogr = await idbGet('opsgrup');       _ogCache = (ogr&&typeof ogr==='object')?ogr:null;
-  await _docSigLoad();
+  await _docSigLoad(); _docBaseBaslat(); // v800
   window._bootT.idb=performance.now();
   // ── BULUT ÖNCELİKLİ AÇILIŞ ──
   // Ekran çizilmeden ÖNCE bulut çekilir: her cihaz açılışta bulutla eşitlenir.
