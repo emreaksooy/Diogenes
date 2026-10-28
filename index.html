@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v800 · 28.10.2026';
+const APP_VER='v801 · 28.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18715,9 +18715,9 @@ function _trBolgeKanon(s){ // v753: ISTANBUL / İSTANBUL / istanbul → tek yaz�
 }
 function _trBolge(pkg){ return _trBolgeKanon(pkg.bolge||(pkg.destinasyonSehir||'').split(/[·,\/]/)[0]||''); }
 function _trBolgeOnce(ad){ const n=_norm(ad||''); const b=(getTanimlar().bolgeler||[]).find(x=>_norm(x.ad||'')===n); return b?_dk(b.once):null; }
-// v788: bölgede "uçuştan önce" dakikası tanımlı değilse VARSAYILAN: dış hat 180 dk, iç hat 120 dk (Tanımlamalar › Bölgeler'de bölgeye dakika yazılırsa o geçerli)
-const TR_ONCE_VARSAYILAN={DIS:180,IC:120};
-function _trDeparHesap(r){ if(r.deparMan&&r.depar) return {saat:r.depar,onceki:false}; if(r.tip==='D'||r.tip==='ARAD'){ const u=_dk(r.saat); let o=_trBolgeOnce(r.bolge), vars=false; if(o===null&&u!==null){ o=(_trHatTipi(r.rota||'')==='IC')?TR_ONCE_VARSAYILAN.IC:TR_ONCE_VARSAYILAN.DIS; vars=true; } if(u===null||o===null) return {saat:r.depar||'',onceki:false}; const d=u-o; return {saat:_mmss(d),onceki:d<0,varsayilan:vars}; } return {saat:r.saat||'',onceki:false}; }
+// v801: OTOMATİK DEPAR YOK (Emre: "ben tanımlamadığım halde saat atıyor, çok riskli" — v788 varsayılanı kaldırıldı).
+// Depar yalnız elle girilirse (ya da bölgede açıkça "uçuştan önce" dakikası tanımlıysa) hesaplanır; yoksa BOŞ kalır.
+function _trDeparHesap(r){ if(r.deparMan&&r.depar) return {saat:r.depar,onceki:false}; if(r.tip==='D'||r.tip==='ARAD'){ const u=_dk(r.saat), o=_trBolgeOnce(r.bolge); if(u===null||o===null) return {saat:r.depar||'',onceki:false}; const d=u-o; return {saat:_mmss(d),onceki:d<0}; } return {saat:r.saat||'',onceki:false}; }
 function _trGrupKey(y,p){ return p+':'+String(y[p+'_u1']||'').trim().toUpperCase()+'_'+String(y[p+'_k1']||'').trim().toUpperCase()+'_'+String(y[p+'_ks1']||'').trim(); }
 function _trGroup(rows,p,ekKey){ // v740: ekKey(y)→otel; aynı uçuşta farklı otelden alınanlar ayrı satır (en kalabalık otel eski anahtarı korur → mevcut atamalar bozulmaz)
   const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={};
