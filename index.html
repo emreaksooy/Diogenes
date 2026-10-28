@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v798 · 26.10.2026';
+const APP_VER='v799 · 28.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13362,7 +13362,15 @@ async function _cloudPullIncre(last){
     console.warn('İncre: mezar taşlı bulut kalıntısı silindi:',L.length);
   }catch(e){ console.warn('kalıntı silme',e); } },1200); }
   { const uzak={}; (drIds.data||[]).forEach(r=>{ (uzak[r.col]=uzak[r.col]||new Set()).add(r.id); });
-    Object.keys(_docSig).forEach(col=>{ const set=uzak[col]||new Set(); [..._docSig[col].keys()].forEach(id=>{ if(!set.has(id)){ _docSig[col].delete(id); _docApplyOne(col,id,null); degisti++; } }); }); }
+    const K2={res:'reservations',pnr:'pnrLedger',ops:'operasyon',transfer:'transfer',opsgrup:'opsgrup',rezv:'rezervasyonlar'};
+    Object.keys(_docSig).forEach(col=>{ const set=uzak[col]||new Set();
+      // v799: yerelde DEĞİŞMİŞ ama henüz buluta gitmemiş satır (uyku/kapatma sırasında yarım kalan push) silinmez → yeniden gönderilir
+      let yerel=null; try{ yerel=new Map(_docSplit(col).map(r=>[r.id,_dsig(r.data)])); }catch(e){}
+      let yenidenGonder=false;
+      [..._docSig[col].keys()].forEach(id=>{ if(!set.has(id)){
+        if(yerel&&yerel.has(id)&&yerel.get(id)!==_docSig[col].get(id)){ _docSig[col].delete(id); yenidenGonder=true; try{ _hataKaydet&&_hataKaydet('BULUT/koruma',col+':'+id+' bulutta yok ama yerelde değişmiş — silinmedi, yeniden gönderiliyor'); }catch(e){} return; }
+        _docSig[col].delete(id); _docApplyOne(col,id,null); degisti++; } });
+      if(yenidenGonder&&K2[col]) setTimeout(()=>{ try{ _cloudQueue(K2[col]); }catch(e){} },1500); }); }
   // ── BACKFILL: bulutta olup YERELDE OLMAYAN kayıtları tamamla ──
   // Neden: Safari IndexedDB'yi boşaltabilir; dmcSyncTs kalırsa artımlı çekim eski satırları
   // hiç getirmez ve delik kalıcılaşır (yanlış 'uçak listesinde yok' uyarılarının kök nedeni).
@@ -13529,14 +13537,38 @@ async function _cloudPushKindIc(kind){
 }
 
 function _cloudSubscribe(){
+  // v799: kanal düşerse (uyku, ağ kopması) yeniden bağlan; sekme öne gelince / ağ dönünce artımlı çekim —
+  // bayat sekme eski satırı buluta yazıp başka yerde yapılan rehber/araç atamasını eziyordu
   try{
-    sb.channel('dmc-sync')
+    if(window._rtKanal){ try{ sb.removeChannel(window._rtKanal); }catch(e){} window._rtKanal=null; }
+    window._rtDurum='';
+    window._rtKanal=sb.channel('dmc-sync-'+Date.now().toString(36))
       .on('postgres_changes',{event:'*',schema:'public',table:'packages'},p=>_onRemote('packages',p))
       .on('postgres_changes',{event:'*',schema:'public',table:'operators'},p=>_onRemote('operators',p))
       .on('postgres_changes',{event:'*',schema:'public',table:'kv_store'},p=>_onRemote('kv',p))
       .on('postgres_changes',{event:'*',schema:'public',table:'doc_rows'},p=>_onDocRemote(p))
-      .subscribe();
+      .subscribe(st=>{ window._rtDurum=st; if(st==='SUBSCRIBED'){ window._rtSonOk=Date.now(); }
+        if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){ clearTimeout(window._rtRetryT); window._rtRetryT=setTimeout(()=>{ try{ _cloudSubscribe(); _cloudTazele('realtime-'+st); }catch(e){} },4000); } });
   }catch(e){ console.warn('realtime',e); }
+  if(!window._rtDinleyici){ window._rtDinleyici=true;
+    const tetik=neden=>{ try{ if(document.visibilityState!=='visible') return; _cloudTazele(neden); if(window._rtDurum!=='SUBSCRIBED'||(window._rtSonOk&&Date.now()-window._rtSonOk>30*60*1000)) _cloudSubscribe(); }catch(e){} };
+    document.addEventListener('visibilitychange',()=>tetik('görünür'));
+    window.addEventListener('online',()=>tetik('çevrimiçi'));
+    window.addEventListener('focus',()=>{ if(!window._rtSonTazele||Date.now()-window._rtSonTazele>60*1000) tetik('odak'); });
+    setInterval(()=>tetik('periyodik'),10*60*1000);
+  }
+}
+// v799: artımlı çekim — en az 20 sn arayla, push devam ederken değil
+async function _cloudTazele(neden){
+  if(!_cloudOn||!sb) return; if(window._pullBusy) return;
+  if(window._rtSonTazele&&Date.now()-window._rtSonTazele<20*1000) return;
+  if(window._pushBusy||((window._cloudBekleyen||new Set()).size)) { clearTimeout(window._rtTazeleT); window._rtTazeleT=setTimeout(()=>_cloudTazele(neden),5000); return; }
+  window._rtSonTazele=Date.now(); window._pullBusy=true;
+  try{ await _cloudPull(); window._trRowsMemo=null; window._ogResolveMemo=null; _paxMemoSifirla&&_paxMemoSifirla();
+    try{ const ap=document.querySelector('.page.active')?.id; if(ap==='page-operasyon'){ if(typeof _opsTab!=='undefined'&&_opsTab==='transfer') renderOpsTransfer&&renderOpsTransfer(); else if(typeof _opsTab!=='undefined'&&_opsTab==='turlar') renderOpsTurlar&&renderOpsTurlar(); else if(typeof _opsTab!=='undefined'&&_opsTab==='tahsis') renderOpsTahsis&&renderOpsTahsis(); } }catch(e){}
+    console.log('Bulut tazelendi ('+neden+')');
+  }catch(e){ console.warn('bulut tazeleme',e); }
+  finally{ window._pullBusy=false; }
 }
 function _canon(o){ if(o===null||typeof o!=='object') return JSON.stringify(o); if(Array.isArray(o)) return '['+o.map(_canon).join(',')+']'; return '{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+_canon(o[k])).join(',')+'}'; }
 function _onRemote(kind,p){
