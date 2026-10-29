@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v801 · 28.10.2026';
+const APP_VER='v802 · 29.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18336,6 +18336,7 @@ function _tdDocUstBilgi(E){
     <span>GELİŞ: <span style="color:#111">${_fmtDateTR(E.tarih)}</span></span></div>`;
 }
 function _tdDocSatisMx(g,E){
+  try{ const gg=_tdG(); if(!g.hesapKapali&&gg&&gg.id===g.id) tdSatisPaketleriGetir(true); }catch(e){} // v802
   const K=_tdKisiler(E); const P=(g.satislar||[]);
   const opAd=k=>{ try{ const rz=_tdRezv(k.resno); return (rz&&(rz.operator||'').trim())||''; }catch(e){ return ''; } };
 
@@ -18371,6 +18372,8 @@ function _tdDocSatisMx(g,E){
   <p style="font-size:8.5pt;color:#555;margin-top:3mm">☑ = kur tax rehber tarafından alındı · ✓ = paket satışı işaretli</p></div></div>`;
 }
 function _tdDocCizelge(g,E){
+  // v802: Satış & Hesap sekmesi hiç açılmadıysa g.satislar boş kalıyor → ürünün satış paketleri çizelgeye girmiyordu; burada da tanımdan getir
+  try{ const gg=_tdG(); if(!g.hesapKapali&&gg&&gg.id===g.id) tdSatisPaketleriGetir(true); }catch(e){}
   const K=_tdKisiler(E);
   const opAd=k=>{ try{ const rz=_tdRezv(k.resno); return (rz&&(rz.operator||'').trim())||''; }catch(e){ return ''; } };
 
