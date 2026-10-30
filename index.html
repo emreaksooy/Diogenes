@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v803 · 30.10.2026';
+const APP_VER='v804 · 30.10.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15751,7 +15751,7 @@ function renderTrYeni(){
       <div class="state">${durum}</div>
     </div>`; };
   // aynı göreve (grup) atanmış uçuş transferleri → tek kart (klasikteki 🔗 birleşik satır)
-  const birlesik=U=>{ U=U.slice().sort((a,b)=>(_dk(a.r.saat)??9999)-(_dk(b.r.saat)??9999)||String(a.r.ucus||'').localeCompare(String(b.r.ucus||''))); // v803: kart içi sıralama uçuş saatine göre
+  const birlesik=U=>{ U=U.slice().sort((a,b)=>((_dk(a.dh&&a.dh.saat)??9999)-(_dk(b.dh&&b.dh.saat)??9999))||((_dk(a.r.saat)??9999)-(_dk(b.r.saat)??9999))||String(a.r.ucus||'').localeCompare(String(b.r.ucus||''))); // v804: önce depar, eşitse uçuş saati
     const r0=U[0].r, dh0=U[0].dh, gr=_trGrupOf(r0); const enc=U.map(x=>encodeURIComponent(x.r.id)).join('~');
     const hepsi=U.every(x=>_trSel.has(x.r.id)); const paxT=U.reduce((t,x)=>t+(+x.r.pax||0),0);
     const u1=f=>[...new Set(U.map(x=>String(f(x.r)||'').trim()).filter(Boolean))];
