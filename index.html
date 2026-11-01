@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v807 · 01.11.2026';
+const APP_VER='v808 · 01.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15802,7 +15802,7 @@ function renderTrYeni(){
       ${aralik?'':`<div class="days">${dayH}</div>`}
     </div>
     <div class="band">
-      <div class="head"><div><div class="title">${esc(baslik)}</div><div class="sum">${L.length?`<button class="btn btn-outline btn-sm" style="padding:2px 8px;margin-right:6px" onclick="_trHepsiSec()" title="Görünen tüm transferleri seç / bırak">${L.length&&L.every(x=>_trSel.has((x.r||x).id))?'☑ Seçimi bırak':'☐ Hepsini seç'}</button>`:''}<b>${L.length} transfer</b> · ${pax} yolcu${acik?` · <b style="color:var(--tbad)">${acik} atanmamış</b>`:(L.length?' · <b style="color:var(--tok)">hepsi atanmış</b>':'')}${ham.length!==L.length?` · filtre: ${L.length}/${ham.length}`:''}</div></div></div>
+      <div class="head"><div><div class="title">${esc(baslik)}</div><div class="sum"><b>${L.length} transfer</b> · ${pax} yolcu${acik?` · <b style="color:var(--tbad)">${acik} atanmamış</b>`:(L.length?' · <b style="color:var(--tok)">hepsi atanmış</b>':'')}${ham.length!==L.length?` · filtre: ${L.length}/${ham.length}`:''}</div></div></div>
       <div class="kpis"><div class="kpi"><span class="n">${L.length}</span><span class="l">Transfer</span></div><div class="kpi ${acik?'bad':''}"><span class="n">${acik}</span><span class="l">Atanmamış</span><span class="bar" title="${L.length-acik}/${L.length} atandı"><b style="width:${L.length?Math.round((L.length-acik)/L.length*100):0}%"></b></span></div><div class="kpi"><span class="n">${ths}</span><span class="l">Tahsis aracı</span></div><div class="kpi"><span class="n">${pax}</span><span class="l">Yolcu</span></div></div>
     </div>
     <div class="band">
@@ -15811,6 +15811,7 @@ function renderTrYeni(){
       <div class="exp-band"><span class="band-l">Dışa aktar</span>${expH}</div>
     </div>
     <div class="atabar${_trSel.size?' show':''}" id="trAtabar"></div>
+    ${L.length?`<div style="display:flex;align-items:center;gap:8px;padding:8px 14px 0"><button class="btn btn-outline btn-sm" onclick="_trHepsiSec()" title="Görünen tüm transferleri seç / bırak">${L.every(x=>_trSel.has((x.r||x).id))?'☑ Seçimi bırak':'☐ Hepsini seç'}</button><span style="font-size:12px;color:var(--muted)">${_trSel.size?_trSel.size+' seçili':'görünen '+L.length+' transfer'}</span></div>`:''}
     <div class="list">${listH}</div>
   </div>`;
   try{ _trRenderAtabar(); }catch(e){}
