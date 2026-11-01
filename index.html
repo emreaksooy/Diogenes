@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v804 · 30.10.2026';
+const APP_VER='v805 · 01.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13102,6 +13102,9 @@ function _docApplyOne(col,id,data){
 }
 function _docRerender(col){
   const ap=document.querySelector('.page.active')?document.querySelector('.page.active').id:'';
+  // v805: kullanıcı atama çubuğunda/giriş alanında çalışırken bulut yeniden çizimi ertelenir (firma/araç seçimi sıfırlanıyordu)
+  try{ const ae=document.activeElement; if(ae&&ae!==document.body&&(ae.closest('#trAtabar')||ae.closest('.tdm-ab')||ae.closest('.notrow')||/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName))&&ap==='page-operasyon'){
+    clearTimeout(window._docRerenderT); window._docRerenderT=setTimeout(()=>_docRerender(col),4000); return; } }catch(e){}
   try{
     if(col==='rezv'&&ap==='page-rezervasyon'){ renderRezvPage(); }
     if((col==='res'||col==='pnr')&&ap==='page-ucak'){ if(typeof renderRezervasyon==='function')renderRezervasyon(); if(typeof renderUcakGenel==='function')renderUcakGenel(); }
@@ -13608,6 +13611,7 @@ function _cloudSubscribe(){
 // v799: artımlı çekim — en az 20 sn arayla, push devam ederken değil
 async function _cloudTazele(neden){
   if(!_cloudOn||!sb) return; if(window._pullBusy) return;
+  try{ if(_trSel&&_trSel.size&&neden!=='periyodik'){ const ae=document.activeElement; if(ae&&ae!==document.body) return; } }catch(e){} // v805: transfer seçimi/formu açıkken odak tetikli tazeleme yok
   if(window._rtSonTazele&&Date.now()-window._rtSonTazele<20*1000) return;
   if(window._pushBusy||((window._cloudBekleyen||new Set()).size)) { clearTimeout(window._rtTazeleT); window._rtTazeleT=setTimeout(()=>_cloudTazele(neden),5000); return; }
   window._rtSonTazele=Date.now(); window._pullBusy=true;
@@ -20297,7 +20301,7 @@ function _trSatMigrate(){
     }
   }catch(e){}
 }
-function renderOpsTransfer(){ if(_trGorunum==='yeni'){ try{ return renderTrYeni(); }catch(e){ console.warn('renderTrYeni',e); _hataKaydet&&_hataKaydet('TRF-YENİ',String(e&&e.message||e)); } } return _renderOpsTransferKlasik(); }
+function renderOpsTransfer(){ try{ window._trAbSnapOnce=_trAbSnapAl(); }catch(e){ window._trAbSnapOnce=null; } if(_trGorunum==='yeni'){ try{ return renderTrYeni(); }catch(e){ console.warn('renderTrYeni',e); _hataKaydet&&_hataKaydet('TRF-YENİ',String(e&&e.message||e)); } } return _renderOpsTransferKlasik(); }
 function _renderOpsTransferKlasik(){
   const _shF=window._trSheetF; try{ mSheetKapat(); }catch(e){} window._trSheetF=_shF;
   window._trVBolM=null;
@@ -21198,12 +21202,22 @@ function _trAbOnDoldur(rows){
     return true;
   }catch(e){ return false; }
 }
-function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!bar) return; if(!_trSel.size){ bar.classList.remove('show'); bar.innerHTML=''; return; } bar.classList.add('show');
+function _trAbSnapAl(){ try{ const ids=['trRehber','trFirma','trArac','trArac2','trTarife','trDepar','trSecNot','trGuzergah']; const v={}; let dolu=false; ids.forEach(id=>{ const el=document.getElementById(id); if(el){ v[id]=el.value; if(el.value) dolu=true; } }); return dolu?{sel:[..._trSel].sort().join('|'),v}:null; }catch(e){ return null; } }
+function _trAbSnapUygula(sn){ try{ if(!sn||sn.sel!==[..._trSel].sort().join('|')) return; const E=id=>document.getElementById(id);
+  if(E('trRehber')&&sn.v.trRehber) E('trRehber').value=sn.v.trRehber;
+  if(E('trFirma')&&sn.v.trFirma){ E('trFirma').value=sn.v.trFirma; _trAracDoldur(); }
+  ['trArac','trArac2','trTarife'].forEach(id=>{ if(E(id)&&sn.v[id]) E(id).value=sn.v[id]; });
+  ['trDepar','trSecNot','trGuzergah'].forEach(id=>{ if(E(id)&&sn.v[id]) E(id).value=sn.v[id]; });
+  try{ _trKapKontrol(); }catch(e){} }catch(e){} }
+function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!bar) return; if(!_trSel.size){ bar.classList.remove('show'); bar.innerHTML=''; window._trAbSnap=null; return; } bar.classList.add('show');
+  const _snap=_trAbSnapAl()||window._trAbSnapOnce||null; window._trAbSnapOnce=null; // v805: yeniden çizimde form değerleri korunur
+  const _bitir=()=>{ if(_snap) _trAbSnapUygula(_snap); };
   if(_trGorunum==='yeni'&&bar.closest('.tdm')){ const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0);
     _trRenderAtabarYeni(bar,rows,pax,getTanimlar()); _trAracDoldur();
     _trAbOnDoldur(rows); // v796
     try{ const ilk=rows[0]; if(ilk){ const bl=_trSatirBolum(ilk); const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,bl); const el=document.getElementById('trRehber'); if(el&&!el.value&&(sr.rehberAd||'').trim()){ const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(sr.rehberAd)); if(o) el.value=o.value||o.text; } } }catch(e){}
     try{ if(window.matchMedia&&matchMedia('(max-width:980px)').matches&&bar.parentElement!==document.body) document.body.appendChild(bar); }catch(e){}
+    _bitir();
     return; }
   const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const T=getTanimlar();
   bar.innerHTML=`<b>${rows.length} seçili</b><span class="cap" id="trSecPax">${pax} pax</span>
@@ -21228,6 +21242,7 @@ function _trRenderAtabar(){ const bar=document.getElementById('trAtabar'); if(!b
   try{ const ilk=rows[0]; if(ilk){ const bl=_trSatirBolum(ilk); const sr=_opsRehGet(ilk.pkgId,ilk.kalkis,bl); const el=document.getElementById('trRehber');
     if(el&&!el.value&&(sr.rehberAd||'').trim()){ const o=[...el.options].find(x=>_norm(x.value||x.text)===_norm(sr.rehberAd)); if(o) el.value=o.value||o.text; } } }catch(e){}
   try{ if(window.matchMedia&&matchMedia('(max-width:980px)').matches&&bar.parentElement!==document.body) document.body.appendChild(bar); }catch(e){}
+  _bitir();
 }
 function _trKapKontrol(){ const rowsAll=_trGenRows(); const rows=[..._trSel].map(id=>rowsAll.find(r=>r.id===id)).filter(Boolean); const pax=rows.reduce((t,r)=>t+(+r.pax||0),0); const L=_trFiloList((document.getElementById('trFirma')||{}).value); const a=L.find(x=>x.id===(document.getElementById('trArac')||{}).value); const a2=L.find(x=>x.id===(document.getElementById('trArac2')||{}).value); const kap=(a?a.kap:0)+(a2?a2.kap:0); const el=document.getElementById('trSecPax'); if(el){ el.textContent=pax+' pax'+(a?(a.tahsis?' / tur aracı':' / '+kap+' koltuk'):''); el.classList.toggle('asim',!!a&&!a.tahsis&&pax>kap); } }
 function _trAtama(birlesik){ if(birlesik===undefined) birlesik=true;
