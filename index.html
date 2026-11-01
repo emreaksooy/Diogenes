@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v806 · 01.11.2026';
+const APP_VER='v807 · 01.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15802,7 +15802,7 @@ function renderTrYeni(){
       ${aralik?'':`<div class="days">${dayH}</div>`}
     </div>
     <div class="band">
-      <div class="head"><div><div class="title">${esc(baslik)}</div><div class="sum"><b>${L.length} transfer</b> · ${pax} yolcu${acik?` · <b style="color:var(--tbad)">${acik} atanmamış</b>`:(L.length?' · <b style="color:var(--tok)">hepsi atanmış</b>':'')}${ham.length!==L.length?` · filtre: ${L.length}/${ham.length}`:''}</div></div></div>
+      <div class="head"><div><div class="title">${esc(baslik)}</div><div class="sum">${L.length?`<button class="btn btn-outline btn-sm" style="padding:2px 8px;margin-right:6px" onclick="_trHepsiSec()" title="Görünen tüm transferleri seç / bırak">${L.length&&L.every(x=>_trSel.has((x.r||x).id))?'☑ Seçimi bırak':'☐ Hepsini seç'}</button>`:''}<b>${L.length} transfer</b> · ${pax} yolcu${acik?` · <b style="color:var(--tbad)">${acik} atanmamış</b>`:(L.length?' · <b style="color:var(--tok)">hepsi atanmış</b>':'')}${ham.length!==L.length?` · filtre: ${L.length}/${ham.length}`:''}</div></div></div>
       <div class="kpis"><div class="kpi"><span class="n">${L.length}</span><span class="l">Transfer</span></div><div class="kpi ${acik?'bad':''}"><span class="n">${acik}</span><span class="l">Atanmamış</span><span class="bar" title="${L.length-acik}/${L.length} atandı"><b style="width:${L.length?Math.round((L.length-acik)/L.length*100):0}%"></b></span></div><div class="kpi"><span class="n">${ths}</span><span class="l">Tahsis aracı</span></div><div class="kpi"><span class="n">${pax}</span><span class="l">Yolcu</span></div></div>
     </div>
     <div class="band">
@@ -21059,6 +21059,8 @@ function trGonderimYap(kanal){
 }
 function _trSecToggle(id,on){ on?_trSel.add(id):_trSel.delete(id); _trRenderAtabar(); }
 function _trSecTemizle(){ _trSel.clear(); renderOpsTransfer(); }
+// v807: görünen (filtrelenmiş) tüm transferleri seç / bırak
+function _trHepsiSec(){ const L=(_trGorunum==='yeni'?_trGorunur():_trGenRows()).map(x=>x&&(x.r||x)).filter(r=>r&&r.id); const hepsi=L.length&&L.every(r=>_trSel.has(r.id)); if(hepsi) L.forEach(r=>_trSel.delete(r.id)); else L.forEach(r=>_trSel.add(r.id)); renderOpsTransfer(); }
 // filo: araçlar firma tanımlarının içinde — atama listesi oradan beslenir
 function _trFiloList(firmaAd){
   // ARAÇ TİPİ bazlı atama (Emre: plaka değil tip atanır) — firmanın aracTipleri esas; filo varsa ek olarak listelenir
@@ -21363,6 +21365,9 @@ const _trInfoL={
  tr:{basU:'OTEL TRANSFERİ · UZATMA',otelU:'ALINIŞ OTELİ',otelU2:'GİDİLECEK OTEL',bas:'DÖNÜŞ BİLGİLENDİRME',basG:'GELİŞ BİLGİLENDİRME',datum:'TARİH',otel:'OTEL · ALINIŞ YERİ',otelG:'OTEL · BIRAKIŞ',abhol:'ALINIŞ SAATİ',anzeit:'İNİŞ',pers:'KAYITLI YOLCULAR',name:'İSİM',vch:'VOUCHER',flug:'UÇUŞ',saatD:'KALKIŞ',saatG:'İNİŞ',not:'Lütfen alınış saatinden <b>10 dakika</b> önce resepsiyonda hazır olun.',rec:'RESEPSİYON',fAb:'Kalkış Havalimanı',fZiel:'Varış Havalimanı',fAbz:'Kalkış Saati',fAnz:'Varış Saati',ansch:'AKTARMA UÇUŞU',gun:['Paz','Pzt','Sal','Çar','Per','Cum','Cmt']}};
 const _trInfoRenk=[['#1d4ed8','#eff6ff','#bfdbfe'],['#c2410c','#fff4ee','#fcd9c4'],['#15803d','#f0fdf4','#bbf7d0'],['#7c3aed','#f5f3ff','#ddd6fe'],['#0e7490','#ecfeff','#a5f3fc']];
 // v806: havayolu logosu (uçuş no ön ekinden IATA kodu; pics.avs.io CDN, yüklenemezse gizlenir)
+const _TR_HY_AD={VF:'AJet',TK:'Turkish Airlines',PC:'Pegasus',XQ:'SunExpress',OS:'Austrian',LH:'Lufthansa',EW:'Eurowings',DE:'Condor',X3:'TUIfly',LX:'SWISS',EN:'Air Dolomiti',A3:'Aegean',FR:'Ryanair',W6:'Wizz Air',U2:'easyJet',EJU:'easyJet',HV:'Transavia',AF:'Air France',KL:'KLM',BA:'British Airways',LO:'LOT',SN:'Brussels Airlines',TP:'TAP',IB:'Iberia',VY:'Vueling',AZ:'ITA Airways',AY:'Finnair',SK:'SAS',DY:'Norwegian',D8:'Norwegian',EK:'Emirates',QR:'Qatar Airways',EY:'Etihad',MS:'EgyptAir',RJ:'Royal Jordanian',ME:'MEA',SV:'Saudia',GF:'Gulf Air',WY:'Oman Air',KM:'Air Malta','4U':'Eurowings','6H':'Israir',LY:'El Al',OK:'Czech Airlines',RO:'TAROM',JU:'Air Serbia',OU:'Croatia Airlines',FB:'Bulgaria Air',BT:'airBaltic',OA:'Olympic',SM:'Air Cairo',AT:'Royal Air Maroc','3O':'Air Arabia Maroc',TB:'TUI fly Belgium',OR:'TUI fly Netherlands',BY:'TUI Airways',TOM:'TUI Airways',TUI:'TUIfly',UX:'Air Europa',FHY:'Freebird',FH:'Freebird',CAI:'Corendon',XC:'Corendon',KK:'AtlasGlobal','8Q':'Onur Air',ZF:'Azur Air',N4:'Nordwind',S7:'S7',SU:'Aeroflot',PS:'UIA',B2:'Belavia',A9:'Georgian Airways',J2:'AZAL',HY:'Uzbekistan Airways',KC:'Air Astana',DV:'SCAT',IR:'Iran Air',W5:'Mahan Air',AH:'Air Algérie',TU:'Tunisair',UG:'TunisAir Express',ET:'Ethiopian',KQ:'Kenya Airways',SA:'South African',AC:'Air Canada',AA:'American',DL:'Delta',UA:'United',UL:'SriLankan',AI:'Air India',CX:'Cathay',SQ:'Singapore Airlines',MH:'Malaysia',TG:'Thai',QF:'Qantas',NZ:'Air New Zealand',JL:'JAL',NH:'ANA',KE:'Korean Air',OZ:'Asiana',CA:'Air China',CZ:'China Southern',MU:'China Eastern'};
+function _trHyKod(no){ const m=String(no||'').toUpperCase().replace(/\s+/g,'').match(/^([A-Z][A-Z0-9]|[0-9][A-Z])\d/); return m?m[1]:''; }
+function _trHyAd(no,hy){ const h=String(hy||'').trim(); if(h&&!/^[A-Z0-9]{2,3}$/.test(h)) return h; const k=_trHyKod(no); return _TR_HY_AD[k]||_TR_HY_AD[h]||h||''; }
 function _trHyLogo(no,hy){ const m=String(no||'').toUpperCase().replace(/\s+/g,'').match(/^([A-Z][A-Z0-9]|[0-9][A-Z])\d/); const k=m?m[1]:''; if(!k) return ''; return `<img src="https://pics.avs.io/120/40/${k}.png" alt="${esc(hy||k)}" style="height:16px;width:auto;max-width:60px;object-fit:contain;background:#fff;border-radius:3px;padding:1px 3px" onerror="this.style.display='none'">`; }
 function _trInfoBolum(U,L){
   // U: ayni gorevin D/G satirlari (1+) — TEK sayfa
@@ -21435,7 +21440,7 @@ function _trInfoBolum(U,L){
         const et=(l,v,b)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:1px 0"><span style="color:#6b7280">${l}:</span><b style="${b?'font-size:9pt':''}">${esc(v||'—')}</b></div>`;
         const legs=u.legs||[u];
         return `<div style="flex:1;min-width:180px;background:${c[1]};border:1.5px solid ${c[2]};border-radius:9px;padding:7px 12px;font-size:7.9pt;${PCA}">
-          ${legs.map((lg,j)=>`<div style="display:flex;align-items:center;gap:7px;font-weight:800;color:${c[0]};font-size:10pt;margin:${j?'6px':'0'} 0 3px;border-bottom:1px solid ${c[2]};padding-bottom:2px">${_trHyLogo(lg.no,u.hy)}<span>✈ ${esc(lg.no||'—')}</span>${legs.length>1?`<span style="margin-left:auto;font-size:7pt;color:#6b7280;font-weight:700">${j?(L.ansch||'ANSCHLUSSFLUG'):(L.flug||'FLUG')+' 1'}</span>`:''}</div>
+          ${legs.map((lg,j)=>`<div style="display:flex;align-items:center;gap:7px;font-weight:800;color:${c[0]};font-size:10pt;margin:${j?'6px':'0'} 0 3px;border-bottom:1px solid ${c[2]};padding-bottom:2px">${_trHyLogo(lg.no,j?'':u.hy)}<span>✈ ${esc(lg.no||'—')}</span>${_trHyAd(lg.no,j?'':u.hy)?`<span style="font-size:7.5pt;font-weight:700;color:#4b5563">${esc(_trHyAd(lg.no,j?'':u.hy))}</span>`:''}${legs.length>1?`<span style="margin-left:auto;font-size:7pt;color:#6b7280;font-weight:700">${j?(L.ansch||'ANSCHLUSSFLUG'):(L.flug||'FLUG')+' 1'}</span>`:''}</div>
           ${et(L.fAb,lg.ab)}${et(L.fZiel,lg.ziel)}${et(L.fAbz,lg.kalk,1)}${et(L.fAnz,lg.varis,1)}`).join('')}
         </div>`; }).join('')}
     </div>`:''}
