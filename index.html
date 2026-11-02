@@ -2576,7 +2576,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v811 · 02.11.2026';
+const APP_VER='v812 · 02.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20817,6 +20817,7 @@ function thsTekExcel(gid,aid){
   XLSX.writeFile(wb,_fn+'.xlsx');
   showToast('Tahsis görev emri indirildi','success');
 }
+function _thsFSet(k,v){ window._thsF=window._thsF||{bas:'',bit:'',reh:''}; window._thsF[k]=v||''; renderOpsTahsis(); }
 function renderOpsTahsis(){
   const box=document.getElementById('opsPane_tahsis'); if(!box) return;
   const bugun=_opsToday();
@@ -20866,10 +20867,24 @@ function renderOpsTahsis(){
   h+='</div>';
 
   // ── TUR LİSTESİ: tahsis atama
+  // v812: tarih aralığı + rehber filtresi (geriye dönük bakılabilir)
+  const F=window._thsF||(window._thsF={bas:'',bit:'',reh:''});
+  const fBas=F.bas||bugun, fBit=F.bit||_isoAdd(bugun,90);
   let turlar=[];
-  try{ turlar=_rtTurlar(bugun,_isoAdd(bugun,90)); }catch(e){}
+  try{ turlar=_rtTurlar(fBas,fBit); }catch(e){}
+  const rehOpt=[...new Set(turlar.map(t=>(t.rehberAd||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  if(F.reh) turlar=turlar.filter(t=>(t.rehberAd||'').trim()===F.reh);
   turlar.sort((a,b)=>String(a.kalkis).localeCompare(String(b.kalkis)));
-  h+=`<div class="card"><div class="card-title">Turlardan Tahsis Ata <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">bugün → 90 gün</span></div>`;
+  const fin='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.74rem';
+  h+=`<div class="card"><div class="card-title" style="flex-wrap:wrap;gap:8px">Turlardan Tahsis Ata
+    <span style="display:flex;align-items:center;gap:6px;margin-left:auto;font-weight:500;font-size:.7rem;color:var(--muted)">
+      <input type="date" value="${esc(fBas)}" onchange="_thsFSet('bas',this.value)" style="${fin}"> →
+      <input type="date" value="${esc(fBit)}" onchange="_thsFSet('bit',this.value)" style="${fin}">
+      <select onchange="_thsFSet('reh',this.value)" style="${fin};${F.reh?'border-color:var(--primary);font-weight:700;':''}min-width:140px"><option value="">Rehber: Hepsi</option>${rehOpt.map(r=>`<option value="${esc(r)}"${F.reh===r?' selected':''}>${esc(r)}</option>`).join('')}</select>
+      <button class="btn btn-outline btn-sm" onclick="_thsFSet('bas',_isoAdd(_opsToday(),-30));_thsFSet('bit',_opsToday())" title="Son 30 gün">◀ 30g</button>
+      <button class="btn btn-outline btn-sm" onclick="_thsFSet('bas','');_thsFSet('bit','')" title="Bugün → 90 gün">Bugün → 90g</button>
+      ${(F.bas||F.bit||F.reh)?`<button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="window._thsF={bas:'',bit:'',reh:''};renderOpsTahsis()">✕</button>`:''}
+      <b style="color:var(--text)">${turlar.length}</b> tur</span></div>`;
   if(!turlar.length) h+='<p class="section-tip">Bu aralıkta tur yok.</p>';
   else{
     h+=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
