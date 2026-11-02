@@ -2576,7 +2576,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v810 · 02.11.2026';
+const APP_VER='v811 · 02.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -16454,7 +16454,7 @@ function tdMxExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
   const kisiler=_tdKisiler(E); const satislar=(g.satislar||[]);
-  const reh=_tdBolumReh(g,E)||(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  const reh=_tdBolumReh(g,E)||_ogRehberCoz(g);
   const aoa=[[(reh?reh.ad:'')||'', _fmtDateTR(E.tarih), (E.ops||[]).join(', '), (E.urunler||[]).join(', ')],
     ['GASTNAMEN','Voucher No','KUR TAX'].concat(satislar.map(x=>x.ad+(_tdN(x.satis)?(' ('+_tdN(x.satis)+' €)'):'')+(x.icerik?('\n'+x.icerik):'')))];
   let ktTop=0;
@@ -17308,6 +17308,10 @@ function opsTdKapat(){ try{localStorage.removeItem('dmc_lastTd');}catch(e){}
 }
 function tdTabSec(t){ _tdTab=t; renderOpsGrup(); }
 function _tdG(){ const S=getOpsGrup(); return (S.gruplar||{})[_tdGid]||null; }
+// v811: grup rehberi — dosyada seçili değilse Turlar sekmesindeki görev ataması (_opsRehGet) kullanılır
+function _ogRehberCoz(g){ try{ if(!g) return null; const t=(getTanimlar().rehberler||[]); if(g.rehberId){ const r=t.find(x=>x.id===g.rehberId); if(r) return r; }
+  const sf=g.sefer||((g.uyeler||[])[0])||null; if(!sf||!sf.pkgId) return null; const br=_opsRehGet(sf.pkgId,sf.kalkis,'01'); if(!br||!(br.rehberId||br.rehberAd)) return null;
+  return t.find(r=>r.id===br.rehberId)||t.find(r=>_norm(r.ad||'')===_norm(br.rehberAd||''))||{id:br.rehberId||'',ad:(br.rehberAd||'').trim(),_gorev:true}; }catch(e){ return null; } }
 function _tdE(){ return _ogResolve().find(x=>x.id===_tdGid)||null; }
 function _tdSave(){ setOpsGrup(getOpsGrup()); }
 const _tdN=v=>{ let t=String(v==null?'':v).trim().replace(/\s/g,''); if(!t)return 0; if(t.includes(',')&&t.includes('.')) t=t.replace(/\./g,'').replace(',','.'); else t=t.replace(',','.'); const n=parseFloat(t); return isNaN(n)?0:n; };
@@ -17471,6 +17475,9 @@ function _tdAktList(E){
 function tdYev(f,v){ const g=_tdG(); if(!g)return; g.yevmiye[f]=String(v).trim(); _tdSave(); if(f==='donem') renderOpsGrup(); }
 function tdSet(f,v){ const g=_tdG(); if(!g)return; g[f]=String(v).trim(); _tdSave(); if(f==='kurTL'||f==='kurUSD'||f==='teslimAlinan'||f==='gunSay') _tdHesapDom(); }
 function tdRehberSec(v){ const g=_tdG(); if(!g)return; g.rehberId=v; _tdSave();
+  try{ const rh=(getTanimlar().rehberler||[]).find(x=>x.id===v); const all=getOperasyon(); let d=false; const sfs=[g.sefer,...(g.uyeler||[])].filter(x=>x&&x.pkgId); const seen=new Set();
+    sfs.forEach(sf=>{ const k=sf.pkgId+'|'+sf.kalkis; if(seen.has(k)) return; seen.add(k); const r=all.find(x=>x.pkgId===sf.pkgId&&x.kalkis===sf.kalkis); if(!r) return; if(v&&r.rehberId!==v){ r.rehberId=v; r.rehberAd=rh?(rh.ad||''):''; r.rehberTel=rh?(rh.tel||''):''; r.rehberDil=rh?(rh.dil||''):''; d=true; } });
+    if(d) setOperasyon(all); }catch(e){}
   try{
     const reh=(getTanimlar().rehberler||[]).find(r=>r.id===v);
     const veri=reh?{rehberId:reh.id,rehberAd:reh.ad||'',rehberTel:reh.tel||'',rehberDil:Array.isArray(reh.diller)?reh.diller.join(', '):(reh.dil||'')}:{rehberId:'',rehberAd:'',rehberTel:'',rehberDil:''};
@@ -17695,7 +17702,7 @@ function renderTurDosyasi(box){
   const g=_tdG(), E=_tdE();
   if(!g||!E){ _tdGid=null; renderOpsGrup(); return; }
   _tdInit(g,E);
-  const reh=_tdBolumReh(g,E)||(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  const reh=_tdBolumReh(g,E)||_ogRehberCoz(g);
   const kisiler=_tdKisiler(E);
   const T=_tdTopla(g);
   const rehMod=(sbRol==='rehber');
@@ -17741,7 +17748,7 @@ function renderTurDosyasi(box){
   if(_tdTab==='rehber'){
     const rehberler=getTanimlar().rehberler||[];
     h+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px" class="td-grid3">
-      <label class="otl-f"><span>Rehber</span><select onchange="tdRehberSec(this.value)"><option value="">— seç —</option>${rehberler.map(r=>`<option value="${r.id}"${g.rehberId===r.id?' selected':''}>${esc(r.ad||'(adsız)')}</option>`).join('')}</select></label>
+      <label class="otl-f"><span>Rehber</span><select onchange="tdRehberSec(this.value)"><option value="">— seç —</option>${rehberler.map(r=>`<option value="${r.id}"${((_ogRehberCoz(g)||{}).id||'')===r.id?' selected':''}>${esc(r.ad||'(adsız)')}</option>`).join('')}</select>${!g.rehberId&&_ogRehberCoz(g)?'<small style="color:var(--muted)">Turlar sekmesindeki görev atamasından</small>':''}</label>
       <div class="otl-f"><span>Yevmiye</span>
         <div style="display:flex;gap:6px">
           <input value="${esc(g.yevmiye.tutar)}" placeholder="€" style="flex:1;min-width:60px;padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit" onchange="tdYev('tutar',this.value)">
@@ -18421,7 +18428,7 @@ function _tdDocCizelge(g,E){
 }
 function _tdDocMasraf(g,E){ // v775: Emre'nin Masraf_Formu.pdf düzeni — üstte tur + rehber bilgisi, tam sayfa boş satırlar
   const t=getTanimlar();
-  let reh={}; try{ reh=_tdBolumReh(g,E)||(t.rehberler||[]).find(r=>r.id===g.rehberId)||{}; }catch(e){}
+  let reh={}; try{ reh=_tdBolumReh(g,E)||_ogRehberCoz(g)||{}; }catch(e){}
   let pk=null; try{ pk=(E.uyeler[0]||g.sefer)?getPackages().find(p=>p.id===(E.uyeler[0]?E.uyeler[0].pkgId:g.sefer.pkgId)):null; }catch(e){}
   const gun=+g.gunSay||((pk&&+pk.gece)?(+pk.gece+1):0);
   const bit=(E.tarih&&gun)?_rzGun(E.tarih,Math.max(0,gun-1)):'';
@@ -18450,7 +18457,7 @@ function _tdDocMasraf(g,E){ // v775: Emre'nin Masraf_Formu.pdf düzeni — üstt
 }
 function _tdDocSozlesme(g,E){
   const t=getTanimlar();
-  const reh=_tdBolumReh(g,E)||(t.rehberler||[]).find(r=>r.id===g.rehberId)||{};
+  const reh=_tdBolumReh(g,E)||_ogRehberCoz(g)||{};
   const pk=(E.uyeler[0]||g.sefer)?getPackages().find(p=>p.id===(E.uyeler[0]?E.uyeler[0].pkgId:g.sefer.pkgId)):null;
   const gun=+g.gunSay||((pk&&+pk.gece)?(+pk.gece+1):0);
   const bit=E.tarih&&gun?_rzGun(E.tarih,Math.max(0,gun-1)):'';
@@ -18525,7 +18532,7 @@ function _tdDocAcente(g,E){ const t=getTanimlar();
   return _tdDocBas('Seyahat Acente Belgesi',E)+`<div style="font-size:10pt">${govde}</div></div>`; }
 function _tdDocHesap(g,E){
   const T=_tdTopla(g), mas=_tdMasrafEUR(g), yev=_tdYevToplam(g);
-  const reh=_tdBolumReh(g,E)||(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  const reh=_tdBolumReh(g,E)||_ogRehberCoz(g);
   const ktO=_tdKurTaxOzet(E);
   const teslimHedef=Math.round((T.teslim+ktO.toplam)*100)/100;
   const teslimA=_tdN(g.teslimAlinan);
@@ -18671,7 +18678,7 @@ function tdPdfHepsi(cb){
 }
 function tdRehWhatsapp(){
   const g=_tdG(), E=_tdE(); if(!g||!E) return;
-  const reh=(getTanimlar().rehberler||[]).find(r=>r.id===g.rehberId);
+  const reh=_ogRehberCoz(g);
   let tel=String((reh&&(reh.tel||reh.telefon))||'').replace(/\D/g,'');
   if(tel.length===11&&tel.startsWith('0')) tel='9'+tel;
   else if(tel.length===10&&tel.startsWith('5')) tel='90'+tel;
