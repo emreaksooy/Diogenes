@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v814 · 02.11.2026';
+const APP_VER='v815 · 02.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20260,28 +20260,29 @@ function renderOpsHesap(){
     </div>`;
   if(!L.length) h+='<p class="section-tip" style="margin-top:10px">Bu filtrede dosya yok.</p>';
   else{
-    const th='padding:6px 8px;font-size:.62rem;letter-spacing:.3px;color:#fff;background:var(--navy);text-align:left;white-space:nowrap', thr=th+';text-align:right';
-    const td='padding:6px 8px;border-bottom:1px solid var(--light);font-size:.76rem;vertical-align:middle', tdr=td+';text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap';
-    const tag=(bg,c,t)=>`<span style="background:${bg};color:${c};font-weight:800;font-size:.6rem;padding:1px 7px;border-radius:7px;white-space:nowrap">${t}</span>`;
+    const th='padding:6px 6px;font-size:.6rem;letter-spacing:.3px;color:#fff;background:var(--navy);text-align:left;white-space:nowrap', thr=th+';text-align:right';
+    const td='padding:5px 6px;border-bottom:1px solid var(--light);font-size:.72rem;vertical-align:middle', tdr=td+';text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap';
+    const tag=(bg,c,t)=>`<span style="background:${bg};color:${c};font-weight:800;font-size:.58rem;padding:1px 6px;border-radius:7px;white-space:nowrap">${t}</span>`;
     const tot={ciro:0,teslimHedef:0,yev:0,kom:0,mas:0,net:0,alinan:0,bakiye:0};
     let bolum='';
     h+=`<div style="overflow-x:auto;margin-top:10px"><table style="width:100%;border-collapse:collapse">
-      <tr><th style="${th}">Tur bitiş</th><th style="${th}">Dosya</th><th style="${th}">Tur</th><th style="${th}">Rehber</th><th style="${thr}">Pax</th><th style="${thr}">Ciro</th><th style="${thr}">Teslim hedefi</th><th style="${thr}">Yevmiye</th><th style="${thr}">Komisyon</th><th style="${thr}">Masraf</th><th style="${thr}">Net</th><th style="${thr}">Teslim alınan</th><th style="${thr}">Bakiye</th><th style="${th}">Durum</th><th style="${th}"></th></tr>`;
+      <tr><th style="${th}">Tur bitiş</th><th style="${th}">Dosya</th><th style="${th}">Tur</th><th style="${th}">Rehber</th><th style="${thr}">Pax</th><th style="${thr}">Ciro</th><th style="${thr}">Teslim hedefi</th><th style="${thr}" title="Yevmiye + Komisyon + Masraf">Kesintiler</th><th style="${thr}">Net</th><th style="${thr}">Alınan</th><th style="${thr}">Bakiye</th><th style="${th}">Durum</th><th style="${th}"></th></tr>`;
     L.forEach(x=>{ const hh=x.h;
       const b=hh.kapali?'KAPANAN HESAPLAR':'AÇIK HESAPLAR';
-      if(F.durum==='hepsi'&&b!==bolum){ bolum=b; h+=`<tr><td colspan="15" style="${td};background:#f8fafc;font-weight:800;font-size:.66rem;color:#374151">${b}</td></tr>`; }
+      if(F.durum==='hepsi'&&b!==bolum){ bolum=b; h+=`<tr><td colspan="13" style="${td};background:#f8fafc;font-weight:800;font-size:.66rem;color:#374151">${b}</td></tr>`; }
       if(hh.satisVar){ tot.ciro+=hh.ciro; tot.teslimHedef+=hh.teslimHedef; tot.yev+=hh.yev; tot.kom+=hh.kom; tot.mas+=hh.mas; tot.net+=hh.net; tot.alinan+=hh.alinan; tot.bakiye+=hh.bakiye; }
       const bakC=hh.bakiye===0?'#166534':(hh.bakiye>0?'#b91c1c':'var(--navy)');
       const durum=hh.kapali?tag('#dcfce7','#166534','kapandı'+(hh.kapanis?' '+_fmtDateTR(hh.kapanis):'')):(!hh.satisVar?tag('#fef3c7','#b45309',x.bitti?'satış girilmemiş':'tur sürüyor'):(hh.bakiye===0?tag('#e5e7eb','#374151','kapatılabilir'):(hh.bakiye>0?tag('#fee2e2','#b91c1c','rehber verecek'):tag('#dbeafe','#1e3a8a','şirket ödeyecek'))));
-      h+=`<tr style="${hh.kapali?'color:#4b5563':''}"><td style="${td};white-space:nowrap">${_fmtDateTR(hh.bitis)||'—'}</td><td style="${td}"><b>${esc(x.no||'—')}</b></td>
-        <td style="${td}"><b>${esc(x.tur)}</b> <span style="color:var(--muted);font-size:.66rem">${esc(x.op)} · ${_fmtDateTR(x.tarih)}</span></td>
-        <td style="${td}">${esc(x.rehAd)||'<span style="color:#b45309">—</span>'}</td><td style="${tdr}">${x.pax}</td>
-        ${hh.satisVar?`<td style="${tdr}">${E2(hh.ciro)}</td><td style="${tdr}">${E2(hh.teslimHedef)}</td><td style="${tdr}">−${E2(hh.yev)}</td><td style="${tdr}">−${E2(hh.kom)}</td><td style="${tdr}">−${E2(hh.mas)}</td><td style="${tdr};font-weight:700">${E2(hh.net)}</td><td style="${tdr}">${E2(hh.alinan)}</td><td style="${tdr};font-weight:800;color:${bakC}">${E2(Math.abs(hh.bakiye))}</td>`
-          :`<td colspan="8" style="${td};color:#b45309;text-align:center">satış girilmemiş</td>`}
+      const kes=hh.yev+hh.kom+hh.mas;
+      h+=`<tr style="${hh.kapali?'color:#4b5563':''}"><td style="${td};white-space:nowrap">${_fmtDateTR(hh.bitis)||'—'}</td><td style="${td};white-space:nowrap"><b>${esc(x.no||'—')}</b></td>
+        <td style="${td};white-space:nowrap"><b>${esc(x.tur)}</b><div style="color:var(--muted);font-size:.62rem">${esc(x.op)} · ${_fmtDateTR(x.tarih)}</div></td>
+        <td style="${td};white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis" title="${esc(x.rehAd)}">${esc(x.rehAd)||'<span style="color:#b45309">—</span>'}</td><td style="${tdr}">${x.pax}</td>
+        ${hh.satisVar?`<td style="${tdr}">${E2(hh.ciro)}</td><td style="${tdr}">${E2(hh.teslimHedef)}</td><td style="${tdr}" title="Yevmiye ${E2(hh.yev)} · Komisyon ${E2(hh.kom)} · Masraf ${E2(hh.mas)}">−${E2(kes)}</td><td style="${tdr};font-weight:700">${E2(hh.net)}</td><td style="${tdr}">${E2(hh.alinan)}</td><td style="${tdr};font-weight:800;color:${bakC}">${E2(Math.abs(hh.bakiye))}</td>`
+          :`<td colspan="6" style="${td};color:#b45309;text-align:center">satış girilmemiş</td>`}
         <td style="${td}">${durum}</td>
-        <td style="${td};white-space:nowrap"><button class="btn ${hh.kapali?'btn-outline':'btn-primary'} btn-sm" onclick="_ohDosyaAc('${x.id}')">Dosya</button></td></tr>`;
+        <td style="${td};white-space:nowrap;padding-left:2px"><button class="btn ${hh.kapali?'btn-outline':'btn-primary'} btn-sm" style="padding:3px 8px" onclick="_ohDosyaAc('${x.id}')">📂</button></td></tr>`;
     });
-    h+=`<tr style="font-weight:800;background:#f8fafc"><td colspan="5" style="${td}">TOPLAM (filtre)</td><td style="${tdr}">${E2(tot.ciro)}</td><td style="${tdr}">${E2(tot.teslimHedef)}</td><td style="${tdr}">−${E2(tot.yev)}</td><td style="${tdr}">−${E2(tot.kom)}</td><td style="${tdr}">−${E2(tot.mas)}</td><td style="${tdr}">${E2(tot.net)}</td><td style="${tdr}">${E2(tot.alinan)}</td><td style="${tdr}">${E2(tot.bakiye)}</td><td colspan="2"></td></tr></table></div>
+    h+=`<tr style="font-weight:800;background:#f8fafc"><td colspan="5" style="${td}">TOPLAM (filtre)</td><td style="${tdr}">${E2(tot.ciro)}</td><td style="${tdr}">${E2(tot.teslimHedef)}</td><td style="${tdr}" title="Yevmiye ${E2(tot.yev)} · Komisyon ${E2(tot.kom)} · Masraf ${E2(tot.mas)}">−${E2(tot.yev+tot.kom+tot.mas)}</td><td style="${tdr}">${E2(tot.net)}</td><td style="${tdr}">${E2(tot.alinan)}</td><td style="${tdr}">${E2(tot.bakiye)}</td><td colspan="2"></td></tr></table></div>
     <div style="font-size:.66rem;color:var(--muted);margin-top:8px">Bakiye = Net (teslim hedefi − yevmiye − komisyon − masraf) − teslim alınan. <span style="color:#b91c1c;font-weight:700">Kırmızı</span>: rehber şirkete verecek · <span style="color:var(--navy);font-weight:700">Lacivert</span>: şirket rehbere ödeyecek · <span style="color:#166534;font-weight:700">Yeşil 0</span>: kapatılabilir. "Dosya" tur dosyasını Satış &amp; Hesap sekmesinde açar.</div>`;
   }
   h+='</div>';
