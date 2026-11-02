@@ -1498,6 +1498,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
         <div class="pkg-section-item ops-navitem" data-ot="transfer" onclick="opsTab('transfer')"><svg class="ic"><use href="#i-bus"/></svg> <span class="nlbl" data-k="Transfer">Transfer</span></div>
         <div class="pkg-section-item ops-navitem" data-ot="tahsis" onclick="opsTab('tahsis')"><svg class="ic"><use href="#i-ticket"/></svg> <span class="nlbl" data-k="Tahsisler">Tahsisler</span></div>
         <div class="pkg-section-item ops-navitem" data-ot="mutabakat" onclick="opsTab('mutabakat')"><svg class="ic"><use href="#i-coins"/></svg> <span class="nlbl" data-k="Mutabakat">Araç Mutabakatı</span></div>
+        <div class="pkg-section-item ops-navitem" data-ot="hesap" onclick="opsTab('hesap')"><svg class="ic"><use href="#i-card"/></svg> <span class="nlbl" data-k="Hesaplaşma">Tur Hesaplaşmaları</span></div>
         <div class="pkg-section-item ops-navitem" data-ot="tanim" onclick="opsTab('tanim')"><svg class="ic"><use href="#i-gear"/></svg> <span class="nlbl" data-k="Tanımlar">Tanımlamalar</span></div>
       </div>
     </div>
@@ -2288,6 +2289,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
         <div id="opsPane_transfer" style="display:none"></div>
         <div id="opsPane_tahsis" style="display:none"></div>
         <div id="opsPane_mutabakat" style="display:none"></div>
+        <div id="opsPane_hesap" style="display:none"></div>
         <div id="opsPane_tanim" style="display:none"></div>
       </div>
     </div>
@@ -2576,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v812 · 02.11.2026';
+const APP_VER='v813 · 02.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15829,7 +15831,7 @@ function opsTab(t,noPush){
   _opsTab=t; try{localStorage.setItem('dmc_opsTab',t);}catch(e){}
   try{ if(t!=='transfer'){ const ab=document.querySelector('body>#trAtabar'); ab&&ab.remove(); } }catch(e){} _rehEdit=null; _opsView(false);
   document.querySelectorAll('.ops-navitem').forEach(b=>b.classList.toggle('active-ops', b.getAttribute('data-ot')===t));
-  ['anasayfa','gunluk','rehtak','grup','transfer','tahsis','tanim','mutabakat','birlestir','turlar'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
+  ['anasayfa','gunluk','rehtak','grup','transfer','tahsis','tanim','mutabakat','hesap','birlestir','turlar'].forEach(p=>{const el=document.getElementById('opsPane_'+p); if(el) el.style.display=(p===t)?'':'none';});
   if(t==='anasayfa') renderOpsAnasayfa();
   else if(t==='rehtak') renderRehberTakvim();
   else if(t==='gunluk') renderOperasyonPage();
@@ -15839,6 +15841,7 @@ function opsTab(t,noPush){
   else if(t==='birlestir') renderGrupBirlestir();
   else if(t==='turlar') renderOpsTurlar();
   else if(t==='mutabakat') renderOpsMutabakat();
+  else if(t==='hesap') renderOpsHesap();
   else if(t==='tanim') renderOpsTanim();
 }
 /* ── Tanımlamalar ── */
@@ -20186,6 +20189,116 @@ function mmExcel(){
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Mağaza');
   XLSX.writeFile(wb,_mmAy+'_magaza_muhasebe.xlsx');
   showToast('Excel indirildi','success');
+}
+// ═══ v813: TUR HESAPLAŞMALARI — açık / kapanan rehber hesapları ═══
+function _ohHesap(g,E){
+  const gg=Object.assign({yevmiye:{tutar:'',donem:'gunluk'},satislar:[],masraflar:[],teslimAlinan:''},g||{});
+  if(!gg.yevmiye||typeof gg.yevmiye!=='object') gg.yevmiye={tutar:'',donem:'gunluk'};
+  let gunSay=+gg.gunSay||0; let gece=0;
+  try{ const u0=(E&&E.uyeler&&E.uyeler[0])||(g&&g.sefer); const pk=u0?getPackages().find(p=>p.id===u0.pkgId):null; gece=pk?(+pk.gece||0):0; if(!gunSay) gunSay=gece?gece+1:0; }catch(e){}
+  gg.gunSay=gunSay;
+  const T=_tdTopla(gg); const mas=_tdMasrafEUR(gg); const yev=_tdYevToplam(gg);
+  let kt=0; try{ kt=E?_tdKurTaxOzet(E).toplam:0; }catch(e){}
+  const teslimHedef=Math.round((T.teslim+kt)*100)/100;
+  const net=Math.round((teslimHedef-(yev+T.kom+mas))*100)/100;
+  const alinan=_tdN(gg.teslimAlinan);
+  const bakiye=Math.round((net-alinan)*100)/100;
+  const bitis=(E&&E.tarih)?_isoAdd(E.tarih,gece):'';
+  return {ciro:T.ciro,ode:T.ode,kt,teslimHedef,yev,kom:T.kom,mas,net,alinan,bakiye,bitis,satisVar:(gg.satislar||[]).length>0,kapali:!!gg.hesapKapali,kapanis:gg.hesapKapanis||''};
+}
+function _ohFSet(k,v){ window._ohF=window._ohF||{durum:'acik',bas:'',bit:'',reh:'',op:''}; window._ohF[k]=v||''; renderOpsHesap(); }
+function _ohListe(){
+  const bugun=_opsToday(); const S=getOpsGrup().gruplar||{};
+  const out=[];
+  _ogResolve().forEach(E=>{ const g=S[E.id]||E; const h=_ohHesap(g,E);
+    const rh=_ogRehberCoz(g); const rehAd=rh?(rh.ad||''):'';
+    const bitti=h.bitis&&h.bitis<=bugun;
+    if(!h.kapali&&!h.satisVar&&!bitti) return; // tur sürüyor, hesap yok → listeye girmez
+    out.push({id:E.id,no:g.no||'',tur:(E.urunler||[]).join('+'),op:(E.ops||[]).join(', '),tarih:E.tarih||'',pax:E.pax||0,rehAd,h,bitti,auto:String(E.id).startsWith('auto:')});
+  });
+  return out;
+}
+function renderOpsHesap(){
+  const box=document.getElementById('opsPane_hesap'); if(!box) return;
+  const F=window._ohF||(window._ohF={durum:'acik',bas:'',bit:'',reh:'',op:''});
+  const bugun=_opsToday();
+  let L=_ohListe();
+  // özet kutuları (filtre öncesi)
+  const acik=L.filter(x=>!x.h.kapali), kapali=L.filter(x=>x.h.kapali);
+  const ayBas=bugun.slice(0,7);
+  const kapAy=kapali.filter(x=>String(x.h.kapanis||'').slice(0,7)===ayBas);
+  const rehVer=acik.filter(x=>x.h.satisVar&&x.h.bakiye>0).reduce((t,x)=>t+x.h.bakiye,0);
+  const sirOde=acik.filter(x=>x.h.satisVar&&x.h.bakiye<0).reduce((t,x)=>t+Math.abs(x.h.bakiye),0);
+  const bos=acik.filter(x=>!x.h.satisVar&&x.bitti);
+  const kapTeslim=kapAy.reduce((t,x)=>t+x.h.alinan,0);
+  // filtreler
+  const rehOpt=[...new Set(L.map(x=>x.rehAd).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  const opOpt=[...new Set(L.map(x=>x.op).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
+  if(F.durum==='acik') L=L.filter(x=>!x.h.kapali); else if(F.durum==='kapali') L=L.filter(x=>x.h.kapali);
+  if(F.bas) L=L.filter(x=>x.h.bitis>=F.bas); if(F.bit) L=L.filter(x=>x.h.bitis<=F.bit);
+  if(F.reh) L=L.filter(x=>x.rehAd===F.reh); if(F.op) L=L.filter(x=>x.op===F.op);
+  L.sort((a,b)=>(a.h.kapali===b.h.kapali?0:(a.h.kapali?1:-1))||String(b.h.bitis).localeCompare(String(a.h.bitis)));
+  const fin='padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.74rem';
+  const chip=(k,lbl,n)=>`<button class="btn ${F.durum===k?'btn-primary':'btn-outline'} btn-sm" onclick="_ohFSet('durum','${k}')">${lbl} (${n})</button>`;
+  const tile=(n,l,sub,c)=>`<div style="border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;flex:1;min-width:170px"><div style="font-size:1.4rem;font-weight:800;color:${c||'var(--text)'}">${n}</div><div style="font-size:.62rem;color:var(--muted);font-weight:700;letter-spacing:.5px">${l}</div>${sub?`<div style="font-size:.66rem;color:var(--muted);margin-top:2px">${sub}</div>`:''}</div>`;
+  const E2=v=>_tdEur(v);
+  let h=`<div class="card"><div class="card-title">💰 Tur Hesaplaşmaları</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${tile(acik.length,'AÇIK HESAP',`rehber şirkete verecek: <b>${E2(rehVer)}</b> · şirket rehbere: <b>${E2(sirOde)}</b>`,'#b91c1c')}
+      ${tile(E2(rehVer-sirOde),'NET BAKİYE (AÇIK)','tahsil beklenen − ödenecek','var(--navy)')}
+      ${tile(kapAy.length,'KAPANAN (BU AY)',`teslim alınan toplam <b>${E2(kapTeslim)}</b>`,'#166534')}
+      ${tile(bos.length,'SATIŞ GİRİLMEMİŞ','tur bitti, hesap boş','#b45309')}
+    </div></div>
+  <div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      ${chip('acik','Açık',acik.length)}${chip('kapali','Kapanan',kapali.length)}${chip('hepsi','Hepsi',acik.length+kapali.length)}
+      <span style="margin-left:10px;color:var(--muted);font-weight:700;font-size:.68rem">Tur bitiş:</span>
+      <input type="date" value="${esc(F.bas)}" onchange="_ohFSet('bas',this.value)" style="${fin}"> → <input type="date" value="${esc(F.bit)}" onchange="_ohFSet('bit',this.value)" style="${fin}">
+      <select onchange="_ohFSet('reh',this.value)" style="${fin};${F.reh?'border-color:var(--primary);font-weight:700;':''}"><option value="">Rehber: Hepsi</option>${rehOpt.map(r=>`<option value="${esc(r)}"${F.reh===r?' selected':''}>${esc(r)}</option>`).join('')}</select>
+      <select onchange="_ohFSet('op',this.value)" style="${fin};${F.op?'border-color:var(--primary);font-weight:700;':''}"><option value="">Operatör: Hepsi</option>${opOpt.map(r=>`<option value="${esc(r)}"${F.op===r?' selected':''}>${esc(r)}</option>`).join('')}</select>
+      ${(F.bas||F.bit||F.reh||F.op)?`<button class="btn btn-outline btn-sm" style="color:#dc2626" onclick="window._ohF={durum:'${F.durum}',bas:'',bit:'',reh:'',op:''};renderOpsHesap()">✕</button>`:''}
+      <span style="margin-left:auto;display:flex;gap:6px;align-items:center"><b>${L.length}</b> <span style="color:var(--muted);font-size:.7rem">dosya</span><button class="btn btn-outline btn-sm" onclick="_ohExcel()">📥 Excel</button></span>
+    </div>`;
+  if(!L.length) h+='<p class="section-tip" style="margin-top:10px">Bu filtrede dosya yok.</p>';
+  else{
+    const th='padding:6px 8px;font-size:.62rem;letter-spacing:.3px;color:#fff;background:var(--navy);text-align:left;white-space:nowrap', thr=th+';text-align:right';
+    const td='padding:6px 8px;border-bottom:1px solid var(--light);font-size:.76rem;vertical-align:middle', tdr=td+';text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap';
+    const tag=(bg,c,t)=>`<span style="background:${bg};color:${c};font-weight:800;font-size:.6rem;padding:1px 7px;border-radius:7px;white-space:nowrap">${t}</span>`;
+    const tot={ciro:0,teslimHedef:0,yev:0,kom:0,mas:0,net:0,alinan:0,bakiye:0};
+    let bolum='';
+    h+=`<div style="overflow-x:auto;margin-top:10px"><table style="width:100%;border-collapse:collapse">
+      <tr><th style="${th}">Tur bitiş</th><th style="${th}">Dosya</th><th style="${th}">Tur</th><th style="${th}">Rehber</th><th style="${thr}">Pax</th><th style="${thr}">Ciro</th><th style="${thr}">Teslim hedefi</th><th style="${thr}">Yevmiye</th><th style="${thr}">Komisyon</th><th style="${thr}">Masraf</th><th style="${thr}">Net</th><th style="${thr}">Teslim alınan</th><th style="${thr}">Bakiye</th><th style="${th}">Durum</th><th style="${th}"></th></tr>`;
+    L.forEach(x=>{ const hh=x.h;
+      const b=hh.kapali?'KAPANAN HESAPLAR':'AÇIK HESAPLAR';
+      if(F.durum==='hepsi'&&b!==bolum){ bolum=b; h+=`<tr><td colspan="15" style="${td};background:#f8fafc;font-weight:800;font-size:.66rem;color:#374151">${b}</td></tr>`; }
+      if(hh.satisVar){ tot.ciro+=hh.ciro; tot.teslimHedef+=hh.teslimHedef; tot.yev+=hh.yev; tot.kom+=hh.kom; tot.mas+=hh.mas; tot.net+=hh.net; tot.alinan+=hh.alinan; tot.bakiye+=hh.bakiye; }
+      const bakC=hh.bakiye===0?'#166534':(hh.bakiye>0?'#b91c1c':'var(--navy)');
+      const durum=hh.kapali?tag('#dcfce7','#166534','kapandı'+(hh.kapanis?' '+_fmtDateTR(hh.kapanis):'')):(!hh.satisVar?tag('#fef3c7','#b45309',x.bitti?'satış girilmemiş':'tur sürüyor'):(hh.bakiye===0?tag('#e5e7eb','#374151','kapatılabilir'):(hh.bakiye>0?tag('#fee2e2','#b91c1c','rehber verecek'):tag('#dbeafe','#1e3a8a','şirket ödeyecek'))));
+      h+=`<tr style="${hh.kapali?'color:#4b5563':''}"><td style="${td};white-space:nowrap">${_fmtDateTR(hh.bitis)||'—'}</td><td style="${td}"><b>${esc(x.no||'—')}</b></td>
+        <td style="${td}"><b>${esc(x.tur)}</b> <span style="color:var(--muted);font-size:.66rem">${esc(x.op)} · ${_fmtDateTR(x.tarih)}</span></td>
+        <td style="${td}">${esc(x.rehAd)||'<span style="color:#b45309">—</span>'}</td><td style="${tdr}">${x.pax}</td>
+        ${hh.satisVar?`<td style="${tdr}">${E2(hh.ciro)}</td><td style="${tdr}">${E2(hh.teslimHedef)}</td><td style="${tdr}">−${E2(hh.yev)}</td><td style="${tdr}">−${E2(hh.kom)}</td><td style="${tdr}">−${E2(hh.mas)}</td><td style="${tdr};font-weight:700">${E2(hh.net)}</td><td style="${tdr}">${E2(hh.alinan)}</td><td style="${tdr};font-weight:800;color:${bakC}">${E2(Math.abs(hh.bakiye))}</td>`
+          :`<td colspan="8" style="${td};color:#b45309;text-align:center">satış girilmemiş</td>`}
+        <td style="${td}">${durum}</td>
+        <td style="${td};white-space:nowrap"><button class="btn ${hh.kapali?'btn-outline':'btn-primary'} btn-sm" onclick="_ohDosyaAc('${x.id}')">Dosya</button></td></tr>`;
+    });
+    h+=`<tr style="font-weight:800;background:#f8fafc"><td colspan="5" style="${td}">TOPLAM (filtre)</td><td style="${tdr}">${E2(tot.ciro)}</td><td style="${tdr}">${E2(tot.teslimHedef)}</td><td style="${tdr}">−${E2(tot.yev)}</td><td style="${tdr}">−${E2(tot.kom)}</td><td style="${tdr}">−${E2(tot.mas)}</td><td style="${tdr}">${E2(tot.net)}</td><td style="${tdr}">${E2(tot.alinan)}</td><td style="${tdr}">${E2(tot.bakiye)}</td><td colspan="2"></td></tr></table></div>
+    <div style="font-size:.66rem;color:var(--muted);margin-top:8px">Bakiye = Net (teslim hedefi − yevmiye − komisyon − masraf) − teslim alınan. <span style="color:#b91c1c;font-weight:700">Kırmızı</span>: rehber şirkete verecek · <span style="color:var(--navy);font-weight:700">Lacivert</span>: şirket rehbere ödeyecek · <span style="color:#166534;font-weight:700">Yeşil 0</span>: kapatılabilir. "Dosya" tur dosyasını Satış &amp; Hesap sekmesinde açar.</div>`;
+  }
+  h+='</div>';
+  box.innerHTML=h;
+}
+function _ohDosyaAc(gid){ window._tdDonus='hesap'; opsTdAc(gid); _tdTab='satis'; opsTab('grup',true); }
+function _ohExcel(){
+  const F=window._ohF||{durum:'acik'}; let L=_ohListe();
+  if(F.durum==='acik') L=L.filter(x=>!x.h.kapali); else if(F.durum==='kapali') L=L.filter(x=>x.h.kapali);
+  if(F.bas) L=L.filter(x=>x.h.bitis>=F.bas); if(F.bit) L=L.filter(x=>x.h.bitis<=F.bit);
+  if(F.reh) L=L.filter(x=>x.rehAd===F.reh); if(F.op) L=L.filter(x=>x.op===F.op);
+  if(!L.length){ showToast('Listede dosya yok','error'); return; }
+  const r2=v=>Math.round((+v||0)*100)/100;
+  const aoa=[['Tur bitiş','Dosya','Tur','Operatör','Kalkış','Rehber','Pax','Ciro €','Teslim hedefi €','Yevmiye €','Komisyon €','Masraf €','Net €','Teslim alınan €','Bakiye €','Durum','Kapanış']];
+  L.forEach(x=>{ const h=x.h; aoa.push([_fmtDateTR(h.bitis),x.no,x.tur,x.op,_fmtDateTR(x.tarih),x.rehAd,x.pax,h.satisVar?r2(h.ciro):'',h.satisVar?r2(h.teslimHedef):'',h.satisVar?r2(h.yev):'',h.satisVar?r2(h.kom):'',h.satisVar?r2(h.mas):'',h.satisVar?r2(h.net):'',h.satisVar?r2(h.alinan):'',h.satisVar?r2(h.bakiye):'',h.kapali?'Kapandı':(h.satisVar?(h.bakiye===0?'Kapatılabilir':(h.bakiye>0?'Rehber verecek':'Şirket ödeyecek')):'Satış girilmemiş'),h.kapanis?_fmtDateTR(h.kapanis):'']); });
+  const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[11,9,14,14,11,22,5,10,12,10,10,10,10,12,10,16,11].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws,'Hesaplaşma'); const ad='tur_hesaplasmalari_'+_opsToday()+'.xlsx'; XLSX.writeFile(wb,ad); showToast('Excel indirildi: '+ad,'success');
 }
 function renderOpsMutabakat(){
   const box=document.getElementById('opsPane_mutabakat'); if(!box) return;
