@@ -2575,7 +2575,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v808 · 01.11.2026';
+const APP_VER='v809 · 02.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15807,7 +15807,7 @@ function renderTrYeni(){
     </div>
     <div class="band">
       <div class="chips">${chip(_trTipF.G,'g','Geliş',"_trChk('G')")}${chip(_trTipF.D,'d','Dönüş',"_trChk('D')")}${chip(_trTipF.ARAD&&_trTipF.ARAG,'a','Ara depar / varış',"_trYeniChkAra()")}${chip(_trTipF.TUR,'t','Tur yürüyüşü',"_trChk('TUR')")}${chip(_trTipF.UZT,'u','Uzatma',"_trChk('UZT')")}<span class="sep"></span><button class="chip sel ${_trTipF.atanmamis?'on':''}" onclick="_trChk('atanmamis')">Sadece atanmamış</button><button class="chip sel ${_trTipF.gece?'on':''}" onclick="_trChk('gece')" title="Ertesi gece 06:00 öncesi dönüş/ara deparlar bugünün listesinde">Ertesi gece alışları</button></div>
-      <div class="chips">${selChip('op','Operatör',uniq(r=>r.op))}${selChip('urun','Ürün',uniq(r=>r.urun))}${selChip('bolge','Bölge',uniq(r=>r.bolge))}${selChip('firma','Firma',firmalar)}${selChip('reh','Rehber',rehberler)}<label class="chip ${_trUst.durum?'on':''}" style="${_trUst.durum?'color:var(--text)':''}">Durum: <select onchange="_trUstSet('durum',this.value)"><option value="">Hepsi</option><option value="atanmamis" ${_trUst.durum==='atanmamis'?'selected':''}>Atanmamış</option><option value="atandi" ${_trUst.durum==='atandi'?'selected':''}>Atandı (onaysız)</option><option value="onayli" ${_trUst.durum==='onayli'?'selected':''}>Onaylı</option></select></label>${ustAktif?`<button class="chip" onclick="_trUstTemizle()" title="Üst filtreleri temizle">✕ temizle</button>`:''}</div>
+      <div class="chips">${selChip('op','Operatör',uniq(r=>r.op))}${selChip('urun','Ürün',uniq(r=>r.urun))}${selChip('bolge','Bölge',uniq(r=>r.bolge))}${selChip('kalkis','Kalkış',uniq(r=>_trYerAd(r.nereden)))}${selChip('varis','Varış',uniq(r=>_trYerAd(r.nereye)))}${selChip('firma','Firma',firmalar)}${selChip('reh','Rehber',rehberler)}<label class="chip ${_trUst.durum?'on':''}" style="${_trUst.durum?'color:var(--text)':''}">Durum: <select onchange="_trUstSet('durum',this.value)"><option value="">Hepsi</option><option value="atanmamis" ${_trUst.durum==='atanmamis'?'selected':''}>Atanmamış</option><option value="atandi" ${_trUst.durum==='atandi'?'selected':''}>Atandı (onaysız)</option><option value="onayli" ${_trUst.durum==='onayli'?'selected':''}>Onaylı</option></select></label>${ustAktif?`<button class="chip" onclick="_trUstTemizle()" title="Üst filtreleri temizle">✕ temizle</button>`:''}</div>
       <div class="exp-band"><span class="band-l">Dışa aktar</span>${expH}</div>
     </div>
     <div class="atabar${_trSel.size?' show':''}" id="trAtabar"></div>
@@ -18919,7 +18919,9 @@ function opsTrSet2(v){ _opsTrDate2=(v&&v>=_opsTrDate)?v:''; renderOpsTransfer();
 function opsTrAralik(gun){ if(!_opsTrDate) _opsTrDate=_opsToday(); _opsTrDate2=gun?_isoAdd(_opsTrDate,gun-1):''; renderOpsTransfer(); }
 let _trSaatB='', _trSaatS='';
 // ÜST FİLTRE PANELİ (Sejour tarzı): operatör / ürün / bölge / araç firması / rehber / durum
-let _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:''};
+let _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:'',kalkis:'',varis:''};
+// v809: kalkış/varış yeri filtresi için yer adı (' · ' sonrası açıklama atılır)
+function _trYerAd(v){ return String(v||'').split(' · ')[0].trim(); }
 function _trKartTik(k){ const c=k.querySelector('.trk-cb'); if(!c) return; c.checked=!c.checked; c.dispatchEvent(new Event('change')); }
 function _trBirlesikSec(enc,on){ _trIdsCoz(enc).forEach(id=>{ on?_trSel.add(id):_trSel.delete(id); }); _trRenderAtabar(); }
 function _trKartMenu(id,dep){
@@ -18976,7 +18978,7 @@ function _trUstHas(k,v){ const L=_trUstList(k); return !L.length||L.includes(Str
 function _trUstTog(k,v,on){ const L=_trUstList(k).filter(x=>x!==v); if(on) L.push(v); _trUst[k]=L.join('|'); renderOpsTransfer(); }
 function _trUstPanel(k){ window._trUstAcik=(window._trUstAcik===k)?'':k; renderOpsTransfer(); } // v755: durum değişkeni fonksiyonla aynı addaydı → ilk tıktan sonra fonksiyon eziliyordu
 document.addEventListener('click',e=>{ if(window._trUstAcik&&!e.target.closest('.tdm-msel')){ window._trUstAcik=''; try{ renderOpsTransfer(); }catch(x){} } },true);
-function _trUstTemizle(){ _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:''}; _trSaatB=''; _trSaatS=''; _trFilt={}; renderOpsTransfer(); }
+function _trUstTemizle(){ _trUst={op:'',urun:'',bolge:'',firma:'',reh:'',durum:'',kalkis:'',varis:''}; _trSaatB=''; _trSaatS=''; _trFilt={}; renderOpsTransfer(); }
 function _trGorunur(){
   let tam=_opsTrDate2?_trListRows():_trDayRows();
   if(_trSaatB||_trSaatS){ const b=_dk(_trSaatB), sn=_dk(_trSaatS);
@@ -18986,6 +18988,8 @@ function _trGorunur(){
   if(_trUst.op) tam=tam.filter(x=>_trUstHas('op',x.r.op));
   if(_trUst.urun) tam=tam.filter(x=>_trUstHas('urun',x.r.urun));
   if(_trUst.bolge) tam=tam.filter(x=>_trUstHas('bolge',x.r.bolge||''));
+  if(_trUst.kalkis) tam=tam.filter(x=>_trUstHas('kalkis',_trYerAd(x.r.nereden)));
+  if(_trUst.varis) tam=tam.filter(x=>_trUstHas('varis',_trYerAd(x.r.nereye)));
   if(_trUst.firma) tam=tam.filter(x=>{ const g=grOf(x.r); return g&&_trUstHas('firma',g.firma||''); });
   if(_trUst.reh) tam=tam.filter(x=>{ const g=grOf(x.r); return g&&_trUstHas('reh',g.rehber||''); });
   if(_trUst.durum==='atanmamis') tam=tam.filter(x=>!x.r.grup);
@@ -20359,14 +20363,14 @@ function _renderOpsTransferKlasik(){
     const ham=_opsTrDate2?_trListRows():_trDayRows();
     const G2=getTransfer().gruplar||{};
     const uniq=f=>[...new Set(ham.map(f).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'tr'));
-    const opL=uniq(x=>x.r.op), urunL=uniq(x=>x.r.urun), bolgeL=uniq(x=>x.r.bolge);
+    const opL=uniq(x=>x.r.op), urunL=uniq(x=>x.r.urun), bolgeL=uniq(x=>x.r.bolge), kalkL=uniq(x=>_trYerAd(x.r.nereden)), varL=uniq(x=>_trYerAd(x.r.nereye));
     const firmaL=[...new Set([...(getTanimlar().aracFirmalari||[]).map(f=>f.ad||''),...Object.values(G2).map(g=>g.firma||'')].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
     const rehL=[...new Set([...(getTanimlar().rehberler||[]).map(r=>r.ad||''),...Object.values(G2).map(g=>g.rehber||'')].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr'));
     const sel=(k,lbl,L)=>`<label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">${lbl}
       <select onchange="_trUstSet('${k}',this.value)" style="padding:5px 7px;border:1.5px solid ${_trUst[k]?'var(--primary)':'var(--border)'};border-radius:8px;font-size:.76rem;font-family:inherit;min-width:120px">
       <option value="">Hepsi</option>${L.map(v=>`<option value="${esc(v)}" ${_trUst[k]===v?'selected':''}>${esc(v)}</option>`).join('')}</select></label>`;
     h+=`<div id="trFiltrePanel" class="card" style="padding:.55rem .8rem;margin-bottom:8px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-      ${sel('op','OPERATÖR',opL)}${sel('urun','ÜRÜN',urunL)}${sel('bolge','BÖLGE',bolgeL)}${sel('firma','ARAÇ FİRMASI',firmaL)}${sel('reh','REHBER',rehL)}
+      ${sel('op','OPERATÖR',opL)}${sel('urun','ÜRÜN',urunL)}${sel('bolge','BÖLGE',bolgeL)}${sel('kalkis','KALKIŞ YERİ',kalkL)}${sel('varis','VARIŞ YERİ',varL)}${sel('firma','ARAÇ FİRMASI',firmaL)}${sel('reh','REHBER',rehL)}
       <label style="display:flex;flex-direction:column;gap:2px;font-size:.62rem;font-weight:700;color:var(--muted)">DURUM
         <select onchange="_trUstSet('durum',this.value)" style="padding:5px 7px;border:1.5px solid ${_trUst.durum?'var(--primary)':'var(--border)'};border-radius:8px;font-size:.76rem;font-family:inherit;min-width:110px">
           <option value="">Hepsi</option><option value="atanmamis" ${_trUst.durum==='atanmamis'?'selected':''}>Atanmamış</option><option value="atandi" ${_trUst.durum==='atandi'?'selected':''}>Atandı (onaysız)</option><option value="onayli" ${_trUst.durum==='onayli'?'selected':''}>Onaylı</option>
