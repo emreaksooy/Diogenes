@@ -1011,6 +1011,7 @@ body.sb-kapali #sbKenarBtn svg{transform:rotate(180deg)}
   #mTabbar button.on{color:var(--primary)}
   .m-sadece-mobil{display:inline-flex!important}
   #trAksiyonBar .m-sheet-item{display:none!important}
+  #trAksiyonBar .m-pc-sadece{display:none!important}
   #trFiltrePanel:not(.msh-tasindi){display:none!important}
   #trTipPanel:not(.msh-tasindi){display:none!important}
   #mSheet #trFiltrePanel{display:grid!important;grid-template-columns:1fr 1fr;gap:8px!important;padding:4px 2px!important;align-items:stretch}
@@ -2575,7 +2576,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v809 · 02.11.2026';
+const APP_VER='v810 · 02.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15778,15 +15779,21 @@ function renderTrYeni(){
   cizim.forEach(U=>{ const x=U[0]; const key=aralik?x.r.tarih:dilim(x); if(key!==son){ listH+=`<div class="grp">${aralik?esc(_trGunAd(x.r.tarih)):DAD[key]}</div>`; son=key; } listH+=U.length>1?birlesik(U):satir(x); });
   if(!L.length) listH=`<div class="bos">${ham.length?'Filtreye uyan transfer yok.':'Bu günde transfer yok.'}</div>`;
   const ustAktif=Object.values(_trUst).filter(Boolean).length+(_trSaatB||_trSaatS?1:0);
+  // v810: üst çubukta yalnız 4 düğme; kalanlar "Diğer ▾" altında (mobil sheet'te hepsi listelenir)
   const expH=`<span id="trAksiyonBar" class="exp">
-        <button class="btn btn-primary btn-sm" onclick="trGonderimAc()" title="Firmaya toplu iş paketi: aralıktaki transferler + tahsisler">📤 Firmaya İş Gönder</button>
         <button class="btn btn-outline btn-sm m-sadece-mobil tr-ik" title="Dışa Aktar" onclick="mSheetKaynak('trAksiyonBar','Dışa Aktar — '+${JSON.stringify(baslik)})">⤓</button>
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trKlasikExcel()" title="Turkuaz satırlı klasik günlük iş listesi">📗 Klasik İş Listesi</button>
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trTasimaciExcel()" title="Seçili firmaya özel, yolcu isimli GELİŞ/DÖNÜŞ listesi — Firma çipinden firma seç">🚌 Taşımacı Excel</button>
-        <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trTasimaciPdf()" title="Aynı listenin yazdırılabilir hali">🚌 Taşımacı PDF</button>
+        <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trExcelSecili()" title="Yalnız seçili (kutucuk işaretli) transferleri Excel indir">📥 Seçili Excel</button>
+        <button class="btn btn-outline btn-sm m-sheet-item" style="border-color:#7c3aed;color:#7c3aed" onclick="_trInfoDilSor('')" title="Seçili uçuş transferleri için Abreise/Anreise Information PDF (DE/EN/TR)">🏨 Info PDF</button>
+        <button class="btn btn-outline btn-sm m-pc-sadece" onclick="window._trExpDiger=!window._trExpDiger;renderOpsTransfer()" title="Diğer dışa aktarma seçenekleri">Diğer ${window._trExpDiger?'▴':'▾'}</button>
+        <span style="display:${window._trExpDiger?'contents':'none'}" class="tr-exp-diger">
+        <button class="btn btn-primary btn-sm m-sheet-item" onclick="trGonderimAc()" title="Firmaya toplu iş paketi: aralıktaki transferler + tahsisler">📤 Firmaya İş Gönder</button>
+        <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trTasimaciPdf()" title="Taşımacı listesinin yazdırılabilir hali">🚌 Taşımacı PDF</button>
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trWhatsapp()" title="Taşımacı Excel'ini indirir + firmanın WhatsApp sohbetini açar">📲 WhatsApp</button>
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trPrintDay()">🖨 Günün görev listeleri (PDF)</button>
         <button class="btn btn-outline btn-sm m-sheet-item" onclick="_trRehberIsPdfWa()" title="Rehber çipinden rehber seç — işlerini PDF + WhatsApp">📱 Rehbere İş Listesi</button>
+        </span>
       </span>`;
   box.innerHTML=`<div class="card tdm">
     <div class="band">
