@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v817 · 02.11.2026';
+const APP_VER='v818 · 02.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20230,7 +20230,10 @@ function _ohListe(){
     const bitti=h.bitis&&h.bitis<=bugun;
     if(!h.kapali&&!h.satisVar&&!bitti) return; // tur sürüyor, hesap yok → listeye girmez
     // v817: iptal (CXX) seferler ve yolcusu kalmamış (0 pax) hesapsız dosyalar listeye girmez
-    if(!h.kapali&&!h.satisVar){ const uy=(E.uyeler||[]); const cxx=uy.length&&uy.every(u=>{ const rg=getReservations().find(x=>x.pkgId===u.pkgId&&x.kalkis===u.kalkis); return rg&&rg.iptal; }); if(cxx||!(E.pax>0)) return; }
+    if(!h.kapali&&!h.satisVar){ const uy=(E.uyeler||[]);
+      // v818: operasyonu dış acentede olan (opsDisAcente) ya da rehbersiz ürünler hesaplaşmaya girmez
+      const dis=uy.length&&uy.every(u=>{ const pk=getPackages().find(p=>p.id===u.pkgId)||{}; return pk.opsDisAcente||pk.rehbersiz; }); if(dis) return;
+      const cxx=uy.length&&uy.every(u=>{ const rg=getReservations().find(x=>x.pkgId===u.pkgId&&x.kalkis===u.kalkis); return rg&&rg.iptal; }); if(cxx||!(E.pax>0)) return; }
     out.push({id:E.id,no:g.no||'',tur:(E.urunler||[]).join('+'),op:(E.ops||[]).join(', '),tarih:E.tarih||'',pax:E.pax||0,rehAd,h,bitti,auto:String(E.id).startsWith('auto:')});
   });
   return out;
