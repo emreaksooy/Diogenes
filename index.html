@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v815 · 02.11.2026';
+const APP_VER='v816 · 02.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -2950,9 +2950,24 @@ function _navPush(){
     if(son&&JSON.stringify(son)===JSON.stringify(s)) return;
     _navGecmis.push(s);
     if(_navGecmis.length>30) _navGecmis.shift();
+    try{ history.pushState({dmcNav:_navGecmis.length},'',location.href); }catch(e){} // v816: tarayıcı geri tuşu = uygulama içi geri
   }catch(e){}
 }
+// v816: tarayıcının ← tuşu uygulamadan çıkarmaz; uygulama içi geçmişte geri gider, geçmiş bitince sayfada kalır
+(function(){ try{
+  history.replaceState({dmcRoot:true},'',location.href);
+  history.pushState({dmcGuard:true},'',location.href);
+  window.addEventListener('popstate',function(){
+    try{
+      if(_navGecmis.length){ _navGeriPop=true; navGeri(); }
+      else { history.pushState({dmcGuard:true},'',location.href); }
+    }catch(e){}
+  });
+}catch(e){} })();
+let _navGeriPop=false;
 function navGeri(){
+  if(!_navGeriPop&&history.state&&history.state.dmcNav){ try{ history.back(); return; }catch(e){} } // ← düğmesi: tarayıcı geçmişiyle aynı hizada kalsın (popstate → tekrar çağrılır)
+  _navGeriPop=false;
   let s=null;
   while(_navGecmis.length){ s=_navGecmis.pop(); if(!(s.page==='operasyon'&&s.ops==='grup'&&!s.tdGid)) break; s=null; }
   if(!s){ showToast('Geri gidilecek görünüm yok',null,2000); return; }
