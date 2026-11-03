@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v818 · 02.11.2026';
+const APP_VER='v819 · 03.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -11829,7 +11829,10 @@ function _rzSejourOku(f){
       if(kod){
         // aynı kod birden çok operatörde olabilir — önce REZERVASYONUN OPERATÖRÜNE ait ürün tercih edilir
         const adaylar=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod));
-        pkg=(op&&adaylar.find(p=>p.operatorId===op.id))||adaylar[0]||null;
+        pkg=(op&&adaylar.find(p=>p.operatorId===op.id))||null;
+        // v819: operatör biliniyor ama kendi ürünü yoksa BAŞKA operatörün ürününe BAĞLANMAZ — o operatör için kopya ürün açılır (gruplar operatör bazında ayrı kalır)
+        if(!pkg&&op&&adaylar.length){ pkg=_pkgOpKopyaAc(adaylar[0],op); if(pkg) (window._sjKopyaUrun=window._sjKopyaUrun||new Set()).add(op.ad+' › '+kod); }
+        if(!pkg&&!op) pkg=adaylar[0]||null;
         if(!pkg){ const uzm=_uzKodBul(kod); if(uzm){ pkg=uzm.pkg; uzHafta=uzm.hafta; } }
         if(!pkg){ kodYok.add(kod); } }
       // kalkış = en erken giriş; satış = en erken ilk kayıt
@@ -11837,7 +11840,7 @@ function _rzSejourOku(f){
       kaynak.forEach(r=>{ const t=_sjTarih(r[iGir]); if(t&&(!kalkis||t<kalkis)) kalkis=t;
         if(iKayit>=0){ const k2=_sjTarih(r[iKayit]); if(k2&&(!satis||k2<satis)) satis=k2; } });
       if(g.zincir&&g.giris) kalkis=g.giris; // v779: zincirde ikinci ürünün girişi = öncekinin bitişi
-      if(kod&&pkg&&!uzHafta){ const ad3=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod)); if(ad3.length>1) pkg=_pkgSecKodTarih(ad3,op,kalkis)||pkg; } // v741: tarihe uygun sürüm
+      if(kod&&pkg&&!uzHafta){ const ad3=getPackages().filter(p=>_norm(p.paketKodu||'')===_norm(kod)&&(!op||p.operatorId===op.id)); if(ad3.length>1) pkg=_pkgSecKodTarih(ad3,op,kalkis)||pkg; } // v741: tarihe uygun sürüm (v819: yalnız aynı operatörün sürümleri)
       const gw=String(ilk[iG3]||'').trim().toUpperCase();
       // müşteriler (aynı isim mükerrer olmasın)
       const gorulen=new Set(); const musteriler=[];
@@ -11945,8 +11948,10 @@ function _rzSejourOku(f){
         }
       }
     }catch(e){ console.warn('eksik voucher kontrolü',e); }
-    if(kodYok.size||opYok.size){
+    const kopyaU=window._sjKopyaUrun||new Set(); window._sjKopyaUrun=null;
+    if(kodYok.size||opYok.size||kopyaU.size){
       const parca=[];
+      if(kopyaU.size) parca.push('Operatöre özel ürün kopyası açıldı (operatörler ayrı dosyada kalır): '+[...kopyaU].join(', '));
       if(kodYok.size) parca.push('Üründe eşleşmeyen kodlar (rezervasyon OTEL tipiyle alındı): '+[...kodYok].join(', '));
       if(opYok.size) parca.push('Eşleşmeyen operatörler (ad olduğu gibi yazıldı): '+[...opYok].join(', '));
       showConfirm('⚠️','Sejour Aktarım Raporu',parca.join('\n\n')+'\n\nEksik ürünleri tanımlayıp dosyayı YENİDEN yükleyebilirsin — var olan voucherlar atlanır.','Tamam',()=>{});
@@ -14106,6 +14111,7 @@ async function _boot(){
     await Promise.race([_cloudBoot(), new Promise(r=>setTimeout(r,20000))]);
   }catch(e){ console.warn('bulut açılış',e); }
   window._bootT.bulut=performance.now();
+  try{ if(sbRol==='yonetici'||sbRol==='ofis') _rzOpUyumla(); }catch(e){} // v819
   _bootRender();
   window._bootT.render=performance.now();
   _bootSplashKapat();
@@ -14258,6 +14264,34 @@ function _opsRehGet(pkgId,kalkis,bolum){
   if(bolum&&bolum!=='01'){ const b=(rec.bolumReh||{})[bolum]||{}; return {rehberId:b.rehberId||'',rehberAd:(b.rehberAd||'').trim()}; }
   return {rehberId:rec.rehberId||'',rehberAd:(rec.rehberAd||'').trim()};
 }
+// v819: operatöre özel ürün kopyası (aynı kod, başka operatörden) — rezervasyonlar operatör bazında ayrı seferde kalır
+function _pkgOpKopyaAc(kaynakPk,op){ try{ if(!kaynakPk||!op) return null; const all=getPackages(); const var_=all.find(p=>_norm(p.paketKodu||'')===_norm(kaynakPk.paketKodu||'')&&p.operatorId===op.id); if(var_) return var_;
+  const k=JSON.parse(JSON.stringify(kaynakPk)); k.id='pkg_'+String(op.ad||'op').toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+String(kaynakPk.paketKodu||'').toLowerCase().replace(/[^a-z0-9]+/g,'')+'_'+Date.now().toString(36); k.operatorId=op.id; k.kopyaKaynak=kaynakPk.id; k.olusturma=new Date().toISOString().slice(0,10); k.not=((k.not||'')+' · '+(op.ad||'')+' için '+( (_opCache||[]).find(o=>o.id===kaynakPk.operatorId)||{}).ad+' ürününden kopyalandı').trim();
+  all.push(k); setPackages(all); return k; }catch(e){ console.warn('pkgOpKopya',e); return null; } }
+// v819: operatörü ürünün operatöründen farklı olan rezervasyonları o operatörün (gerekirse kopyalanan) ürününe taşır
+function _rzOpUyumla(){ try{
+  const opAd=id=>((_opCache||[]).find(o=>o.id===id)||{}).ad||''; const opBulAd=ad=>(_opCache||[]).find(o=>_norm(o.ad||'')===_norm(ad||''));
+  const rz=getRezv()||[]; let tasinan=0; const tasimalar=[]; let pkDeg=false;
+  const bugun=_opsToday();
+  rz.forEach(r=>{ if(!r||r.tip!=='urun'||!r.pkgId||r.durum==='iptal'||!(r.kalkis>=bugun)) return; const pk=getPackages().find(p=>p.id===r.pkgId); if(!pk) return; // yalnız gelecek seferler (geçmiş dosyalara dokunulmaz)
+    const ro=_norm(r.operator||''), po=_norm(opAd(pk.operatorId)); if(!ro||!po||ro===po) return;
+    const op=opBulAd(r.operator); if(!op) return;
+    const hedef=_pkgOpKopyaAc(pk,op); if(!hedef||hedef.id===pk.id) return;
+    tasimalar.push({r,eski:pk.id,yeni:hedef.id}); });
+  if(!tasimalar.length) return 0;
+  tasimalar.forEach(t=>{ const r=t.r; r.pkgId=t.yeni; if(r.opsPkgId===t.eski) r.opsPkgId=t.yeni; (r.kartlar||[]).forEach(k=>{ if(k&&k.turPkgId===t.eski) k.turPkgId=t.yeni; }); tasinan++; });
+  setRezv(rz);
+  // uçak listesi satırları: operatör adına göre hedef ürünün grid'ine taşı
+  try{ const grids=getReservations(); let gd=false; const cift=new Set(tasimalar.map(t=>t.eski+'|'+t.r.kalkis+'|'+t.yeni));
+    cift.forEach(c=>{ const [eski,kalkis,yeni]=c.split('|'); const g=grids.find(x=>x.pkgId===eski&&x.kalkis===kalkis); if(!g) return; const hp=getPackages().find(p=>p.id===yeni); const hAd=_norm(opAd(hp&&hp.operatorId));
+      const vset=new Set(tasimalar.filter(t=>t.eski===eski&&t.yeni===yeni&&t.r.kalkis===kalkis).map(t=>String(t.r.voucher||'').trim()));
+      const tas=(g.rows||[]).filter(rw=>vset.has(String(rw.resno||'').trim())||(_norm(rw.op||'')&&_norm(rw.op||'')===hAd)); if(!tas.length) return;
+      g.rows=(g.rows||[]).filter(rw=>!tas.includes(rw)); let h=grids.find(x=>x.pkgId===yeni&&x.kalkis===kalkis); if(!h){ h={pkgId:yeni,kalkis,rows:[]}; grids.push(h); } h.rows=(h.rows||[]).concat(tas); gd=true; });
+    if(gd) setReservations(grids); }catch(e){ console.warn('rzOpUyumla grid',e); }
+  // açık grup üyelikleri: taşınan voucherlar eski gruptan çıkar (kendi seferinde ayrı dosya olur)
+  try{ const S=getOpsGrup(); let sd=false; Object.values(S.gruplar||{}).forEach(g=>{ const n=(g.uyeler||[]).length; g.uyeler=(g.uyeler||[]).filter(u=>!tasimalar.some(t=>t.eski===u.pkgId&&t.r.kalkis===u.kalkis&&String(t.r.voucher||'').trim()===String(u.resno||'').trim())); if(g.uyeler.length!==n) sd=true; }); if(sd){ setOpsGrup(S); window._ogResolveMemo=null; } }catch(e){}
+  try{ showToast(tasinan+' rezervasyon kendi operatörünün ürününe taşındı (operatörler artık ayrı dosya)','success',7000); }catch(e){}
+  return tasinan; }catch(e){ console.warn('rzOpUyumla',e); return 0; } }
 function _opsOperatorAd(pkg,kalkis){
   try{
     const set=new Set();
