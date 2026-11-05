@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v820 · 03.11.2026';
+const APP_VER='v821 · 05.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18825,6 +18825,8 @@ function _trGenRows(){
   if(window._trRowsMemo) return window._trRowsMemo;
   return window._trRowsMemo=_trGenRowsHesap();
 }
+// v821: iki otel adı aynı mı (büyük/küçük, noktalama, 'hotel/otel' eki ve şehir eki farkları yok sayılır)
+function _trAyniOtel(a,b){ const n=v=>_norm(String(v||'').split(' · ')[0]).replace(/\b(hotel|otel|resort|spa|and|&)\b/g,'').replace(/[^a-z0-9]+/g,'').trim(); const x=n(a), y=n(b); if(!x||!y) return false; return x===y||x.startsWith(y)||y.startsWith(x); }
 function _trGenRowsHesap(){
   const T=getTransfer(); const sat=T.sat||{}; const pkgs=getPackages(); const out=[];
   const vsat=T.vsat||{};
@@ -18893,6 +18895,8 @@ function _trGenRowsHesap(){
           const ksU=_trRezvKartlar(g.pkgId,g.kalkis,y.resno,y);
           const otelSon=_trOtelSec(ksU,'tarih',_isoAdd(anaD,-1))||_trOtelSec(ksU,'son')||hotel;
           const otelUz=_trOtelSec(ksU,'baslayan',anaD)||_trOtelSec(ksU,'tarih',anaD)||'Uzatma oteli ?';
+          // v821: uzatma AYNI otelde devam ediyorsa otel→otel transferi yok
+          if(_trAyniOtel(otelSon,otelUz)) throw 'ayni-otel';
           out.push(merge({id:g.pkgId+'|'+g.kalkis+'|UZT|'+grp.key,tip:'UZT',tarih:anaD,op,urun,grupKod:grp.pnr,nereden:otelSon,nereye:otelUz,bolge,ucus:'',rota:'',akt:'dönüş '+_fmtDateTR(dTarih)+(y.d_u1?' · '+y.d_u1:''),saat:'',pax:grp.n,yet:grp.n,coc:0,beb:0},grp.vlist));
         }
       }catch(e){}
