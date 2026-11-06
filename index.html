@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v822 · 05.11.2026';
+const APP_VER='v823 · 06.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8823,6 +8823,7 @@ async function ucakTopluImport(evt){
       _resPkgId=pkg.id; _resKalkis=kalkis;
       const oz=_ucakSablonAktar(rows,wb,true);
       if(_cxxMi) _resCxxIsaretle(pkg.id,kalkis,true,true);
+      else { try{ const gg=getReservations().find(x=>x.pkgId===pkg.id&&x.kalkis===kalkis); if(gg&&gg.iptal&&(oz.n+oz.atla)>0){ _resCxxIsaretle(pkg.id,kalkis,false,true); (window._ucakCxxKalkan=window._ucakCxxKalkan||[]).push(coz.kod+' '+_fmtDateTR(kalkis)); } }catch(e){} } // v823: CXX'siz dosya yeniden yüklendi → CXX kalkar
       ok++; toplamYolcu+=(oz.n+oz.atla); toplamDegisim+=oz.degisim;
     }catch(e){ cozulemedi.push(f.name+' ('+(e.message||'okunamadı')+')'); }
   }
@@ -8832,6 +8833,7 @@ async function ucakTopluImport(evt){
   let msg=ok+' dosya aktarıldı · '+toplamYolcu+' yolcu';
   if(toplamDegisim) msg+=' · ⚠ '+toplamDegisim+' uçuş değişikliği (uyarı merkezine bakın)';
   if(iptalAtla) msg+=' · '+iptalAtla+' CXX dosyası alındı — sefer CXX (iptal) işaretlendi';
+  if((window._ucakCxxKalkan||[]).length){ msg+=' · CXX kaldırıldı (dosya adında CXX yok): '+window._ucakCxxKalkan.join(', '); window._ucakCxxKalkan=null; }
   showToast(msg,'success',7000);
   const sorun=[];
   if(cozulemedi.length) sorun.push('Ad çözülemedi/okunamadı: '+cozulemedi.slice(0,6).join(', ')+(cozulemedi.length>6?' +'+(cozulemedi.length-6):''));
@@ -8930,6 +8932,7 @@ function ucakKodEsleKaydet(){
       _resPkgId=pid; _resKalkis=b.kalkis;
       const oz=_ucakSablonAktar(b.rows,b.wb,true);
       if(b.cxx) _resCxxIsaretle(pid,b.kalkis,true,true);
+      else { try{ const gg=getReservations().find(x=>x.pkgId===pid&&x.kalkis===b.kalkis); if(gg&&gg.iptal&&(oz.n+oz.atla)>0){ _resCxxIsaretle(pid,b.kalkis,false,true); (window._ucakCxxKalkan=window._ucakCxxKalkan||[]).push(b.kod+' '+_fmtDateTR(b.kalkis)); } }catch(e){} }
       ok++; yolcu+=(oz.n+oz.atla); degisim+=oz.degisim;
     }catch(e){ atla++; }
   });
