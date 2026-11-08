@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v827 · 08.11.2026';
+const APP_VER='v828 · 08.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8342,11 +8342,11 @@ function _ucakSablonAktar(rows,wb,sessiz){
   g.rows=(g.rows||[]).filter(x=>_isim(x));
   const bosTemiz=oncekiBos-g.rows.length;
   let n=0, atla=0; const degisimler=[]; let sonOda='';
-  const _dosyadaGorulen=new Set();
+  const _dosyadaGorulen=new Set(); const _dosyaV=new Set(); // v828: dosyada geçen voucher'lar
   rows.slice(hIdx+1).forEach((r,_ri)=>{
     if(!Array.isArray(r)) return;
     const p=_ucakSablonIsim(r[iAd]); if(!p) return;
-    const resno=iRes>=0?String(r[iRes]||'').trim():'';
+    const resno=iRes>=0?String(r[iRes]||'').trim():''; if(resno) _dosyaV.add(resno);
     const y={resno,soyad:p.soyad,ad:p.ad};
     try{ if(_satirIptalMi(r,_ri)){ y.durum='iptal'; iptalYolcu++; } }catch(e){}
     if(p.dogum) y.dogum=p.dogum;
@@ -8440,20 +8440,27 @@ function _ucakSablonAktar(rows,wb,sessiz){
   });
   // YENİ LİSTEDE OLMAYAN eski satırlar: rezervasyonu İPTAL olanlar otomatik iptale çekilir
   // (operatör iptal yolcuyu listeden tamamen çıkarır — uyarının kendiliğinden düşmesi için)
-  let listedenDusen=0, listedeYok=0;
+  let listedenDusen=0, listedeYok=0, isimDegisti=0;
   try{
     const iptV=new Set();
     (getRezv()||[]).forEach(rz=>{ if(rz&&rz.durum==='iptal'&&rz.pkgId===_resPkgId&&rz.kalkis===_resKalkis){
       if((rz.voucher||'').trim()) iptV.add(String(rz.voucher).trim());
       if((rz.asilVoucher||'').trim()) iptV.add(String(rz.asilVoucher).trim());
     } });
+    const silinecek=[];
     (g.rows||[]).forEach(x=>{
       if(_dosyadaGorulen.has(x)||!_isim(x)) return;
       if(_durumEff(x)==='iptal') return;
       const v=String(x.resno||'').trim();
       if(v&&[...iptV].some(iv=>_vEsit(v,iv))){ x.durum='iptal'; listedenDusen++; }
+      // v828: voucher dosyada VAR ama bu isim yok → yolcu değişti / isim düzeltildi. Bileti (PNR) yoksa satır silinir; bileti varsa İPTAL'e çekilir (iade/değişiklik takibi için)
+      else if(v&&[..._dosyaV].some(dv=>_vEsit(v,dv))){
+        if(String(x.g_pnr||x.d_pnr||'').trim()){ x.durum='iptal'; x.not=((x.not?x.not+' · ':'')+'Listeden çıktı (isim değişti) — bilet kontrol'); isimDegisti++; }
+        else { silinecek.push(x); isimDegisti++; }
+      }
       else listedeYok++;
     });
+    if(silinecek.length) g.rows=(g.rows||[]).filter(x=>!silinecek.includes(x));
   }catch(e){}
   // Sayfa2: PNR maliyetleri → PNR defteri
   let pnrN=0;
@@ -8485,9 +8492,9 @@ function _ucakSablonAktar(rows,wb,sessiz){
     try{_hataKaydet&&_hataKaydet('UÇUŞ-DEĞİŞİM',degisimOzet);}catch(_e){}
     if(!sessiz) showConfirm('🛎','Uçuş Değişikliği Tespit Edildi',degisimOzet+'\n\nSatırlar güncellendi. Transfer atamalarını gözden geçir!','Tamam',()=>{});
   }
-  if(!sessiz) showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(iptalYolcu?' · 🚫 '+iptalYolcu+' yolcu İPTALE çekildi (kırmızı+0)':'')+(listedenDusen?' · 🚫 '+listedenDusen+' yolcu İPTALE çekildi (iptal rezv, yeni listede yok)':'')+(listedeYok?' · ⚠ '+listedeYok+' eski satır yeni listede görünmüyor (kontrol et)':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
+  if(!sessiz) showToast(n+' yolcu aktarıldı (şirket şablonu)'+(atla?' · '+atla+' satır güncellendi':'')+(bosTemiz?' · '+bosTemiz+' boş satır temizlendi':'')+(iptalYolcu?' · 🚫 '+iptalYolcu+' yolcu İPTALE çekildi (kırmızı+0)':'')+(listedenDusen?' · 🚫 '+listedenDusen+' yolcu İPTALE çekildi (iptal rezv, yeni listede yok)':'')+(isimDegisti?' · ✎ '+isimDegisti+' yolcu değişti (aynı voucher, eski isim listeden çıktı)':'')+(listedeYok?' · ⚠ '+listedeYok+' eski satır yeni listede görünmüyor (kontrol et)':'')+(pnrN?' · '+pnrN+' PNR maliyeti deftere işlendi':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6500);
   try{ if(!sessiz) setTimeout(_ucakKaydirmaKontrol,400); }catch(e){}
-  return {n,atla,degisim:degisimler.length,pnrN,degisimOzet,iptalYolcu,listedenDusen,listedeYok};
+  return {n,atla,degisim:degisimler.length,pnrN,degisimOzet,iptalYolcu,listedenDusen,listedeYok,isimDegisti};
 }
 function _ucakKaydirmaKontrol(){
   // Aktarılan listedeki voucherlar başka kalkışlarda da kayıtlıysa (sefer kaydırma /
