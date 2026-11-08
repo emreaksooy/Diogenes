@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v826 · 08.11.2026';
+const APP_VER='v827 · 08.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8412,11 +8412,16 @@ function _ucakSablonAktar(rows,wb,sessiz){
       mevcutY.soyad=p.soyad; mevcutY.ad=p.ad; if(p.dogum) mevcutY.dogum=p.dogum; if(resno) mevcutY.resno=resno;
       if(y.durum==='iptal'&&mevcutY.durum!=='iptal') mevcutY.durum='iptal'; // kırmızı/CXX işaretli — mevcut satır da iptale çekilir
       if(y.not&&!(mevcutY.not||'').includes(y.not)) mevcutY.not=((mevcutY.not?mevcutY.not+' · ':'')+y.not);
-      if(y.oda&&!mevcutY.oda) mevcutY.oda=y.oda; if(y.bagaj&&!mevcutY.bagaj) mevcutY.bagaj=y.bagaj;
+      if(y.oda) mevcutY.oda=y.oda; if(y.bagaj) mevcutY.bagaj=y.bagaj;
+      // v827: DOSYA KAZANIR — voucher+isim eşleşen satırın uçuş alanları dosyadaki haliyle BAŞTAN yazılır (dosyada boşsa temizlenir).
+      // Bölüm temizleme yalnız dosyada o bölümün sütunları varsa (geliş: Flight No/Airport; dönüş: 2. Flight No/Airport; ara: Domestic) — eksik bölüm eski veriyi silmez.
+      const bolumVar={g:(iUc>=0||iHav>=0||iSaat>=0), d:(dUc>=0||dHav>=0||dSaat>=0), a:(iDom>=0)};
       ['op','kod','g_u1','g_u2','g_pnr','g_hy','g_ks1','g_vs1','g_ks2','g_vs2','g_tarih','g_k1','g_v1','g_k2','g_v2','d_u1','d_u2','d_pnr','d_hy','d_ks1','d_vs1','d_ks2','d_vs2','d_tarih','d_k1','d_v1','d_k2','d_v2','a_u1','a_k1','a_v1','a_ks1','a_vs1','a_tarih','a_hy','a_pnr'].forEach(f=>{
         const yeni=String(y[f]||'').trim(); const eski=String(mevcutY[f]||'').trim();
+        const px=f.charAt(0); const temizle=!yeni&&eski&&bolumVar[px]&&/^[gda]_/.test(f);
         if(yeni&&eski&&yeni!==eski){ degisimler.push({alan:f,eski,yeni}); mevcutY[f]=yeni; }
         else if(yeni&&!eski) mevcutY[f]=yeni;
+        else if(temizle){ degisimler.push({alan:f,eski,yeni:'(boş)'}); mevcutY[f]=''; }
       });
       // v791: BİLET DEĞİŞTİ ve yeni bilet aktarmasız → eski 2. bacak temizlenir (AYT-ESB-VIE iptal, AYT-MUC alındı → "AYT-MUC + ESB-VIE" kalmasın)
       ['g','d'].forEach(px=>{ const u1='_u1', bacak2=[px+'_u2',px+'_k2',px+'_v2',px+'_ks2',px+'_vs2'];
