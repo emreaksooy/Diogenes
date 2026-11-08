@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v824 · 08.11.2026';
+const APP_VER='v825 · 08.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18815,7 +18815,10 @@ function _trDeparHesap(r){ if(r.deparMan&&r.depar) return {saat:r.depar,onceki:f
 function _trGrupKey(y,p){ return p+':'+String(y[p+'_u1']||'').trim().toUpperCase()+'_'+String(y[p+'_k1']||'').trim().toUpperCase()+'_'+String(y[p+'_ks1']||'').trim(); }
 function _trGroup(rows,p,ekKey){ // v740: ekKey(y)→otel; aynı uçuşta farklı otelden alınanlar ayrı satır (en kalabalık otel eski anahtarı korur → mevcut atamalar bozulmaz)
   const has=y=>[y[p+'_hy'],y[p+'_pnr'],y[p+'_u1'],y[p+'_k1'],y[p+'_v1']].some(x=>(x||'').toString().trim()); const map={};
-  rows.forEach(y=>{ if(!has(y))return; const base=_trGrupKey(y,p); const ek=ekKey?_norm(ekKey(y)||''):''; const key=base+(ek?'\u0001'+ek:'');
+  // v825: aynı uçuş no/saat ama FARKLI TARİH (ör. 1 hafta sonra dönen uzatmacılar) aynı gruba girmez — çoğunluk tarihi eski anahtarı korur, diğerleri '|t:tarih' eki alır
+  const tSay={}; rows.forEach(y=>{ if(!has(y))return; const b=_trGrupKey(y,p); const t=_pdate(y[p+'_tarih']||'')||''; tSay[b]=tSay[b]||{}; tSay[b][t]=(tSay[b][t]||0)+1; });
+  const tAna={}; Object.keys(tSay).forEach(b=>{ tAna[b]=Object.entries(tSay[b]).sort((a,c)=>c[1]-a[1]||String(a[0]).localeCompare(String(c[0])))[0][0]; });
+  rows.forEach(y=>{ if(!has(y))return; const b0=_trGrupKey(y,p); const t=_pdate(y[p+'_tarih']||'')||''; const base=(t&&t!==tAna[b0])?(b0+'|t:'+t):b0; const ek=ekKey?_norm(ekKey(y)||''):''; const key=base+(ek?'\u0001'+ek:'');
     if(!map[key]) map[key]={key,base,ek,pnrs:new Set(),vset:new Set(),y,n:0}; const pn=(y[p+'_pnr']||'').trim(); if(pn) map[key].pnrs.add(pn); const vc=String(y.resno||'').trim(); if(vc) map[key].vset.add(vc); map[key].n++; });
   const G=Object.values(map);
   if(ekKey){ const byBase={}; G.forEach(g=>(byBase[g.base]=byBase[g.base]||[]).push(g)); Object.values(byBase).forEach(L=>{ L.sort((a,b)=>b.n-a.n); L.forEach((g,i)=>{ g.key=i===0?g.base:g.base+'|'+g.ek.replace(/[^a-z0-9]+/g,'_').slice(0,24); }); }); }
