@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v829 · 08.11.2026';
+const APP_VER='v830 · 10.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19434,16 +19434,20 @@ function _mmTurSinif(ad){ const t=String(ad||'').toLocaleLowerCase('tr'); if(/ha
 function _mmKayitTur(k,firmalar){ const fm=(firmalar||_moFirmalar()).find(x=>x.id===k.firmaId)||{}; const sb=(fm.subeler||[]).find(x=>String(x.ad||x.sehir||'')===String(k.magaza||'')); return [sb&&sb.tur,fm.tur,k.magaza,fm.ad].map(_mmTurSinif).find(t=>t!=='diger')||'diger'; }
 function _mmGirenPax(k){ let gp=_tdN(k.rehPax); if(!gp){ try{ const b=getRehBildirim().find(b=>_rehbBildEsle(b,k)); if(b) gp=_tdN(b.pax); }catch(e){} } return gp; }
 function _mmOpAd(kod){ try{ for(const parca of String(kod||'').split('+')){ const pk=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(parca.replace(/×\d+$/,''))); if(pk){ const ad=_resOpAd(pk); if(ad) return ad; } } }catch(e){} return ''; }
+// v830: dönem ölçütü — 'kalkis' (grup/tur kalkış tarihi, varsayılan) ya da 'giris' (mağaza giriş tarihi). Tüm mağaza ekranlarında ortak.
+function _mmOlcut(){ return window._mmOlcutSec||'kalkis'; }
+function _mmDonemTarih(k){ if(_mmOlcut()==='kalkis'){ const kz=String(k.kalkis||'').trim(); if(/^\d{4}-\d{2}-\d{2}$/.test(kz)) return kz; } return String(_pdate(k.tarih)||''); }
+function _mmOlcutSecH(fn){ const inp='padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;background:var(--card,#fff)'; return `<select onchange="window._mmOlcutSec=this.value;${fn}()" style="${inp};${_mmOlcut()==='giris'?'border-color:#b45309;color:#b45309;font-weight:700':''}" title="Ay/tarih filtresinin baktığı tarih"><option value="kalkis" ${_mmOlcut()==='kalkis'?'selected':''}>Dönem: tur kalkışı</option><option value="giris" ${_mmOlcut()==='giris'?'selected':''}>Dönem: mağaza girişi</option></select>`; }
 function _mmDonemF(pref){ // yıl/ay filtresi — window[pref+'Yil'], window[pref+'Ay']
   const yil=window[pref+'Yil']||'', ay=window[pref+'Ay']||'';
-  return k=>{ const t=String(_pdate(k.tarih)||''); return (!yil||t.slice(0,4)===yil)&&(!ay||t.slice(5,7)===ay); };
+  return k=>{ const t=_mmDonemTarih(k); return (!yil||t.slice(0,4)===yil)&&(!ay||t.slice(5,7)===ay); };
 }
 function _mmDonemSec(pref,fn){
-  const yillar=[...new Set(getMagMuhAktif().map(k=>String(_pdate(k.tarih)||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  const yillar=[...new Set(getMagMuhAktif().map(k=>_mmDonemTarih(k).slice(0,4)).filter(Boolean))].sort().reverse();
   if(window[pref+'Yil']==null){ window[pref+'Yil']=yillar[0]||''; window[pref+'Ay']=''; }
   const AY=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const inp='padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;background:var(--card,#fff)';
-  return `<select onchange="window.${pref}Yil=this.value;${fn}()" style="${inp}"><option value="">Tüm yıllar</option>${yillar.map(y=>`<option ${window[pref+'Yil']===y?'selected':''}>${y}</option>`).join('')}</select>
+  return `${_mmOlcutSecH(fn)}<select onchange="window.${pref}Yil=this.value;${fn}()" style="${inp}"><option value="">Tüm yıllar</option>${yillar.map(y=>`<option ${window[pref+'Yil']===y?'selected':''}>${y}</option>`).join('')}</select>
     <select onchange="window.${pref}Ay=this.value;${fn}()" style="${inp}"><option value="">Tüm aylar</option>${AY.map((a,i)=>{ const v=String(i+1).padStart(2,'0'); return `<option value="${v}" ${window[pref+'Ay']===v?'selected':''}>${a}</option>`; }).join('')}</select>`;
 }
 const _MM_INP='padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem;background:var(--card,#fff)';
@@ -19507,13 +19511,13 @@ function renderMagKalem(){
     </table></div></div>`;
   box.innerHTML=h;
 }
-function mmKalemGit(kid){ try{ const k=getMagMuh().find(x=>x.id===kid); if(!k) return; _mmAy=String(_pdate(k.tarih)||'').slice(0,7)||_mmAy; window._mmTurAcik=window._mmTurAcik||new Set(); window._mmTurAcik.add((String(k.kod||'').trim().toUpperCase()||'—')+'|'+String(k.kalkis||'')+'|'+String(k.rehberAd||'').trim()); mmTab('muh'); setTimeout(()=>{ try{ const el=document.querySelector('[data-mmkid="'+kid+'"]'); if(el) el.scrollIntoView({block:'center'}); }catch(e){} },80); }catch(e){} }
+function mmKalemGit(kid){ try{ const k=getMagMuh().find(x=>x.id===kid); if(!k) return; _mmAy=String(_mmDonemTarih(k)||_pdate(k.tarih)||'').slice(0,7)||_mmAy; window._mmTurAcik=window._mmTurAcik||new Set(); window._mmTurAcik.add((String(k.kod||'').trim().toUpperCase()||'—')+'|'+String(k.kalkis||'')+'|'+String(k.rehberAd||'').trim()); mmTab('muh'); setTimeout(()=>{ try{ const el=document.querySelector('[data-mmkid="'+kid+'"]'); if(el) el.scrollIntoView({block:'center'}); }catch(e){} },80); }catch(e){} }
 function mmKalemExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const rows=[...document.querySelectorAll('#magmuhKalemWrap table tr')];
   if(rows.length<2){ showToast('Liste boş','error'); return; }
   const aoa=rows.map(tr=>[...tr.children].map(td=>td.innerText.replace(/\s+/g,' ').trim()));
-  const ws=XLSX.utils.aoa_to_sheet([['MAĞAZA KALEMLERİ — '+((window._mklYil||'')+' '+(window._mklAy||'')).trim()],[]].concat(aoa));
+  const ws=XLSX.utils.aoa_to_sheet([['MAĞAZA KALEMLERİ — '+((window._mklYil||'')+' '+(window._mklAy||'')).trim()+' · dönem: '+(_mmOlcut()==='kalkis'?'tur kalkışı':'mağaza girişi')],[]].concat(aoa));
   try{ ws['!cols']=aoa[0].map((_,i)=>({wch:i===4||i===3?26:14})); _xsSatirStil(ws,2,aoa[0].length,{font:{bold:true,color:{rgb:_XSC.beyaz}},fill:{fgColor:{rgb:_XSC.navy}}}); }catch(e){}
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Kalemler'); XLSX.writeFile(wb,'Magaza_Kalemler_'+(window._mklYil||'')+(window._mklAy||'')+'.xlsx');
 }
@@ -19582,7 +19586,7 @@ function mmRehberExcel(){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi','error'); return; }
   const R=_mmRehberOzet().sort((a,b)=>b.ppax-a.ppax);
   if(!R.length){ showToast('Kayıt yok','error'); return; }
-  const aoa=[['REHBER ANALİZİ — '+((window._mrhYil||'')+' '+(window._mrhAy||'')).trim()],[],['Rehber','Operatör','Tur','Pax','Giren','Giriş %','Ciro','Ciro P.Pax','Giren P.Pax','Acente kom.','Rehber payı','Halı','Kuyum','Deri','Beklemede']];
+  const aoa=[['REHBER ANALİZİ — '+((window._mrhYil||'')+' '+(window._mrhAy||'')).trim()+' · dönem: '+(_mmOlcut()==='kalkis'?'tur kalkışı':'mağaza girişi')],[],['Rehber','Operatör','Tur','Pax','Giren','Giriş %','Ciro','Ciro P.Pax','Giren P.Pax','Acente kom.','Rehber payı','Halı','Kuyum','Deri','Beklemede']];
   R.forEach(r=>aoa.push([r.reh,[...r.ops].join(', '),r.tur,r.pax,r.gir,Math.round(r.girY),Math.round(r.ciro),Math.round(r.ppax),Math.round(r.gpax),Math.round(r.acente),Math.round(r.rehPay),Math.round(r.hali),Math.round(r.kuyum),Math.round(r.deri),r.bek]));
   aoa.push([]); aoa.push(['TUR TUR DÖKÜM']); aoa.push(['Rehber','Kalkış','Tur','Operatör','Pax','Giren','Halı','Kuyum','Deri','Ciro','P.Pax','Mağazalar']);
   R.forEach(r=>r.turlar.forEach(t=>aoa.push([r.reh,t.kalkis?_fmtDateTR(t.kalkis):_fmtDateTR(t.tarih),t.kod,t.op,t.pax,t.gir,Math.round(t.hali),Math.round(t.kuyum),Math.round(t.deri),Math.round(t.ciro),t.pax?Math.round(t.ciro/t.pax):'',[...t.mag].join(' · ')])));
@@ -19962,7 +19966,7 @@ function renderMagMuh(){
   const firmalar=_moFirmalar();
   window._mmBasF=window._mmBasF||''; window._mmBitF=window._mmBitF||'';
   const _mmAralik=!!(window._mmBasF||window._mmBitF);
-  let L=getMagMuhAktif().filter(k=>{ const t=String(_pdate(k.tarih)||'');
+  let L=getMagMuhAktif().filter(k=>{ const t=_mmDonemTarih(k); // v830: ölçüt (tur kalkışı / mağaza girişi)
     if(_mmAralik) return (!window._mmBasF||t>=window._mmBasF)&&(!window._mmBitF||t<=window._mmBitF);
     return t.slice(0,7)===_mmAy; });
   if(_mmFirmaF) L=L.filter(k=>k.firmaId===_mmFirmaF);
@@ -19988,6 +19992,7 @@ function renderMagMuh(){
   const DAD={bekliyor:['Bekliyor','#fef3c7','#92400e'],mutabik:['Mutabık','#dcfce7','#166534'],bekleme:['Bekleme Satış','#ede9fe','#6d28d9'],tahsil:['Tahsil edildi','#e0f2fe','#0369a1']};
   let h=(window._mmBildKartHTML||'')+`<div class="card"><div class="card-title">🏬 Mağaza Muhasebesi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">Yalnız yönetim · mağaza bildirimi ↔ rehber bildirimi</span></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      ${_mmOlcutSecH('renderMagMuh')}
       <input type="month" value="${_mmAy}" ${_mmAralik?'disabled title="Tarih aralığı aktif — ay filtresi devre dışı"':''} onchange="_mmAy=this.value;renderMagMuh()" style="${inp};${_mmAralik?'opacity:.45':''}">
       <input type="date" value="${window._mmBasF||''}" onchange="window._mmBasF=this.value;renderMagMuh()" title="Aralık başı" style="${inp};border-color:${window._mmBasF?'#2563eb':'var(--border)'}">
       <span style="color:var(--muted)">~</span>
