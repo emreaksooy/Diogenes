@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v830 · 10.11.2026';
+const APP_VER='v831 · 12.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19708,15 +19708,16 @@ function renderMagEkstre(){
   if(subeF||turF) T=[];
   const yillar=[...new Set(getMagMuhAktif().concat(getMagTahsilat()).map(k=>String(_pdate(k.tarih)||'').slice(0,4)).filter(Boolean))].sort().reverse();
   const M={}, MS={};
-  Z.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
+  Z.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,bekHak:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
     const skey=id+'\u0001'+String(k.magaza||'');
-    const ms=MS[skey]=MS[skey]||{satis:0,bekleme:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},n:0};
+    const ms=MS[skey]=MS[skey]||{satis:0,bekleme:0,bekHak:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},n:0};
     const c=_mmHesap(k);
-    if((k.durum||'')==='bekleme'){ m.bekleme+=c.mag; ms.bekleme+=c.mag; return; }
+    // v831: bekleme satışı — satış ayrı sütunda, acente payı "Bekleme Hakediş"te (onaylı hakedişe ve kalana girmez); ziyaret/pax sayılır
+    if((k.durum||'')==='bekleme'){ m.bekleme+=c.mag; ms.bekleme+=c.mag; let bp=0; try{ bp=_mmPaylar(k).acente||0; }catch(e){} m.bekHak+=bp; ms.bekHak+=bp; m.n++; ms.n++; m.pax+=_tdN(k.pax); ms.pax+=_tdN(k.pax); return; }
     m.satis+=c.mag; m.n++; m.pax+=_tdN(k.pax);
     ms.satis+=c.mag; ms.n++; ms.pax+=_tdN(k.pax);
     const p=_mmPaylar(k); ['acente','rehber','ofis','sef','kaptan'].forEach(x=>{ m.hak[x]+=p[x]; ms.hak[x]+=p[x]; }); });
-  T.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
+  T.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,bekHak:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
     const t2=_tdN(k.tutar);
     if(k.tur==='ofis') m.tahO+=t2; else if(k.tur==='avans') m.avans+=t2; else m.tahA+=t2; });
   const R=v=>(Math.round(v*100)/100).toLocaleString('tr-TR');
@@ -19737,18 +19738,20 @@ function renderMagEkstre(){
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="meExcel()">📥 Excel</button>
     </div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
-    <tr><th style="${th};text-align:left">Mağaza</th><th style="${th}">Pax</th><th style="${th}">Onaylı Satış</th><th style="${th}">P.Pax Ort.</th><th style="${th}">Bekleme Satış</th><th style="${th}">Acente Hakediş</th><th style="${th}">Ofis Hakediş</th>${gizliKisi?'':`<th style="${th}">Şef</th>`}<th style="${th}">Acente Tahsilat</th><th style="${th}">Ofis Tahsilat</th><th style="${th}">Avans</th><th style="${th}">KALAN ACENTE</th><th style="${th}">KALAN OFİS</th></tr>`;
+    <tr><th style="${th};text-align:left">Mağaza</th><th style="${th}">Pax</th><th style="${th}">Toplam Satış</th><th style="${th}">Onaylı Satış</th><th style="${th};background:#5b21b6">Bekleme Satış</th><th style="${th}">P.Pax Ort.</th><th style="${th}">Toplam Hakediş</th><th style="${th}">Acente Hakediş<br><span style="font-weight:400;font-size:.52rem">bekleme hariç</span></th><th style="${th};background:#5b21b6">Bekleme Hakediş</th><th style="${th}">Ofis Hakediş</th>${gizliKisi?'':`<th style="${th}">Şef</th>`}<th style="${th}">Acente Tahsilat</th><th style="${th}">Ofis Tahsilat</th><th style="${th}">Avans</th><th style="${th}">KALAN ACENTE</th><th style="${th}">KALAN OFİS</th></tr>`;
   const idler=Object.keys(M).sort((a,b)=>(((firmalar.find(f=>f.id===a)||{}).ad)||'').localeCompare(((firmalar.find(f=>f.id===b)||{}).ad)||'','tr'));
-  const G={satis:0,bekleme:0,pax:0,hakA:0,hakO:0,tahA:0,tahO:0,avans:0};
+  const G={satis:0,bekleme:0,bekHak:0,pax:0,hakA:0,hakO:0,tahA:0,tahO:0,avans:0};
   idler.forEach(id=>{ const m=M[id]; const ad=(firmalar.find(f=>f.id===id)||{}).ad||'—';
     const kalanA=m.hak.acente-m.tahA, kalanO=m.hak.ofis-m.tahO;
-    G.satis+=m.satis; G.bekleme+=m.bekleme; G.pax+=m.pax; G.hakA+=m.hak.acente; G.hakO+=m.hak.ofis; G.tahA+=m.tahA; G.tahO+=m.tahO; G.avans+=m.avans;
+    G.satis+=m.satis; G.bekleme+=m.bekleme; G.bekHak+=m.bekHak; G.pax+=m.pax; G.hakA+=m.hak.acente; G.hakO+=m.hak.ofis; G.tahA+=m.tahA; G.tahO+=m.tahO; G.avans+=m.avans;
     h+=`<tr><td style="${td};text-align:left"><b>${esc(ad)}</b> <span style="font-size:.62rem;color:var(--muted)">${m.n} ziyaret</span></td>
       <td style="${td}">${m.pax||'—'}</td>
-      <td style="${td}"><b>${R(m.satis)}</b></td>
-      <td style="${td};color:#166534;font-weight:700">${m.pax>0?R(m.satis/m.pax):'—'}</td>
+      <td style="${td}"><b>${R(m.satis+m.bekleme)}</b></td>
+      <td style="${td};color:var(--navy)">${R(m.satis)}</td>
       <td style="${td};color:#6d28d9">${m.bekleme?R(m.bekleme):'—'}</td>
-      <td style="${td}">${R(m.hak.acente)}</td><td style="${td}">${R(m.hak.ofis)}</td>
+      <td style="${td};color:#166534;font-weight:700">${m.pax>0?R(m.satis/m.pax):'—'}</td>
+      <td style="${td}"><b>${R(m.hak.acente+m.bekHak)}</b></td>
+      <td style="${td}">${R(m.hak.acente)}</td><td style="${td};color:#6d28d9">${m.bekHak?R(m.bekHak):'—'}</td><td style="${td}">${R(m.hak.ofis)}</td>
       ${gizliKisi?'':`<td style="${td};color:var(--muted)">${m.hak.sef?R(m.hak.sef):'—'}</td>`}
       <td style="${td}">${R(m.tahA)}</td><td style="${td}">${R(m.tahO)}</td>
       <td style="${td};color:#92400e">${m.avans?R(m.avans):'—'}</td>
@@ -19761,10 +19764,13 @@ function renderMagEkstre(){
       const tds='padding:3px 9px;font-size:.7rem;border-bottom:1px solid var(--light);text-align:right;white-space:nowrap;color:var(--muted)';
       h+=`<tr><td style="${tds};text-align:left;padding-left:26px">↳ ${esc(sad)} <span style="font-size:.58rem">${sm.n} ziyaret</span></td>
         <td style="${tds}">${sm.pax||'—'}</td>
+        <td style="${tds}">${(sm.satis+sm.bekleme)?R(sm.satis+sm.bekleme):'—'}</td>
         <td style="${tds}">${sm.satis?R(sm.satis):'—'}</td>
-        <td style="${tds}">${sm.pax>0?R(sm.satis/sm.pax):'—'}</td>
         <td style="${tds}">${sm.bekleme?R(sm.bekleme):'—'}</td>
+        <td style="${tds}">${sm.pax>0?R(sm.satis/sm.pax):'—'}</td>
+        <td style="${tds}">${(sm.hak.acente+sm.bekHak)?R(sm.hak.acente+sm.bekHak):'—'}</td>
         <td style="${tds}">${sm.hak.acente?R(sm.hak.acente):'—'}</td>
+        <td style="${tds}">${sm.bekHak?R(sm.bekHak):'—'}</td>
         <td style="${tds}">${sm.hak.ofis?R(sm.hak.ofis):'—'}</td>
         ${gizliKisi?'':`<td style="${tds}">${sm.hak.sef?R(sm.hak.sef):'—'}</td>`}
         <td style="${tds}">—</td><td style="${tds}">—</td><td style="${tds}">—</td><td style="${tds}">—</td><td style="${tds}">—</td></tr>`;
@@ -19772,15 +19778,17 @@ function renderMagEkstre(){
   });
   h+=`<tr><td style="${td};text-align:left;background:var(--primary-soft)"><b>TOPLAM</b></td>
     <td style="${td};background:var(--primary-soft)"><b>${G.pax||'—'}</b></td>
-    <td style="${td};background:var(--primary-soft)"><b>${R(G.satis)}</b></td>
-    <td style="${td};background:var(--primary-soft);color:#166534"><b>${G.pax>0?R(G.satis/G.pax):'—'}</b></td><td style="${td};background:var(--primary-soft)">${R(G.bekleme)}</td>
-    <td style="${td};background:var(--primary-soft)"><b>${R(G.hakA)}</b></td><td style="${td};background:var(--primary-soft)">${R(G.hakO)}</td>
+    <td style="${td};background:var(--primary-soft)"><b>${R(G.satis+G.bekleme)}</b></td>
+    <td style="${td};background:var(--primary-soft)">${R(G.satis)}</td><td style="${td};background:var(--primary-soft);color:#6d28d9">${R(G.bekleme)}</td>
+    <td style="${td};background:var(--primary-soft);color:#166534"><b>${G.pax>0?R(G.satis/G.pax):'—'}</b></td>
+    <td style="${td};background:var(--primary-soft)"><b>${R(G.hakA+G.bekHak)}</b></td>
+    <td style="${td};background:var(--primary-soft)">${R(G.hakA)}</td><td style="${td};background:var(--primary-soft);color:#6d28d9">${R(G.bekHak)}</td><td style="${td};background:var(--primary-soft)">${R(G.hakO)}</td>
     ${gizliKisi?``:`<td style="${td};background:var(--primary-soft)"></td>`}
     <td style="${td};background:var(--primary-soft)"><b>${R(G.tahA)}</b></td><td style="${td};background:var(--primary-soft)">${R(G.tahO)}</td>
     <td style="${td};background:var(--primary-soft)">${R(G.avans)}</td>
     <td style="${td};background:var(--primary-soft)"><b>${R(G.hakA-G.tahA)}</b></td><td style="${td};background:var(--primary-soft)"><b>${R(G.hakO-G.tahO)}</b></td></tr>
   </table></div>
-  <div style="font-size:.68rem;color:var(--muted);margin-top:8px">Bekleme Satış: ödemesi sonra yapılacak satışlar — hakedişe girmez, kayıt "Bekleme Satış" durumundan "Mutabık"a alınınca eklenir. Avans: mağazadan önden alınan tutar — kalan hesabına katılmaz, ayrıca izlenir.</div>
+  <div style="font-size:.68rem;color:var(--muted);margin-top:8px">Toplam Satış = Onaylı + Bekleme. P.Pax Ort., Acente/Ofis/Şef hakedişleri ve KALAN yalnız onaylı satış üzerinden. Bekleme Hakediş = bekleme satışının acente payı (ayrı izlenir, kalana girmez); kayıt "Mutabık"a alınınca Onaylı'ya ve Acente Hakediş'e geçer. Toplam Hakediş = Acente Hakediş + Bekleme Hakediş. Avans: mağazadan önden alınan tutar — kalan hesabına katılmaz, ayrıca izlenir.</div>
   </div>`;
   box.innerHTML=h;
 }
@@ -19789,7 +19797,7 @@ function meExcel(){
   const tbl=document.querySelector('#magmuhEkstreWrap table'); if(!tbl){ showToast('Önce ekstre açılmalı','error'); return; }
   const aoa=[['DIOGENES TRAVEL — MAĞAZA EKSTRESİ'+(_meYil?' · '+_meYil:'')],[]];
   tbl.querySelectorAll('tr').forEach(tr=>{ aoa.push([...tr.children].map(c2=>c2.innerText.replace(/\n/g,' ').trim())); });
-  const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[24,12,12,13,11,10,9,9,13,11,10,13,11].map(w2=>({wch:w2}));
+  const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[24,8,12,12,12,10,13,13,13,11,9,13,11,9,13,11].map(w2=>({wch:w2}));
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Ekstre');
   const _ek=(window._meBas||window._meBit)?((window._meBas||'')+'_'+(window._meBit||'')+'_').replace(/^_/,''):(_meYil?_meYil+'_':'');
   XLSX.writeFile(wb,_ek+'magaza_ekstresi.xlsx');
