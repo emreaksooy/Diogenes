@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v831 · 12.11.2026';
+const APP_VER='v833 · 15.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -13161,7 +13161,7 @@ function _docApplyOne(col,id,data){
 function _docRerender(col){
   const ap=document.querySelector('.page.active')?document.querySelector('.page.active').id:'';
   // v805: kullanıcı atama çubuğunda/giriş alanında çalışırken bulut yeniden çizimi ertelenir (firma/araç seçimi sıfırlanıyordu)
-  try{ const ae=document.activeElement; if(ae&&ae!==document.body&&(ae.closest('#trAtabar')||ae.closest('.tdm-ab')||ae.closest('.notrow')||/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName))&&ap==='page-operasyon'){
+  try{ const ae=document.activeElement; if(ap==='page-operasyon'&&((window._thsAcik&&document.getElementById('ths_firma'))||(ae&&ae!==document.body&&(ae.closest('#trAtabar')||ae.closest('.tdm-ab')||ae.closest('.notrow')||/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName))))){ // v833: tahsis formu açıkken de ertele
     clearTimeout(window._docRerenderT); window._docRerenderT=setTimeout(()=>_docRerender(col),4000); return; } }catch(e){}
   try{
     if(col==='rezv'&&ap==='page-rezervasyon'){ renderRezvPage(); }
@@ -13669,7 +13669,7 @@ function _cloudSubscribe(){
 // v799: artımlı çekim — en az 20 sn arayla, push devam ederken değil
 async function _cloudTazele(neden){
   if(!_cloudOn||!sb) return; if(window._pullBusy) return;
-  try{ if(_trSel&&_trSel.size&&neden!=='periyodik'){ const ae=document.activeElement; if(ae&&ae!==document.body) return; } }catch(e){} // v805: transfer seçimi/formu açıkken odak tetikli tazeleme yok
+  try{ if(((_trSel&&_trSel.size)||(window._thsAcik&&document.getElementById('ths_firma')))&&neden!=='periyodik'){ const ae=document.activeElement; if(ae&&ae!==document.body) return; } }catch(e){} // v805/v833: transfer seçimi ya da tahsis formu açıkken odak tetikli tazeleme yok
   if(window._rtSonTazele&&Date.now()-window._rtSonTazele<20*1000) return;
   if(window._pushBusy||((window._cloudBekleyen||new Set()).size)) { clearTimeout(window._rtTazeleT); window._rtTazeleT=setTimeout(()=>_cloudTazele(neden),5000); return; }
   window._rtSonTazele=Date.now(); window._pullBusy=true;
@@ -19687,6 +19687,12 @@ function _mmPaylar(k){
     else out.acente+=c*_tdN(x.oran)/100; });
   return out;
 }
+// v832: kalem bazlı onaylı / bekleme ayrımı (kalem durumu 'bekleme'/'bekliyor' → bekleme; kayıt durumu 'bekleme' → tüm kalemler bekleme)
+function _mmKalemBol(k){ const out={on:{ciro:0,acente:0,rehber:0,ofis:0,sef:0,kaptan:0},bek:{ciro:0,acente:0}}; const kayitBek=(k.durum||'')==='bekleme';
+  (k.magKalemler||[]).forEach(x=>{ if(!x||x.durum==='iptal') return; const c=_tdN(x.ciro); const bek=kayitBek||x.durum==='bekleme'||x.durum==='bekliyor';
+    const pay={}; if(x.pay&&typeof x.pay==='object'){ ['acente','rehber','ofis','sef','kaptan'].forEach(q=>{ pay[q]=c*_tdN(x.pay[q])/100; }); } else { pay.acente=c*_tdN(x.oran)/100; pay.rehber=pay.ofis=pay.sef=pay.kaptan=0; }
+    if(bek){ out.bek.ciro+=c; out.bek.acente+=pay.acente; } else { out.on.ciro+=c; ['acente','rehber','ofis','sef','kaptan'].forEach(q=>{ out.on[q]+=pay[q]; }); } });
+  return out; }
 function renderMagEkstre(){
   const box=document.getElementById('magmuhEkstreWrap'); if(!box) return;
   if(_cloudOn&&sbRol&&_acl('magmuh')==='-'){ box.innerHTML='<div class="card"><b>Bu bölüme erişim yetkiniz yok.</b></div>'; return; }
@@ -19711,12 +19717,12 @@ function renderMagEkstre(){
   Z.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,bekHak:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
     const skey=id+'\u0001'+String(k.magaza||'');
     const ms=MS[skey]=MS[skey]||{satis:0,bekleme:0,bekHak:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},n:0};
-    const c=_mmHesap(k);
-    // v831: bekleme satışı — satış ayrı sütunda, acente payı "Bekleme Hakediş"te (onaylı hakedişe ve kalana girmez); ziyaret/pax sayılır
-    if((k.durum||'')==='bekleme'){ m.bekleme+=c.mag; ms.bekleme+=c.mag; let bp=0; try{ bp=_mmPaylar(k).acente||0; }catch(e){} m.bekHak+=bp; ms.bekHak+=bp; m.n++; ms.n++; m.pax+=_tdN(k.pax); ms.pax+=_tdN(k.pax); return; }
-    m.satis+=c.mag; m.n++; m.pax+=_tdN(k.pax);
-    ms.satis+=c.mag; ms.n++; ms.pax+=_tdN(k.pax);
-    const p=_mmPaylar(k); ['acente','rehber','ofis','sef','kaptan'].forEach(x=>{ m.hak[x]+=p[x]; ms.hak[x]+=p[x]; }); });
+    // v832: KALEM bazlı — kalem durumu bekleme/bekliyor olanlar Bekleme Satış + Bekleme Hakediş'e, diğerleri Onaylı'ya (ziyaret/pax her durumda sayılır)
+    const B=_mmKalemBol(k);
+    m.n++; ms.n++; m.pax+=_tdN(k.pax); ms.pax+=_tdN(k.pax);
+    m.bekleme+=B.bek.ciro; ms.bekleme+=B.bek.ciro; m.bekHak+=B.bek.acente; ms.bekHak+=B.bek.acente;
+    m.satis+=B.on.ciro; ms.satis+=B.on.ciro;
+    ['acente','rehber','ofis','sef','kaptan'].forEach(x=>{ m.hak[x]+=B.on[x]; ms.hak[x]+=B.on[x]; }); });
   T.forEach(k=>{ const id=k.firmaId||'?'; const m=M[id]=M[id]||{satis:0,bekleme:0,bekHak:0,pax:0,hak:{acente:0,rehber:0,ofis:0,sef:0,kaptan:0},tahA:0,tahO:0,avans:0,n:0};
     const t2=_tdN(k.tutar);
     if(k.tur==='ofis') m.tahO+=t2; else if(k.tur==='avans') m.avans+=t2; else m.tahA+=t2; });
@@ -21084,8 +21090,16 @@ function thsTekExcel(gid,aid){
   showToast('Tahsis görev emri indirildi','success');
 }
 function _thsFSet(k,v){ window._thsF=window._thsF||{bas:'',bit:'',reh:''}; window._thsF[k]=v||''; renderOpsTahsis(); }
+// v833: tahsis formu açıkken yeniden çizimde girilen değerler korunur
+const _THS_ALANLAR=['ths_firma','ths_arac','ths_tip','ths_plaka','ths_sofor','ths_stel','ths_bas','ths_bit','ths_basyer','ths_bassaat','ths_gorev','ths_program','ths_fiyat','ths_not'];
+function _thsSnapAl(){ try{ if(!window._thsAcik||!document.getElementById('ths_firma')) return null; const v={}; _THS_ALANLAR.forEach(id=>{ const el=document.getElementById(id); if(el) v[id]=el.value; }); return {enc:window._thsAcik,v}; }catch(e){ return null; } }
+function _thsSnapUygula(sn){ try{ if(!sn||sn.enc!==window._thsAcik) return; _THS_ALANLAR.forEach(id=>{ const el=document.getElementById(id); if(el&&sn.v[id]!=null&&el.value!==sn.v[id]) el.value=sn.v[id]; }); }catch(e){} }
 function renderOpsTahsis(){
   const box=document.getElementById('opsPane_tahsis'); if(!box) return;
+  const _thsSnap=_thsSnapAl();
+  try{ _renderOpsTahsisIc(box); }finally{ if(_thsSnap){ _thsSnapUygula(_thsSnap); try{ thsFirmaDoldur(); _thsSnapUygula(_thsSnap); }catch(e){} } }
+}
+function _renderOpsTahsisIc(box){
   const bugun=_opsToday();
   const inp='padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.8rem';
   const T=getTanimlar();
