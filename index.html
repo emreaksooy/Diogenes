@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v834 · 17.11.2026';
+const APP_VER='v835 · 20.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9772,6 +9772,7 @@ async function _cloudStart(session){
     _setCloud('ok','Bulut: bağlanıyor…');
     { const _pr=await Promise.race([_pullP,new Promise((_,rej)=>setTimeout(()=>rej(new Error('Bulut çekimi 60 sn içinde tamamlanamadı — bağlantıyı kontrol edip sayfayı yenileyin')),60000))]); if(_pr!==true) throw _pr; }
     window._bootT&&(window._bootT.pullBit=performance.now());
+    window._cloudEsitlendi=true; // v835
     _cloudSubscribe();
     renderPano&&renderPano();
     _setCloud('ok','Bulut: eşitlendi');
@@ -13088,9 +13089,23 @@ function _docBirlestir(base,local,remote){
   const out=JSON.parse(JSON.stringify(remote)); const degisen=[];
   new Set([...Object.keys(local||{}),...Object.keys(base)]).forEach(k=>{
     const lv=JSON.stringify(local?local[k]:undefined), bv=JSON.stringify(base[k]);
-    if(lv!==bv){ degisen.push(k); if(local&&k in local) out[k]=JSON.parse(JSON.stringify(local[k])); else delete out[k]; }
+    if(lv!==bv){ degisen.push(k);
+      // v835: uçak listesi satırları (rows) — tüm dizi yerine SATIR BAZINDA birleştir: bulut satırları + yerelde eklenen/değişen satırlar − yerelde silinenler
+      if(k==='rows'&&Array.isArray(local&&local[k])&&Array.isArray(remote[k])&&Array.isArray(base[k])){ out[k]=_docSatirBirlestir(base[k],local[k],remote[k]); return; }
+      if(local&&k in local) out[k]=JSON.parse(JSON.stringify(local[k])); else delete out[k]; }
   });
   return {out,degisen};
+}
+function _docSatirBirlestir(bRows,lRows,rRows){
+  const key=r=>[r.resno,r.soyad,r.ad].map(x=>String(x||'').trim().toLowerCase()).join('|');
+  const J=r=>JSON.stringify(r);
+  const bM=new Map(), lM=new Map(); bRows.forEach(r=>{ if(r) bM.set(key(r),J(r)); }); lRows.forEach(r=>{ if(r) lM.set(key(r),r); });
+  const silinen=new Set([...bM.keys()].filter(k=>!lM.has(k)));
+  const out=[]; const gorulen=new Set();
+  rRows.forEach(r=>{ if(!r) return; const k=key(r); if(silinen.has(k)) return; gorulen.add(k);
+    const l=lM.get(k); if(l&&bM.has(k)&&J(l)!==bM.get(k)) out.push(JSON.parse(J(l))); else out.push(JSON.parse(J(r))); });
+  lRows.forEach(r=>{ if(!r) return; const k=key(r); if(gorulen.has(k)) return; if(!bM.has(k)||J(r)!==bM.get(k)) { out.push(JSON.parse(J(r))); gorulen.add(k); } });
+  return out;
 }
 function _docYerineKoy(hedef,yeni){ Object.keys(hedef).forEach(k=>{ if(!(k in yeni)) delete hedef[k]; }); Object.assign(hedef,yeni); }
 function _docSplit(col){
@@ -13197,7 +13212,17 @@ async function _docPush(col){
     const idL=ups.map(u=>u.id); const srv=new Map();
     for(let i=0;i<idL.length;i+=100){ const q=await sb.from('doc_rows').select('id,data').eq('col',col).in('id',idL.slice(i,i+100)); (q.data||[]).forEach(x=>srv.set(x.id,x.data)); }
     const sigBase=new Map(); // bulut değişti mi? → bulut sig ≠ base sig
-    ups.forEach(u=>{ const sd=srv.get(u.id); if(!sd||typeof sd!=='object'||Array.isArray(sd)) return; const base=_docBaseGet(col,u.id); if(!base) return;
+    const atla=new Set();
+    ups.forEach(u=>{ const sd=srv.get(u.id); if(!sd||typeof sd!=='object'||Array.isArray(sd)) return; let base=_docBaseGet(col,u.id);
+      if(!base){ // v835: temel yok (eski cihaz, temizlenmiş önbellek, v800 öncesi veri) → bulut ile körlemesine üstüne yazma
+        if(_dsig(sd)===_dsig(u.data)) return;
+        let bj=null; try{ bj=(_docBootSnap[col]||new Map()).get(u.id)||null; }catch(e){}
+        if(bj&&bj===JSON.stringify(u.data)){ // bu oturumda değişmedi → BULUT KAZANIR, yerel satır buluttaki hale çekilir
+          const yerelObj=_docSplit(col).find(r=>r.id===u.id); if(yerelObj&&yerelObj.data&&typeof yerelObj.data==='object') _docYerineKoy(yerelObj.data,sd);
+          sig.set(u.id,_dsig(sd)); _docBaseSet(col,u.id,sd); atla.add(u.id);
+          try{ _hataKaydet&&_hataKaydet('BULUT/koruma',col+':'+u.id+' yerel eski sürüm buluta yazılmadı (bulut kazandı)'); }catch(e){} return; }
+        if(bj){ try{ base=JSON.parse(bj); }catch(e){ base=null; } } // oturumda değişti → açılıştaki hali temel alıp birleştir
+        if(!base) return; }
       if(_dsig(sd)===_dsig(base)) return; // bulut bizim bildiğimiz gibi → düz yaz
       if(_dsig(sd)===_dsig(u.data)) return; // zaten aynı
       const m=_docBirlestir(base,u.data,sd); if(!m||!m.out) return;
@@ -13205,6 +13230,7 @@ async function _docPush(col){
       u.data=m.out; sig.set(u.id,_dsig(m.out));
       try{ _hataKaydet&&_hataKaydet('BULUT/birleştirme',col+':'+u.id+' push öncesi bulut değişmişti → birleştirildi ('+m.degisen.join(',')+')'); }catch(e){} });
     try{ ['res','rezv','ops','transfer','opsgrup','pnr'].includes(col)&&_docKaydetYerel&&_docKaydetYerel(col); }catch(e){}
+    if(atla.size){ for(let i=ups.length-1;i>=0;i--) if(atla.has(ups[i].id)) ups.splice(i,1); }
   }catch(e){ console.warn('push öncesi birleştirme',e); } }
   for(let i=0;i<ups.length;i+=50){
     const dilim=ups.slice(i,i+50);
@@ -13232,7 +13258,9 @@ async function _docPush(col){
 }
 function _docKaydetYerel(col){ try{ if(col==='ops') idbSet('operasyon',_opsCache); else if(col==='res') idbSet('reservations',_resCache); else if(col==='rezv') idbSet('rezervasyonlar',_rezvCache); else if(col==='transfer') idbSet('transfer',_trCache); else if(col==='opsgrup') idbSet('opsgrup',_ogCache); else if(col==='pnr') idbSet('pnrLedger',_pnrCache); }catch(e){} }
 // v800: açılışta/tam çekimde senkron sayılan satırlar temel olarak kaydedilir (sig eşleşenler)
-function _docBaseBaslat(){ try{ Object.keys(_docSig).forEach(col=>{ _docSplit(col).forEach(r=>{ if(_docSig[col].get(r.id)===_dsig(r.data)) _docBaseSet(col,r.id,r.data); }); }); }catch(e){} }
+function _docBaseBaslat(){ try{ Object.keys(_docSig).forEach(col=>{ _docBootSnap[col]=new Map(); _docSplit(col).forEach(r=>{ if(_docSig[col].get(r.id)===_dsig(r.data)) _docBaseSet(col,r.id,r.data); try{ _docBootSnap[col].set(r.id,JSON.stringify(r.data)); }catch(e){} }); }); }catch(e){} }
+// v835: açılış/çekim sonrası satır anlık görüntüsü — bu oturumda DEĞİŞMEMİŞ bir satır, buluttaki farklı sürümün ÜZERİNE YAZILMAZ (eski cihaz/önbellek koruması)
+const _docBootSnap={};
 function _onDocRemote(p){
   try{
     const col=(p.new&&p.new.col)||(p.old&&p.old.col); if(!col||!_docSig[col]) return;
@@ -13580,6 +13608,7 @@ function _cloudQueue(kind){
   if(!_cloudOn) return;
   (window._cloudBekleyen=window._cloudBekleyen||new Set()).add(kind);
   clearTimeout(_cloudT[kind]);
+  if(!window._cloudEsitlendi){ _cloudT[kind]=setTimeout(()=>_cloudQueue(kind),3000); return; } // v835: ilk başarılı bulut çekimi tamamlanmadan HİÇBİR şey gönderilmez
   _cloudT[kind]=setTimeout(()=>_cloudPushKind(kind).catch(e=>{
     const m=(e&&(e.message||e.error_description))||'yetki/bağlantı';
     console.error('BULUT YAZMA HATASI',kind,e);
@@ -14146,8 +14175,8 @@ async function _boot(){
     await Promise.race([_cloudBoot(), new Promise(r=>setTimeout(r,20000))]);
   }catch(e){ console.warn('bulut açılış',e); }
   window._bootT.bulut=performance.now();
-  try{ if(sbRol==='yonetici'||sbRol==='ofis') _rzOpUyumla(); }catch(e){} // v819
-  try{ if(sbRol==='yonetici'||sbRol==='ofis') _ucakSutunOnar(); }catch(e){} // v826
+  try{ if((sbRol==='yonetici'||sbRol==='ofis')&&(window._cloudEsitlendi||!_cloudOn)) _rzOpUyumla(); }catch(e){} // v819 (v835: yalnız bulutla eşitlendikten sonra)
+  try{ if((sbRol==='yonetici'||sbRol==='ofis')&&(window._cloudEsitlendi||!_cloudOn)) _ucakSutunOnar(); }catch(e){} // v826
   _bootRender();
   window._bootT.render=performance.now();
   _bootSplashKapat();
@@ -16800,7 +16829,7 @@ function _ogResolve(){
   return window._ogResolveMemo=_ogResolveHesap();
 }
 function _ogResolveHesap(){
-  if(!window._ogBakimTs||Date.now()-window._ogBakimTs>5000){
+  if((!window._ogBakimTs||Date.now()-window._ogBakimTs>5000)&&(window._cloudEsitlendi||!_cloudOn)){ // v835: bakım yalnız bulutla eşitlenmiş oturumda
     window._ogBakimTs=Date.now();
     _ogHayaletTemizle();
     _ogCiftBirlestir();
