@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v835 · 20.11.2026';
+const APP_VER='v836 · 22.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -18952,8 +18952,11 @@ function _trGenRowsHesap(){
   try{ const RZ=(getRezv()||[]).filter(r=>r&&r.tip==='urun'&&!r.personel&&r.durum!=='iptal'&&r.pkgId&&r.kalkis&&String(r.voucher||'').trim());
     const bitis=r=>{ let b=null; (r.kartlar||[]).forEach(k=>{ if(!k||(k.tip||'otel')!=='otel'||!k.baslangic) return; const e=_isoAdd(k.baslangic,Math.max(1,+k.gece||1)); if(!b||e>b) b=e; }); if(!b){ const pk=pkgs.find(p=>p.id===r.pkgId); b=_isoAdd(r.kalkis,+(pk&&pk.gece)||0); } return b; };
     RZ.forEach(A=>{ const v=String(A.voucher).trim(); const bA=bitis(A); if(!bA) return;
-      const B=RZ.find(x=>x!==A&&String(x.voucher).trim()===v&&x.pkgId!==A.pkgId&&x.kalkis===bA&&_norm(x.operator||'')===_norm(A.operator||'')); if(!B) return;
-      _zIleri[A.pkgId+'|'+A.kalkis+'|'+v]={gun:bA,B,v}; _zGeri[B.pkgId+'|'+B.kalkis+'|'+v]={gun:bA,A,v}; });
+      // v836: aynı ürün koduyla da zincir olabilir (LYK7 17.11 → "LYK7" 24.11 = 5+2); uçak listesi satırı başka ürün seferinde olabilir → o grid'ler de kaydedilir
+      const B=RZ.find(x=>x!==A&&String(x.voucher).trim()===v&&x.kalkis===bA&&x.kalkis!==A.kalkis&&_norm(x.operator||'')===_norm(A.operator||'')); if(!B) return;
+      const z1={gun:bA,B,v}, z2={gun:bA,A,v};
+      _zIleri[A.pkgId+'|'+A.kalkis+'|'+v]=z1; _zGeri[B.pkgId+'|'+B.kalkis+'|'+v]=z2;
+      try{ getReservations().forEach(g=>{ if(!(g.rows||[]).some(y=>_vEsit(String(y.resno||'').trim(),v))) return; if(g.kalkis===A.kalkis) _zIleri[g.pkgId+'|'+g.kalkis+'|'+v]=z1; if(g.kalkis===bA) _zGeri[g.pkgId+'|'+g.kalkis+'|'+v]=z2; }); }catch(e){} });
   }catch(e){}
   const merge=(o,vlist)=>{ const p=(o.id||'').split('|'); o.pkgId=p[0]||''; o.kalkis=p[1]||''; o.opsGrupId=(p[0]||'')+'|'+(p[1]||'');
     o.vlist=vlist||[]; o.vseg=p[2]==='TUR'?('TUR:'+(p[3]||'')):p[2];
@@ -19004,7 +19007,7 @@ function _trGenRowsHesap(){
     try{ const zM={}; real.forEach(y=>{ const v=String(y.resno||'').trim(); const z=_zIleri[g.pkgId+'|'+g.kalkis+'|'+v]; if(!z) return;
         const ksA=_trRezvKartlar(g.pkgId,g.kalkis,v,y); const otelA=_trOtelSec(ksA,'tarih',_isoAdd(z.gun,-1))||_trOtelSec(ksA,'son')||hotel;
         const ksB=_trRezvKartlar(z.B.pkgId,z.B.kalkis,v,null); const otelB=_trOtelSec(ksB,'baslayan',z.gun)||_trOtelSec(ksB,'ilk')||'?';
-        const pkB=pkgs.find(p=>p.id===z.B.pkgId)||{}; const key=z.gun+'|'+_norm(otelA)+'|'+_norm(otelB)+'|'+z.B.pkgId;
+        let pkB=pkgs.find(p=>p.id===z.B.pkgId)||{}; try{ const gB=getReservations().find(g2=>g2.kalkis===z.gun&&g2.pkgId!==z.B.pkgId&&(g2.rows||[]).some(y2=>_vEsit(String(y2.resno||'').trim(),v))); if(gB){ const p2=pkgs.find(p=>p.id===gB.pkgId); if(p2) pkB=p2; } }catch(e){} const key=z.gun+'|'+_norm(otelA)+'|'+_norm(otelB)+'|'+(pkB.id||z.B.pkgId);
         (zM[key]=zM[key]||{gun:z.gun,otelA,otelB,urunB:pkB.paketKodu||pkB.paketAdi||'',vset:new Set(),n:0}).n++; zM[key].vset.add(v); });
       Object.values(zM).forEach(z=>{ const vl=[...z.vset]; out.push(merge({id:g.pkgId+'|'+g.kalkis+'|UZT|zincir:'+_norm(z.urunB).replace(/[^a-z0-9]+/g,'')+':'+_norm(z.otelB).replace(/[^a-z0-9]+/g,'').slice(0,16),tip:'UZT',tarih:z.gun,op,urun,grupKod:'—',nereden:z.otelA,nereye:z.otelB,bolge,ucus:'',rota:'',akt:'ürün geçişi '+urun+' → '+z.urunB,saat:'',pax:z.n,yet:z.n,coc:0,beb:0,zincir:true},vl)); });
     }catch(e){}
