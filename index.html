@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v839 · 24.11.2026';
+const APP_VER='v840 · 24.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9505,6 +9505,74 @@ function _sbInit(){
   return false;
 }
 window._hataLog=window._hataLog||[];
+// v840: kv bloklarında (mağaza muhasebesi, ekip, görevler, duyurular, tanımlar, rehber bildirimi) bayat cihaz koruması —
+// bulut bizim son gördüğümüzden farklıysa komple üstüne yazılmaz; kayıt (id) bazında 3 yönlü birleştirilir.
+const _KV_DIZI={magmuh:1,ekip:1,gorevler:1,duyurular:1,rehbildirim:1};
+const _KV_NESNE={tanimlar:1,ekipek:1};
+const _kvSatirSig={};
+function _kvCache(kind){ switch(kind){ case 'tanimlar':return _tanimCache; case 'gorevler':return _gorevCache; case 'duyurular':return _duyuruCache; case 'ekip':return _ekipCache; case 'magmuh':return _mmCache; case 'ekipek':return _ekipEkCache; case 'rehbildirim':return _rbCache; } return undefined; }
+function _kvCacheSet(kind,v){
+  const cur=_kvCache(kind);
+  // mevcut dizi/nesne referansı korunur (ekranda tutulan referanslar bayatlamasın)
+  if(Array.isArray(cur)&&Array.isArray(v)&&cur!==v){ cur.length=0; cur.push(...v); v=cur; }
+  else if(cur&&v&&!Array.isArray(cur)&&!Array.isArray(v)&&typeof cur==='object'&&typeof v==='object'&&cur!==v){ Object.keys(cur).forEach(k=>{ if(!(k in v)) delete cur[k]; }); Object.assign(cur,v); v=cur; }
+  switch(kind){ case 'tanimlar':_tanimCache=v;break; case 'gorevler':_gorevCache=v;break; case 'duyurular':_duyuruCache=v;break; case 'ekip':_ekipCache=v;break; case 'magmuh':_mmCache=v;break; case 'ekipek':_ekipEkCache=v;break; case 'rehbildirim':_rbCache=v;break; }
+  try{ idbSet(kind,v); }catch(e){}
+  try{ if(_kvSatirSig[kind]){ const M=new Map(); (Array.isArray(v)?v:[]).forEach(x=>{ if(x&&x.id!=null) M.set(String(x.id),JSON.stringify(x)); }); _kvSatirSig[kind]=M; } }catch(e){}
+  return v;
+}
+function _kvBirlestir(kind,base,yerel,bulut){
+  const J=x=>JSON.stringify(x);
+  if(_KV_DIZI[kind]&&Array.isArray(yerel)&&Array.isArray(bulut)){
+    const key=x=>(x&&x.id!=null)?String(x.id):null;
+    const mapOf=a=>{ const m=new Map(); (Array.isArray(a)?a:[]).forEach(x=>{ const k=key(x); if(k&&!m.has(k)) m.set(k,x); }); return m; };
+    const B=mapOf(base),Y=mapOf(yerel),C=mapOf(bulut);
+    const zaman=x=>+(x&&(x.guncel||x.ts))||0;
+    const sec=k=>{ const b=B.get(k),y=Y.get(k),c=C.get(k);
+      if(y&&c){ const jy=J(y),jc=J(c); if(jy===jc) return y; const jb=b?J(b):null; if(jb===jy) return c; if(jb===jc) return y; return zaman(y)>=zaman(c)?y:c; }
+      if(y&&!c){ if(!b) return y; return J(b)!==J(y)?y:null; }   // bulutta silinmiş: yerelde değiştiyse kalır
+      if(!y&&c){ if(!b) return c; return J(b)!==J(c)?c:null; }   // yerelde silinmiş: bulutta değiştiyse kalır
+      return null; };
+    const out=[]; const gor=new Set();
+    bulut.forEach(x=>{ const k=key(x); if(!k||gor.has(k)) return; gor.add(k); const r=sec(k); if(r) out.push(r); });
+    yerel.forEach(x=>{ const k=key(x); if(!k){ out.push(x); return; } if(gor.has(k)) return; gor.add(k); const r=sec(k); if(r) out.push(r); });
+    return out;
+  }
+  if(_KV_NESNE[kind]&&yerel&&bulut&&typeof yerel==='object'&&typeof bulut==='object'&&!Array.isArray(yerel)&&!Array.isArray(bulut)){
+    base=(base&&typeof base==='object')?base:{}; const out={};
+    [...new Set([...Object.keys(bulut),...Object.keys(yerel)])].forEach(k=>{
+      const iy=k in yerel, ic=k in bulut, ib=k in base; const y=yerel[k],c=bulut[k],b=base[k];
+      if(iy&&ic){ if(J(y)===J(c)) out[k]=y; else if(ib&&J(b)===J(y)) out[k]=c; else out[k]=y; }
+      else if(iy){ if(!(ib&&J(b)===J(y))) out[k]=y; }
+      else if(ic){ if(!(ib&&J(b)===J(c))) out[k]=c; }
+    });
+    return out;
+  }
+  return yerel;
+}
+// buluttan gelen kv bloğu: yerelde gönderilmemiş değişiklik varsa ezilmez, birleştirilir; fark kalırsa geri gönderilir
+function _kvGelen(kind,bulut){
+  const J=x=>JSON.stringify(x);
+  const bulutSig=J(bulut); const baseSig=_sigKv.get(kind); const yerel=_kvCache(kind);
+  let sonuc=bulut;
+  try{
+    if(yerel!=null&&baseSig!=null&&J(yerel)!==baseSig&&J(yerel)!==bulutSig){
+      const base=JSON.parse(baseSig);
+      sonuc=_kvBirlestir(kind,base,yerel,bulut);
+      if(J(sonuc)!==bulutSig){ _hataKaydet('BULUT/koruma',kind+': bulut + yerel değişiklik birleştirildi'); }
+    }
+  }catch(e){ console.warn('kv birleştir',kind,e); sonuc=bulut; }
+  _sigKv.set(kind,bulutSig);
+  const v=_kvCacheSet(kind,sonuc);
+  if(J(v)!==bulutSig){ try{ _cloudQueue(kind); }catch(e){} }
+  return v;
+}
+// mağaza muhasebesi kayıtlarına düzenleme damgası (birleştirmede yeni olan kazansın)
+function _kvDamga(kind,arr){
+  if(!Array.isArray(arr)) return;
+  const M=_kvSatirSig[kind]=_kvSatirSig[kind]||new Map(); const now=Date.now();
+  arr.forEach(x=>{ if(!x||x.id==null) return; const k=String(x.id); const j=JSON.stringify(x); if(M.get(k)===j) return; if(!M.has(k)&&!x.guncel){ M.set(k,j); return; } x.guncel=now; M.set(k,JSON.stringify(x)); });
+}
 function _hataKaydet(kaynak,msg){
   try{ window._hataLog.unshift({t:new Date().toLocaleTimeString('tr-TR'),kaynak,msg:String(msg).slice(0,200)}); window._hataLog=window._hataLog.slice(0,30); }catch(e){}
 }
@@ -13282,7 +13350,7 @@ async function _dailyBackup(){
     const key='yedek_'+new Date().toISOString().slice(0,10);
     const ex=await sb.from('kv_store').select('key').eq('key',key).maybeSingle();
     if(ex.data) return;
-    const snap={ts:new Date().toISOString(),packages:getPackages(),operators:getOperators(),res:_resCache,pnr:_pnrCache,ops:_opsCache,transfer:getTransfer(),opsgrup:getOpsGrup(),tanimlar:_tanimCache,rezervasyonlar:_rezvCache};
+    const snap={ts:new Date().toISOString(),packages:getPackages(),operators:getOperators(),res:_resCache,pnr:_pnrCache,ops:_opsCache,transfer:getTransfer(),opsgrup:getOpsGrup(),tanimlar:_tanimCache,rezervasyonlar:_rezvCache,magmuh:getMagMuh(),ekip:_ekipCache||[],gorevler:_gorevCache||[],duyurular:_duyuruCache||[],ekipek:getEkipEk(),rehbildirim:getRehBildirim()};
     await sb.from('kv_store').upsert({key,data:snap,updated_at:new Date().toISOString(),updated_by:sbUser?sbUser.id:null});
     const all=await sb.from('kv_store').select('key').like('key','yedek_%');
     const keys=(all.data||[]).map(r=>r.key).sort();
@@ -13361,13 +13429,13 @@ async function _cloudPullFull(){
     _opCache=(op.data||[]).map(r=>r.data).filter(Boolean);
     idbSet('packages',_pkgCache); idbSet('operators',_opCache);
     const kvMap={}; (kv.data||[]).forEach(r=>{ kvMap[r.key]=r.data; });
-    if(kvMap.tanimlar&&typeof kvMap.tanimlar==='object'){ _tanimCache=kvMap.tanimlar; idbSet('tanimlar',_tanimCache); _sigKv.set('tanimlar',JSON.stringify(kvMap.tanimlar)); }
-    if(Array.isArray(kvMap.gorevler)){ _gorevCache=kvMap.gorevler; idbSet('gorevler',_gorevCache); _sigKv.set('gorevler',JSON.stringify(kvMap.gorevler)); }
-    if(Array.isArray(kvMap.duyurular)){ _duyuruCache=kvMap.duyurular; idbSet('duyurular',_duyuruCache); _sigKv.set('duyurular',JSON.stringify(kvMap.duyurular)); }
-    if(Array.isArray(kvMap.ekip)){ _ekipCache=kvMap.ekip; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(kvMap.ekip)); }
-    if(Array.isArray(kvMap.magmuh)){ _mmCache=kvMap.magmuh; idbSet('magmuh',_mmCache); _sigKv.set('magmuh',JSON.stringify(kvMap.magmuh)); }
-    if(kvMap.ekipek&&typeof kvMap.ekipek==='object'&&!Array.isArray(kvMap.ekipek)){ _ekipEkCache=kvMap.ekipek; idbSet('ekipek',_ekipEkCache); _sigKv.set('ekipek',JSON.stringify(kvMap.ekipek)); }
-    if(Array.isArray(kvMap.rehbildirim)){ _rbCache=kvMap.rehbildirim; idbSet('rehbildirim',_rbCache); _sigKv.set('rehbildirim',JSON.stringify(kvMap.rehbildirim)); }
+    if(kvMap.tanimlar&&typeof kvMap.tanimlar==='object'){ _kvGelen('tanimlar',kvMap.tanimlar); }
+    if(Array.isArray(kvMap.gorevler)){ _kvGelen('gorevler',kvMap.gorevler); }
+    if(Array.isArray(kvMap.duyurular)){ _kvGelen('duyurular',kvMap.duyurular); }
+    if(Array.isArray(kvMap.ekip)){ _kvGelen('ekip',kvMap.ekip); }
+    if(Array.isArray(kvMap.magmuh)){ _kvGelen('magmuh',kvMap.magmuh); }
+    if(kvMap.ekipek&&typeof kvMap.ekipek==='object'&&!Array.isArray(kvMap.ekipek)){ _kvGelen('ekipek',kvMap.ekipek); }
+    if(Array.isArray(kvMap.rehbildirim)){ _kvGelen('rehbildirim',kvMap.rehbildirim); }
     const docBy={res:[],pnr:[],ops:[],transfer:[],opsgrup:[],rezv:[]};
     _silTomb=new Map();
     if(!dr.error) (dr.data||[]).forEach(r=>{ if(r.col==='sil'){ _silTomb.set(r.id,(r.data&&r.data.ts)||0); return; } if(docBy[r.col]) docBy[r.col].push(r); });
@@ -13470,13 +13538,13 @@ async function _cloudPullIncre(last){
   idbSet('operators',_opCache);
   // kv: yalnız bilinen anahtarlar
   (kv.data||[]).forEach(r=>{
-    if(r.key==='tanimlar'&&r.data&&typeof r.data==='object'){ _tanimCache=r.data; idbSet('tanimlar',_tanimCache); _sigKv.set('tanimlar',JSON.stringify(r.data)); degisti++; }
-    else if(r.key==='gorevler'&&Array.isArray(r.data)){ _gorevCache=r.data; idbSet('gorevler',_gorevCache); _sigKv.set('gorevler',JSON.stringify(r.data)); degisti++; }
-    else if(r.key==='duyurular'&&Array.isArray(r.data)){ _duyuruCache=r.data; idbSet('duyurular',_duyuruCache); _sigKv.set('duyurular',JSON.stringify(r.data)); degisti++; }
-    else if(r.key==='ekip'&&Array.isArray(r.data)){ _ekipCache=r.data; idbSet('ekip',_ekipCache); _sigKv.set('ekip',JSON.stringify(r.data)); degisti++; }
-    else if(r.key==='magmuh'&&Array.isArray(r.data)){ _mmCache=r.data; idbSet('magmuh',_mmCache); _sigKv.set('magmuh',JSON.stringify(r.data)); degisti++; }
-    else if(r.key==='ekipek'&&r.data&&typeof r.data==='object'&&!Array.isArray(r.data)){ _ekipEkCache=r.data; idbSet('ekipek',_ekipEkCache); _sigKv.set('ekipek',JSON.stringify(r.data)); degisti++; }
-    else if(r.key==='rehbildirim'&&Array.isArray(r.data)){ _rbCache=r.data; idbSet('rehbildirim',_rbCache); _sigKv.set('rehbildirim',JSON.stringify(r.data)); degisti++;
+    if(r.key==='tanimlar'&&r.data&&typeof r.data==='object'){ _kvGelen('tanimlar',r.data); degisti++; }
+    else if(r.key==='gorevler'&&Array.isArray(r.data)){ _kvGelen('gorevler',r.data); degisti++; }
+    else if(r.key==='duyurular'&&Array.isArray(r.data)){ _kvGelen('duyurular',r.data); degisti++; }
+    else if(r.key==='ekip'&&Array.isArray(r.data)){ _kvGelen('ekip',r.data); degisti++; }
+    else if(r.key==='magmuh'&&Array.isArray(r.data)){ _kvGelen('magmuh',r.data); degisti++; }
+    else if(r.key==='ekipek'&&r.data&&typeof r.data==='object'&&!Array.isArray(r.data)){ _kvGelen('ekipek',r.data); degisti++; }
+    else if(r.key==='rehbildirim'&&Array.isArray(r.data)){ _kvGelen('rehbildirim',r.data); degisti++;
       try{ const ap3=document.querySelector('.page.active')?.id; if(ap3==='page-magmuh'&&window._mmTab==='muh') renderMagMuh&&renderMagMuh(); }catch(e){} }
   });
   // doc_rows: satır satır merge + uzak id diff ile silme
@@ -13568,12 +13636,14 @@ function _txCloudPull(last){
 async function _cloudPull(){
   const _now=new Date().toISOString();
   let _last=''; try{ _last=localStorage.getItem('dmcSyncTs')||''; }catch(e){}
+  if(window._tabSyncTs&&(!_last||window._tabSyncTs<_last)) _last=window._tabSyncTs; // v840: eşitleme zamanı sekme bazlı — başka sekme çekti diye bu sekme "günceli aldım" sanmasın
   let increOK=false;
   if(_last&&(_pkgCache.length||_opCache.length)){
     try{ await _cloudPullIncre(_last); increOK=true; }
     catch(e){ console.warn('Artımlı eşitleme başarısız, tam çekime dönüldü:',e); }
   }
   if(!increOK) await _cloudPullFull();
+  window._tabSyncTs=_now;
   try{ localStorage.setItem('dmcSyncTs',_now); }catch(e){}
   _txCloudPull(increOK?_last:'');
 }
@@ -13663,9 +13733,24 @@ async function _cloudPushKindIc(kind){
   } else if(_KIND2COL[kind]){
     await _docPush(_KIND2COL[kind]);
   } else if(kind==='tanimlar'||kind==='gorevler'||kind==='duyurular'||kind==='ekip'||kind==='magmuh'||kind==='ekipek'||kind==='rehbildirim'){
-    const val=kind==='tanimlar'?(_tanimCache||{}):(kind==='gorevler'?(_gorevCache||[]):(kind==='duyurular'?(_duyuruCache||[]):(kind==='magmuh'?(getMagMuh()):(kind==='ekipek'?(getEkipEk()):(kind==='rehbildirim'?(getRehBildirim()):(_ekipCache||[]))))));
-    const sig=JSON.stringify(val);
+    let val=kind==='tanimlar'?(_tanimCache||{}):(kind==='gorevler'?(_gorevCache||[]):(kind==='duyurular'?(_duyuruCache||[]):(kind==='magmuh'?(getMagMuh()):(kind==='ekipek'?(getEkipEk()):(kind==='rehbildirim'?(getRehBildirim()):(_ekipCache||[]))))));
+    if(kind==='magmuh') _kvDamga(kind,val);
+    let sig=JSON.stringify(val);
     if(_sigKv.get(kind)===sig) return;
+    // v840: bayat cihaz koruması — bulut bizim son gördüğümüzden farklıysa komple üstüne yazma, kayıt bazında birleştir
+    try{
+      const cur=await sb.from('kv_store').select('data').eq('key',kind).maybeSingle();
+      if(!cur.error&&cur.data&&cur.data.data!=null){
+        const bulutSig=JSON.stringify(cur.data.data); const baseSig=_sigKv.get(kind);
+        if(bulutSig!==baseSig&&bulutSig!==sig){
+          const base=baseSig?JSON.parse(baseSig):null;
+          const birlesik=_kvBirlestir(kind,base,val,cur.data.data);
+          val=_kvCacheSet(kind,birlesik); sig=JSON.stringify(val);
+          _hataKaydet('BULUT/koruma',kind+': bulutta yeni veri vardı, üstüne yazılmadı — birleştirildi');
+          if(sig===bulutSig){ _sigKv.set(kind,sig); return; }
+        }
+      }
+    }catch(e){ console.warn('kv koruma',kind,e); }
     const r=await sb.from('kv_store').upsert({key:kind,data:val,updated_at:new Date().toISOString(),updated_by:sbUser.id});
     if(r.error) throw r.error;
     _sigKv.set(kind,sig);
@@ -13748,20 +13833,21 @@ function _onRemote(kind,p){
       const row=p.new; if(!row||!row.key) return;
       const sig=JSON.stringify(row.data);
       if(_sigKv.get(row.key)===sig) return;
-      _sigKv.set(row.key,sig);
+      if(!(_KV_DIZI[row.key]||_KV_NESNE[row.key])) _sigKv.set(row.key,sig); // v840: kv blokları _kvGelen ile birleştirilir
       if(row.key==='reservations'&&Array.isArray(row.data)){ _resCache=row.data; idbSet('reservations',_resCache); }
       if(row.key==='pnrLedger'&&Array.isArray(row.data)){ _pnrCache=row.data; idbSet('pnrLedger',_pnrCache); }
       if(row.key==='operasyon'&&Array.isArray(row.data)){ _opsCache=row.data; idbSet('operasyon',_opsCache); if(document.querySelector('.page.active')?.id==='page-operasyon') renderOperasyonPage&&renderOperasyonPage(); }
-      if(row.key==='tanimlar'&&row.data&&typeof row.data==='object'){ _tanimCache=row.data; idbSet('tanimlar',_tanimCache); }
-      if(row.key==='gorevler'&&Array.isArray(row.data)){ _gorevCache=row.data; idbSet('gorevler',_gorevCache); renderPano&&renderPano(); }
-      if(row.key==='duyurular'&&Array.isArray(row.data)){ _duyuruCache=row.data; idbSet('duyurular',_duyuruCache); renderPano&&renderPano(); }
-      if(row.key==='ekip'&&Array.isArray(row.data)){ _ekipCache=row.data; idbSet('ekip',_ekipCache); }
-      if(row.key==='ekipek'&&row.data&&typeof row.data==='object'&&!Array.isArray(row.data)){ _ekipEkCache=row.data; idbSet('ekipek',_ekipEkCache); if(document.querySelector('.page.active')?.id==='page-ekip') renderEkipPanel&&renderEkipPanel(); }
-      if(row.key==='rehbildirim'&&Array.isArray(row.data)){ const onceki=(getRehBildirim()||[]).length; _rbCache=row.data; idbSet('rehbildirim',_rbCache);
+      if(row.key==='tanimlar'&&row.data&&typeof row.data==='object'){ _kvGelen('tanimlar',row.data); }
+      if(row.key==='gorevler'&&Array.isArray(row.data)){ _kvGelen('gorevler',row.data); renderPano&&renderPano(); }
+      if(row.key==='duyurular'&&Array.isArray(row.data)){ _kvGelen('duyurular',row.data); renderPano&&renderPano(); }
+      if(row.key==='ekip'&&Array.isArray(row.data)){ _kvGelen('ekip',row.data); }
+      if(row.key==='ekipek'&&row.data&&typeof row.data==='object'&&!Array.isArray(row.data)){ _kvGelen('ekipek',row.data); if(document.querySelector('.page.active')?.id==='page-ekip') renderEkipPanel&&renderEkipPanel(); }
+      if(row.key==='rehbildirim'&&Array.isArray(row.data)){ const onceki=(getRehBildirim()||[]).length; _kvGelen('rehbildirim',row.data);
         const ap2=document.querySelector('.page.active')?.id;
         if(ap2==='page-rehberim') renderRehberim&&renderRehberim();
         if(ap2==='page-magmuh'&&window._mmTab==='muh') renderMagMuh&&renderMagMuh();
         if(sbRol==='yonetici'&&Array.isArray(row.data)&&row.data.length>onceki){ const y=row.data[row.data.length-1]||{}; try{ showToast('📲 Yeni rehber bildirimi: '+(y.rehberAd||'')+' — '+(y.magaza||'')+' · '+(y.tutar||'')+' '+(y.para||''),'success',6000); }catch(e){} } }
+      if(row.key==='magmuh'&&Array.isArray(row.data)){ _kvGelen('magmuh',row.data); try{ const ap4=document.querySelector('.page.active')?.id; if(ap4==='page-magmuh'&&!(document.activeElement&&document.activeElement!==document.body&&/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))){ if(window._mmTab==='muh') renderMagMuh&&renderMagMuh(); } }catch(e){} } // v840: mağaza muhasebesi anlık gelir (form açıkken ekran yenilenmez)
       if(row.key==='transfer'&&row.data&&typeof row.data==='object'){ _trCache=row.data; idbSet('transfer',_trCache); if(document.querySelector('.page.active')?.id==='page-operasyon'&&_opsTab==='transfer') renderOpsTransfer&&renderOpsTransfer(); }
       if(row.key==='opsgrup'&&row.data&&typeof row.data==='object'){ _ogCache=row.data; idbSet('opsgrup',_ogCache); if(document.querySelector('.page.active')?.id==='page-operasyon'&&_opsTab==='grup') renderOpsGrup&&renderOpsGrup(); }
       if(document.querySelector('.page.active')?.id==='page-rezervasyon') renderRezervasyon&&renderRezervasyon();
