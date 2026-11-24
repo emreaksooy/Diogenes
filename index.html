@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v838 · 24.11.2026';
+const APP_VER='v839 · 24.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -19835,8 +19835,11 @@ function renderMagEkstre(){
     const t2=_tdN(k.tutar);
     if(k.tur==='ofis') m.tahO+=t2; else if(k.tur==='avans') m.avans+=t2; else m.tahA+=t2; });
   const R=v=>(Math.round(v*100)/100).toLocaleString('tr-TR');
-  const th='background:var(--navy);color:#fff;padding:5px 9px;font-size:.6rem;text-align:right;white-space:nowrap';
-  const td='padding:5px 9px;font-size:.76rem;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap';
+  // v839: kompakt + renkli sütun grupları (satış mavi · hakediş yeşil · bekleme mor · tahsilat turuncu · kalan kırmızı), firma blokları dönüşümlü
+  const th='background:var(--navy);color:#fff;padding:4px 6px;font-size:.56rem;line-height:1.15;text-align:right;white-space:nowrap;vertical-align:bottom';
+  const td='padding:3px 6px;font-size:.7rem;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap';
+  const GR={S:'#1e3a8a',H:'#065f46',B:'#5b21b6',T:'#9a3412',K:'#7f1d1d'}; const TN={S:'#f3f7ff',H:'#f1faf4',B:'#f6f2ff',T:'#fff7ef',K:'#fff4f4'};
+  const thg=g=>th+';background:'+GR[g]; const tdg=g=>td+';background:'+TN[g];
   let h=`<div class="card"><div class="card-title">🧾 Mağaza Ekstresi <span style="font-weight:500;color:var(--muted);font-size:.7rem;margin-left:auto">onaylı satış → hakediş → tahsilat → kalan</span></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
       <select onchange="_meYil=this.value;renderMagEkstre()" ${_meAralik?'disabled title="Tarih aralığı aktif"':''} style="padding:4px 7px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.76rem;${_meAralik?'opacity:.45':''}"><option value="">Tüm yıllar</option>${yillar.map(y=>`<option ${_meYil===y?'selected':''}>${y}</option>`).join('')}</select>
@@ -19852,31 +19855,32 @@ function renderMagEkstre(){
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="meExcel()">📥 Excel</button>
     </div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
-    <tr><th style="${th};text-align:left">Mağaza</th><th style="${th}">Pax</th><th style="${th}">Toplam Satış</th><th style="${th}">Onaylı Satış</th><th style="${th};background:#5b21b6">Bekleme Satış</th><th style="${th}">P.Pax Ort.</th><th style="${th}">Toplam Hakediş</th><th style="${th}">Acente Hakediş<br><span style="font-weight:400;font-size:.52rem">bekleme hariç</span></th><th style="${th};background:#5b21b6">Bekleme Hakediş</th><th style="${th}">Ofis Hakediş</th>${gizliKisi?'':`<th style="${th}">Şef</th>`}<th style="${th}">Acente Tahsilat</th><th style="${th}">Ofis Tahsilat</th><th style="${th}">Avans</th><th style="${th}">KALAN ACENTE</th><th style="${th}">KALAN OFİS</th></tr>`;
+    <tr><th style="${th};text-align:left">Mağaza</th><th style="${th}">Pax</th><th style="${thg('S')}">Toplam<br>Satış</th><th style="${thg('S')}">Onaylı<br>Satış</th><th style="${thg('B')}">Bekleme<br>Satış</th><th style="${thg('S')}">P.Pax<br>Ort.</th><th style="${thg('H')}">Toplam<br>Hakediş</th><th style="${thg('H')}">Acente Hak.<br><span style="font-weight:400;font-size:.5rem">bekleme hariç</span></th><th style="${thg('B')}">Bekleme<br>Hakediş</th><th style="${thg('H')}">Ofis<br>Hakediş</th>${gizliKisi?'':`<th style="${thg('H')}">Şef</th>`}<th style="${thg('T')}">Acente<br>Tahsilat</th><th style="${thg('T')}">Ofis<br>Tahsilat</th><th style="${thg('T')}">Avans</th><th style="${thg('K')}">KALAN<br>ACENTE</th><th style="${thg('K')}">KALAN<br>OFİS</th></tr>`;
   const idler=Object.keys(M).sort((a,b)=>(((firmalar.find(f=>f.id===a)||{}).ad)||'').localeCompare(((firmalar.find(f=>f.id===b)||{}).ad)||'','tr'));
   const G={satis:0,bekleme:0,bekHak:0,pax:0,hakA:0,hakO:0,tahA:0,tahO:0,avans:0};
   idler.forEach(id=>{ const m=M[id]; const ad=(firmalar.find(f=>f.id===id)||{}).ad||'—';
     const kalanA=m.hak.acente-m.tahA, kalanO=m.hak.ofis-m.tahO;
     G.satis+=m.satis; G.bekleme+=m.bekleme; G.bekHak+=m.bekHak; G.pax+=m.pax; G.hakA+=m.hak.acente; G.hakO+=m.hak.ofis; G.tahA+=m.tahA; G.tahO+=m.tahO; G.avans+=m.avans;
-    h+=`<tr><td style="${td};text-align:left"><b>${esc(ad)}</b> <span style="font-size:.62rem;color:var(--muted)">${m.n} ziyaret</span></td>
+    const fi=idler.indexOf(id); const bandRenk=['#1a3c5e','#e8622a','#0f766e','#7c3aed','#b45309','#be185d'][fi%6]; const bandBg=fi%2?'#fafafa':'#fff';
+    h+=`<tr style="background:${bandBg}"><td style="${td};text-align:left;border-left:4px solid ${bandRenk};font-size:.78rem"><b style="color:${bandRenk}">${esc(ad)}</b> <span style="font-size:.58rem;color:var(--muted)">${m.n} ziyaret</span></td>
       <td style="${td}">${m.pax||'—'}</td>
-      <td style="${td}"><b>${R(m.satis+m.bekleme)}</b></td>
-      <td style="${td};color:var(--navy)">${R(m.satis)}</td>
-      <td style="${td};color:#6d28d9">${m.bekleme?R(m.bekleme):'—'}</td>
-      <td style="${td};color:#166534;font-weight:700">${m.pax>0?R(m.satis/m.pax):'—'}</td>
-      <td style="${td}"><b>${R(m.hak.acente+m.bekHak)}</b></td>
-      <td style="${td}">${R(m.hak.acente)}</td><td style="${td};color:#6d28d9">${m.bekHak?R(m.bekHak):'—'}</td><td style="${td}">${R(m.hak.ofis)}</td>
-      ${gizliKisi?'':`<td style="${td};color:var(--muted)">${m.hak.sef?R(m.hak.sef):'—'}</td>`}
-      <td style="${td}">${R(m.tahA)}</td><td style="${td}">${R(m.tahO)}</td>
-      <td style="${td};color:#92400e">${m.avans?R(m.avans):'—'}</td>
-      <td style="${td};font-weight:800;color:${kalanA>0.01?'#b91c1c':'#166534'}">${R(kalanA)}</td>
-      <td style="${td};font-weight:800;color:${kalanO>0.01?'#b91c1c':'#166534'}">${R(kalanO)}</td></tr>`;
+      <td style="${tdg('S')}"><b>${R(m.satis+m.bekleme)}</b></td>
+      <td style="${tdg('S')};color:var(--navy)">${R(m.satis)}</td>
+      <td style="${tdg('B')};color:#6d28d9">${m.bekleme?R(m.bekleme):'—'}</td>
+      <td style="${tdg('S')};color:#166534;font-weight:700">${m.pax>0?R(m.satis/m.pax):'—'}</td>
+      <td style="${tdg('H')}"><b>${R(m.hak.acente+m.bekHak)}</b></td>
+      <td style="${tdg('H')}">${R(m.hak.acente)}</td><td style="${tdg('B')};color:#6d28d9">${m.bekHak?R(m.bekHak):'—'}</td><td style="${tdg('H')}">${R(m.hak.ofis)}</td>
+      ${gizliKisi?'':`<td style="${tdg('H')};color:var(--muted)">${m.hak.sef?R(m.hak.sef):'—'}</td>`}
+      <td style="${tdg('T')}">${R(m.tahA)}</td><td style="${tdg('T')}">${R(m.tahO)}</td>
+      <td style="${tdg('T')};color:#92400e">${m.avans?R(m.avans):'—'}</td>
+      <td style="${tdg('K')};font-weight:800;color:${kalanA>0.01?'#b91c1c':'#166534'}">${R(kalanA)}</td>
+      <td style="${tdg('K')};font-weight:800;color:${kalanO>0.01?'#b91c1c':'#166534'}">${R(kalanO)}</td></tr>`;
     const subeKeys=Object.keys(MS).filter(x=>x.split('\u0001')[0]===id);
     const cokSube=subeKeys.length>1||(subeKeys.length===1&&subeKeys[0].split('\u0001')[1]);
     if(cokSube) subeKeys.sort((a,b)=>a.localeCompare(b,'tr')).forEach(sk=>{
       const sm=MS[sk]; const sad=sk.split('\u0001')[1]||'şube belirtilmemiş';
-      const tds='padding:3px 9px;font-size:.7rem;border-bottom:1px solid var(--light);text-align:right;white-space:nowrap;color:var(--muted)';
-      h+=`<tr><td style="${tds};text-align:left;padding-left:26px">↳ ${esc(sad)} <span style="font-size:.58rem">${sm.n} ziyaret</span></td>
+      const tds='padding:2px 6px;font-size:.64rem;border-bottom:1px solid var(--light);text-align:right;white-space:nowrap;color:var(--muted)';
+      h+=`<tr style="background:${bandBg}"><td style="${tds};text-align:left;padding-left:18px;border-left:4px solid ${bandRenk}">↳ ${esc(sad)} <span style="font-size:.54rem">${sm.n} ziyaret</span></td>
         <td style="${tds}">${sm.pax||'—'}</td>
         <td style="${tds}">${(sm.satis+sm.bekleme)?R(sm.satis+sm.bekleme):'—'}</td>
         <td style="${tds}">${sm.satis?R(sm.satis):'—'}</td>
