@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v837 · 23.11.2026';
+const APP_VER='v838 · 24.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15440,6 +15440,7 @@ function renderMagFirmalar(){
   if(g){
     let h='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'
      +'<button class="btn btn-outline btn-sm" onclick="window._mgSayfa=null;window._mgMagForm=false;renderMagFirmalar()">← Mağaza Grupları</button>'
+     +(window._mgTasiGeri?'<button class="btn btn-outline btn-sm" style="color:#b45309;border-color:#f59e0b" onclick="mgMagTasiGeriAl()" title="Son taşımayı geri al">↶ Taşımayı Geri Al</button>':'')
      +'<b style="font-size:1rem">🏬 '+esc(g.ad)+'</b>'
      +(g.sehir?'<span style="color:var(--muted);font-size:.8rem">'+esc(g.sehir)+'</span>':'')
      +'<span style="flex:1"></span>'
@@ -15483,6 +15484,7 @@ function renderMagFirmalar(){
         +(m.adres?'<div style="font-size:.68rem;color:var(--muted)">'+esc(m.adres)+'</div>':'')
         +'</div>'
         +'<button onclick="window._mgMagEdit='+si+';window._mgMagForm=true;renderMagFirmalar();window.scrollTo(0,0)" title="Düzenle" style="border:none;background:none;cursor:pointer">✏️</button>'
+        +'<button onclick="mgMagTasi(\''+g.id+'\','+si+')" title="Başka mağaza grubuna taşı (kayıtlarıyla birlikte)" style="border:none;background:none;cursor:pointer">↪</button>'
         +'<button onclick="mgMagSil(\''+g.id+'\','+si+')" style="border:none;background:none;color:var(--muted);cursor:pointer">✕</button>'
         +'</div>'
         +'<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">'
@@ -15615,6 +15617,44 @@ function mgMagKaydet(gid){
   }
   window._mgMagEdit=null;
   setTanimlar(t); window._mgMagForm=false; renderMagFirmalar(); try{renderMagazaOps();}catch(e){}
+}
+// v838: MAĞAZAYI BAŞKA GRUBA TAŞI — şube + o şubeye ait tüm bildirim/ziyaret kayıtları hedef firmaya geçer (hiçbir şey silinmez); tek adım geri alınabilir
+function mgMagTasi(gid,si){
+  const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); const sb=f&&(f.subeler||[])[si]; if(!sb) return;
+  const ad=String(sb.ad||sb.sehir||''); const digerler=(t.magazaFirmalari||[]).filter(x=>x.id!==gid);
+  if(!digerler.length){ showToast('Önce hedef mağaza grubunu oluştur (+ Mağaza Grubu Ekle)','error'); return; }
+  const kayitlar=getMagMuh().filter(k=>k&&!k.silindi&&k.tip!=='tahsilat'&&k.firmaId===gid&&String(k.magaza||'')===ad);
+  const ciro=kayitlar.reduce((tt,k)=>tt+((k.magKalemler||[]).reduce((a,x)=>a+(x&&x.durum!=='iptal'?_tdN(x.ciro):0),0)),0);
+  let ov=document.getElementById('mgTasiOv'); if(ov) ov.remove();
+  ov=document.createElement('div'); ov.id='mgTasiOv'; ov.className='overlay open'; ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center';
+  ov.innerHTML=`<div class="card" style="max-width:460px;width:94%;margin:0;padding:18px 20px">
+    <div style="font-weight:800;font-size:1rem;margin-bottom:6px">↪ Mağazayı Taşı</div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px"><b style="color:var(--text)">${esc(ad)}</b> şubesi ve ona ait <b style="color:var(--text)">${kayitlar.length} ziyaret kaydı</b> (${_tdEur?_tdEur(ciro):ciro} ciro) seçilen gruba taşınacak. Tahsilatlar <b>${esc(f.ad||'')}</b> grubunda kalır. Hiçbir kayıt silinmez; işlem geri alınabilir.</div>
+    <label style="display:block;font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:4px">HEDEF MAĞAZA GRUBU</label>
+    <select id="mgTasiHedef" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.86rem">${digerler.map(x=>`<option value="${x.id}">${esc(x.ad||'')}</option>`).join('')}</select>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="btn btn-outline" onclick="document.getElementById('mgTasiOv').remove()">Vazgeç</button><button class="btn btn-primary" onclick="mgMagTasiUygula('${gid}',${si})">Taşı</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+function mgMagTasiUygula(gid,si){
+  const hedefId=(document.getElementById('mgTasiHedef')||{}).value; const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); const h=(t.magazaFirmalari||[]).find(x=>x.id===hedefId); const sb=f&&(f.subeler||[])[si];
+  if(!sb||!h){ showToast('Hedef grup bulunamadı','error'); return; }
+  const ad=String(sb.ad||sb.sehir||'');
+  if((h.subeler||[]).some(x=>String(x.ad||x.sehir||'')===ad)){ showToast('Hedef grupta aynı adlı mağaza zaten var','error'); return; }
+  // geri alma anlık görüntüsü
+  window._mgTasiGeri={tanim:JSON.stringify(t),magmuh:JSON.stringify(getMagMuh()),ozet:ad+' → '+(h.ad||'')};
+  f.subeler.splice(si,1); h.subeler=h.subeler||[]; h.subeler.push(sb);
+  let n=0; const L=getMagMuh(); L.forEach(k=>{ if(k&&k.tip!=='tahsilat'&&k.firmaId===gid&&String(k.magaza||'')===ad){ k.firmaId=hedefId; n++; } });
+  setTanimlar(t); setMagMuh(L); try{ document.getElementById('mgTasiOv').remove(); }catch(e){}
+  window._mgSayfa=hedefId; renderMagFirmalar(); try{renderMagazaOps();}catch(e){}
+  showToast('"'+ad+'" '+(h.ad||'')+' grubuna taşındı — '+n+' kayıt. Gerekirse "↶ Taşımayı Geri Al".','success',8000);
+}
+function mgMagTasiGeriAl(){
+  const g=window._mgTasiGeri; if(!g) return;
+  showConfirm('🔄','Taşımayı Geri Al','Son taşıma ('+g.ozet+') geri alınacak; mağaza ve kayıtları eski gruba döner.','Geri Al',()=>{
+    try{ setTanimlar(JSON.parse(g.tanim)); setMagMuh(JSON.parse(g.magmuh)); }catch(e){ showToast('Geri alınamadı','error'); return; }
+    window._mgTasiGeri=null; renderMagFirmalar(); try{renderMagazaOps();}catch(e){} showToast('Taşıma geri alındı','success');
+  });
 }
 function mgMagSil(gid,si){
   const t=getTanimlar(); const f=(t.magazaFirmalari||[]).find(x=>x.id===gid); if(!f||!f.subeler) return;
