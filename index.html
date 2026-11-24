@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v840 · 24.11.2026';
+const APP_VER='v841 · 24.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20015,6 +20015,24 @@ function _mmZiyaretSenk(){
     const bugun=_opsToday();
     const rows=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.tarih<=bugun&&r.firmaId); // ziyaret günü dahil
     const L=getMagMuh(); let n=0;
+    // v841: program kodu değişince (birleşik grup dağıldı / tek sefer birleşti: CAP7×2 ↔ CAP7) aynı gün + aynı mağaza +
+    // aynı kalkışlı DOKUNULMUŞ eski kayıt yeni anahtara TAŞINIR; boş şablon üretilmez, giriş kaybolmaz.
+    try{
+      const gecerliK=new Set(rows.map(r=>r.tarih+'|'+r.firmaId+'|'+r.kod));
+      const dokunuldu=k=>(k.magKalemler||[]).some(x=>_tdN(x.ciro))||_tdN(k.rehCiro)>0||(k.not||'').trim()||!!k.magOnay;
+      rows.forEach(r=>{
+        const zKey=r.tarih+'|'+r.firmaId+'|'+r.kod;
+        const kal=(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'';
+        const cz=_moAtaCoz(r.firmaId); const fm=cz.f; const fid=fm?fm.id:String(r.firmaId).split('|')[0];
+        const sube=cz.sube||(fm?_moSubeBul(fm,r.sehir):null); const mag=sube?(sube.ad||sube.sehir||''):'';
+        const oksuz=L.find(k=>!k.silindi&&k.tip!=='tahsilat'&&k.otoKey&&k.otoKey!==zKey&&!gecerliK.has(k.otoKey)&&k.tarih===r.tarih&&String(k.firmaId)===String(fid)&&(k.magaza||'')===mag&&(!kal||!k.kalkis||k.kalkis===kal)&&dokunuldu(k));
+        if(!oksuz) return;
+        const mev=L.find(k=>k.otoKey===zKey&&!k.silindi);
+        if(mev){ if(dokunuldu(mev)) return; mev.silindi=true; }
+        const eskiKod=oksuz.kod; oksuz.otoKey=zKey; oksuz.kod=r.kod; if(r.pax&&!oksuz.pax) oksuz.pax=r.pax; if(kal&&!oksuz.kalkis) oksuz.kalkis=kal; n++;
+        _hataKaydet('MAĞAZA/taşıma',r.tarih+' '+mag+': '+eskiKod+' → '+r.kod+' kaydı yeni tur koduna taşındı');
+      });
+    }catch(e){ console.warn('mm taşıma',e); }
     rows.forEach(r=>{
       const zKey=r.tarih+'|'+r.firmaId+'|'+r.kod;
       const mev=L.find(k=>k.otoKey===zKey);
