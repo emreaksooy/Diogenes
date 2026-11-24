@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v836 · 22.11.2026';
+const APP_VER='v837 · 23.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -14774,6 +14774,7 @@ function _rtTurlar(bas,son){
       if(kapsanan.has(pkg.id+'|'+k)) return;
       const end=_isoAdd(k,gece);
       if(end<bas||k>son) return;
+      try{ const gcx=getReservations().find(x=>x.pkgId===pkg.id&&x.kalkis===k); if(gcx&&gcx.iptal) return; }catch(e){} // v837: CXX sefer takvime girmez
       const rec=_opsGet(pkg.id,k);
       const pax=_opsPax(pkg.id,k);
       const bols=Object.keys(bolumMap[pkg.id+'|'+k]||{}).sort();
@@ -16778,6 +16779,8 @@ function _ogCiftBirlestir(){
 }
 // v834: ÇİFT ÜYELİK TEMİZLİĞİ — bir voucher iki grupta ise rehberi/tahsisi/satışı olan (yoksa daha eski) grupta kalır;
 // sonra yalnız "sefer arkadaşları tek bir başka grupta olan" voucher'lardan oluşan boş (rehbersiz/tahsissiz/satışsız) grup o gruba katılır ve silinir.
+// v837: gerçek satış var mı? (paket çizelgesinden otomatik gelen, pax/rez girilmemiş kalemler satış sayılmaz)
+function _ogSatisGercek(g){ return (g&&g.satislar||[]).some(x=>x&&(_tdN(x.pax)>0||_tdN(x.rez)>0||_tdN(x.odeme)>0)); }
 function _ogGrupAgirlik(g){ return ((g.rehberId||'').trim()?8:0)+((g.tahsisler||[]).length?4:0)+((g.satislar||[]).length?2:0)+(g.hesapKapali?1:0); }
 function _ogGrupZaman(g){ try{ const m=String(g.id||'').match(/^og([a-z0-9]{8})/); return m?parseInt(m[1],36):0; }catch(e){ return 0; } }
 function _ogCiftUyelikTemizle(){
@@ -16854,7 +16857,10 @@ function _ogResolveHesap(){
   const out=[];
   const seferMap={};
   Object.values(exp).forEach(g=>{ if(g.sefer&&!(g.uyeler||[]).length) seferMap[g.sefer.pkgId+'|'+g.sefer.kalkis]=g; });
-  Object.values(exp).forEach(g=>{ if((g.uyeler||[]).length) out.push(enrich(Object.assign({},g,{isDefault:false}))); });
+  Object.values(exp).forEach(g=>{ if(!(g.uyeler||[]).length) return;
+    // v837: tüm seferleri CXX (iptal) olan ve satışı/kapalı hesabı olmayan grup gizlenir (rehber takvimi, gruplar, hesaplaşma)
+    try{ const sefs=[...new Set(g.uyeler.map(u=>u.pkgId+'|'+u.kalkis))]; const hepsiCxx=sefs.length&&sefs.every(sk=>{ const [p1,k1]=sk.split('|'); const gr=getReservations().find(x=>x.pkgId===p1&&x.kalkis===k1); return gr&&gr.iptal; }); if(hepsiCxx&&!_ogSatisGercek(g)&&!g.hesapKapali) return; }catch(e){}
+    out.push(enrich(Object.assign({},g,{isDefault:false}))); });
   getReservations().forEach(grid=>{ const real=(grid.rows||[]).filter(_isim); const resnos=[...new Set(real.map(r=>(r.resno||'').trim()).filter(Boolean))]; const un=resnos.filter(rn=>!claimed[grid.pkgId+'|'+grid.kalkis+'|'+rn]); if(!un.length) return; const pk=pkgs.find(p=>p.id===grid.pkgId)||{};
     const sg=seferMap[grid.pkgId+'|'+grid.kalkis];
     if(sg){ out.push(enrich(Object.assign({},sg,{isDefault:false,uyeler:un.map(rn=>({pkgId:grid.pkgId,kalkis:grid.kalkis,resno:rn}))}))); delete seferMap[grid.pkgId+'|'+grid.kalkis]; return; }
@@ -20419,7 +20425,7 @@ function _ohHesap(g,E){
   const alinan=_tdN(gg.teslimAlinan);
   const bakiye=Math.round((net-alinan)*100)/100;
   const bitis=(E&&E.tarih)?_isoAdd(E.tarih,gece):'';
-  return {ciro:T.ciro,ode:T.ode,kt,teslimHedef,yev,kom:T.kom,mas,net,alinan,bakiye,bitis,satisVar:(gg.satislar||[]).length>0,kapali:!!gg.hesapKapali,kapanis:gg.hesapKapanis||''};
+  return {ciro:T.ciro,ode:T.ode,kt,teslimHedef,yev,kom:T.kom,mas,net,alinan,bakiye,bitis,satisVar:_ogSatisGercek(gg),kapali:!!gg.hesapKapali,kapanis:gg.hesapKapanis||''};
 }
 function _ohFSet(k,v){ window._ohF=window._ohF||{durum:'acik',bas:'',bit:'',reh:'',op:''}; window._ohF[k]=v||''; renderOpsHesap(); }
 function _ohListe(){
