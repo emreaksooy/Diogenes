@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v841 · 24.11.2026';
+const APP_VER='v842 · 25.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20014,7 +20014,36 @@ function _mmZiyaretSenk(){
   try{
     const bugun=_opsToday();
     const rows=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.tarih<=bugun&&r.firmaId); // ziyaret günü dahil
-    const L=getMagMuh(); let n=0;
+    let L=getMagMuh(); let n=0;
+    // v842: ATAMA DEVRİ — birleşik grup dağılınca mağaza atamaları eski program seferinde kalır; dokunulmuş öksüz kaydın
+    // mağazası, aynı gün + aynı kalkışlı turun BOŞ program slotuna otomatik atanır (sonra v841 taşıması kaydı yeni koda bağlar).
+    try{
+      const tumRows=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.tarih<=bugun);
+      const gecerli0=new Set(tumRows.filter(r=>r.firmaId).map(r=>r.tarih+'|'+r.firmaId+'|'+r.kod));
+      const bos=tumRows.filter(r=>!r.firmaId&&r.parts&&r.parts[0]&&r.parts[0].pkgId);
+      const atanmis=new Set(tumRows.filter(r=>r.firmaId).map(r=>r.tarih+'|'+r.firmaId));
+      const dok=k=>(k.magKalemler||[]).some(x=>_tdN(x.ciro))||_tdN(k.rehCiro)>0||(k.not||'').trim()||!!k.magOnay;
+      let dev=0;
+      if(bos.length){
+        const all=getOperasyon();
+        L.forEach(k=>{
+          if(k.silindi||k.tip==='tahsilat'||!k.otoKey||gecerli0.has(k.otoKey)||!dok(k)||!k.kalkis||!k.firmaId) return;
+          const fm=_moFirmalar().find(f=>f.id===k.firmaId); if(!fm) return;
+          const sube=(fm.subeler||[]).find(x=>(x.ad||x.sehir||'')===(k.magaza||''));
+          const val=fm.id+(sube?'|'+sube.id:'');
+          if(atanmis.has(k.tarih+'|'+val)||atanmis.has(k.tarih+'|'+fm.id)) return; // o gün o mağaza zaten atanmış → v841 taşıması halleder
+          const slot=bos.find(r=>!r._alindi&&r.tarih===k.tarih&&r.parts[0].kalkis===k.kalkis&&(!sube||!sube.sehir||!r.sehir||String(r.sehir).toLowerCase()===String(sube.sehir).toLowerCase()));
+          if(!slot) return;
+          const p=slot.parts[0]; let rec=all.find(x=>x.pkgId===p.pkgId&&x.kalkis===p.kalkis);
+          if(!rec){ rec={pkgId:p.pkgId,kalkis:p.kalkis,magazalar:[],oteller:[]}; all.push(rec); }
+          rec.magazaAtama=rec.magazaAtama||{}; if(rec.magazaAtama[p.key]) return;
+          rec.magazaAtama[p.key]=fm.id+(sube?'|'+sube.id:''); slot._alindi=true; dev++;
+          _hataKaydet('MAĞAZA/atama devri',k.tarih+' '+(k.magaza||fm.ad||'')+': '+k.kod+' atamasi '+(slot.kod||'')+' turuna devredildi');
+        });
+        if(dev){ setOperasyon(all); }
+      }
+    }catch(e){ console.warn('mm atama devri',e); }
+    const rows2=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.tarih<=bugun&&r.firmaId); rows.length=0; rows2.forEach(r=>rows.push(r));
     // v841: program kodu değişince (birleşik grup dağıldı / tek sefer birleşti: CAP7×2 ↔ CAP7) aynı gün + aynı mağaza +
     // aynı kalkışlı DOKUNULMUŞ eski kayıt yeni anahtara TAŞINIR; boş şablon üretilmez, giriş kaybolmaz.
     try{
