@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v843 · 26.11.2026';
+const APP_VER='v844 · 26.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -15442,6 +15442,8 @@ function _moZiyaretUret(programTur,pax,rehber,kodEtiket,opEtiket,parts,birlesik,
       const key='b'+(programTur.bolum||'01')+'_g'+gi+'_'+mi;
       const rec=_opsGet(programTur.pkgId,programTur.kalkis);
       out.push({tarih,kod:kodEtiket,op:opEtiket,sehir:m.sehir||'',tur:m.tip||'',pax,rehber,birlesik:!!birlesik,
+        sefer:{pkgId:programTur.pkgId,kalkis:programTur.kalkis}, // v844: kayıt kimliği = program seferi
+        uyeler:(programTur.uyeSeferler&&programTur.uyeSeferler.length)?programTur.uyeSeferler.map(x=>({pkgId:x.pkgId,kalkis:x.kalkis})):[{pkgId:programTur.pkgId,kalkis:programTur.kalkis}],
         firmaId:(rec.magazaAtama||{})[key]||'',
         parts:[{pkgId:programTur.pkgId,kalkis:programTur.kalkis,key}],
         progKey:_moSeferKey(programTur)});
@@ -17063,12 +17065,15 @@ function gbBirlestir(){
   try{ const keys=new Set(uyeler.map(uKey)); let dusen=0; Object.values(S.gruplar).forEach(g=>{ const n=(g.uyeler||[]).length; g.uyeler=(g.uyeler||[]).filter(u=>!keys.has(uKey(u))); dusen+=n-g.uyeler.length; if(!g.uyeler.length&&!g.sefer&&!_ogGrupAgirlik(g)) delete S.gruplar[g.id]; }); if(dusen) showToast(dusen+' voucher başka gruptan bu birleşik gruba taşındı','success',5000); }catch(e){}
   const nid='og'+R_GID().slice(1);
   S.gruplar[nid]={id:nid,no:devralinanNo||_ogNoVer(S,tarihler[0]),ad:'Birleşik '+_fmtDateTR(tarihler[0]),rehberId:devralinanReh,not:'',uyeler,tahsisler:[]};
-  setOpsGrup(S); _gbSec.clear(); try{renderGrupBirlestir();}catch(e){} try{renderOpsTurlar();}catch(e){}
+  setOpsGrup(S);
+  try{ _moAtamaKopyala([...seferSet].map(x=>{ const p=x.split('|'); return {pkgId:p[0],kalkis:p[1]}; })); }catch(e){} // v844: program seferi hangisi olursa olsun mağaza atamaları kaybolmasın _gbSec.clear(); try{renderGrupBirlestir();}catch(e){} try{renderOpsTurlar();}catch(e){}
   showToast(seferSet.size+' sefer TEK TUR olarak birleştirildi — '+uyeler.length+' rezervasyon'+(eskiGidler.length?' (mevcut birleşik grup genişletildi)':'')+'. Rehber takviminde tek şerit görünür.','success',6000);
 }
 function gbDagit(gid){
   showConfirm('✂️','Grubu Dağıt','Birleşik grup dağıtılacak; seferler yeniden ayrı turlar olur. (Rehber atamaları sefer kayıtlarında durur.)','Dağıt',()=>{
-    const S=getOpsGrup(); if(S.gruplar) delete S.gruplar[gid];
+    const S=getOpsGrup();
+    try{ const g=S.gruplar&&S.gruplar[gid]; const sefs=[...new Set(((g&&g.uyeler)||[]).map(u=>u.pkgId+'|'+u.kalkis))].map(x=>{ const p=x.split('|'); return {pkgId:p[0],kalkis:p[1]}; }); _moAtamaKopyala(sefs); }catch(e){} // v844: mağaza atamaları her sefere kopyalanır → dağılan her tur kendi mağaza satırını alır
+    if(S.gruplar) delete S.gruplar[gid];
     setOpsGrup(S); try{renderGrupBirlestir();}catch(e){} try{renderOpsTurlar();}catch(e){} showToast('Grup dağıtıldı','success');
   });
 }
@@ -20006,7 +20011,95 @@ function meExcel(){
   const _ek=(window._meBas||window._meBit)?((window._meBas||'')+'_'+(window._meBit||'')+'_').replace(/^_/,''):(_meYil?_meYil+'_':'');
   XLSX.writeFile(wb,_ek+'magaza_ekstresi.xlsx');
 }
-// geçmiş ziyaretleri muhasebe kaydına dönüştür (idempotent — otoKey: tarih|firma|kod)
+// v844: MAĞAZA KAYDI KİMLİĞİ = sefer (paket + kalkış) + gün + mağaza. Tur kodu (CAP7, CAP7×2) yalnız etikettir;
+// birleştir/dağıt kodu değiştirse de kayıt aynı seferde kalır. Eski kayıtlar (otoKey) ilk eşleşmede damgalanır.
+function _mmSeferKey(tarih,firmaIdRaw,pkgId,kalkis){ return tarih+'|'+firmaIdRaw+'|'+pkgId+'|'+kalkis; }
+function _mmRowNorm(r){ try{ if(r&&!r.sefer&&r.parts&&r.parts[0]&&r.parts[0].pkgId){ r.sefer={pkgId:r.parts[0].pkgId,kalkis:r.parts[0].kalkis}; if(!r.uyeler||!r.uyeler.length) r.uyeler=[{pkgId:r.sefer.pkgId,kalkis:r.sefer.kalkis}]; } }catch(e){} return r; }
+function _mmRowKey(r){ _mmRowNorm(r); return (r&&r.sefer)?_mmSeferKey(r.tarih,r.firmaId,r.sefer.pkgId,r.sefer.kalkis):''; }
+// program satırları → Map(seferKey → üye sefer kümesi); kayıt geçerli = anahtarı var VE kendi seferi o turun üyesi
+function _mmGecerliMap(rows){ const m=new Map(); (rows||[]).forEach(r=>{ const k=_mmRowKey(r); if(k) m.set(k,new Set((r.uyeler||[]).map(x=>x.pkgId+'|'+x.kalkis))); m.set('O|'+r.tarih+'|'+r.firmaId+'|'+r.kod,true); }); return m; }
+function _mmKayitGecerli(k,map){ if(!k||!map) return false;
+  if(!k.seferKey) return !!(k.otoKey&&map.has('O|'+k.otoKey)); // damgasız eski kayıt: kod anahtarı programda varsa geçerli
+  if(!map.has(k.seferKey)) return false; if(!k.sefer) return true; return map.get(k.seferKey).has(k.sefer.pkgId+'|'+k.sefer.kalkis); }
+function _mmKodTemel(kod){ return String(kod||'').split('+').map(x=>_norm(x.replace(/×\d+$/,'').replace(/\s+G\d+$/,'').trim())).filter(Boolean); }
+function _mmKodUyar(kayitKod,satirKod){ const a=_mmKodTemel(kayitKod), b=_mmKodTemel(satirKod); return a.some(x=>b.includes(x)); } // CAP7×2 ↔ CAP7 ✓, LYK7 ↔ CAP7 ✗
+function _mmDokunuldu(k){ return (k.magKalemler||[]).some(x=>_tdN(x.ciro))||_tdN(k.rehCiro)>0||!!String(k.not||'').trim()||!!k.magOnay; }
+function _mmKayitDamgala(k,r){
+  _mmRowNorm(r); if(!r||!r.sefer) return;
+  const fRaw=String(r.firmaId);
+  // kaydın kendi seferi birleşik grupta hâlâ üyeyse korunur (dağıtınca orijinal turuna döner); değilse program seferi olur
+  if(!(k.sefer&&(r.uyeler||[]).some(x=>x.pkgId===k.sefer.pkgId&&x.kalkis===k.sefer.kalkis))) k.sefer={pkgId:r.sefer.pkgId,kalkis:r.sefer.kalkis};
+  k.uyeSeferler=(r.uyeler||[]).map(x=>({pkgId:x.pkgId,kalkis:x.kalkis}));
+  k.seferKey=_mmRowKey(r); k.otoKey=r.tarih+'|'+fRaw+'|'+r.kod; k.kod=r.kod;
+  if(r.op) k.op=r.op;
+  if(!k.kalkis) k.kalkis=r.sefer.kalkis;
+  if(!k.pax&&r.pax) k.pax=r.pax;
+  if(!String(k.rehberAd||'').trim()&&r.rehber) k.rehberAd=r.rehber;
+}
+function _mmKayitBirlestir(ana,digerler){
+  (digerler||[]).forEach(d=>{
+    ana.magKalemler=ana.magKalemler||[];
+    (d.magKalemler||[]).forEach(x=>ana.magKalemler.push(Object.assign({},x)));
+    if(_tdN(d.rehCiro)>0) ana.rehCiro=String(_tdN(ana.rehCiro)+_tdN(d.rehCiro));
+    if(String(d.not||'').trim()) ana.not=(String(ana.not||'')+(ana.not?' | ':'')+d.not).trim();
+    if(d.magOnay) ana.magOnay=true;
+    d.silindi=true; d.birlesti=ana.id;
+  });
+}
+function _mmYeniKayit(r){
+  const cz=_moAtaCoz(r.firmaId); const fm=cz.f; const sube=cz.sube||(fm?_moSubeBul(fm,r.sehir):null);
+  const k={id:genId(),otoKey:r.tarih+'|'+r.firmaId+'|'+r.kod,tarih:r.tarih,kalkis:(r.sefer&&r.sefer.kalkis)||(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'',firmaId:(fm?fm.id:String(r.firmaId).split('|')[0]),magaza:sube?(sube.ad||sube.sehir||''):'',kod:r.kod,rehberAd:r.rehber||'',pax:r.pax||'',para:'EUR',
+    magKalemler:[],rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()};
+  _mmKayitDamgala(k,r); return k;
+}
+// satır ↔ kayıt eşleme: 1) sefer kimliği  2) eski otoKey (damgasız kayıt)  3) üye sefer / aynı kalkış + gün + mağaza (dokunulmuş, öksüz)
+function _mmKayitEsle(L,r,gecerliMap){
+  _mmRowNorm(r);
+  const sk=_mmRowKey(r); const zKey=r.tarih+'|'+r.firmaId+'|'+r.kod;
+  const uyeK0=new Set((r.uyeler||[]).map(x=>x.pkgId+'|'+x.kalkis));
+  // silinmiş DOLU kayıt kullanıcı kararıdır: eşleşmeye girmez (yalnız silinmiş boş şablon dirilebilir)
+  const uygun=k=>k.tip!=='tahsilat'&&(!k.silindi||!_mmDokunuldu(k));
+  let mev=sk?(L.find(k=>!k.silindi&&uygun(k)&&k.seferKey===sk&&(!k.sefer||uyeK0.has(k.sefer.pkgId+'|'+k.sefer.kalkis)))||L.find(k=>uygun(k)&&k.seferKey===sk&&(!k.sefer||uyeK0.has(k.sefer.pkgId+'|'+k.sefer.kalkis)))):null;
+  if(!mev) mev=L.find(k=>!k.silindi&&uygun(k)&&!k.seferKey&&k.otoKey===zKey)||L.find(k=>uygun(k)&&!k.seferKey&&k.otoKey===zKey)||null;
+  // dokunulmuş öksüz kayıt var mı? (birleşme/dağılma/iptal sonrası eski kayıt) — ana kayıt doluysa bunlar ona katılır
+  let aday=[];
+  try{
+    const cz=_moAtaCoz(r.firmaId); const fm=cz.f;
+    if(fm){
+      const fid=fm.id; const sube=cz.sube||_moSubeBul(fm,r.sehir); const mag=sube?(sube.ad||sube.sehir||''):'';
+      const uyeK=new Set((r.uyeler||[]).map(x=>x.pkgId+'|'+x.kalkis)); const uyeKal=new Set((r.uyeler||[]).map(x=>x.kalkis)); if(r.sefer) uyeKal.add(r.sefer.kalkis);
+      aday=L.filter(k=>k!==mev&&!k.silindi&&k.tip!=='tahsilat'&&k.tarih===r.tarih&&String(k.firmaId)===String(fid)&&(k.magaza||'')===mag&&_mmDokunuldu(k)
+        &&!_mmKayitGecerli(k,gecerliMap)
+        &&(k.sefer&&uyeK.has(k.sefer.pkgId+'|'+k.sefer.kalkis) // kendi seferi bu turun üyesi
+           || (_mmKodUyar(k.kod,r.kod)&&(k.sefer?uyeKal.has(k.sefer.kalkis):(!k.kalkis||uyeKal.has(k.kalkis)))))); // ya da aynı temel kod + aynı kalkış (iptal/birleşme kalıntısı)
+      const tam=k=>(k.sefer&&r.sefer&&k.sefer.pkgId===r.sefer.pkgId&&k.sefer.kalkis===r.sefer.kalkis)?1:0;
+      aday.sort((a,b)=>(tam(b)-tam(a))||(_mmHesap(b).mag-_mmHesap(a).mag)); // önce kendi seferi, sonra en dolu
+    }
+  }catch(e){}
+  if(mev&&_mmDokunuldu(mev)) return {k:mev,yol:'kimlik',digerler:aday};
+  if(aday.length) return {k:aday[0],yol:'uye',digerler:aday.slice(1),sil:mev||null};
+  return mev?{k:mev,yol:'kimlik'}:null;
+}
+// birleştir/dağıt: aynı kodlu seferler arasında mağaza atamalarını tamamla (eksik slotlar kopyalanır)
+function _moAtamaKopyala(seferler){
+  try{
+    const all=getOperasyon(); const pk=id=>getPackages().find(p=>p.id===id)||{}; let d=false;
+    (seferler||[]).forEach(a=>{
+      const ra=all.find(x=>x.pkgId===a.pkgId&&x.kalkis===a.kalkis); const A=(ra&&ra.magazaAtama)||{}; if(!Object.keys(A).length) return;
+      (seferler||[]).forEach(b=>{
+        if(b===a||(b.pkgId===a.pkgId&&b.kalkis===a.kalkis)) return;
+        if(_norm(pk(a.pkgId).paketKodu||'')!==_norm(pk(b.pkgId).paketKodu||'')) return;
+        let rb=all.find(x=>x.pkgId===b.pkgId&&x.kalkis===b.kalkis);
+        if(!rb){ rb={pkgId:b.pkgId,kalkis:b.kalkis,magazalar:[],oteller:[]}; all.push(rb); }
+        rb.magazaAtama=rb.magazaAtama||{};
+        Object.keys(A).forEach(key=>{ if(!rb.magazaAtama[key]){ rb.magazaAtama[key]=A[key]; d=true; } });
+      });
+    });
+    if(d) setOperasyon(all);
+    return d;
+  }catch(e){ return false; }
+}
+// geçmiş ziyaretleri muhasebe kaydına dönüştür (idempotent — kimlik: sefer+gün+mağaza; eski: otoKey tarih|firma|kod)
 function _mmZiyaretSenk(){
   // YALNIZ yazma yetkisi olan çalıştırır — salt-okunur (şirket/görüntüleme) kullanıcının
   // cihazı kayıt üretip buluta yazmasın (kullanıcılar arası tutarsızlık kaynağıydı)
@@ -20020,6 +20113,7 @@ function _mmZiyaretSenk(){
     try{
       const tumRows=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.tarih<=bugun);
       const gecerli0=new Set(tumRows.filter(r=>r.firmaId).map(r=>r.tarih+'|'+r.firmaId+'|'+r.kod));
+      const gecerliS0=_mmGecerliMap(tumRows.filter(r=>r.firmaId));
       const bos=tumRows.filter(r=>!r.firmaId&&r.parts&&r.parts[0]&&r.parts[0].pkgId);
       const atanmis=new Set(tumRows.filter(r=>r.firmaId).map(r=>r.tarih+'|'+r.firmaId+'|'+((r.parts&&r.parts[0]&&r.parts[0].kalkis)||''))); // v843: aynı gün başka turun ataması engellemesin (tarih+mağaza+kalkış)
       const dok=k=>(k.magKalemler||[]).some(x=>_tdN(x.ciro))||_tdN(k.rehCiro)>0||(k.not||'').trim()||!!k.magOnay;
@@ -20027,7 +20121,8 @@ function _mmZiyaretSenk(){
       if(bos.length){
         const all=getOperasyon();
         L.forEach(k=>{
-          if(k.silindi||k.tip==='tahsilat'||!k.otoKey||gecerli0.has(k.otoKey)||!dok(k)||!k.kalkis||!k.firmaId) return;
+          if(k.silindi||k.tip==='tahsilat'||!k.otoKey||!dok(k)||!k.kalkis||!k.firmaId) return;
+          if(k.seferKey?_mmKayitGecerli(k,gecerliS0):gecerli0.has(k.otoKey)) return; // programda karşılığı var → öksüz değil
           const fm=_moFirmalar().find(f=>f.id===k.firmaId); if(!fm) return;
           const sube=(fm.subeler||[]).find(x=>(x.ad||x.sehir||'')===(k.magaza||''));
           const val=fm.id+(sube?'|'+sube.id:'');
@@ -20044,48 +20139,27 @@ function _mmZiyaretSenk(){
       }
     }catch(e){ console.warn('mm atama devri',e); }
     const rows2=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.tarih<=bugun&&r.firmaId); rows.length=0; rows2.forEach(r=>rows.push(r));
-    // v841: program kodu değişince (birleşik grup dağıldı / tek sefer birleşti: CAP7×2 ↔ CAP7) aynı gün + aynı mağaza +
-    // aynı kalkışlı DOKUNULMUŞ eski kayıt yeni anahtara TAŞINIR; boş şablon üretilmez, giriş kaybolmaz.
-    try{
-      const gecerliK=new Set(rows.map(r=>r.tarih+'|'+r.firmaId+'|'+r.kod));
-      const dokunuldu=k=>(k.magKalemler||[]).some(x=>_tdN(x.ciro))||_tdN(k.rehCiro)>0||(k.not||'').trim()||!!k.magOnay;
-      rows.forEach(r=>{
-        const zKey=r.tarih+'|'+r.firmaId+'|'+r.kod;
-        const kal=(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'';
-        const cz=_moAtaCoz(r.firmaId); const fm=cz.f; const fid=fm?fm.id:String(r.firmaId).split('|')[0];
-        const sube=cz.sube||(fm?_moSubeBul(fm,r.sehir):null); const mag=sube?(sube.ad||sube.sehir||''):'';
-        const oksuz=L.find(k=>!k.silindi&&k.tip!=='tahsilat'&&k.otoKey&&k.otoKey!==zKey&&!gecerliK.has(k.otoKey)&&k.tarih===r.tarih&&String(k.firmaId)===String(fid)&&(k.magaza||'')===mag&&(!kal||!k.kalkis||k.kalkis===kal)&&dokunuldu(k));
-        if(!oksuz) return;
-        const mev=L.find(k=>k.otoKey===zKey&&!k.silindi);
-        if(mev){ if(dokunuldu(mev)) return; mev.silindi=true; }
-        const eskiKod=oksuz.kod; oksuz.otoKey=zKey; oksuz.kod=r.kod; if(r.pax&&!oksuz.pax) oksuz.pax=r.pax; if(kal&&!oksuz.kalkis) oksuz.kalkis=kal; n++;
-        _hataKaydet('MAĞAZA/taşıma',r.tarih+' '+mag+': '+eskiKod+' → '+r.kod+' kaydı yeni tur koduna taşındı');
-      });
-    }catch(e){ console.warn('mm taşıma',e); }
+    const gecerliKeys=_mmGecerliMap(rows);
     rows.forEach(r=>{
-      const zKey=r.tarih+'|'+r.firmaId+'|'+r.kod;
-      const mev=L.find(k=>k.otoKey===zKey);
-      if(mev){
-        // kalkış geriye dönük doldurulur (eski kayıtlar kartlarda doğru gruplansın)
-        const kal=(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'';
-        if(kal&&!mev.kalkis){ mev.kalkis=kal; n++; }
+      const es=_mmKayitEsle(L,r,gecerliKeys);
+      if(es){
+        let mev=es.k; const once=JSON.stringify([mev.seferKey,mev.otoKey,mev.kod,mev.op,mev.kalkis,!!mev.silindi]);
+        if(es.sil&&es.sil!==mev&&!_mmDokunuldu(es.sil)){ es.sil.silindi=true; } // boş şablon → dolu kayıt yerine geçti
+        if(es.digerler&&es.digerler.length){ // birden çok dolu kayıt → en dolu olan ana kayıt, diğerleri ona katılır
+          const hepsi=[mev].concat(es.digerler).sort((a,b)=>_mmHesap(b).mag-_mmHesap(a).mag); mev=hepsi[0];
+          _mmKayitBirlestir(mev,hepsi.slice(1)); _hataKaydet('MAĞAZA/birleşme',r.tarih+' '+(mev.magaza||'')+': '+hepsi.length+' kayıt tek satırda toplandı ('+r.kod+')'); }
+        _mmKayitDamgala(mev,r);
+        if(es.yol==='uye'){ _hataKaydet('MAĞAZA/taşıma',r.tarih+' '+(mev.magaza||'')+': kayıt '+r.kod+' turuna bağlandı'); }
         // temizlikte düşmüş DOKUNULMAMIŞ kayıt: atama geri geldiyse dirilt
-        if(mev.silindi&&!((mev.magKalemler||[]).some(x=>_tdN(x.ciro))||_tdN(mev.rehCiro)>0||(mev.not||'').trim())){ delete mev.silindi; n++; }
+        if(mev.silindi&&!_mmDokunuldu(mev)) delete mev.silindi;
+        if(once!==JSON.stringify([mev.seferKey,mev.otoKey,mev.kod,mev.op,mev.kalkis,!!mev.silindi])||(es.digerler&&es.digerler.length)) n++;
         return;
       }
-      const cz=_moAtaCoz(r.firmaId);
-      const fm=cz.f;
-      const sube=cz.sube||(fm?_moSubeBul(fm,r.sehir):null);
-      L.push({id:genId(),otoKey:zKey,tarih:r.tarih,kalkis:(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'',firmaId:(fm?fm.id:String(r.firmaId).split('|')[0]),magaza:sube?(sube.ad||sube.sehir||''):'',kod:r.kod,rehberAd:r.rehber||'',pax:r.pax||'',para:'EUR',
-        magKalemler:[],rehCiro:'',durum:'bekliyor',not:'',ts:Date.now()});
-      n++;
+      L.push(_mmYeniKayit(r)); n++;
     });
     // erken açılmış (gelecek tarihli) kayıtlarda kalkış backfill — doğru tur kartında görünsün
-    try{ (_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.firmaId&&r.tarih>=bugun).forEach(r=>{
-      const mev=L.find(k=>k.otoKey===r.tarih+'|'+r.firmaId+'|'+r.kod);
-      const kal=(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'';
-      if(mev&&kal&&!mev.kalkis){ mev.kalkis=kal; n++; }
-    }); }catch(e){}
+    try{ const ileri=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.firmaId&&r.tarih>=bugun); const gk2=_mmGecerliMap(ileri);
+      ileri.forEach(r=>{ const es=_mmKayitEsle(L,r,gk2); if(!es) return; const mev=es.k; const once=JSON.stringify([mev.seferKey,mev.kod,mev.kalkis]); _mmKayitDamgala(mev,r); if(once!==JSON.stringify([mev.seferKey,mev.kod,mev.kalkis])) n++; }); }catch(e){}
     // hazır gelmiş, hiç dokunulmamış şablon kalemleri boşaltılır (kalemi Emre girer)
     try{ L.forEach(k=>{ if(k.silindi) return;
       if((k.magKalemler||[]).length&&!k.magOnay&&k.magKalemler.every(x=>!String(x.ciro||'').trim()&&!x.durum)) k.magKalemler=[];
@@ -20094,10 +20168,11 @@ function _mmZiyaretSenk(){
     // artık programda karşılığı olmayan, DOKUNULMAMIŞ otomatik kayıtlar düşer.
     let temiz=0;
     try{
-      const gecerli=new Set((_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.firmaId).map(r=>r.tarih+'|'+r.firmaId+'|'+r.kod));
+      const _tum=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.firmaId);
+      const gecerli=new Set(_tum.map(r=>r.tarih+'|'+r.firmaId+'|'+r.kod)); const gecerliS=_mmGecerliMap(_tum);
       L.forEach(k=>{
-        if(k.silindi||!k.otoKey) return;
-        if(gecerli.has(k.otoKey)) return;
+        if(k.silindi||k.tip==='tahsilat'||(!k.otoKey&&!k.seferKey)) return;
+        if(k.seferKey?_mmKayitGecerli(k,gecerliS):gecerli.has(k.otoKey)) return;
         if((k.magKalemler||[]).some(x=>_tdN(x.ciro))||_tdN(k.rehCiro)>0||(k.not||'').trim()) return; // bildirim girilmiş — dokunma
         k.silindi=true; temiz++;
       });
@@ -20235,12 +20310,12 @@ function renderMagMuh(){
   let planL=[];
   try{
     const bugun=_opsToday();
-    const mev=new Set(getMagMuhAktif().map(k=>k.otoKey).filter(Boolean));
+    const mev=new Set(getMagMuhAktif().flatMap(k=>[k.otoKey,k.seferKey]).filter(Boolean));
     planL=(_moSatirlar(bugun)||[]).filter(r=>{ const t=String(_pdate(r.tarih)||r.tarih||'');
         const donem=_mmAralik?((!window._mmBasF||t>=window._mmBasF)&&(!window._mmBitF||t<=window._mmBitF)):(t.slice(0,7)===_mmAy);
-        return r.firmaId&&donem&&String(r.tarih)>bugun&&!mev.has(r.tarih+'|'+r.firmaId+'|'+r.kod); })
+        return r.firmaId&&donem&&String(r.tarih)>bugun&&!mev.has(r.tarih+'|'+r.firmaId+'|'+r.kod)&&!(_mmRowKey(r)&&mev.has(_mmRowKey(r))); })
       .map(r=>{ let ad='',sube=''; try{ const cz=_moAtaCoz(r.firmaId); ad=(cz.f&&cz.f.ad)||''; sube=cz.sube?(cz.sube.ad||cz.sube.sehir||''):''; }catch(e){}
-        return {plan:true,planKey:r.tarih+'|'+r.firmaId+'|'+r.kod,tarih:r.tarih,kalkis:(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'',kod:r.kod,rehberAd:r.rehber||'',pax:r.pax||'',firmaAd:ad,magaza:sube,para:'EUR'}; });
+        return {plan:true,planKey:r.tarih+'|'+r.firmaId+'|'+r.kod,tarih:r.tarih,kalkis:(r.sefer&&r.sefer.kalkis)||(r.parts&&r.parts[0]&&r.parts[0].kalkis)||'',kod:r.kod,op:r.op||'',sefer:r.sefer||null,rehberAd:r.rehber||'',pax:r.pax||'',firmaAd:ad,magaza:sube,para:'EUR'}; });
     if(_mmFirmaF) planL=planL.filter(r=>{ try{ const cz=_moAtaCoz(r.planKey.split('|')[1]); return cz.f&&cz.f.id===_mmFirmaF; }catch(e){ return false; } });
     if(_mmDurumF&&_mmDurumF!=='bekliyor') planL=[];
   }catch(e){}
@@ -20269,11 +20344,14 @@ function renderMagMuh(){
   h+=(()=>{
   // ── TUR BAZLI "BALON" KARTLAR ──
   const gruplar={};
-  L.concat(planL).forEach(k=>{ const key=(String(k.kod||'').trim().toUpperCase()||'—')+'|'+String(k.kalkis||'')+'|'+String(k.rehberAd||'').trim(); (gruplar[key]=gruplar[key]||[]).push(k); });
+  // v844: tur kartı anahtarı = sefer kimliği (varsa); kod yalnız etiket — birleştir/dağıt kartı bölmez
+  const _progSefer=k=>{ if(k.seferKey){ const p=String(k.seferKey).split('|'); return p.slice(-2).join('|'); } return k.sefer?(k.sefer.pkgId+'|'+k.sefer.kalkis):''; };
+  L.concat(planL).forEach(k=>{ const _ps=_progSefer(k); const key=_ps?('S|'+_ps):((String(k.kod||'').trim().toUpperCase()||'—')+'|'+String(k.kalkis||'')+'|'+String(k.rehberAd||'').trim()); (gruplar[key]=gruplar[key]||[]).push(k); });
   const turSinif=ad=>{ const t=String(ad||'').toLocaleLowerCase('tr'); if(/hal[ıi]/.test(t))return 'hali'; if(/kuyum|alt[ıi]n|gold/.test(t))return 'kuyum'; if(/deri|leather/.test(t))return 'deri'; return 'diger'; };
   const opBul=kod=>{ try{ for(const parca of String(kod||'').split('+')){ const pk=getPackages().find(p=>_norm(p.paketKodu||'')===_norm(parca.replace(/×\d+$/,''))); if(pk){ const ad=_resOpAd(pk); if(ad) return ad; } } }catch(e){} return ''; };
   const GL=Object.entries(gruplar).map(([key,ks])=>{ ks.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
-    const kod=key.split('|')[0], kalkis=key.split('|')[1]||'', reh=key.split('|').slice(2).join('|');
+    const _k0=ks.find(k=>!k.plan)||ks[0];
+    const kod=String(_k0.kod||'').trim().toUpperCase()||'—', kalkis=String(_k0.kalkis||''), reh=String((ks.find(k=>String(k.rehberAd||'').trim())||{}).rehberAd||'').trim();
     let mag=0,kom=0,bek=0,bks=0,plan=0,girPax=0; const tsat={hali:0,kuyum:0,deri:0,diger:0}; const tsatG={hali:false,kuyum:false,deri:false,diger:false};
     ks.forEach(k=>{ if(k.plan){ plan++; return; } const c=_mmHesap(k); mag+=c.mag;
       try{ kom+=_mmPaylar(k).acente; }catch(e){ kom+=c.kom; } // turuncu pill: yalnız ACENTE komisyonu
@@ -20281,7 +20359,7 @@ function renderMagMuh(){
       (k.magKalemler||[]).forEach(x=>{ if(x.durum==='iptal') return; let ts=turSinif(x.ad); if(ts==='diger') ts=ftur; tsat[ts]+=_tdN(x.ciro); if(String(x.ciro||'').trim()!==''&&_mmGirildiMi(k)) tsatG[ts]=true; });
       const _d=_mmKayitDurum(k); if(_d==='bekliyor') bek++; else if(_d==='bekleme') bks++;
       let gp=_tdN(k.rehPax); if(!gp){ try{ const b=getRehBildirim().find(b=>_rehbBildEsle(b,k)); if(b) gp=_tdN(b.pax); }catch(e){} } if(gp>girPax) girPax=gp; });
-    return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),girPax,mag,kom,bek,bks,plan,tsat,tsatG,op:opBul(kod)};
+    return {key,kod,kalkis,reh,ks,ilk:_pdate(ks[0].tarih)||'',son:_pdate(ks[ks.length-1].tarih)||'',pax:_tdN((ks.find(k=>k.pax)||{}).pax),girPax,mag,kom,bek,bks,plan,tsat,tsatG,op:((ks.find(k=>k.op)||{}).op)||opBul(kod)};
   }).sort((a,b)=>String(a.ilk).localeCompare(String(b.ilk)));
   window._mmTurAcik=window._mmTurAcik||new Set();
   const F=n=>Math.round(n).toLocaleString('tr-TR');
@@ -20404,7 +20482,15 @@ function mmPlanKayitAc(enc){ if(!_mmYazYetki()) return;
     const key=decodeURIComponent(enc); const p=key.split('|');
     const tarih=p[0], firmaIdRaw=p.slice(1,-1).join('|'), kod=p[p.length-1];
     const L=getMagMuh();
-    let k=L.find(x=>x.otoKey===key);
+    let k=L.find(x=>x.otoKey===key&&!x.silindi);
+    if(!k){
+      const r=(_moSatirlar(_opsToday())||[]).find(x=>x.tarih===tarih&&String(x.firmaId)===firmaIdRaw&&x.kod===kod);
+      if(r&&r.sefer){ const es=_mmKayitEsle(L,r,new Map()); if(es&&es.k&&!es.k.silindi) k=es.k; }
+    }
+    if(!k){
+      const r=(_moSatirlar(_opsToday())||[]).find(x=>x.tarih===tarih&&String(x.firmaId)===firmaIdRaw&&x.kod===kod);
+      if(r&&r.sefer){ k=_mmYeniKayit(r); L.unshift(k); setMagMuh(L); }
+    }
     if(!k){
       const r=(_moSatirlar(_opsToday())||[]).find(x=>x.tarih===tarih&&String(x.firmaId)===firmaIdRaw&&x.kod===kod);
       const cz=_moAtaCoz(firmaIdRaw); const fm=cz.f;
