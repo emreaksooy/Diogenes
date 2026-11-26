@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v842 · 25.11.2026';
+const APP_VER='v843 · 26.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -20021,7 +20021,7 @@ function _mmZiyaretSenk(){
       const tumRows=(_moSatirlar(_isoAdd(bugun,-60))||[]).filter(r=>r.tarih<=bugun);
       const gecerli0=new Set(tumRows.filter(r=>r.firmaId).map(r=>r.tarih+'|'+r.firmaId+'|'+r.kod));
       const bos=tumRows.filter(r=>!r.firmaId&&r.parts&&r.parts[0]&&r.parts[0].pkgId);
-      const atanmis=new Set(tumRows.filter(r=>r.firmaId).map(r=>r.tarih+'|'+r.firmaId));
+      const atanmis=new Set(tumRows.filter(r=>r.firmaId).map(r=>r.tarih+'|'+r.firmaId+'|'+((r.parts&&r.parts[0]&&r.parts[0].kalkis)||''))); // v843: aynı gün başka turun ataması engellemesin (tarih+mağaza+kalkış)
       const dok=k=>(k.magKalemler||[]).some(x=>_tdN(x.ciro))||_tdN(k.rehCiro)>0||(k.not||'').trim()||!!k.magOnay;
       let dev=0;
       if(bos.length){
@@ -20031,7 +20031,7 @@ function _mmZiyaretSenk(){
           const fm=_moFirmalar().find(f=>f.id===k.firmaId); if(!fm) return;
           const sube=(fm.subeler||[]).find(x=>(x.ad||x.sehir||'')===(k.magaza||''));
           const val=fm.id+(sube?'|'+sube.id:'');
-          if(atanmis.has(k.tarih+'|'+val)||atanmis.has(k.tarih+'|'+fm.id)) return; // o gün o mağaza zaten atanmış → v841 taşıması halleder
+          if(atanmis.has(k.tarih+'|'+val+'|'+k.kalkis)||atanmis.has(k.tarih+'|'+fm.id+'|'+k.kalkis)) return; // o gün o tura o mağaza zaten atanmış → v841 taşıması halleder
           const slot=bos.find(r=>!r._alindi&&r.tarih===k.tarih&&r.parts[0].kalkis===k.kalkis&&(!sube||!sube.sehir||!r.sehir||String(r.sehir).toLowerCase()===String(sube.sehir).toLowerCase()));
           if(!slot) return;
           const p=slot.parts[0]; let rec=all.find(x=>x.pkgId===p.pkgId&&x.kalkis===p.kalkis);
