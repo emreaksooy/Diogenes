@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v846 · 27.11.2026';
+const APP_VER='v848 · 27.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -9453,8 +9453,8 @@ function exportReservationExcel(){
 }
 
 // ═══════════════ BULUT (Supabase) ═══════════════
-const SB_URL='https://jyqwbzyevejyqxfafrtf.supabase.co';
-const SB_KEY='sb_publishable_65daq2tGCWi0fHcERLGwbQ_7zPH8TD2';
+const SB_URL='https://supabase.diogenestravel.com'; // v848: self-host Supabase (Hostinger VPS / Coolify)
+const SB_KEY='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc5NTYwMjcyMCwiZXhwIjo0OTUxMjc2MzIwLCJyb2xlIjoiYW5vbiJ9.9CGq2CA1VOlpgvsaAtHLjFbU865ZPueJOJ5s137joes';
 let sb=null, sbUser=null, sbRol=null, _cloudOn=false;
 // ═══ ROL / YETKI ═══
 const _PAGEGRP={urunozet:'urunpdf',paketlerim:'home',urun:'urun',paket:'urun',maliyet:'urun',harita:'urun',cikti:'urun',sunum:'urun',opdetay:'urun',rezervasyon:'rezervasyon',ucak:'ucak',operasyon:'operasyon',rapor:'rapor',yonetim:'yonetim',magmuh:'magaza',ekip:'yonetim',rehberim:'rehberim'};
@@ -9618,10 +9618,13 @@ function _ynSeferKardes(pk,kalkis){
   const yil=String(kalkis||'').slice(0,4); if(!pk||!yil) return null;
   const kendi=_resDepartureDates(pk)||[];
   if(!kendi.length) return null; // tarihsiz ürün — yargı yok
-  if(kendi.some(t=>String(_pdate(t)||t).slice(0,4)===yil)) return null; // yıl uyuyor
   const kod=_norm(pk.paketKodu||''); if(!kod) return null;
   const aday=getPackages().filter(p=>p.id!==pk.id&&_norm(p.paketKodu||'')===kod&&(p.operatorId||'')===(pk.operatorId||''));
+  // v847: ürünün kendi tarihlerinde bu kalkış YOK ama aynı kodlu kardeş üründe TAM olarak var → yıl aynı olsa da öner (ör. IST4N4 Herbst → IST4N4 Silvester 29.12)
+  const kendiTam=kendi.some(t=>_pdate(t)===kalkis);
   const tam=aday.filter(p=>(_resDepartureDates(p)||[]).some(t=>_pdate(t)===kalkis));
+  if(!kendiTam&&tam.length===1) return tam[0];
+  if(kendi.some(t=>String(_pdate(t)||t).slice(0,4)===yil)) return null; // yıl uyuyor
   if(tam.length===1) return tam[0];
   const yilli=aday.filter(p=>(_resDepartureDates(p)||[]).some(t=>String(_pdate(t)||t).slice(0,4)===yil));
   return yilli.length===1?yilli[0]:null;
