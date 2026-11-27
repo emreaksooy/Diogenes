@@ -2578,7 +2578,7 @@ try{var _g=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i
 
 <script>
 // ═══════════════ STORAGE KEYS ═══════════════
-const APP_VER='v845 · 26.11.2026';
+const APP_VER='v846 · 27.11.2026';
 // MASKE KALIBI: boş saat/tarih kutusu odaklanınca Sejour tarzı __:__ / __.__.____ gösterir
 document.addEventListener('focusin',function(e){
   try{
@@ -8606,10 +8606,12 @@ function ucakExcelImport(evt){
   if(typeof XLSX==='undefined'){ showToast('Excel kütüphanesi yüklenemedi (internet gerekli)','error'); return; }
   const rd=new FileReader();
   rd.onload=async e=>{ try{
+    _ilerleme.ac('✈️ Uçak listesi aktarımı'); _ilerleme.set(5,'Excel açılıyor…'); await _ilerleme.bekle();
     const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellStyles:true});
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true});
     if(!rows.length){ showToast('Dosya boş','error'); return; }
     // ── ŞİRKET ŞABLONU (uçak departmanının kendi formatı): deterministik ayrıştırma, AI'a gerek yok
+    _ilerleme.set(25,'Dosya okundu — '+rows.length+' satır, yolcular eşleştiriliyor…'); await _ilerleme.bekle();
     if(_ucakSablonDetect(rows)){
       // dosyadaki Operatör + Product açık seferle uyuşuyor mu?
       try{
@@ -8728,7 +8730,7 @@ function ucakExcelImport(evt){
       showConfirm('🛎','Uçuş Değişikliği Tespit Edildi',ozet+'\n\nSatırlar güncellendi. Bu seferin transfer atamalarını (depar saati) gözden geçir!','Tamam',()=>{});
     }
     showToast(n+' yolcu aktarıldı'+(ai?' (yapay zeka eşlemesiyle)':'')+(atla?' · '+atla+' satır güncellendi/atlandı':'')+(degisimler.length?' · ⚠ '+degisimler.length+' uçuş değişikliği':''),'success',6000);
-  }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); } };
+  }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); }finally{ _ilerleme.set(100,'Tamamlandı'); setTimeout(()=>_ilerleme.kapat(),350); } };
   rd.readAsArrayBuffer(f);
 }
 function _ucakDosyaCoz(yol){
@@ -8787,8 +8789,11 @@ async function ucakTopluImport(evt){
   };
   let ok=0, iptalAtla=0, cozulemedi=[], kodYok=[], sablonDegil=[], toplamYolcu=0, toplamDegisim=0;
   showToast(files.length+' dosya işleniyor…','success',3000);
+  _ilerleme.ac('✈️ Toplu uçak listesi aktarımı'); let _fi=0;
+  try{
   for(const f of files){
     const yol=f.webkitRelativePath||f.name;
+    _ilerleme.set(100*_fi/files.length,(_fi+1)+' / '+files.length+' — '+f.name); await _ilerleme.bekle(); _fi++;
     const _cxxMi=/[-—]+\s*cxx/i.test(yol); if(_cxxMi) iptalAtla++;
     const coz=_ucakDosyaCoz(yol);
     if(!coz){ cozulemedi.push(f.name); continue; }
@@ -8852,6 +8857,7 @@ async function ucakTopluImport(evt){
       ok++; toplamYolcu+=(oz.n+oz.atla); toplamDegisim+=oz.degisim;
     }catch(e){ cozulemedi.push(f.name+' ('+(e.message||'okunamadı')+')'); }
   }
+  }finally{ _ilerleme.set(100,'Tamamlandı'); setTimeout(()=>_ilerleme.kapat(),350); }
   _resPkgId=eskiP; _resKalkis=eskiK;
   _resTglKey='';
   try{ renderUcakGenel(); if(_resPkgId&&_resKalkis) renderRezervasyon(); }catch(_e){}
@@ -11699,12 +11705,29 @@ function rzSejourImport(evt){
   }
   _rzSejourOku(f);
 }
+// v846: içe aktarma ilerleme penceresi (% + mesaj + süre). ac() → set(pct,msg) + await bekle() → kapat()
+const _ilerleme={ el:null, t0:0,
+  ac(baslik){ this.kapat(); const d=document.createElement('div'); d.id='ilerlemeOv';
+    d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px';
+    d.innerHTML='<div style="background:var(--card,#fff);border-radius:16px;width:100%;max-width:420px;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+      +'<div style="font-weight:800;font-size:1rem;margin-bottom:6px" id="ilBaslik"></div>'
+      +'<div style="font-size:.8rem;color:var(--muted);min-height:1.2em" id="ilMsg">Hazırlanıyor…</div>'
+      +'<div style="height:10px;background:var(--border,#e5e7eb);border-radius:999px;overflow:hidden;margin:12px 0 6px"><div id="ilBar" style="height:100%;width:0%;background:linear-gradient(90deg,#e8622a,#f59e0b);transition:width .15s"></div></div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)"><span id="ilPct">%0</span><span id="ilSure"></span></div></div>';
+    document.body.appendChild(d); this.el=d; this.t0=Date.now(); d.querySelector('#ilBaslik').textContent=baslik||'İşleniyor'; return this; },
+  set(pct,msg){ if(!this.el) return; pct=Math.max(0,Math.min(100,Math.round(pct))); this.el.querySelector('#ilBar').style.width=pct+'%'; this.el.querySelector('#ilPct').textContent='%'+pct;
+    if(msg!=null) this.el.querySelector('#ilMsg').textContent=msg; const g=(Date.now()-this.t0)/1000; this.el.querySelector('#ilSure').textContent=g>=1?(Math.round(g)+' sn'):''; },
+  bekle(){ return new Promise(r=>setTimeout(r,0)); },
+  kapat(){ const d=document.getElementById('ilerlemeOv'); if(d) d.remove(); this.el=null; }
+};
 function _rzSejourOku(f){
   const rd=new FileReader();
-  rd.onload=e=>{ try{
+  rd.onload=async e=>{ try{
+    _ilerleme.ac('📥 Sejour aktarımı'); _ilerleme.set(2,'Excel açılıyor…'); await _ilerleme.bekle();
     const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellStyles:true});
     const sh=wb.Sheets[wb.SheetNames[0]];
     let rows=XLSX.utils.sheet_to_json(sh,{header:1,raw:true});
+    _ilerleme.set(8,'Dosya okundu — '+rows.length+' satır, rezervasyonlar gruplanıyor…'); await _ilerleme.bekle();
     if(!rows.length){ showToast('Dosya boş','error'); return; }
     // başlık satırı her zaman ilk satır olmayabilir — ilk 15 satırda ara
     let hdrIdx=rows.findIndex((r,i)=>i<15&&Array.isArray(r)&&r.some(x=>String(x||'').trim()==='Voucher')&&r.some(x=>{const t=String(x||'').trim();return t==='Misafir Adı'||t==='Otel Adı';}));
@@ -11804,7 +11827,7 @@ function _rzSejourOku(f){
     } }catch(e){ console.warn('açılım böl',e); }
     let yeni=0, atla=0, kartN=0, kartVoucher=0, uyeYok=0, iptalRez=0; const kodYok=new Set(), opYok=new Set();
     const otelAdCoz=ad=>{ const t=getTanimlar()||{}; const o=(t.oteller||[]).find(x=>_norm(x.ad||'')===_norm(ad)); return o?o.ad:ad; };
-    Object.values(grup).forEach(g=>{
+    const _isleG=(g)=>{
       // VOUCHER SİSTEMDE VARSA: bu dosya açılım (rooming) dosyası → konaklama kartlarını bağla
       const adaylarV=rezv.filter(x=>x.voucher&&_norm(x.voucher||'')===_norm(g.voucher));
       let mevcut=adaylarV.find(x=>String(x.kalkis||'')===String(g.giris||''));
@@ -12002,7 +12025,9 @@ function _rzSejourOku(f){
       if(iptalIsim.length) rec.not=((rec.not||'')+' · İPTAL edilenler: '+[...new Set(iptalIsim)].join(', ')).trim();
       if(tumIptal){ rec.not=('İPTAL REZERVASYON'+(rec.not?' · '+rec.not:'')); iptalRez++; }
       rezv.push(rec); yeni++;
-    });
+    };
+    { const _gL=Object.values(grup); for(let _gi=0;_gi<_gL.length;_gi++){ if(_gi%10===0){ _ilerleme.set(10+75*_gi/_gL.length,(_gi+1)+' / '+_gL.length+' rezervasyon işleniyor…'); await _ilerleme.bekle(); } _isleG(_gL[_gi]); } }
+    _ilerleme.set(88,'Kaydediliyor…'); await _ilerleme.bekle();
     // ONARIM: aynı operatör+voucher içinde ürünlü kayıt varken tip!=='urun' kardeşler açılım artığıdır → sil
     let onarim=0;
     { const vG={}; rezv.forEach(r=>{ const k=_norm(r.operator||'')+'|'+_norm(r.voucher||''); (vG[k]=vG[k]||[]).push(r); });
@@ -12060,7 +12085,7 @@ function _rzSejourOku(f){
       if(opYok.size) parca.push('Eşleşmeyen operatörler (ad olduğu gibi yazıldı): '+[...opYok].join(', '));
       showConfirm('⚠️','Sejour Aktarım Raporu',parca.join('\n\n')+'\n\nEksik ürünleri tanımlayıp dosyayı YENİDEN yükleyebilirsin — var olan voucherlar atlanır.','Tamam',()=>{});
     }
-  }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); } };
+  }catch(err){ showToast('Dosya okunamadı: '+((err&&err.message)||err),'error'); }finally{ _ilerleme.set(100,'Tamamlandı'); setTimeout(()=>_ilerleme.kapat(),350); } };
   rd.readAsArrayBuffer(f);
 }
 function rzYeni(){ document.getElementById('rzYeniAdim1').style.display=''; document.getElementById('rzYeniAdim2').style.display='none'; window._rzYeniK=''; document.getElementById('rzTipModal').classList.add('open'); }
